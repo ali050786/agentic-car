@@ -51,8 +51,23 @@ export interface Profile {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
+  brand_kit: BrandKit | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Brand Kit Configuration
+ * Stored in JSONB 'brand_kit' column
+ */
+export interface BrandKit {
+  enabled: boolean;
+  seeds: {
+    primary: string;
+    secondary: string;
+    text: string;
+    background: string;
+  };
 }
 
 /**
@@ -66,6 +81,7 @@ export interface Carousel {
   template_type: 'template1' | 'template2';
   theme: CarouselTheme;
   slides: SlideContent[];
+  preset_id: string | null;  // Color preset ID (e.g., 'ocean-tech', 'sunset-energy')
   is_public: boolean;
   created_at: string;
   updated_at: string;

@@ -33,13 +33,12 @@ export const injectContentIntoSvg = (templateId: string, content: SlideContent, 
 
     // T1 List Style (Matching PDF Slide 3: Bullet + Bold Key)
     listHtml = content.listItems && content.listItems.length > 0
-    ? `<div style="display: flex; flex-direction: column; gap: 30px; width: 100%;">
-        ${content.listItems.map((item) => {
-          const parts = item.split(':');
-          const title = parts.length > 1 ? parts[0] + ':' : '';
-          const desc = parts.length > 1 ? parts.slice(1).join(':') : item;
-          
-          return `
+      ? content.listItems.map((item) => {
+        const parts = item.split(':');
+        const title = parts.length > 1 ? parts[0] + ':' : '';
+        const desc = parts.length > 1 ? parts.slice(1).join(':') : item;
+
+        return `
           <div style="display: flex; align-items: flex-start; gap: 24px; font-family: 'Lato', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.2;">
             <div style="min-width: 20px;">•</div>
             <div>
@@ -48,9 +47,8 @@ export const injectContentIntoSvg = (templateId: string, content: SlideContent, 
             </div>
           </div>
           `;
-        }).join('')}
-      </div>`
-    : '';
+      }).join('')
+      : '';
 
   } else if (templateId === 'template-2') {
     switch (content.variant) {
@@ -77,14 +75,13 @@ export const injectContentIntoSvg = (templateId: string, content: SlideContent, 
 
     // T2 List Style (Matching PDF Slide 7: Bullet + Bold Key)
     listHtml = content.listItems && content.listItems.length > 0
-    ? `<div style="display: flex; flex-direction: column; gap: 30px; width: 100%;">
-        ${content.listItems.map((item) => {
-          // Split "Key: Value" -> ["Key", "Value"]
-          const parts = item.split(':');
-          const title = parts.length > 1 ? parts[0] + ':' : '';
-          const desc = parts.length > 1 ? parts.slice(1).join(':') : item;
-          
-          return `
+      ? content.listItems.map((item) => {
+        // Split "Key: Value" -> ["Key", "Value"]
+        const parts = item.split(':');
+        const title = parts.length > 1 ? parts[0] + ':' : '';
+        const desc = parts.length > 1 ? parts.slice(1).join(':') : item;
+
+        return `
           <div style="display: flex; align-items: flex-start; gap: 20px; font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.4;">
              <div style="min-width: 15px; color: var(--text-highlight);">•</div>
              <div>
@@ -93,9 +90,8 @@ export const injectContentIntoSvg = (templateId: string, content: SlideContent, 
              </div>
           </div>
           `;
-        }).join('')}
-      </div>`
-    : '';
+      }).join('')
+      : '';
   }
 
   // Inject Theme CSS
@@ -112,7 +108,7 @@ export const injectContentIntoSvg = (templateId: string, content: SlideContent, 
   baseSvg = replaceSafe('{{HEADLINE_HIGHLIGHT}}', content.headlineHighlight);
   baseSvg = replaceSafe('{{BODY}}', content.body);
   baseSvg = replaceSafe('{{FOOTER}}', content.footer);
-  
+
   // Inject List HTML
   baseSvg = replaceSafe('{{LIST_ITEMS}}', listHtml);
 

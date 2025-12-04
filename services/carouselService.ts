@@ -21,7 +21,8 @@ export const createCarousel = async (
   templateType: 'template1' | 'template2',  // FIXED: Removed hyphens
   theme: any,
   slides: any[],
-  isPublic: boolean = false
+  isPublic: boolean = false,
+  presetId: string | null = null  // Color preset ID
 ): Promise<{ data: Carousel | null; error: any }> => {
   try {
     const carouselData: CarouselInsert = {
@@ -30,6 +31,7 @@ export const createCarousel = async (
       template_type: templateType,
       theme,
       slides,
+      preset_id: presetId,
       is_public: isPublic,
     };
 
@@ -383,7 +385,8 @@ export const duplicateCarousel = async (
       original.template_type,
       original.theme,
       original.slides,
-      false
+      false,
+      original.preset_id  // Copy the preset ID too
     );
 
     return { data, error };
@@ -421,24 +424,24 @@ export const canEditCarousel = async (
 export default {
   // Create
   createCarousel,
-  
+
   // Read
   getUserCarousels,
   getCarouselById,
   getPublicCarousels,
   searchUserCarousels,
   getCarouselsByTemplate,
-  
+
   // Update
   updateCarousel,
   updateCarouselTitle,
   toggleCarouselPublic,
   updateCarouselContent,
-  
+
   // Delete
   deleteCarousel,
   deleteCarousels,
-  
+
   // Utility
   getUserAnalytics,
   duplicateCarousel,

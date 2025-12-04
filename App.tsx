@@ -19,6 +19,9 @@ import { SaveCarouselModal } from './components/SaveCarouselModal';
 import { updateCarouselContent } from './services/carouselService';
 import { Carousel } from './lib/supabaseClient';
 import { dbToAppTemplate } from './utils/templateConverter';
+import { ThemeSelector } from './components/ThemeSelector';
+import { resolveTheme } from './utils/brandUtils';
+import { getPresetById } from './config/colorPresets';
 
 // Auth Pages
 import { SignUp } from './pages/SignUp';
@@ -54,7 +57,7 @@ const CarouselGenerator: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { topic, setTopic, selectedTemplate, setTemplate, isGenerating, error, slides, setSlides } = useCarouselStore();
+  const { topic, setTopic, selectedTemplate, setTemplate, selectedModel, setModel, isGenerating, error, slides, setSlides, activePresetId, setActivePreset, setTheme } = useCarouselStore();
 
   const [localTopic, setLocalTopic] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -77,10 +80,29 @@ const CarouselGenerator: React.FC = () => {
       setTemplate(dbToAppTemplate(carousel.template_type));
       setSlides(carousel.slides as any);
 
+      // Restore the color preset if it was saved
+      if (carousel.preset_id) {
+        setActivePreset(carousel.preset_id);
+      }
+
       // Clear the state so refresh doesn't reload
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  // Reactive Theme Update: Recalculate theme when template or preset changes
+  useEffect(() => {
+    // Only update if we have slides (carousel already generated)
+    if (slides.length > 0 && !isGenerating) {
+      const preset = getPresetById(activePresetId || 'ocean-tech');
+
+      if (preset) {
+        const newTheme = resolveTheme(preset.seeds, selectedTemplate);
+        setTheme(newTheme);
+        console.log(`[App] Theme updated reactively: ${preset.name} + ${selectedTemplate}`);
+      }
+    }
+  }, [selectedTemplate, activePresetId, slides.length, isGenerating]);
 
   const handleGenerate = () => {
     if (!localTopic) return;
@@ -325,6 +347,53 @@ const CarouselGenerator: React.FC = () => {
             </div>
           </div>
 
+          {/* AI Model Selection */}
+          <div className="flex flex-col gap-4">
+            <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
+              {editMode ? 'AI Model' : '3. AI Model'}
+            </label>
+            <div className="grid grid-cols-1 gap-3">
+              <button
+                onClick={() => setModel('groq-llama')}
+                className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'groq-llama'
+                  ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
+                  : 'border-white/10 hover:border-white/30 bg-black/20'
+                  }`}
+              >
+                <div className="relative z-10">
+                  <div className="font-bold text-white mb-1 flex justify-between items-center">
+                    <span>Groq Llama 3.3</span>
+                    {selectedModel === 'groq-llama' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
+                  </div>
+                  <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
+                    <span>⚡ Fast generation, generous limits</span>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setModel('openrouter-gemini')}
+                className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'openrouter-gemini'
+                  ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
+                  : 'border-white/10 hover:border-white/30 bg-black/20'
+                  }`}
+              >
+                <div className="relative z-10">
+                  <div className="font-bold text-white mb-1 flex justify-between items-center">
+                    <span>OpenRouter Gemini 2.0</span>
+                    {selectedModel === 'openrouter-gemini' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
+                  </div>
+                  <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
+                    <span>🧠 Smarter reasoning, stricter limits</span>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Theme/Color Preset Selection */}
+          <ThemeSelector />
+
           {/* Action Button */}
           <div className="mt-auto pt-6 border-t border-white/5">
             {error && (
@@ -395,6 +464,7 @@ const CarouselGenerator: React.FC = () => {
         templateType={selectedTemplate as any}
         theme={getTheme()}
         slides={slides}
+        presetId={activePresetId}
         defaultTitle={localTopic}
       />
     </div>

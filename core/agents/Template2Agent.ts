@@ -97,6 +97,18 @@ export const Template2Agent = {
 
     const result = await generateContentFromAgent(prompt, T2_SCHEMA);
 
+    // Validate response structure
+    if (!result || typeof result !== 'object') {
+      console.error('[Template2Agent] Invalid API response:', result);
+      throw new Error('API returned invalid response structure');
+    }
+
+    if (!result.slides || !Array.isArray(result.slides)) {
+      console.error('[Template2Agent] Missing or invalid slides array:', result);
+      console.error('[Template2Agent] Full response:', JSON.stringify(result, null, 2));
+      throw new Error('API response missing slides array. Check console for details.');
+    }
+
     // Post-processing
     const slides = result.slides.map((s: any, i: number) => ({
       id: `t2-slide-${i}`,

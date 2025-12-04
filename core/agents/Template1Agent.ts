@@ -1,7 +1,7 @@
 import { generateContentFromAgent } from '../../services/geminiService';
 import { SlideContent, CarouselTheme } from '../../types';
 
-// JSON Schema used for Groq structured outputs
+// JSON Schema used for OpenRouter structured outputs (Gemini 2.0 Flash)
 const T1_SCHEMA = {
   type: 'object',
   properties: {
@@ -75,13 +75,13 @@ export const Template1Agent = {
           - preHeader (Concise, Max 60 chars).
           - headline (First part of title, Max 36 chars).
           - headlineHighlight (Completing part, highlighted, Max 15 chars). 
-          - body (short intro).
+          - body (short intro, Max 150 chars).
       - 'body': Needs preHeader, headline, headlineHighlight, and body text (max 35 words).
           - Headlines appear on TWO LINES: Line 1: "{{headline}}" | Line 2: "{{headlineHighlight}}"
           - preHeader (Concise, Max 60 chars).
           - headline (First line, faded, Max 36 chars).
           - headlineHighlight (Second line, bright emphasis, Max 15 chars). 
-          - body (explanation text).
+          - body (explanation text. Max 250 chars)).
           
       - 'list': Needs preHeader, headline, headlineHighlight. **CRITICAL**: 'listItems' MUST use the format "Key: Value" (e.g., "Direction: From complex to obvious"). Max 3 items per slide.
           - Headlines appear on TWO LINES: Line 1: "{{headline}}" | Line 2: "{{headlineHighlight}}"
@@ -94,13 +94,25 @@ export const Template1Agent = {
           - preHeader (Concise, Max 60 chars)
           - headline (First line, faded, Max 36 chars).
           - headlineHighlight (Second line, bright emphasis, Max 15 chars). 
-          - body (final philosophical statement).
+          - body (final philosophical statement Max 80 chars).
           
          
       Return JSON fitting the schema including the Theme.
     `;
 
     const result = await generateContentFromAgent(prompt, T1_SCHEMA);
+
+    // Validate response structure
+    if (!result || typeof result !== 'object') {
+      console.error('[Template1Agent] Invalid API response:', result);
+      throw new Error('API returned invalid response structure');
+    }
+
+    if (!result.slides || !Array.isArray(result.slides)) {
+      console.error('[Template1Agent] Missing or invalid slides array:', result);
+      console.error('[Template1Agent] Full response:', JSON.stringify(result, null, 2));
+      throw new Error('API response missing slides array. Check console for details.');
+    }
 
     // Post-processing
     const slides = result.slides.map((s: any, i: number) => ({

@@ -19,6 +19,7 @@ interface SaveCarouselModalProps {
   templateType: AppTemplateType;  // App uses 'template-1' and 'template-2'
   theme: any;
   slides: any[];
+  presetId: string | null;  // Active color preset ID
   defaultTitle?: string;
 }
 
@@ -28,10 +29,11 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
   templateType,
   theme,
   slides,
+  presetId,
   defaultTitle = '',
 }) => {
   const { user } = useAuthStore();
-  
+
   const [title, setTitle] = useState(defaultTitle);
   const [isPublic, setIsPublic] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -66,7 +68,8 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
       dbTemplateType,  // Use converted template type
       theme,
       slides,
-      isPublic
+      isPublic,
+      presetId  // Save the active preset ID
     );
 
     setIsSaving(false);
@@ -152,11 +155,10 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
                 <div className="space-y-2">
                   <button
                     onClick={() => setIsPublic(false)}
-                    className={`w-full p-4 rounded-lg border text-left transition-all ${
-                      !isPublic
-                        ? 'border-blue-500 bg-blue-500/10'
-                        : 'border-white/10 bg-black/20 hover:border-white/30'
-                    }`}
+                    className={`w-full p-4 rounded-lg border text-left transition-all ${!isPublic
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : 'border-white/10 bg-black/20 hover:border-white/30'
+                      }`}
                   >
                     <div className="flex items-start gap-3">
                       <Lock size={20} className={!isPublic ? 'text-blue-400' : 'text-neutral-500'} />
@@ -169,11 +171,10 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
 
                   <button
                     onClick={() => setIsPublic(true)}
-                    className={`w-full p-4 rounded-lg border text-left transition-all ${
-                      isPublic
-                        ? 'border-blue-500 bg-blue-500/10'
-                        : 'border-white/10 bg-black/20 hover:border-white/30'
-                    }`}
+                    className={`w-full p-4 rounded-lg border text-left transition-all ${isPublic
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : 'border-white/10 bg-black/20 hover:border-white/30'
+                      }`}
                   >
                     <div className="flex items-start gap-3">
                       <Globe size={20} className={isPublic ? 'text-blue-400' : 'text-neutral-500'} />
@@ -212,11 +213,10 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
             <button
               onClick={handleSave}
               disabled={isSaving || !title.trim()}
-              className={`flex-1 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
-                isSaving || !title.trim()
-                  ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white'
-              }`}
+              className={`flex-1 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${isSaving || !title.trim()
+                ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white'
+                }`}
             >
               {isSaving ? (
                 <>
