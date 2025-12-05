@@ -103,14 +103,17 @@ export const Template2Agent = {
       throw new Error('API returned invalid response structure');
     }
 
-    if (!result.slides || !Array.isArray(result.slides)) {
+    // Handle both direct format and Claude's nested format
+    const data = result.carousel || result;
+
+    if (!data.slides || !Array.isArray(data.slides)) {
       console.error('[Template2Agent] Missing or invalid slides array:', result);
       console.error('[Template2Agent] Full response:', JSON.stringify(result, null, 2));
       throw new Error('API response missing slides array. Check console for details.');
     }
 
     // Post-processing
-    const slides = result.slides.map((s: any, i: number) => ({
+    const slides = data.slides.map((s: any, i: number) => ({
       id: `t2-slide-${i}`,
       variant: s.variant,
       headline: s.headline || '',
@@ -121,6 +124,6 @@ export const Template2Agent = {
       footer: s.footer || ''
     }));
 
-    return { slides, theme: result.theme };
+    return { slides, theme: data.theme };
   }
 };

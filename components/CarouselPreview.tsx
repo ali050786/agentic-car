@@ -5,10 +5,10 @@ import { optimizeSvgForFigma } from '../utils/figmaOptimizer';
 import { Edit2, Download, Check, X, RefreshCw, Copy, CheckCircle } from 'lucide-react';
 import { SlideContent } from '../types';
 
-const SlideEditor: React.FC<{ 
-  slide: SlideContent; 
-  onSave: (c: Partial<SlideContent>) => void; 
-  onCancel: () => void 
+const SlideEditor: React.FC<{
+  slide: SlideContent;
+  onSave: (c: Partial<SlideContent>) => void;
+  onCancel: () => void
 }> = ({ slide, onSave, onCancel }) => {
   const [formData, setFormData] = useState({ ...slide });
 
@@ -32,34 +32,34 @@ const SlideEditor: React.FC<{
       <div className="space-y-3">
         <div>
           <label className="text-xs text-neutral-400 block mb-1">Preheader</label>
-          <input 
-            value={formData.preHeader || ''} 
+          <input
+            value={formData.preHeader || ''}
             onChange={(e) => handleChange('preHeader', e.target.value)}
             className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white"
           />
         </div>
         <div>
           <label className="text-xs text-neutral-400 block mb-1">Headline</label>
-          <input 
-            value={formData.headline} 
+          <input
+            value={formData.headline}
             onChange={(e) => handleChange('headline', e.target.value)}
             className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white font-bold"
           />
         </div>
         <div>
           <label className="text-xs text-neutral-400 block mb-1">Highlight</label>
-          <input 
-            value={formData.headlineHighlight || ''} 
+          <input
+            value={formData.headlineHighlight || ''}
             onChange={(e) => handleChange('headlineHighlight', e.target.value)}
             className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-blue-400 font-bold"
           />
         </div>
-        
+
         {formData.variant !== 'list' && (
-           <div>
+          <div>
             <label className="text-xs text-neutral-400 block mb-1">Body Text</label>
-            <textarea 
-              value={formData.body || ''} 
+            <textarea
+              value={formData.body || ''}
               onChange={(e) => handleChange('body', e.target.value)}
               className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white h-20"
             />
@@ -71,7 +71,7 @@ const SlideEditor: React.FC<{
             <label className="text-xs text-neutral-400 block mb-1">List Items</label>
             <div className="space-y-2">
               {formData.listItems?.map((item, idx) => (
-                <input 
+                <input
                   key={idx}
                   value={item}
                   onChange={(e) => handleListChange(idx, e.target.value)}
@@ -82,10 +82,10 @@ const SlideEditor: React.FC<{
           </div>
         )}
 
-         <div>
+        <div>
           <label className="text-xs text-neutral-400 block mb-1">Footer</label>
-          <input 
-            value={formData.footer || ''} 
+          <input
+            value={formData.footer || ''}
             onChange={(e) => handleChange('footer', e.target.value)}
             className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white"
           />
@@ -93,7 +93,7 @@ const SlideEditor: React.FC<{
       </div>
 
       <div className="mt-auto pt-4 flex gap-2">
-        <button 
+        <button
           onClick={() => onSave(formData)}
           className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded text-sm font-medium flex items-center justify-center gap-2"
         >
@@ -105,18 +105,18 @@ const SlideEditor: React.FC<{
 };
 
 export const CarouselPreview: React.FC = () => {
-  const { slides, selectedTemplate, isGenerating, updateSlide, theme } = useCarouselStore();
+  const { slides, selectedTemplate, isGenerating, updateSlide, theme, branding } = useCarouselStore();
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isCopying, setIsCopying] = useState(false);
 
   const handleCopy = async (slide: SlideContent, index: number) => {
     setIsCopying(true);
-    
+
     try {
       // Generate SVG (Synchronous Native Generator)
       const optimizedSvg = await optimizeSvgForFigma(slide, theme, selectedTemplate);
-      
+
       await navigator.clipboard.writeText(optimizedSvg);
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
@@ -153,8 +153,8 @@ export const CarouselPreview: React.FC = () => {
     <div className="w-full h-full overflow-y-auto bg-neutral-900 p-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
         {slides.map((slide, index) => {
-          // Preview still uses the fast SVG Injector for DOM rendering
-          const svgString = injectContentIntoSvg(selectedTemplate, slide, theme);
+          // Preview with carousel-level branding
+          const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, branding);
           const isEditing = editingIndex === index;
           const isCopied = copiedIndex === index;
 
@@ -166,21 +166,20 @@ export const CarouselPreview: React.FC = () => {
                   Slide 0{index + 1}
                 </span>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
+                  <button
                     onClick={() => setEditingIndex(index)}
                     className="p-1.5 bg-neutral-800 hover:bg-blue-600 text-white rounded-md transition-colors"
                     title="Edit Content"
                   >
                     <Edit2 size={14} />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleCopy(slide, index)}
                     disabled={isCopying}
-                    className={`p-1.5 rounded-md transition-all flex items-center gap-1 ${
-                      isCopied 
-                        ? 'bg-green-600 text-white' 
+                    className={`p-1.5 rounded-md transition-all flex items-center gap-1 ${isCopied
+                        ? 'bg-green-600 text-white'
                         : 'bg-neutral-800 hover:bg-purple-600 text-white'
-                    }`}
+                      }`}
                     title="Copy optimized SVG for Figma"
                   >
                     {isCopied ? <CheckCircle size={14} /> : <Copy size={14} />}
@@ -192,15 +191,15 @@ export const CarouselPreview: React.FC = () => {
               {/* Card Container */}
               <div className="relative aspect-[4/5] w-full bg-black shadow-2xl rounded-xl overflow-hidden border border-white/10 group-hover:border-white/20 transition-all">
                 {/* SVG Render (DOM) */}
-                <div 
+                <div
                   className="w-full h-full"
-                  dangerouslySetInnerHTML={{ __html: svgString }} 
+                  dangerouslySetInnerHTML={{ __html: svgString }}
                 />
 
                 {/* Edit Overlay */}
                 {isEditing && (
-                  <SlideEditor 
-                    slide={slide} 
+                  <SlideEditor
+                    slide={slide}
                     onCancel={() => setEditingIndex(null)}
                     onSave={(newContent) => {
                       updateSlide(index, newContent);

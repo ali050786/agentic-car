@@ -15,8 +15,8 @@ import {
   deleteCarousel,
   duplicateCarousel,
   toggleCarouselPublic,
+  Carousel,
 } from '../services/carouselService';
-import { Carousel } from '../lib/supabaseClient';
 import { ShareModal } from '../components/ShareModal';
 import { injectContentIntoSvg } from '../utils/svgInjector';
 import { dbToAppTemplate } from '../utils/templateConverter';
@@ -66,7 +66,7 @@ export const CarouselLibrary: React.FC = () => {
     if (!user) return;
 
     setLoading(true);
-    const { data, error } = await getUserCarousels(user.id);
+    const { data, error } = await getUserCarousels(user.$id);
 
     if (!error && data) {
       setCarousels(data);
@@ -107,7 +107,7 @@ export const CarouselLibrary: React.FC = () => {
   const handleDuplicate = async (carouselId: string) => {
     if (!user) return;
 
-    const { data, error } = await duplicateCarousel(carouselId, user.id);
+    const { data, error } = await duplicateCarousel(carouselId, user.$id);
 
     if (!error && data) {
       setCarousels([data, ...carousels]);
@@ -116,10 +116,10 @@ export const CarouselLibrary: React.FC = () => {
   };
 
   const handleTogglePublic = async (carousel: Carousel) => {
-    const { data, error } = await toggleCarouselPublic(carousel.id, !carousel.is_public);
+    const { data, error } = await toggleCarouselPublic(carousel.$id, !carousel.isPublic);
 
     if (!error && data) {
-      setCarousels(carousels.map(c => c.id === carousel.id ? data : c));
+      setCarousels(carousels.map(c => c.id === carousel.$id ? data : c));
       setActionMenuOpen(null);
     }
   };
@@ -129,7 +129,7 @@ export const CarouselLibrary: React.FC = () => {
     navigate('/', {
       state: {
         editMode: true,
-        carouselId: carousel.id,
+        carouselId: carousel.$id,
         carousel: carousel
       }
     });
@@ -286,7 +286,7 @@ export const CarouselLibrary: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCarousels.map((carousel) => (
                 <div
-                  key={carousel.id}
+                  key={carousel.$id}
                   className="bg-neutral-900 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/50 transition-all group"
                 >
                   {/* Thumbnail */}
@@ -296,7 +296,7 @@ export const CarouselLibrary: React.FC = () => {
                         className="w-full h-full flex items-center justify-center p-4"
                         dangerouslySetInnerHTML={{
                           __html: injectContentIntoSvg(
-                            dbToAppTemplate(carousel.template_type),
+                            dbToAppTemplate(carousel.templateType),
                             carousel.slides[0] as any,
                             carousel.theme
                           )
@@ -310,7 +310,7 @@ export const CarouselLibrary: React.FC = () => {
                       <Layout className="w-12 h-12 text-neutral-700" />
                     )}
                     <div className="absolute top-3 right-3 flex gap-2">
-                      {carousel.is_public && (
+                      {carousel.isPublic && (
                         <div className="px-2 py-1 bg-green-500/10 border border-green-500/50 rounded text-xs text-green-400 flex items-center gap-1">
                           <Eye size={12} />
                           Public
@@ -330,11 +330,11 @@ export const CarouselLibrary: React.FC = () => {
                   <div className="p-4">
                     <h3 className="font-bold text-white mb-1 truncate">{carousel.title}</h3>
                     <div className="flex items-center gap-3 text-xs text-neutral-500 mb-4">
-                      <span>{getTemplateLabel(carousel.template_type)}</span>
+                      <span>{getTemplateLabel(carousel.templateType)}</span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
                         <Calendar size={12} />
-                        {formatDate(carousel.created_at)}
+                        {formatDate(carousel.$createdAt)}
                       </span>
                     </div>
 
@@ -355,17 +355,17 @@ export const CarouselLibrary: React.FC = () => {
                       </button>
                       <div className="relative">
                         <button
-                          onClick={() => setActionMenuOpen(actionMenuOpen === carousel.id ? null : carousel.id)}
+                          onClick={() => setActionMenuOpen(actionMenuOpen === carousel.$id ? null : carousel.$id)}
                           className="p-2 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-lg transition-colors"
                         >
                           <MoreVertical size={16} />
                         </button>
 
                         {/* Action Menu */}
-                        {actionMenuOpen === carousel.id && (
+                        {actionMenuOpen === carousel.$id && (
                           <div className="absolute right-0 top-full mt-2 w-48 bg-neutral-800 border border-white/10 rounded-lg shadow-xl overflow-hidden z-10">
                             <button
-                              onClick={() => handleDuplicate(carousel.id)}
+                              onClick={() => handleDuplicate(carousel.$id)}
                               className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 flex items-center gap-2 transition-colors"
                             >
                               <Copy size={14} />
@@ -375,11 +375,11 @@ export const CarouselLibrary: React.FC = () => {
                               onClick={() => handleTogglePublic(carousel)}
                               className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 flex items-center gap-2 transition-colors"
                             >
-                              {carousel.is_public ? <EyeOff size={14} /> : <Eye size={14} />}
-                              Make {carousel.is_public ? 'Private' : 'Public'}
+                              {carousel.isPublic ? <EyeOff size={14} /> : <Eye size={14} />}
+                              Make {carousel.isPublic ? 'Private' : 'Public'}
                             </button>
                             <button
-                              onClick={() => handleDelete(carousel.id)}
+                              onClick={() => handleDelete(carousel.$id)}
                               className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-colors border-t border-white/10"
                             >
                               <Trash2 size={14} />
@@ -397,7 +397,7 @@ export const CarouselLibrary: React.FC = () => {
             <div className="space-y-2">
               {filteredCarousels.map((carousel) => (
                 <div
-                  key={carousel.id}
+                  key={carousel.$id}
                   className="bg-neutral-900 border border-white/10 rounded-lg p-4 hover:border-blue-500/50 transition-all flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -407,7 +407,7 @@ export const CarouselLibrary: React.FC = () => {
                           className="w-full h-full"
                           dangerouslySetInnerHTML={{
                             __html: injectContentIntoSvg(
-                              dbToAppTemplate(carousel.template_type),
+                              dbToAppTemplate(carousel.templateType),
                               carousel.slides[0] as any,
                               carousel.theme
                             )
@@ -425,13 +425,13 @@ export const CarouselLibrary: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-white truncate mb-1">{carousel.title}</h3>
                       <div className="flex items-center gap-3 text-xs text-neutral-500">
-                        <span>{getTemplateLabel(carousel.template_type)}</span>
+                        <span>{getTemplateLabel(carousel.templateType)}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
                           <Calendar size={12} />
-                          {formatDate(carousel.created_at)}
+                          {formatDate(carousel.$createdAt)}
                         </span>
-                        {carousel.is_public && (
+                        {carousel.isPublic && (
                           <>
                             <span>•</span>
                             <span className="text-green-400 flex items-center gap-1">
@@ -469,16 +469,16 @@ export const CarouselLibrary: React.FC = () => {
                     </button>
                     <div className="relative">
                       <button
-                        onClick={() => setActionMenuOpen(actionMenuOpen === carousel.id ? null : carousel.id)}
+                        onClick={() => setActionMenuOpen(actionMenuOpen === carousel.$id ? null : carousel.$id)}
                         className="p-2 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-lg transition-colors"
                       >
                         <MoreVertical size={16} />
                       </button>
 
-                      {actionMenuOpen === carousel.id && (
+                      {actionMenuOpen === carousel.$id && (
                         <div className="absolute right-0 top-full mt-2 w-48 bg-neutral-800 border border-white/10 rounded-lg shadow-xl overflow-hidden z-10">
                           <button
-                            onClick={() => handleDuplicate(carousel.id)}
+                            onClick={() => handleDuplicate(carousel.$id)}
                             className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 flex items-center gap-2 transition-colors"
                           >
                             <Copy size={14} />
@@ -488,11 +488,11 @@ export const CarouselLibrary: React.FC = () => {
                             onClick={() => handleTogglePublic(carousel)}
                             className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 flex items-center gap-2 transition-colors"
                           >
-                            {carousel.is_public ? <EyeOff size={14} /> : <Eye size={14} />}
-                            Make {carousel.is_public ? 'Private' : 'Public'}
+                            {carousel.isPublic ? <EyeOff size={14} /> : <Eye size={14} />}
+                            Make {carousel.isPublic ? 'Private' : 'Public'}
                           </button>
                           <button
-                            onClick={() => handleDelete(carousel.id)}
+                            onClick={() => handleDelete(carousel.$id)}
                             className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-colors border-t border-white/10"
                           >
                             <Trash2 size={14} />

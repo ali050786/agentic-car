@@ -24,7 +24,13 @@ export const appToDbTemplate = (appTemplate: AppTemplateType): DbTemplateType =>
  * Convert database template name to app template name
  * Example: 'template1' → 'template-1'
  */
-export const dbToAppTemplate = (dbTemplate: DbTemplateType): AppTemplateType => {
+export const dbToAppTemplate = (dbTemplate: DbTemplateType | string | null | undefined): AppTemplateType => {
+  // Handle undefined, null, or empty values
+  if (!dbTemplate) {
+    console.warn('dbToAppTemplate: received empty template, defaulting to template-1');
+    return 'template-1';
+  }
+
   // Add hyphen before the number
   return dbTemplate.replace(/(\d+)$/, '-$1') as AppTemplateType;
 };

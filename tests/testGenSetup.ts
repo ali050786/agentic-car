@@ -1,7 +1,7 @@
 /**
  * Test Generation Setup
  * 
- * Verifies OpenRouter API key is present and /api/generate endpoint works.
+ * Verifies Claude API key is present and /api/generate endpoint works.
  * Run with: npx ts-node tests/testGenSetup.ts
  * 
  * Location: src/tests/testGenSetup.ts
@@ -14,21 +14,21 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-console.log('\n🔍 Testing OpenRouter Setup...\n');
+console.log('\n🔍 Testing Claude API Setup...\n');
 
 // Test 1: Check API Key Presence
 console.log('1️⃣  Checking API Key Presence:');
-const apiKey = process.env.OPENROUTER_API_KEY;
+const apiKey = process.env.CLAUDE_API_KEY;
 
 if (!apiKey) {
-    console.error('❌ OPENROUTER_API_KEY is missing!');
+    console.error('❌ CLAUDE_API_KEY is missing!');
     console.error('\n📝 To fix:');
     console.error('   1. Create a .env file in the project root');
-    console.error('   2. Add: OPENROUTER_API_KEY=your_key_here');
-    console.error('   3. Get your free key: https://openrouter.ai/keys\n');
+    console.error('   2. Add: CLAUDE_API_KEY=your_key_here');
+    console.error('   3. Get your free key: https://console.anthropic.com/\n');
     process.exit(1);
 } else {
-    console.log(`✅ OPENROUTER_API_KEY found: ${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}`);
+    console.log(`✅ CLAUDE_API_KEY found: ${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}`);
 }
 
 // Test 2: Verify Endpoint (Node.js fetch available in v18+)
@@ -44,7 +44,8 @@ const testGeneration = async () => {
             },
             body: JSON.stringify({
                 prompt: 'Generate 2 slides about TypeScript benefits. Return JSON with this structure: {"slides": [{"variant": "hero", "headline": "text", "body": "text"}]}',
-                responseSchema: null
+                responseSchema: null,
+                selectedModel: 'claude-haiku'
             })
         });
 

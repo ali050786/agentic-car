@@ -11,10 +11,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCarouselById } from '../services/carouselService';
 import { trackCarouselView } from '../services/analyticsService';
-import { Carousel } from '../lib/supabaseClient';
-import { 
-  Layout, 
-  AlertCircle, 
+import { Carousel } from '../services/carouselService';
+import {
+  Layout,
+  AlertCircle,
   Eye,
   Calendar,
   ExternalLink,
@@ -24,7 +24,7 @@ import {
 export const PublicCarouselViewer: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+
   const [carousel, setCarousel] = useState<Carousel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,7 +51,7 @@ export const PublicCarouselViewer: React.FC = () => {
     }
 
     // Check if carousel is public
-    if (!data.is_public) {
+    if (!data.isPublic) {
       setError('This carousel is private');
       setLoading(false);
       return;
@@ -106,7 +106,7 @@ export const PublicCarouselViewer: React.FC = () => {
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">{error}</h2>
           <p className="text-neutral-400 mb-6">
-            {error === 'Carousel not found' 
+            {error === 'Carousel not found'
               ? 'This carousel may have been deleted or the link is incorrect.'
               : 'The owner has made this carousel private.'}
           </p>
@@ -138,11 +138,11 @@ export const PublicCarouselViewer: React.FC = () => {
               <div>
                 <h1 className="text-lg font-bold">{carousel.title}</h1>
                 <div className="flex items-center gap-3 text-xs text-neutral-400">
-                  <span>{getTemplateLabel(carousel.template_type)}</span>
+                  <span>{getTemplateLabel(carousel.templateType)}</span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
                     <Calendar size={12} />
-                    {formatDate(carousel.created_at)}
+                    {formatDate(carousel.$createdAt)}
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
@@ -152,7 +152,7 @@ export const PublicCarouselViewer: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <button
               onClick={() => navigate('/login')}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-lg text-sm font-medium transition-all"
@@ -170,7 +170,7 @@ export const PublicCarouselViewer: React.FC = () => {
           {/* Slide Preview */}
           <div className="aspect-[9/16] bg-neutral-900 rounded-2xl overflow-hidden shadow-2xl mb-6 relative">
             {currentSlideData ? (
-              <div 
+              <div
                 className="w-full h-full"
                 dangerouslySetInnerHTML={{ __html: currentSlideData.svg }}
               />
@@ -201,11 +201,10 @@ export const PublicCarouselViewer: React.FC = () => {
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`h-2 rounded-full transition-all ${
-                  index === currentSlide
-                    ? 'w-8 bg-blue-500'
-                    : 'w-2 bg-neutral-700 hover:bg-neutral-600'
-                }`}
+                className={`h-2 rounded-full transition-all ${index === currentSlide
+                  ? 'w-8 bg-blue-500'
+                  : 'w-2 bg-neutral-700 hover:bg-neutral-600'
+                  }`}
               />
             ))}
           </div>

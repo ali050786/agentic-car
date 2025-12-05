@@ -16,10 +16,10 @@ import { downloadAllSvgs } from './utils/downloadUtils';
 import { UserMenu } from './components/UserMenu';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SaveCarouselModal } from './components/SaveCarouselModal';
-import { updateCarouselContent } from './services/carouselService';
-import { Carousel } from './lib/supabaseClient';
+import { updateCarouselContent, Carousel } from './services/carouselService';
 import { dbToAppTemplate } from './utils/templateConverter';
 import { ThemeSelector } from './components/ThemeSelector';
+import { BrandingSelector } from './components/BrandingSelector';
 import { resolveTheme } from './utils/brandUtils';
 import { getPresetById } from './config/colorPresets';
 
@@ -131,7 +131,7 @@ const CarouselGenerator: React.FC = () => {
     setIsSaving(true);
 
     const theme = editingCarousel.theme;
-    const { data, error } = await updateCarouselContent(editingCarousel.id, theme, slides);
+    const { data, error } = await updateCarouselContent(editingCarousel.$id, theme, slides);
 
     setIsSaving(false);
 
@@ -372,19 +372,19 @@ const CarouselGenerator: React.FC = () => {
               </button>
 
               <button
-                onClick={() => setModel('openrouter-gemini')}
-                className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'openrouter-gemini'
+                onClick={() => setModel('claude-haiku')}
+                className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'claude-haiku'
                   ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
                   : 'border-white/10 hover:border-white/30 bg-black/20'
                   }`}
               >
                 <div className="relative z-10">
                   <div className="font-bold text-white mb-1 flex justify-between items-center">
-                    <span>OpenRouter Gemini 2.0</span>
-                    {selectedModel === 'openrouter-gemini' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
+                    <span>Claude Haiku 3.5</span>
+                    {selectedModel === 'claude-haiku' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
                   </div>
                   <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
-                    <span>🧠 Smarter reasoning, stricter limits</span>
+                    <span>🧠 Smart reasoning, better limits</span>
                   </div>
                 </div>
               </button>
@@ -393,6 +393,9 @@ const CarouselGenerator: React.FC = () => {
 
           {/* Theme/Color Preset Selection */}
           <ThemeSelector />
+
+          {/* Branding Settings */}
+          <BrandingSelector />
 
           {/* Action Button */}
           <div className="mt-auto pt-6 border-t border-white/5">

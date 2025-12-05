@@ -1,12 +1,18 @@
-import { SlideContent, CarouselTheme } from '../types';
+import { SlideContent, CarouselTheme, BrandingConfig } from '../types';
 import { T1_HERO_SVG, T1_BODY_SVG, T1_LIST_SVG, T1_CTA_SVG } from '../assets/templates/template1';
 import { T2_HERO_SVG, T2_BODY_SVG, T2_LIST_SVG, T2_CTA_SVG } from '../assets/templates/template2';
+import { generateSignatureCard } from './signatureCardGenerator';
 
 /**
  * The Injector Engine.
  * Takes the raw SVG string and replaces placeholder tokens with actual content and theme colors.
  */
-export const injectContentIntoSvg = (templateId: string, content: SlideContent, theme: CarouselTheme | null): string => {
+export const injectContentIntoSvg = (
+  templateId: string,
+  content: SlideContent,
+  theme: CarouselTheme | null,
+  branding?: BrandingConfig
+): string => {
   let baseSvg = '';
   let listHtml = '';
   let themeCss = '';
@@ -119,6 +125,14 @@ export const injectContentIntoSvg = (templateId: string, content: SlideContent, 
   baseSvg = replaceSafe('{{BODY}}', '');
   baseSvg = replaceSafe('{{FOOTER}}', '');
   baseSvg = replaceSafe('{{LIST_ITEMS}}', '');
+
+  // 6. Inject Signature Card from Branding Config
+  let signatureCardHtml = '';
+  if (branding && branding.enabled) {
+    const fontFamily = templateId === 'template-1' ? 'Lato' : 'Roboto';
+    signatureCardHtml = generateSignatureCard(branding, fontFamily);
+  }
+  baseSvg = replaceSafe('{{SIGNATURE_CARD}}', signatureCardHtml);
 
   return baseSvg;
 };

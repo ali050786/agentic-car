@@ -60,6 +60,8 @@ export const T1_HERO_SVG = `
     <path d="M1018.01,1158.95 l19.31,9.18 l-19.31,9.18"/>
     <path d="M980.78,1168.13 h46.54"/>
   </g>
+  
+  {{SIGNATURE_CARD}}
 </svg>
 `;
 
@@ -108,6 +110,8 @@ export const T1_BODY_SVG = `
     <path d="M1018.01,1158.95 l19.31,9.18 l-19.31,9.18"/>
     <path d="M980.78,1168.13 h46.54"/>
   </g>
+  
+  {{SIGNATURE_CARD}}
 </svg>
 `;
 
@@ -153,6 +157,8 @@ export const T1_LIST_SVG = `
     <path d="M1018.01,1158.95 l19.31,9.18 l-19.31,9.18"/>
     <path d="M980.78,1168.13 h46.54"/>
   </g>
+  
+  {{SIGNATURE_CARD}}
 </svg>
 `;
 
@@ -196,5 +202,7 @@ export const T1_CTA_SVG = `
 
   <!-- Bottom Section -->
   <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)"/>
+  
+  {{SIGNATURE_CARD}}
 </svg>
 `;

@@ -12,32 +12,32 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useCarouselStore } from '../store/useCarouselStore';
 import { getCarouselById, updateCarouselContent } from '../services/carouselService';
-import { Carousel } from '../lib/supabaseClient';
+import { Carousel } from '../services/carouselService';
 import { CarouselPreview } from '../components/CarouselPreview';
 import { runAgentWorkflow } from '../core/agents/MainAgent';
-import { 
-  Layout, 
-  Sparkles, 
-  AlertCircle, 
-  Save, 
+import {
+  Layout,
+  Sparkles,
+  AlertCircle,
+  Save,
   ArrowLeft,
   Loader,
-  CheckCircle 
+  CheckCircle
 } from 'lucide-react';
 
 export const CarouselEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { 
-    topic, 
-    setTopic, 
-    selectedTemplate, 
-    setTemplate, 
-    isGenerating, 
+  const {
+    topic,
+    setTopic,
+    selectedTemplate,
+    setTemplate,
+    isGenerating,
     error,
     slides,
-    setSlides 
+    setSlides
   } = useCarouselStore();
 
   const [carousel, setCarousel] = useState<Carousel | null>(null);
@@ -69,7 +69,7 @@ export const CarouselEditor: React.FC = () => {
     }
 
     // Check ownership
-    if (data.user_id !== user.id) {
+    if (data.userId !== user.$id) {
       setLoadError('You do not have permission to edit this carousel');
       setLoading(false);
       return;
@@ -79,8 +79,8 @@ export const CarouselEditor: React.FC = () => {
     setCarousel(data);
     setLocalTopic(data.title || '');
     setTopic(data.title || '');
-    setTemplate(data.template_type === 'template1' ? 'template-1' : 'template-2');
-    
+    setTemplate(data.templateType === 'template1' ? 'template-1' : 'template-2');
+
     // FIX: Cast slides to proper type to avoid TypeScript error
     setSlides(data.slides as any);
 
@@ -100,7 +100,7 @@ export const CarouselEditor: React.FC = () => {
     setIsSaving(true);
 
     const theme = carousel.theme; // Use existing theme
-    const { data, error } = await updateCarouselContent(carousel.id, theme, slides);
+    const { data, error } = await updateCarouselContent(carousel.$id, theme, slides);
 
     setIsSaving(false);
 
@@ -162,7 +162,7 @@ export const CarouselEditor: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {saveSuccess && (
             <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/50 rounded-lg text-green-400 text-sm">
@@ -173,11 +173,10 @@ export const CarouselEditor: React.FC = () => {
           <button
             onClick={handleSaveChanges}
             disabled={isSaving || slides.length === 0}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              isSaving || slides.length === 0
-                ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${isSaving || slides.length === 0
+              ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+              : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500'
+              }`}
           >
             {isSaving ? (
               <>
@@ -238,11 +237,10 @@ export const CarouselEditor: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setTemplate('template-1')}
-                  className={`p-4 rounded-lg border text-left transition-all ${
-                    selectedTemplate === 'template-1'
-                      ? 'border-blue-500 bg-blue-500/10'
-                      : 'border-white/10 bg-black/20 hover:border-white/30'
-                  }`}
+                  className={`p-4 rounded-lg border text-left transition-all ${selectedTemplate === 'template-1'
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-white/10 bg-black/20 hover:border-white/30'
+                    }`}
                 >
                   <div className="font-medium text-white mb-1">The Truth</div>
                   <div className="text-xs text-neutral-400">Clean & minimal</div>
@@ -250,11 +248,10 @@ export const CarouselEditor: React.FC = () => {
 
                 <button
                   onClick={() => setTemplate('template-2')}
-                  className={`p-4 rounded-lg border text-left transition-all ${
-                    selectedTemplate === 'template-2'
-                      ? 'border-blue-500 bg-blue-500/10'
-                      : 'border-white/10 bg-black/20 hover:border-white/30'
-                  }`}
+                  className={`p-4 rounded-lg border text-left transition-all ${selectedTemplate === 'template-2'
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-white/10 bg-black/20 hover:border-white/30'
+                    }`}
                 >
                   <div className="font-medium text-white mb-1">The Clarity</div>
                   <div className="text-xs text-neutral-400">Bold & vibrant</div>
@@ -266,11 +263,10 @@ export const CarouselEditor: React.FC = () => {
             <button
               onClick={handleRegenerate}
               disabled={isGenerating || !localTopic.trim()}
-              className={`w-full py-4 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-3 ${
-                isGenerating || !localTopic.trim()
-                  ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-900/30'
-              }`}
+              className={`w-full py-4 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-3 ${isGenerating || !localTopic.trim()
+                ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-900/30'
+                }`}
             >
               {isGenerating ? (
                 <>

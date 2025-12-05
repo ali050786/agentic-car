@@ -63,7 +63,7 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
     const dbTemplateType = appToDbTemplate(templateType);
 
     const { data, error: saveError } = await createCarousel(
-      user.id,
+      user.$id,
       title.trim(),
       dbTemplateType,  // Use converted template type
       theme,

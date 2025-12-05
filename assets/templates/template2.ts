@@ -17,7 +17,7 @@ const COMMON_DEFS = `
 // Shared Elements (Background + Design Elements)
 const BACKGROUND_ELEMENTS = `
   <!-- 1. Background -->
-  <rect id="Background" width="1080" height="1374.14" fill="var(--background)"/>
+  <rect id="Background" width="1080" height="1380" fill="var(--background)"/>
   
   <!-- 2. Complex Design Elements -->
   <path id="Gradiant_Design_element" fill="url(#radial-gradient-hero)" d="M386.97,5.06c0,2.31,0,4.61.02,6.92,3.77,382.43,312.55,690.44,693,695.27V5.06H386.97Z"/>
@@ -59,6 +59,8 @@ export const T2_HERO_SVG = `
       </g>
     </g>
   </g>
+  
+  {{SIGNATURE_CARD}}
 </svg>
 `;
 
@@ -100,6 +102,8 @@ export const T2_BODY_SVG = `
       </g>
     </g>
   </g>
+  
+  {{SIGNATURE_CARD}}
 </svg>
 `;
 
@@ -140,6 +144,8 @@ export const T2_LIST_SVG = `
       </g>
     </g>
   </g>
+  
+  {{SIGNATURE_CARD}}
 </svg>
 `;
 
@@ -181,5 +187,7 @@ export const T2_CTA_SVG = `
       </text>
     </g>
   </g>
+  
+  {{SIGNATURE_CARD}}
 </svg>
 `;

@@ -1,12 +1,33 @@
 /**
- * Carousel Database Service - FIXED VERSION
+ * Carousel Database Service - Appwrite
  * 
- * Updated template types to match database: 'template1' and 'template2'
+ * All database operations for carousels using Appwrite.
  * 
  * Location: src/services/carouselService.ts
  */
 
-import { supabase, Carousel, CarouselInsert, CarouselUpdate } from '../lib/supabaseClient';
+import { databases, config, ID } from '../lib/appwriteClient';
+import { Query } from 'appwrite';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface CarouselData {
+  userId: string;
+  title: string;
+  templateType: 'template1' | 'template2';
+  theme: any;
+  slides: any[];
+  presetId: string | null;
+  isPublic: boolean;
+}
+
+export interface Carousel extends CarouselData {
+  $id: string;
+  $createdAt: string;
+  $updatedAt: string;
+}
 
 // ============================================================================
 // CREATE OPERATIONS
@@ -18,73 +39,105 @@ import { supabase, Carousel, CarouselInsert, CarouselUpdate } from '../lib/supab
 export const createCarousel = async (
   userId: string,
   title: string,
-  templateType: 'template1' | 'template2',  // FIXED: Removed hyphens
+  templateType: 'template1' | 'template2',
   theme: any,
   slides: any[],
   isPublic: boolean = false,
-  presetId: string | null = null  // Color preset ID
+  presetId: string | null = null
 ): Promise<{ data: Carousel | null; error: any }> => {
   try {
-    const carouselData: CarouselInsert = {
-      user_id: userId,
+    console.log('[createCarousel] Starting save...', { userId, title, templateType });
+
+    const carouselData = {
+      userId,
       title,
-      template_type: templateType,
-      theme,
-      slides,
-      preset_id: presetId,
-      is_public: isPublic,
+      templateType,
+      theme: JSON.stringify(theme), // Appwrite stores as string
+      slides: JSON.stringify(slides),
+      presetId: presetId || null,
+      isPublic,
     };
 
-    const { data, error } = await supabase
-      .from('carousels')
-      .insert(carouselData)
-      .select()
-      .single();
+    const document = await databases.createDocument(
+      config.databaseId,
+      config.carouselsCollectionId,
+      ID.unique(),
+      carouselData
+    );
 
-    if (error) {
-      console.error('Error creating carousel:', error);
-      return { data: null, error };
-    }
+    console.log('[createCarousel] Successfully saved carousel:', document.$id);
 
-    // Update user analytics
-    await incrementCarouselCount(userId, templateType);
+    // Parse JSON strings back to objects
+    const carousel: Carousel = {
+      ...document,
+      theme: JSON.parse(document.theme as string),
+      slides: JSON.parse(document.slides as string),
+      userId: document.userId,
+      title: document.title,
+      templateType: document.templateType as 'template1' | 'template2',
+      presetId: document.presetId,
+      isPublic: document.isPublic,
+    };
 
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error in createCarousel:', error);
+    // Update user analytics (non-blocking)
+    incrementCarouselCount(userId, templateType);
+
+    return { data: carousel, error: null };
+  } catch (error: any) {
+    console.error('[createCarousel] Error:', error);
     return { data: null, error };
   }
 };
 
 /**
- * Increment user's carousel generation count
+ * Increment user's carousel generation count (non-blocking)
  */
 const incrementCarouselCount = async (userId: string, templateType: string) => {
-  try {
-    // Get current analytics
-    const { data: analytics } = await supabase
-      .from('user_analytics')
-      .select('carousels_generated, templates_used')
-      .eq('user_id', userId)
-      .single();
+  setTimeout(async () => {
+    try {
+      // Try to get existing analytics
+      const { documents } = await databases.listDocuments(
+        config.databaseId,
+        config.analyticsCollectionId,
+        [Query.equal('userId', userId)]
+      );
 
-    if (analytics) {
-      const newCount = analytics.carousels_generated + 1;
-      const templatesUsed = analytics.templates_used || {};
-      const templateCount = (templatesUsed[templateType] || 0) + 1;
+      if (documents.length > 0) {
+        // Update existing
+        const analytics = documents[0];
+        const templatesUsed = JSON.parse(analytics.templatesUsed as string || '{}');
+        templatesUsed[templateType] = (templatesUsed[templateType] || 0) + 1;
 
-      await supabase
-        .from('user_analytics')
-        .update({
-          carousels_generated: newCount,
-          templates_used: { ...templatesUsed, [templateType]: templateCount },
-          last_generation_at: new Date().toISOString(),
-        })
-        .eq('user_id', userId);
+        await databases.updateDocument(
+          config.databaseId,
+          config.analyticsCollectionId,
+          analytics.$id,
+          {
+            carouselsGenerated: analytics.carouselsGenerated + 1,
+            templatesUsed: JSON.stringify(templatesUsed),
+            lastGenerationAt: new Date().toISOString(),
+          }
+        );
+      } else {
+        // Create new analytics
+        const templatesUsed = { [templateType]: 1 };
+
+        await databases.createDocument(
+          config.databaseId,
+          config.analyticsCollectionId,
+          ID.unique(),
+          {
+            userId,
+            carouselsGenerated: 1,
+            templatesUsed: JSON.stringify(templatesUsed),
+            lastGenerationAt: new Date().toISOString(),
+          }
+        );
+      }
+    } catch (error) {
+      console.warn('Error updating analytics (non-critical):', error);
     }
-  } catch (error) {
-    console.error('Error updating analytics:', error);
-  }
+  }, 0);
 };
 
 // ============================================================================
@@ -98,20 +151,35 @@ export const getUserCarousels = async (
   userId: string
 ): Promise<{ data: Carousel[] | null; error: any }> => {
   try {
-    const { data, error } = await supabase
-      .from('carousels')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching user carousels:', error);
-      return { data: null, error };
+    // Validate userId
+    if (!userId) {
+      console.error('getUserCarousels: userId is required');
+      return { data: [], error: null };
     }
 
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error in getUserCarousels:', error);
+    const { documents } = await databases.listDocuments(
+      config.databaseId,
+      config.carouselsCollectionId,
+      [
+        Query.equal('userId', userId),
+        Query.orderDesc('$createdAt')
+      ]
+    );
+
+    const carousels: Carousel[] = documents.map(doc => ({
+      ...doc,
+      theme: JSON.parse(doc.theme as string),
+      slides: JSON.parse(doc.slides as string),
+      userId: doc.userId,
+      title: doc.title,
+      templateType: doc.templateType as 'template1' | 'template2',
+      presetId: doc.presetId,
+      isPublic: doc.isPublic,
+    }));
+
+    return { data: carousels, error: null };
+  } catch (error: any) {
+    console.error('Error fetching user carousels:', error);
     return { data: null, error };
   }
 };
@@ -123,46 +191,26 @@ export const getCarouselById = async (
   carouselId: string
 ): Promise<{ data: Carousel | null; error: any }> => {
   try {
-    const { data, error } = await supabase
-      .from('carousels')
-      .select('*')
-      .eq('id', carouselId)
-      .single();
+    const document = await databases.getDocument(
+      config.databaseId,
+      config.carouselsCollectionId,
+      carouselId
+    );
 
-    if (error) {
-      console.error('Error fetching carousel:', error);
-      return { data: null, error };
-    }
+    const carousel: Carousel = {
+      ...document,
+      theme: JSON.parse(document.theme as string),
+      slides: JSON.parse(document.slides as string),
+      userId: document.userId,
+      title: document.title,
+      templateType: document.templateType as 'template1' | 'template2',
+      presetId: document.presetId,
+      isPublic: document.isPublic,
+    };
 
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error in getCarouselById:', error);
-    return { data: null, error };
-  }
-};
-
-/**
- * Get public carousels (for sharing/discovery)
- */
-export const getPublicCarousels = async (
-  limit: number = 20
-): Promise<{ data: Carousel[] | null; error: any }> => {
-  try {
-    const { data, error } = await supabase
-      .from('carousels')
-      .select('*')
-      .eq('is_public', true)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.error('Error fetching public carousels:', error);
-      return { data: null, error };
-    }
-
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error in getPublicCarousels:', error);
+    return { data: carousel, error: null };
+  } catch (error: any) {
+    console.error('Error fetching carousel:', error);
     return { data: null, error };
   }
 };
@@ -175,48 +223,30 @@ export const searchUserCarousels = async (
   searchQuery: string
 ): Promise<{ data: Carousel[] | null; error: any }> => {
   try {
-    const { data, error } = await supabase
-      .from('carousels')
-      .select('*')
-      .eq('user_id', userId)
-      .ilike('title', `%${searchQuery}%`)
-      .order('created_at', { ascending: false });
+    const { documents } = await databases.listDocuments(
+      config.databaseId,
+      config.carouselsCollectionId,
+      [
+        Query.equal('userId', userId),
+        Query.search('title', searchQuery),
+        Query.orderDesc('$createdAt')
+      ]
+    );
 
-    if (error) {
-      console.error('Error searching carousels:', error);
-      return { data: null, error };
-    }
+    const carousels: Carousel[] = documents.map(doc => ({
+      ...doc,
+      theme: JSON.parse(doc.theme as string),
+      slides: JSON.parse(doc.slides as string),
+      userId: doc.userId,
+      title: doc.title,
+      templateType: doc.templateType as 'template1' | 'template2',
+      presetId: doc.presetId,
+      isPublic: doc.isPublic,
+    }));
 
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error in searchUserCarousels:', error);
-    return { data: null, error };
-  }
-};
-
-/**
- * Get carousels by template type
- */
-export const getCarouselsByTemplate = async (
-  userId: string,
-  templateType: 'template1' | 'template2'  // FIXED: Removed hyphens
-): Promise<{ data: Carousel[] | null; error: any }> => {
-  try {
-    const { data, error } = await supabase
-      .from('carousels')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('template_type', templateType)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching carousels by template:', error);
-      return { data: null, error };
-    }
-
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error in getCarouselsByTemplate:', error);
+    return { data: carousels, error: null };
+  } catch (error: any) {
+    console.error('Error searching carousels:', error);
     return { data: null, error };
   }
 };
@@ -230,24 +260,35 @@ export const getCarouselsByTemplate = async (
  */
 export const updateCarousel = async (
   carouselId: string,
-  updates: CarouselUpdate
+  updates: Partial<CarouselData>
 ): Promise<{ data: Carousel | null; error: any }> => {
   try {
-    const { data, error } = await supabase
-      .from('carousels')
-      .update(updates)
-      .eq('id', carouselId)
-      .select()
-      .single();
+    // Serialize JSON fields
+    const updateData: any = { ...updates };
+    if (updates.theme) updateData.theme = JSON.stringify(updates.theme);
+    if (updates.slides) updateData.slides = JSON.stringify(updates.slides);
 
-    if (error) {
-      console.error('Error updating carousel:', error);
-      return { data: null, error };
-    }
+    const document = await databases.updateDocument(
+      config.databaseId,
+      config.carouselsCollectionId,
+      carouselId,
+      updateData
+    );
 
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error in updateCarousel:', error);
+    const carousel: Carousel = {
+      ...document,
+      theme: JSON.parse(document.theme as string),
+      slides: JSON.parse(document.slides as string),
+      userId: document.userId,
+      title: document.title,
+      templateType: document.templateType as 'template1' | 'template2',
+      presetId: document.presetId,
+      isPublic: document.isPublic,
+    };
+
+    return { data: carousel, error: null };
+  } catch (error: any) {
+    console.error('Error updating carousel:', error);
     return { data: null, error };
   }
 };
@@ -263,16 +304,6 @@ export const updateCarouselTitle = async (
 };
 
 /**
- * Toggle carousel public status
- */
-export const toggleCarouselPublic = async (
-  carouselId: string,
-  isPublic: boolean
-): Promise<{ data: Carousel | null; error: any }> => {
-  return updateCarousel(carouselId, { is_public: isPublic });
-};
-
-/**
  * Update carousel content (theme and slides)
  */
 export const updateCarouselContent = async (
@@ -281,6 +312,16 @@ export const updateCarouselContent = async (
   slides: any[]
 ): Promise<{ data: Carousel | null; error: any }> => {
   return updateCarousel(carouselId, { theme, slides });
+};
+
+/**
+ * Toggle carousel public status
+ */
+export const toggleCarouselPublic = async (
+  carouselId: string,
+  isPublic: boolean
+): Promise<{ data: Carousel | null; error: any }> => {
+  return updateCarousel(carouselId, { isPublic });
 };
 
 // ============================================================================
@@ -294,19 +335,15 @@ export const deleteCarousel = async (
   carouselId: string
 ): Promise<{ error: any }> => {
   try {
-    const { error } = await supabase
-      .from('carousels')
-      .delete()
-      .eq('id', carouselId);
-
-    if (error) {
-      console.error('Error deleting carousel:', error);
-      return { error };
-    }
+    await databases.deleteDocument(
+      config.databaseId,
+      config.carouselsCollectionId,
+      carouselId
+    );
 
     return { error: null };
-  } catch (error) {
-    console.error('Error in deleteCarousel:', error);
+  } catch (error: any) {
+    console.error('Error deleting carousel:', error);
     return { error };
   }
 };
@@ -318,19 +355,19 @@ export const deleteCarousels = async (
   carouselIds: string[]
 ): Promise<{ error: any }> => {
   try {
-    const { error } = await supabase
-      .from('carousels')
-      .delete()
-      .in('id', carouselIds);
-
-    if (error) {
-      console.error('Error deleting carousels:', error);
-      return { error };
-    }
+    await Promise.all(
+      carouselIds.map(id =>
+        databases.deleteDocument(
+          config.databaseId,
+          config.carouselsCollectionId,
+          id
+        )
+      )
+    );
 
     return { error: null };
-  } catch (error) {
-    console.error('Error in deleteCarousels:', error);
+  } catch (error: any) {
+    console.error('Error deleting carousels:', error);
     return { error };
   }
 };
@@ -344,20 +381,26 @@ export const deleteCarousels = async (
  */
 export const getUserAnalytics = async (userId: string) => {
   try {
-    const { data, error } = await supabase
-      .from('user_analytics')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+    const { documents } = await databases.listDocuments(
+      config.databaseId,
+      config.analyticsCollectionId,
+      [Query.equal('userId', userId)]
+    );
 
-    if (error) {
-      console.error('Error fetching user analytics:', error);
-      return { data: null, error };
+    if (documents.length > 0) {
+      const analytics = documents[0];
+      return {
+        data: {
+          ...analytics,
+          templatesUsed: JSON.parse(analytics.templatesUsed as string || '{}'),
+        },
+        error: null,
+      };
     }
 
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error in getUserAnalytics:', error);
+    return { data: null, error: null };
+  } catch (error: any) {
+    console.error('Error fetching user analytics:', error);
     return { data: null, error };
   }
 };
@@ -370,50 +413,27 @@ export const duplicateCarousel = async (
   userId: string
 ): Promise<{ data: Carousel | null; error: any }> => {
   try {
-    // Get original carousel
     const { data: original, error: fetchError } = await getCarouselById(carouselId);
 
     if (fetchError || !original) {
       return { data: null, error: fetchError };
     }
 
-    // Create duplicate with "Copy" suffix
     const newTitle = `${original.title} (Copy)`;
     const { data, error } = await createCarousel(
       userId,
       newTitle,
-      original.template_type,
+      original.templateType,
       original.theme,
       original.slides,
       false,
-      original.preset_id  // Copy the preset ID too
+      original.presetId
     );
 
     return { data, error };
-  } catch (error) {
-    console.error('Error in duplicateCarousel:', error);
+  } catch (error: any) {
+    console.error('Error duplicating carousel:', error);
     return { data: null, error };
-  }
-};
-
-/**
- * Check if user can edit carousel
- */
-export const canEditCarousel = async (
-  carouselId: string,
-  userId: string
-): Promise<boolean> => {
-  try {
-    const { data } = await supabase
-      .from('carousels')
-      .select('user_id')
-      .eq('id', carouselId)
-      .single();
-
-    return data?.user_id === userId;
-  } catch (error) {
-    console.error('Error checking edit permission:', error);
-    return false;
   }
 };
 
@@ -422,28 +442,16 @@ export const canEditCarousel = async (
 // ============================================================================
 
 export default {
-  // Create
   createCarousel,
-
-  // Read
   getUserCarousels,
   getCarouselById,
-  getPublicCarousels,
   searchUserCarousels,
-  getCarouselsByTemplate,
-
-  // Update
   updateCarousel,
   updateCarouselTitle,
-  toggleCarouselPublic,
   updateCarouselContent,
-
-  // Delete
+  toggleCarouselPublic,
   deleteCarousel,
   deleteCarousels,
-
-  // Utility
   getUserAnalytics,
   duplicateCarousel,
-  canEditCarousel,
 };

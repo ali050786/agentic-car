@@ -1,7 +1,7 @@
 import { generateContentFromAgent } from '../../services/geminiService';
 import { SlideContent, CarouselTheme } from '../../types';
 
-// JSON Schema used for OpenRouter structured outputs (Gemini 2.0 Flash)
+// JSON Schema used for AI structured outputs (Claude/Groq)
 const T1_SCHEMA = {
   type: 'object',
   properties: {
@@ -108,14 +108,17 @@ export const Template1Agent = {
       throw new Error('API returned invalid response structure');
     }
 
-    if (!result.slides || !Array.isArray(result.slides)) {
+    // Handle both direct format and Claude's nested format
+    const data = result.carousel || result;
+
+    if (!data.slides || !Array.isArray(data.slides)) {
       console.error('[Template1Agent] Missing or invalid slides array:', result);
       console.error('[Template1Agent] Full response:', JSON.stringify(result, null, 2));
       throw new Error('API response missing slides array. Check console for details.');
     }
 
     // Post-processing
-    const slides = result.slides.map((s: any, i: number) => ({
+    const slides = data.slides.map((s: any, i: number) => ({
       id: `t1-slide-${i}`,
       variant: s.variant,
       headline: s.headline?.toUpperCase() || '',
@@ -126,6 +129,6 @@ export const Template1Agent = {
       footer: s.footer || ''
     }));
 
-    return { slides, theme: result.theme };
+    return { slides, theme: data.theme };
   }
 };

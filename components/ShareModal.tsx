@@ -7,12 +7,12 @@
  */
 
 import React, { useState } from 'react';
-import { Carousel } from '../lib/supabaseClient';
-import { 
-  X, 
-  Link as LinkIcon, 
-  Code, 
-  Copy, 
+import { Carousel } from '../services/carouselService';
+import {
+  X,
+  Link as LinkIcon,
+  Code,
+  Copy,
   CheckCircle,
   ExternalLink,
   AlertCircle
@@ -32,7 +32,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
 
-  const shareUrl = `${window.location.origin}/view/${carousel.id}`;
+  const shareUrl = `${window.location.origin}/view/${carousel.$id}`;
   const embedCode = `<iframe src="${shareUrl}" width="405" height="720" frameborder="0" allowfullscreen></iframe>`;
 
   const copyToClipboard = async (text: string, type: 'link' | 'embed') => {
@@ -76,7 +76,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Public Status */}
-          {!carousel.is_public && (
+          {!carousel.isPublic && (
             <div className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg">
               <p className="text-sm text-yellow-200 flex items-center gap-2">
                 <AlertCircle size={16} />
@@ -100,11 +100,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               />
               <button
                 onClick={() => copyToClipboard(shareUrl, 'link')}
-                className={`px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                  copiedLink
-                    ? 'bg-green-500/10 border border-green-500/50 text-green-400'
-                    : 'bg-blue-600 hover:bg-blue-500 text-white'
-                }`}
+                className={`px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${copiedLink
+                  ? 'bg-green-500/10 border border-green-500/50 text-green-400'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white'
+                  }`}
               >
                 {copiedLink ? (
                   <>
@@ -146,11 +145,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               />
               <button
                 onClick={() => copyToClipboard(embedCode, 'embed')}
-                className={`absolute top-3 right-3 px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-xs ${
-                  copiedEmbed
-                    ? 'bg-green-500/10 border border-green-500/50 text-green-400'
-                    : 'bg-blue-600 hover:bg-blue-500 text-white'
-                }`}
+                className={`absolute top-3 right-3 px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-xs ${copiedEmbed
+                  ? 'bg-green-500/10 border border-green-500/50 text-green-400'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white'
+                  }`}
               >
                 {copiedEmbed ? (
                   <>
@@ -179,7 +177,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <div>
               <p className="text-xs text-neutral-400 mb-1">Status</p>
               <p className="text-sm font-medium text-white">
-                {carousel.is_public ? (
+                {carousel.isPublic ? (
                   <span className="text-green-400">Public</span>
                 ) : (
                   <span className="text-yellow-400">Private</span>

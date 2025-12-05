@@ -6,7 +6,7 @@
  * Location: src/utils/authUtils.ts
  */
 
-import { supabase } from '../lib/supabaseClient';
+import { account } from '../lib/appwriteClient';
 
 // ============================================================================
 // SESSION HELPERS
@@ -16,24 +16,35 @@ import { supabase } from '../lib/supabaseClient';
  * Check if user has an active session
  */
 export const hasActiveSession = async (): Promise<boolean> => {
-  const { data: { session } } = await supabase.auth.getSession();
-  return !!session;
+  try {
+    await account.get();
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 /**
  * Get current user ID
  */
 export const getCurrentUserId = async (): Promise<string | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.id || null;
+  try {
+    const user = await account.get();
+    return user.$id || null;
+  } catch {
+    return null;
+  }
 };
 
 /**
- * Get current session
+ * Get current session (user)
  */
 export const getCurrentSession = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session;
+  try {
+    return await account.get();
+  } catch {
+    return null;
+  }
 };
 
 // ============================================================================
@@ -62,14 +73,14 @@ export const isValidPassword = (password: string): boolean => {
  */
 export const getPasswordStrength = (password: string): 'weak' | 'medium' | 'strong' => {
   if (password.length < 6) return 'weak';
-  
+
   const hasLower = /[a-z]/.test(password);
   const hasUpper = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  
+
   const strength = [hasLower, hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
-  
+
   if (strength >= 3 && password.length >= 10) return 'strong';
   if (strength >= 2 && password.length >= 8) return 'medium';
   return 'weak';
@@ -91,7 +102,7 @@ export const isValidFullName = (name: string): boolean => {
  */
 export const formatAuthError = (error: any): string => {
   if (!error) return 'An unknown error occurred';
-  
+
   // Common error messages
   const errorMap: { [key: string]: string } = {
     'Invalid login credentials': 'Invalid email or password',
@@ -104,21 +115,13 @@ export const formatAuthError = (error: any): string => {
   };
 
   const message = error.message || error.error_description || error.msg || String(error);
-  
+
   return errorMap[message] || message;
 };
 
 // ============================================================================
-// TOKEN HELPERS
+// TOKEN HELPERS (Not needed with Appwrite - handled internally)
 // ============================================================================
-
-/**
- * Get current access token
- */
-export const getAccessToken = async (): Promise<string | null> => {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token || null;
-};
 
 /**
  * Check if session is expired
@@ -181,7 +184,7 @@ export const getAndClearRedirectPath = (): string | null => {
  */
 export const getUserInitials = (name: string | null | undefined): string => {
   if (!name) return '?';
-  
+
   const parts = name.trim().split(' ');
   if (parts.length >= 2) {
     return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
@@ -231,27 +234,27 @@ const authAttempts = new Map<string, { count: number; firstAttempt: number }>();
  * @param windowMs - Time window in milliseconds
  */
 export const shouldRateLimit = (
-  identifier: string, 
-  maxAttempts: number = 5, 
+  identifier: string,
+  maxAttempts: number = 5,
   windowMs: number = 5 * 60 * 1000 // 5 minutes
 ): boolean => {
   const now = Date.now();
   const attempt = authAttempts.get(identifier);
-  
+
   if (!attempt) {
     authAttempts.set(identifier, { count: 1, firstAttempt: now });
     return false;
   }
-  
+
   // Reset if window has passed
   if (now - attempt.firstAttempt > windowMs) {
     authAttempts.set(identifier, { count: 1, firstAttempt: now });
     return false;
   }
-  
+
   // Increment count
   attempt.count++;
-  
+
   return attempt.count > maxAttempts;
 };
 
@@ -271,34 +274,33 @@ export default {
   hasActiveSession,
   getCurrentUserId,
   getCurrentSession,
-  
+
   // Validation
   isValidEmail,
   isValidPassword,
   getPasswordStrength,
   isValidFullName,
-  
+
   // Errors
   formatAuthError,
-  
+
   // Tokens
-  getAccessToken,
   isSessionExpired,
-  
+
   // Redirects
   getAuthRedirectUrl,
   createLoginUrl,
   saveRedirectPath,
   getAndClearRedirectPath,
-  
+
   // Profile
   getUserInitials,
   getDisplayName,
-  
+
   // Permissions
   canEditCarousel,
   canDeleteCarousel,
-  
+
   // Rate limiting
   shouldRateLimit,
   clearRateLimit,

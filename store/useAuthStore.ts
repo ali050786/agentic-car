@@ -1,15 +1,35 @@
 /**
- * Authentication Store
+ * Authentication Store - Appwrite
  * 
- * Manages user authentication state and operations using Zustand.
+ * Manages user authentication state and operations using Zustand + Appwrite.
  * Handles login, signup, logout, and session management.
  * 
  * Location: src/store/useAuthStore.ts
  */
 
 import { create } from 'zustand';
-import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
-import { supabase, Profile, SignUpData, SignInData, AuthResponse } from '../lib/supabaseClient';
+import { account, AppwriteUser } from '../lib/appwriteClient';
+import { Models } from 'appwrite';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface AuthResponse {
+  error: { message: string; status?: number } | null;
+  success: boolean;
+}
+
+export interface SignUpData {
+  email: string;
+  password: string;
+  fullName: string;
+}
+
+export interface SignInData {
+  email: string;
+  password: string;
+}
 
 // ============================================================================
 // STORE INTERFACE
@@ -17,22 +37,16 @@ import { supabase, Profile, SignUpData, SignInData, AuthResponse } from '../lib/
 
 interface AuthState {
   // State
-  user: User | null;
-  session: Session | null;
-  profile: Profile | null;
+  user: Models.User<Models.Preferences> | null;
   loading: boolean;
   initialized: boolean;
-  
+
   // Actions
   initialize: () => Promise<void>;
   signUp: (data: SignUpData) => Promise<AuthResponse>;
   signIn: (data: SignInData) => Promise<AuthResponse>;
-  signInWithGoogle: () => Promise<AuthResponse>;
-  signInWithGitHub: () => Promise<AuthResponse>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<AuthResponse>;
   updatePassword: (newPassword: string) => Promise<AuthResponse>;
-  updateProfile: (updates: Partial<Profile>) => Promise<AuthResponse>;
   refreshSession: () => Promise<void>;
 }
 
@@ -44,135 +58,62 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   // ============================================================================
   // INITIAL STATE
   // ============================================================================
-  
+
   user: null,
-  session: null,
-  profile: null,
   loading: true,
   initialized: false,
 
   // ============================================================================
-  // INITIALIZE - Setup auth and listen for changes
+  // INITIALIZE - Setup auth and get current session
   // ============================================================================
-  
+
   initialize: async () => {
     try {
-      // Get current session
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error getting session:', error);
-        set({ loading: false, initialized: true });
-        return;
-      }
+      // Try to get current user
+      const user = await account.get();
 
-      if (session?.user) {
-        // Fetch user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-        }
-
-        set({ 
-          user: session.user, 
-          session, 
-          profile: profile || null,
-          loading: false,
-          initialized: true
-        });
-      } else {
-        set({ 
-          user: null, 
-          session: null, 
-          profile: null,
-          loading: false,
-          initialized: true
-        });
-      }
-
-      // Listen to auth changes
-      supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
-        console.log('Auth state changed:', event);
-
-        if (session?.user) {
-          // Fetch updated profile
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          set({ 
-            user: session.user, 
-            session, 
-            profile: profile || null,
-            loading: false
-          });
-        } else {
-          set({ 
-            user: null, 
-            session: null, 
-            profile: null,
-            loading: false
-          });
-        }
-
-        // Handle specific events
-        if (event === 'SIGNED_OUT') {
-          // Clear any cached data
-          set({ user: null, session: null, profile: null });
-        }
+      set({
+        user,
+        loading: false,
+        initialized: true
       });
-
     } catch (error) {
-      console.error('Auth initialization error:', error);
-      set({ loading: false, initialized: true });
+      // No active session
+      set({
+        user: null,
+        loading: false,
+        initialized: true
+      });
     }
   },
 
   // ============================================================================
   // SIGN UP - Create new user account
   // ============================================================================
-  
+
   signUp: async ({ email, password, fullName }: SignUpData) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Create account
+      await account.create(
+        'unique()', // Appwrite will generate unique ID
         email,
         password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
+        fullName
+      );
 
-      if (error) {
-        return { 
-          error: { message: error.message, status: error.status },
-          success: false 
-        };
-      }
+      // Auto sign in after signup
+      const session = await account.createEmailPasswordSession(email, password);
 
-      // Check if email confirmation is required
-      if (data.user && !data.session) {
-        return {
-          error: null,
-          success: true,
-          // Note: User needs to verify email before they can sign in
-        };
-      }
+      // Get user details
+      const user = await account.get();
+
+      set({ user });
 
       return { error: null, success: true };
     } catch (error: any) {
-      return { 
+      return {
         error: { message: error.message || 'An error occurred during sign up' },
-        success: false 
+        success: false
       };
     }
   },
@@ -180,84 +121,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   // ============================================================================
   // SIGN IN - Authenticate existing user
   // ============================================================================
-  
+
   signIn: async ({ email, password }: SignInData) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        return { 
-          error: { message: error.message, status: error.status },
-          success: false 
-        };
+      // Delete any existing session first (Appwrite only allows one session at a time)
+      try {
+        await account.deleteSession('current');
+      } catch {
+        // No existing session, that's fine
       }
+
+      // Create email session
+      await account.createEmailPasswordSession(email, password);
+
+      // Get user details
+      const user = await account.get();
+
+      set({ user });
 
       return { error: null, success: true };
     } catch (error: any) {
-      return { 
+      return {
         error: { message: error.message || 'An error occurred during sign in' },
-        success: false 
-      };
-    }
-  },
-
-  // ============================================================================
-  // SIGN IN WITH GOOGLE - OAuth authentication
-  // ============================================================================
-  
-  signInWithGoogle: async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) {
-        return { 
-          error: { message: error.message },
-          success: false 
-        };
-      }
-
-      return { error: null, success: true };
-    } catch (error: any) {
-      return { 
-        error: { message: error.message || 'An error occurred during Google sign in' },
-        success: false 
-      };
-    }
-  },
-
-  // ============================================================================
-  // SIGN IN WITH GITHUB - OAuth authentication
-  // ============================================================================
-  
-  signInWithGitHub: async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) {
-        return { 
-          error: { message: error.message },
-          success: false 
-        };
-      }
-
-      return { error: null, success: true };
-    } catch (error: any) {
-      return { 
-        error: { message: error.message || 'An error occurred during GitHub sign in' },
-        success: false 
+        success: false
       };
     }
   },
@@ -265,141 +151,55 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   // ============================================================================
   // SIGN OUT - End user session
   // ============================================================================
-  
+
   signOut: async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Sign out error:', error);
-      }
-      
-      // Clear state regardless of error
-      set({ user: null, session: null, profile: null });
+      await account.deleteSession('current');
+      set({ user: null });
     } catch (error) {
       console.error('Sign out error:', error);
       // Clear state even on error
-      set({ user: null, session: null, profile: null });
-    }
-  },
-
-  // ============================================================================
-  // RESET PASSWORD - Send password reset email
-  // ============================================================================
-  
-  resetPassword: async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      });
-
-      if (error) {
-        return { 
-          error: { message: error.message },
-          success: false 
-        };
-      }
-
-      return { error: null, success: true };
-    } catch (error: any) {
-      return { 
-        error: { message: error.message || 'An error occurred sending reset email' },
-        success: false 
-      };
+      set({ user: null });
     }
   },
 
   // ============================================================================
   // UPDATE PASSWORD - Change user password
   // ============================================================================
-  
+
   updatePassword: async (newPassword: string) => {
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
+      const currentPassword = prompt('Enter your current password:');
 
-      if (error) {
-        return { 
-          error: { message: error.message },
-          success: false 
+      if (!currentPassword) {
+        return {
+          error: { message: 'Current password is required' },
+          success: false
         };
       }
 
+      await account.updatePassword(newPassword, currentPassword);
+
       return { error: null, success: true };
     } catch (error: any) {
-      return { 
+      return {
         error: { message: error.message || 'An error occurred updating password' },
-        success: false 
+        success: false
       };
     }
   },
 
   // ============================================================================
-  // UPDATE PROFILE - Update user profile information
+  // REFRESH SESSION - Manually refresh user data
   // ============================================================================
-  
-  updateProfile: async (updates: Partial<Profile>) => {
-    const { user } = get();
-    
-    if (!user) {
-      return { 
-        error: { message: 'Not authenticated' },
-        success: false 
-      };
-    }
 
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', user.id);
-
-      if (error) {
-        return { 
-          error: { message: error.message },
-          success: false 
-        };
-      }
-
-      // Fetch updated profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      if (profile) {
-        set({ profile });
-      }
-
-      return { error: null, success: true };
-    } catch (error: any) {
-      return { 
-        error: { message: error.message || 'An error occurred updating profile' },
-        success: false 
-      };
-    }
-  },
-
-  // ============================================================================
-  // REFRESH SESSION - Manually refresh the session
-  // ============================================================================
-  
   refreshSession: async () => {
     try {
-      const { data: { session }, error } = await supabase.auth.refreshSession();
-      
-      if (error) {
-        console.error('Error refreshing session:', error);
-        return;
-      }
-
-      if (session) {
-        set({ session });
-      }
+      const user = await account.get();
+      set({ user });
     } catch (error) {
       console.error('Error refreshing session:', error);
+      set({ user: null });
     }
   },
 }));
@@ -423,7 +223,6 @@ export const useIsAuthenticated = () => {
 export const useCurrentUser = () => {
   return useAuthStore(state => ({
     user: state.user,
-    profile: state.profile,
     loading: state.loading,
   }));
 };

@@ -1,6 +1,15 @@
 export type TemplateId = 'template-1' | 'template-2';
 export type SlideVariant = 'hero' | 'body' | 'list' | 'closing';
-export type AIModel = 'groq-llama' | 'openrouter-gemini';
+export type AIModel = 'groq-llama' | 'claude-haiku';
+export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';
+
+export interface BrandingConfig {
+  enabled: boolean;
+  name: string;
+  title: string;
+  imageUrl: string;
+  position: SignaturePosition;
+}
 
 export interface SlideContent {
   id: string;
@@ -38,6 +47,9 @@ export interface CarouselState {
   activePresetId: string | null;
   isBrandKitActive: boolean;
 
+  // Branding (Signature Card) State
+  branding: BrandingConfig;
+
   // Actions
   setTopic: (topic: string) => void;
   setTemplate: (templateId: TemplateId) => void;
@@ -51,6 +63,9 @@ export interface CarouselState {
   // Brand Kit Actions
   setActivePreset: (presetId: string | null) => void;
   toggleBrandKit: (isActive: boolean) => void;
+
+  // Branding Actions
+  setBranding: (branding: Partial<BrandingConfig>) => void;
 }
 
 export interface TemplateAgent {
