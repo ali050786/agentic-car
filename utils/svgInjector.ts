@@ -1,6 +1,8 @@
-import { SlideContent, CarouselTheme, BrandingConfig } from '../types';
+import { SlideContent, CarouselTheme, BrandingConfig, CarouselFormat } from '../types';
 import { T1_HERO_SVG, T1_BODY_SVG, T1_LIST_SVG, T1_CTA_SVG } from '../assets/templates/template1';
 import { T2_HERO_SVG, T2_BODY_SVG, T2_LIST_SVG, T2_CTA_SVG } from '../assets/templates/template2';
+import { T1_HERO_SVG_SQUARE, T1_BODY_SVG_SQUARE, T1_LIST_SVG_SQUARE, T1_CTA_SVG_SQUARE } from '../assets/templates/template1_square';
+import { T2_HERO_SVG_SQUARE, T2_BODY_SVG_SQUARE, T2_LIST_SVG_SQUARE, T2_CTA_SVG_SQUARE } from '../assets/templates/template2_square';
 import { generateSignatureCard } from './signatureCardGenerator';
 
 /**
@@ -11,20 +13,44 @@ export const injectContentIntoSvg = (
   templateId: string,
   content: SlideContent,
   theme: CarouselTheme | null,
-  branding?: BrandingConfig
+  branding?: BrandingConfig,
+  format?: CarouselFormat
 ): string => {
   let baseSvg = '';
   let listHtml = '';
   let themeCss = '';
 
-  // 1. Select Base SVG
+  // 1. Select Base SVG based on template and format
+  const isSquare = format === 'square';
+
   if (templateId === 'template-1') {
-    switch (content.variant) {
-      case 'hero': baseSvg = T1_HERO_SVG; break;
-      case 'body': baseSvg = T1_BODY_SVG; break;
-      case 'list': baseSvg = T1_LIST_SVG; break;
-      case 'closing': baseSvg = T1_CTA_SVG; break;
-      default: baseSvg = T1_HERO_SVG;
+    if (isSquare) {
+      switch (content.variant) {
+        case 'hero': baseSvg = T1_HERO_SVG_SQUARE; break;
+        case 'body': baseSvg = T1_BODY_SVG_SQUARE; break;
+        case 'list': baseSvg = T1_LIST_SVG_SQUARE; break;
+        case 'cta': baseSvg = T1_CTA_SVG_SQUARE; break;
+        default: baseSvg = T1_HERO_SVG_SQUARE;
+      }
+    } else {
+      switch (content.variant) {
+        case 'hero': baseSvg = T1_HERO_SVG; break;
+        case 'body': baseSvg = T1_BODY_SVG; break;
+        case 'list': baseSvg = T1_LIST_SVG; break;
+        case 'cta': baseSvg = T1_CTA_SVG; break;
+        default: baseSvg = T1_HERO_SVG;
+      }
+    }
+
+    // Conditionally adjust foreignObject position for bottom-left signature (T1)
+    if (branding && branding.enabled && branding.position === 'bottom-left') {
+      if (isSquare) {
+        // Square: y="180" -> y="120" (move up 60px)
+        baseSvg = baseSvg.replace(/foreignObject x="150" y="180"/g, 'foreignObject x="150" y="120"');
+      } else {
+        // Portrait: y="220" -> y="160" (move up 60px)
+        baseSvg = baseSvg.replace(/foreignObject x="150" y="220"/g, 'foreignObject x="150" y="160"');
+      }
     }
 
     // T1: Inject CSS Variables for Theme
@@ -37,7 +63,11 @@ export const injectContentIntoSvg = (
       }
     `;
 
-    // T1 List Style (Matching PDF Slide 3: Bullet + Bold Key)
+    // T1 List Style (Matching Updated Design: Bullet + Bold Key)
+    // Format-specific sizing: Portrait 32px/1.2, Square 28px/1.35
+    const listFontSize = isSquare ? '28px' : '32px';
+    const listLineHeight = isSquare ? '1.35' : '1.2';
+
     listHtml = content.listItems && content.listItems.length > 0
       ? content.listItems.map((item) => {
         const parts = item.split(':');
@@ -45,7 +75,7 @@ export const injectContentIntoSvg = (
         const desc = parts.length > 1 ? parts.slice(1).join(':') : item;
 
         return `
-          <div style="display: flex; align-items: flex-start; gap: 24px; font-family: 'Lato', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.2;">
+          <div style="display: flex; align-items: flex-start; gap: 24px; font-family: 'Lato', sans-serif; font-weight: 500; font-size: ${listFontSize}; color: var(--text-default); line-height: ${listLineHeight};">
             <div style="min-width: 20px;">•</div>
             <div>
               ${title ? `<span style="color: var(--text-highlight); font-weight: 700;">${title}</span>` : ''} 
@@ -56,13 +86,38 @@ export const injectContentIntoSvg = (
       }).join('')
       : '';
 
+
   } else if (templateId === 'template-2') {
-    switch (content.variant) {
-      case 'hero': baseSvg = T2_HERO_SVG; break;
-      case 'body': baseSvg = T2_BODY_SVG; break;
-      case 'list': baseSvg = T2_LIST_SVG; break;
-      case 'closing': baseSvg = T2_CTA_SVG; break;
-      default: baseSvg = T2_HERO_SVG;
+    if (isSquare) {
+      switch (content.variant) {
+        case 'hero': baseSvg = T2_HERO_SVG_SQUARE; break;
+        case 'body': baseSvg = T2_BODY_SVG_SQUARE; break;
+        case 'list': baseSvg = T2_LIST_SVG_SQUARE; break;
+        case 'cta': baseSvg = T2_CTA_SVG_SQUARE; break;
+        default: baseSvg = T2_HERO_SVG_SQUARE;
+      }
+    } else {
+      switch (content.variant) {
+        case 'hero': baseSvg = T2_HERO_SVG; break;
+        case 'body': baseSvg = T2_BODY_SVG; break;
+        case 'list': baseSvg = T2_LIST_SVG; break;
+        case 'cta': baseSvg = T2_CTA_SVG; break;
+        default: baseSvg = T2_HERO_SVG;
+      }
+    }
+
+    // 2. Conditionally adjust foreignObject position for bottom-left signature
+    // Move content up to create better spacing when bottom signature is visible
+    if (branding && branding.enabled && branding.position === 'bottom-left') {
+      if (isSquare) {
+        // Square: y="220" -> y="160" (move up 60px) for hero
+        baseSvg = baseSvg.replace(/foreignObject x="150" y="220"/g, 'foreignObject x="150" y="160"');
+        // Square: y="200" -> y="140" (move up 60px) for body/list/cta
+        baseSvg = baseSvg.replace(/foreignObject x="150" y="200"/g, 'foreignObject x="150" y="140"');
+      } else {
+        // Portrait: y="240" -> y="180" (move up 60px)
+        baseSvg = baseSvg.replace(/foreignObject x="150" y="240"/g, 'foreignObject x="150" y="180"');
+      }
     }
 
     // T2: Inject CSS Variables for Theme (Exact PDF Mapping)
@@ -103,6 +158,11 @@ export const injectContentIntoSvg = (
   // Inject Theme CSS
   baseSvg = baseSvg.replace('{{THEME_CSS}}', themeCss);
 
+  // Also inject individual color variables for square templates
+  baseSvg = baseSvg.replace(/\{\{TEXT_COLOR\}\}/g, theme?.textDefault || '#A2A2A2');
+  baseSvg = baseSvg.replace(/\{\{TEXT_HIGHLIGHT\}\}/g, theme?.textHighlight || '#FFFFFF');
+  baseSvg = baseSvg.replace(/\{\{BACKGROUND\}\}/g, theme?.background || '#141414');
+
   // 3. Helper for safe replacement
   const replaceSafe = (key: string, value?: string) => {
     return baseSvg.replace(key, value || '');
@@ -111,7 +171,6 @@ export const injectContentIntoSvg = (
   // 4. Injection Execution
   baseSvg = replaceSafe('{{PREHEADER}}', content.preHeader);
   baseSvg = replaceSafe('{{HEADLINE}}', content.headline);
-  baseSvg = replaceSafe('{{HEADLINE_HIGHLIGHT}}', content.headlineHighlight);
   baseSvg = replaceSafe('{{BODY}}', content.body);
   baseSvg = replaceSafe('{{FOOTER}}', content.footer);
 
@@ -121,7 +180,6 @@ export const injectContentIntoSvg = (
   // 5. Cleanup
   baseSvg = replaceSafe('{{PREHEADER}}', '');
   baseSvg = replaceSafe('{{HEADLINE}}', '');
-  baseSvg = replaceSafe('{{HEADLINE_HIGHLIGHT}}', '');
   baseSvg = replaceSafe('{{BODY}}', '');
   baseSvg = replaceSafe('{{FOOTER}}', '');
   baseSvg = replaceSafe('{{LIST_ITEMS}}', '');
@@ -130,7 +188,7 @@ export const injectContentIntoSvg = (
   let signatureCardHtml = '';
   if (branding && branding.enabled) {
     const fontFamily = templateId === 'template-1' ? 'Lato' : 'Roboto';
-    signatureCardHtml = generateSignatureCard(branding, fontFamily);
+    signatureCardHtml = generateSignatureCard(branding, fontFamily, format);
   }
   baseSvg = replaceSafe('{{SIGNATURE_CARD}}', signatureCardHtml);
 

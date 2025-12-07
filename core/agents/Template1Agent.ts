@@ -23,7 +23,6 @@ const T1_SCHEMA = {
           variant: { type: 'string', enum: ['hero', 'body', 'list', 'closing'] },
           preHeader: { type: 'string' },
           headline: { type: 'string' },
-          headlineHighlight: { type: 'string' },
           body: { type: 'string' },
           listItems: {
             type: 'array',
@@ -60,40 +59,28 @@ export const Template1Agent = {
       3. **Last Slide must be 'closing' variant**: A strong takeaway/CTA.
       4. **Middle Slides**: Dynamically choose between 'body' (for concepts/definitions) and 'list' (for strategies/steps) based on the content flow.
       
-      **CRITICAL - Headline & HeadlineHighlight Rule**:
-      - For 'hero' variant: headline and headlineHighlight appear on the SAME line (headline comes first, then highlight)
-      - For 'body', 'list', 'closing' variants: headline and headlineHighlight are TWO SEPARATE LINES
-      - They work together as a complete title/message split across two lines
-      - Example for body/list/closing: headline: "CHOOSE YOUR", headlineHighlight: "JOURNEY"
-      - Example for body/list/closing: headline: "UNDERSTANDING", headlineHighlight: "NEEDS"  
-      - Example for hero: headline: "MASTER THE ART OF ", headlineHighlight: "CODING"
-      - DO NOT repeat words! headline: "JOURNEY", headlineHighlight: "JOURNEY" is WRONG!
+      **CRITICAL - Headline Rule**:
+      - Generate complete, impactful headlines in the headline field
+      - All variants use single-line headlines (no splitting needed)
+      - Max headline length varies by variant (see below)
       
       Variant Requirements:
-      - 'hero': Needs preHeader, headline, headlineHighlight, and a short body intro. 
-          - Headlines appear on SAME LINE: "{{headline}} {{headlineHighlight}}"
+      - 'hero': Needs preHeader, headline, and a short body intro.
           - preHeader (Concise, Max 60 chars).
-          - headline (First part of title, Max 36 chars).
-          - headlineHighlight (Completing part, highlighted, Max 15 chars). 
+          - headline (Complete title, Max 50 chars).
           - body (short intro, Max 150 chars).
-      - 'body': Needs preHeader, headline, headlineHighlight, and body text (max 35 words).
-          - Headlines appear on TWO LINES: Line 1: "{{headline}}" | Line 2: "{{headlineHighlight}}"
+      - 'body': Needs preHeader, headline, and body text (max 35 words).
           - preHeader (Concise, Max 60 chars).
-          - headline (First line, faded, Max 36 chars).
-          - headlineHighlight (Second line, bright emphasis, Max 15 chars). 
+          - headline (Complete title, Max 50 chars).
           - body (explanation text. Max 250 chars)).
           
-      - 'list': Needs preHeader, headline, headlineHighlight. **CRITICAL**: 'listItems' MUST use the format "Key: Value" (e.g., "Direction: From complex to obvious"). Max 3 items per slide.
-          - Headlines appear on TWO LINES: Line 1: "{{headline}}" | Line 2: "{{headlineHighlight}}"
+      - 'list': Needs preHeader, headline. **CRITICAL**: 'listItems' MUST use the format "Key: Value" (e.g., "Direction: From complex to obvious"). Max 3 items per slide.
           - preHeader (Concise, Max 60 chars).
-          - headline (First line, faded, Max 36 chars).
-          - headlineHighlight (Second line, bright emphasis, Max 15 chars). 
+          - headline (Complete title, Max 50 chars).
           - listItems (Max 3 items) Max 120 chars per item.
       - 'closing': 
-          - Headlines appear on TWO LINES: Line 1: "{{headline}}" | Line 2: "{{headlineHighlight}}"
           - preHeader (Concise, Max 60 chars)
-          - headline (First line, faded, Max 36 chars).
-          - headlineHighlight (Second line, bright emphasis, Max 15 chars). 
+          - headline (Complete title, Max 50 chars).
           - body (final philosophical statement Max 80 chars).
           
          
@@ -122,7 +109,6 @@ export const Template1Agent = {
       id: `t1-slide-${i}`,
       variant: s.variant,
       headline: s.headline?.toUpperCase() || '',
-      headlineHighlight: s.headlineHighlight?.toUpperCase() || '',
       preHeader: s.preHeader?.toUpperCase() || '',
       body: s.body || '',
       listItems: s.listItems || [],

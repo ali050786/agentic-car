@@ -20,6 +20,7 @@ interface SaveCarouselModalProps {
   theme: any;
   slides: any[];
   presetId: string | null;  // Active color preset ID
+  format: 'portrait' | 'square';  // Carousel format
   defaultTitle?: string;
 }
 
@@ -30,6 +31,7 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
   theme,
   slides,
   presetId,
+  format,
   defaultTitle = '',
 }) => {
   const { user } = useAuthStore();
@@ -69,7 +71,8 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
       theme,
       slides,
       isPublic,
-      presetId  // Save the active preset ID
+      presetId,  // Save the active preset ID
+      format  // Save the format
     );
 
     setIsSaving(false);

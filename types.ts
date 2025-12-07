@@ -1,7 +1,8 @@
 export type TemplateId = 'template-1' | 'template-2';
-export type SlideVariant = 'hero' | 'body' | 'list' | 'closing';
+export type SlideVariant = 'hero' | 'body' | 'list' | 'cta';
 export type AIModel = 'groq-llama' | 'claude-haiku';
 export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';
+export type CarouselFormat = 'portrait' | 'square';
 
 export interface BrandingConfig {
   enabled: boolean;
@@ -16,7 +17,6 @@ export interface SlideContent {
   variant: SlideVariant;
   preHeader?: string;
   headline: string;
-  headlineHighlight?: string;
   body?: string;
   listItems?: string[];
   footer?: string;
@@ -36,15 +36,16 @@ export interface CarouselTheme {
 
 export interface CarouselState {
   topic: string;
-  selectedTemplate: TemplateId;
-  selectedModel: AIModel;
+  selectedTemplate: string;
+  selectedModel: string;
+  selectedFormat: CarouselFormat;
   slides: SlideContent[];
   theme: CarouselTheme | null;
   isGenerating: boolean;
   error: string | null;
 
   // Brand Kit State
-  activePresetId: string | null;
+  activePresetId: string;
   isBrandKitActive: boolean;
 
   // Branding (Signature Card) State
@@ -52,8 +53,9 @@ export interface CarouselState {
 
   // Actions
   setTopic: (topic: string) => void;
-  setTemplate: (templateId: TemplateId) => void;
-  setModel: (model: AIModel) => void;
+  setTemplate: (selectedTemplate: string) => void;
+  setModel: (selectedModel: string) => void;
+  setFormat: (selectedFormat: CarouselFormat) => void;
   setGenerating: (isGenerating: boolean) => void;
   setError: (error: string | null) => void;
   setSlides: (slides: SlideContent[]) => void;

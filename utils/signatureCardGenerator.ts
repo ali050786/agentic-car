@@ -1,14 +1,19 @@
-import { BrandingConfig, SignaturePosition } from '../types';
+import { BrandingConfig, SignaturePosition, CarouselFormat } from '../types';
 
 /**
- * Generate signature card SVG based on position and font family
+ * Generate signature card SVG based on position, font family, and format
  */
 export const generateSignatureCard = (
   data: BrandingConfig,
-  fontFamily: 'Lato' | 'Roboto'
+  fontFamily: 'Lato' | 'Roboto',
+  format: CarouselFormat = 'portrait'
 ): string => {
-  // Position coordinates
-  const positions = {
+  // Position coordinates - format-specific
+  const positions = format === 'square' ? {
+    'bottom-left': { x: 150, y: 860 },
+    'top-left': { x: 150, y: 85 },
+    'top-right': { x: 550, y: 85 }
+  } : {
     'bottom-left': { x: 150, y: 1120 },
     'top-left': { x: 150, y: 120 },
     'top-right': { x: 540, y: 120 }

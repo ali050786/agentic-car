@@ -24,7 +24,6 @@ const T2_SCHEMA = {
           variant: { type: 'string', enum: ['hero', 'body', 'list', 'closing'] },
           preHeader: { type: 'string' },
           headline: { type: 'string' },
-          headlineHighlight: { type: 'string' },
           body: { type: 'string' },
           listItems: {
             type: 'array',
@@ -63,35 +62,29 @@ export const Template2Agent = {
       3. **Last Slide must be 'closing' variant**.
       4. **Middle Slides**: Mix 'body' (for explanations) and 'list' (for actionable steps).
       
-      **CRITICAL - Headline & HeadlineHighlight Rule**:
-      - For 'hero' variant: headline and headlineHighlight appear on the SAME line (headline comes first, then highlight)
-      - For 'body', 'list', 'closing' variants: headline and headlineHighlight are TWO SEPARATE LINES
-      - They work together as a complete title/message split across two lines
-      - Example for body/list/closing: headline: "Choose your", headlineHighlight: "journey"
-      - Example for body/list/closing: headline: "Understanding", headlineHighlight: "needs"  
-      - Example for hero: headline: "Learn to build ", headlineHighlight: "faster"
-      - DO NOT repeat words! headline: "journey", headlineHighlight: "journey" is WRONG!
+      **CRITICAL - Headline Rule**:
+      - Generate complete, impactful headlines in the headline field
+      - All variants use single-line headlines (no splitting needed)
+      - Max headline length varies by variant (see below)
       
       Variant Requirements:
-      - 'hero': preHeader (Topic Tag), headline, headlineHighlight, body (intro).
-          - Headlines appear on SAME LINE: "{{headline}} {{headlineHighlight}}"
-          - headline (First part of title, Max 35 chars).
-          - headlineHighlight (Completing part, highlighted, Max 20 chars).
-      - 'body': preHeader (Tag), headline, headlineHighlight, body (Explanation, max 40 words).
-          - Headlines appear on TWO LINES: Line 1: "{{headline}}" | Line 2: "{{headlineHighlight}}"
-          - headline (First line, Max 35 chars).
-          - headlineHighlight (Second line, highlighted, Max 20 chars).
-      - 'list': headline (Steps/Checklist). **CRITICAL**: 'listItems' MUST use the format "Key: Value" (e.g., "Step 1: Audit your content"). Max 3 items.
-          - Headlines appear on TWO LINES: Line 1: "{{headline}}" | Line 2: "{{headlineHighlight}}"
-          - headline (First line, Max 35 chars).
-          - headlineHighlight (Second line, highlighted, Max 20 chars).
-      - 'closing': 
-          - Headlines appear on TWO LINES: Line 1: "{{headline}}" | Line 2: "{{headlineHighlight}}"
-          - headline (First line, Max 35 chars, e.g. "Master Your"). 
-          - headlineHighlight (Second line, highlighted, Max 35 chars, e.g. "Craft Today").
-          - **Reason**: Font size is large (104px), keep text concise for readability.
-          - body (Final encouragement).
-      
+      - 'hero': preHeader (Topic Tag), headline, body (intro).
+          - preHeader (Concise topic tag, Max 60 chars).
+          - headline (Complete impactful title, Max 45 chars).
+          - body (engaging intro, Max 150 chars).
+      - 'body': preHeader (Tag), headline, body (Explanation, max 40 words).
+          - preHeader (Tag, Max 60 chars).
+          - headline (Complete title, Max 45 chars).
+          - body (explanation, Max 250 chars).
+      - 'list': preHeader (Tag), headline, listItems.
+          - preHeader (Tag, Max 60 chars).
+          - headline (Complete title, Max 45 chars).
+          - listItems (Max 3 items, bullet + description, Max 120 chars each).
+      - 'closing': headline, body, footer.
+          - headline (Complete strong title, Max 45 chars).
+          - body (Impact statement, Max 100 chars).
+          - footer (Call to action, Max 35 chars, e.g. "Craft Today").
+          
       Return JSON fitting the schema including the Theme.
     `;
 
@@ -117,7 +110,6 @@ export const Template2Agent = {
       id: `t2-slide-${i}`,
       variant: s.variant,
       headline: s.headline || '',
-      headlineHighlight: s.headlineHighlight || '',
       preHeader: s.preHeader || '',
       body: s.body || '',
       listItems: s.listItems || [],

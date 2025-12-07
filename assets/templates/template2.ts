@@ -1,4 +1,4 @@
-// Template 2: "The Clarity" - Exact Implementation from PDF Docs
+// Template 2: "The Clarity" - Updated Design from template-2.md
 
 const COMMON_DEFS = `
   <defs>
@@ -14,40 +14,42 @@ const COMMON_DEFS = `
   </defs>
 `;
 
-// Shared Elements (Background + Design Elements)
+// Shared Background Elements
 const BACKGROUND_ELEMENTS = `
   <!-- 1. Background -->
-  <rect id="Background" width="1080" height="1380" fill="var(--background)"/>
+  <rect id="Background" width="1080" height="1374.14" fill="var(--background)"/>
   
   <!-- 2. Complex Design Elements -->
-  <path id="Gradiant_Design_element" fill="url(#radial-gradient-hero)" d="M386.97,5.06c0,2.31,0,4.61.02,6.92,3.77,382.43,312.55,690.44,693,695.27V5.06H386.97Z"/>
+  <g transform="translate(2, -5)">
+    <path id="Gradiant_Design_element" fill="url(#radial-gradient-hero)" d="M386.97,5.06c0,2.31,0,4.61.02,6.92,3.77,382.43,312.55,690.44,693,695.27V5.06H386.97Z"/>
+  </g>
   <path id="Bottom_archDesign" fill="var(--background-2)" d="M839.49,1326.66c23.07-116.89,125.7-197.83,240.51-197.7v-112.29c-197.43,0-357.47,160.04-357.47,357.47h112.29c.02-15.66,1.52-31.54,4.67-47.48Z"/>
 `;
 
-// Variant 1: Hero (Slide-1 from PDF)
+// Variant 1: Hero
 export const T2_HERO_SVG = `
-<svg viewBox="0 0 1080 1374.14" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080 1374.14" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   ${BACKGROUND_ELEMENTS}
   
   <!-- 3. CONTENT CONTAINER -->
-  <foreignObject x="150" y="240" width="800" height="1000">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; gap: 40px; align-items: flex-start;">
-      <!-- PreHeader -->
-      <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-default); line-height: 1;">
-        {{PREHEADER}}
+  <foreignObject x="150" y="240" width="800" height="800">
+    <body xmlns="http://www.w3.org/1999/xhtml" style="margin:0; padding:0; background:transparent;">
+      <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 50px;">
+        <!-- PreHeader -->
+        <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-highlight); line-height: 1;">
+          {{PREHEADER}}
+        </div>
+        <!-- Headline -->
+        <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 92px; color: var(--text-default); line-height: 1.1;">
+          {{HEADLINE}}
+        </div>
       </div>
-      <!-- Headline -->
-      <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 104px; color: var(--text-default); line-height: 1.1;">
-        {{HEADLINE}}
-        <br/>
-        <span style="color: var(--text-highlight);">{{HEADLINE_HIGHLIGHT}}</span>
-      </div>
-    </div>
+    </body>
   </foreignObject>
 
   <!-- 4. Swipe Component -->
-  <g id="swipeComponent">
+  <g id="swipeComponent" transform="translate(508, 150)">
     <rect id="swipeRectangle" x="150" y="903.03" width="292" height="125" fill="var(--text-highlight)"/>
     <g id="innerComponent">
       <text id="swipeText" x="227.13" y="977.9" style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 32px; letter-spacing: 0.05em; fill: var(--background);">
@@ -64,33 +66,34 @@ export const T2_HERO_SVG = `
 </svg>
 `;
 
-// Variant 2: Body (Slide-2 from PDF)
+// Variant 2: Body
 export const T2_BODY_SVG = `
-<svg viewBox="0 0 1080 1374.14" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080 1374.14" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   ${BACKGROUND_ELEMENTS}
   
   <!-- 3. CONTENT CONTAINER -->
-  <foreignObject x="150" y="240" width="800" height="1000">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; gap: 50px; align-items: flex-start;">
-      <!-- PreHeader -->
-      <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-default); line-height: 1;">
-        {{PREHEADER}}
+  <foreignObject x="150" y="240" width="800" height="800">
+    <body xmlns="http://www.w3.org/1999/xhtml" style="margin:0; padding:0; background:transparent;">
+      <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 60px;">
+        <!-- PreHeader -->
+        <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-highlight); line-height: 1;">
+          {{PREHEADER}}
+        </div>
+        <!-- Headline (Body Variant Size: 80px) -->
+        <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 80px; color: var(--text-default); line-height: 1.1; text-transform: uppercase;">
+          {{HEADLINE}}
+        </div>
+        <!-- Body Text -->
+        <div id="content" style="font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.4;">
+          {{BODY}}
+        </div>
       </div>
-      <!-- Headline (Body Variant Size: 80px) -->
-      <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 80px; color: var(--text-default); line-height: 1.1; text-transform: uppercase;">
-        <span style="opacity: 0.7;">{{HEADLINE}}</span><br/>
-        <span style="color: var(--text-highlight);">{{HEADLINE_HIGHLIGHT}}</span>
-      </div>
-      <!-- Body Text -->
-      <div id="content" style="font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.4;">
-        {{BODY}}
-      </div>
-    </div>
+    </body>
   </foreignObject>
 
   <!-- 4. Swipe Component -->
-  <g id="swipeComponent">
+  <g id="swipeComponent" transform="translate(508, 150)">
     <rect id="swipeRectangle" x="150" y="903.03" width="292" height="125" fill="var(--text-highlight)"/>
     <g id="innerComponent">
       <text id="swipeText" x="227.13" y="977.9" style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 32px; letter-spacing: 0.05em; fill: var(--background);">
@@ -107,32 +110,34 @@ export const T2_BODY_SVG = `
 </svg>
 `;
 
-// Variant 3: List (Slide-3 from PDF)
+// Variant 3: List
 export const T2_LIST_SVG = `
-<svg viewBox="0 0 1080 1374.14" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080 1374.14" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   ${BACKGROUND_ELEMENTS}
   
   <!-- 3. CONTENT CONTAINER -->
-  <foreignObject x="150" y="240" width="800" height="1000">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; gap: 40px; align-items: flex-start;">
-      <!-- PreHeader -->
-      <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-default); line-height: 1;">
-        {{PREHEADER}}
+  <foreignObject x="150" y="240" width="800" height="800">
+    <body xmlns="http://www.w3.org/1999/xhtml" style="margin:0; padding:0; background:transparent;">
+      <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 60px;">
+        <!-- PreHeader -->
+        <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-highlight); line-height: 1;">
+          {{PREHEADER}}
+        </div>
+        <!-- Headline (80px) -->
+        <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 80px; color: var(--text-default); line-height: 1.1; text-transform: uppercase;">
+          {{HEADLINE}}
+        </div>
+        <!-- List Content -->
+        <div id="content" style="display: flex; flex-direction: column; gap: 30px; width: 100%;">
+          {{LIST_ITEMS}}
+        </div>
       </div>
-      <!-- Headline (80px) -->
-      <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 80px; color: var(--text-default); line-height: 1.1; text-transform: uppercase;">
-        {{HEADLINE}} <span style="color: var(--text-highlight);">{{HEADLINE_HIGHLIGHT}}</span>
-      </div>
-      <!-- List Content Injection -->
-      <div style="display: flex; flex-direction: column; gap: 30px; width: 100%;">
-        {{LIST_ITEMS}}
-      </div>
-    </div>
+    </body>
   </foreignObject>
   
   <!-- 4. Swipe Component -->
-  <g id="swipeComponent">
+  <g id="swipeComponent" transform="translate(508, 150)">
     <rect id="swipeRectangle" x="150" y="903.03" width="292" height="125" fill="var(--text-highlight)"/>
     <g id="innerComponent">
       <text id="swipeText" x="227.13" y="977.9" style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 32px; letter-spacing: 0.05em; fill: var(--background);">
@@ -149,39 +154,36 @@ export const T2_LIST_SVG = `
 </svg>
 `;
 
-// Variant 4: Closing (Slide-6 from PDF)
+// Variant 4: Closing
 export const T2_CTA_SVG = `
-<svg viewBox="0 0 1080 1374.14" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080 1374.14" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   ${BACKGROUND_ELEMENTS}
   
   <!-- 3. CONTENT CONTAINER -->
-  <!-- Height restricted to ensure space for CTA below -->
-  <foreignObject x="150" y="240" width="800" height="630">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; gap: 40px; align-items: flex-start;">
-      <!-- PreHeader -->
-      <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-default); line-height: 1;">
-        {{PREHEADER}}
+  <foreignObject x="150" y="240" width="800" height="800">
+    <body xmlns="http://www.w3.org/1999/xhtml" style="margin:0; padding:0; background:transparent;">
+      <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 60px;">
+        <!-- PreHeader -->
+        <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-highlight); line-height: 1;">
+          {{PREHEADER}}
+        </div>
+        <!-- Headline (104px for Closing Impact) -->
+        <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 104px; color: var(--text-default); line-height: 1.1; text-transform: uppercase;">
+          {{HEADLINE}}
+        </div>
+        <!-- Body Text -->
+        <div id="content" style="font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.4;">
+          {{BODY}}
+        </div>
       </div>
-      <!-- Headline (104px for Closing Impact) -->
-      <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 104px; color: var(--text-default); line-height: 1.1; text-transform: uppercase;">
-        {{HEADLINE}}
-        <br/>
-        <span style="color: var(--text-highlight);">{{HEADLINE_HIGHLIGHT}}</span>
-      </div>
-      <!-- Body Text -->
-      <div id="content" style="font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.4;">
-        {{BODY}}
-      </div>
-    </div>
+    </body>
   </foreignObject>
 
   <!-- 4. Follow Us Component -->
-  <!-- Positioned at y=903, aligned with other slides -->
-  <g id="followComponent">
+  <g id="followComponent" transform="translate(508, 150)">
     <rect id="followRectangle" x="150" y="903.03" width="292" height="125" fill="var(--text-highlight)"/>
     <g id="innerComponent">
-      <!-- 146 is half of 292 (center of button relative to x=150) -> x=150+146 = 296 -->
       <text id="followText" x="296" y="977.9" style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 32px; letter-spacing: 0.05em; fill: var(--background); text-anchor: middle;">
         FOLLOW US
       </text>

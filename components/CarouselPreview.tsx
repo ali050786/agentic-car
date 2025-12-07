@@ -46,14 +46,6 @@ const SlideEditor: React.FC<{
             className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white font-bold"
           />
         </div>
-        <div>
-          <label className="text-xs text-neutral-400 block mb-1">Highlight</label>
-          <input
-            value={formData.headlineHighlight || ''}
-            onChange={(e) => handleChange('headlineHighlight', e.target.value)}
-            className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-blue-400 font-bold"
-          />
-        </div>
 
         {formData.variant !== 'list' && (
           <div>
@@ -105,7 +97,7 @@ const SlideEditor: React.FC<{
 };
 
 export const CarouselPreview: React.FC = () => {
-  const { slides, selectedTemplate, isGenerating, updateSlide, theme, branding } = useCarouselStore();
+  const { slides, selectedTemplate, selectedFormat, isGenerating, updateSlide, theme, branding } = useCarouselStore();
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isCopying, setIsCopying] = useState(false);
@@ -115,7 +107,7 @@ export const CarouselPreview: React.FC = () => {
 
     try {
       // Generate SVG (Synchronous Native Generator)
-      const optimizedSvg = await optimizeSvgForFigma(slide, theme, selectedTemplate);
+      const optimizedSvg = await optimizeSvgForFigma(slide, theme, selectedTemplate, selectedFormat, branding);
 
       await navigator.clipboard.writeText(optimizedSvg);
       setCopiedIndex(index);
@@ -154,7 +146,7 @@ export const CarouselPreview: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
         {slides.map((slide, index) => {
           // Preview with carousel-level branding
-          const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, branding);
+          const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, branding, selectedFormat);
           const isEditing = editingIndex === index;
           const isCopied = copiedIndex === index;
 
@@ -177,8 +169,8 @@ export const CarouselPreview: React.FC = () => {
                     onClick={() => handleCopy(slide, index)}
                     disabled={isCopying}
                     className={`p-1.5 rounded-md transition-all flex items-center gap-1 ${isCopied
-                        ? 'bg-green-600 text-white'
-                        : 'bg-neutral-800 hover:bg-purple-600 text-white'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-neutral-800 hover:bg-purple-600 text-white'
                       }`}
                     title="Copy optimized SVG for Figma"
                   >
@@ -189,12 +181,29 @@ export const CarouselPreview: React.FC = () => {
               </div>
 
               {/* Card Container */}
-              <div className="relative aspect-[4/5] w-full bg-black shadow-2xl rounded-xl overflow-hidden border border-white/10 group-hover:border-white/20 transition-all">
+              <div className={`relative ${selectedFormat === 'square' ? 'aspect-square' : 'aspect-[4/5]'} w-full bg-black shadow-2xl rounded-xl overflow-hidden border border-white/10 group-hover:border-white/20 transition-all`}>
                 {/* SVG Render (DOM) */}
                 <div
-                  className="w-full h-full"
-                  dangerouslySetInnerHTML={{ __html: svgString }}
-                />
+                  className="w-full h-full flex items-center justify-center"
+                  style={{
+                    overflow: 'hidden'
+                  }}
+                >
+                  <style>
+                    {`
+                      .svg-preview-container svg {
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                      }
+                    `}
+                  </style>
+                  <div
+                    className="svg-preview-container w-full h-full flex items-center justify-center"
+                    dangerouslySetInnerHTML={{ __html: svgString }}
+                  />
+                </div>
 
                 {/* Edit Overlay */}
                 {isEditing && (

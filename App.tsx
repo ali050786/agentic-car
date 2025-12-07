@@ -20,6 +20,7 @@ import { updateCarouselContent, Carousel } from './services/carouselService';
 import { dbToAppTemplate } from './utils/templateConverter';
 import { ThemeSelector } from './components/ThemeSelector';
 import { BrandingSelector } from './components/BrandingSelector';
+import { FormatSelector } from './components/FormatSelector';
 import { resolveTheme } from './utils/brandUtils';
 import { getPresetById } from './config/colorPresets';
 
@@ -57,7 +58,7 @@ const CarouselGenerator: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { topic, setTopic, selectedTemplate, setTemplate, selectedModel, setModel, isGenerating, error, slides, setSlides, activePresetId, setActivePreset, setTheme } = useCarouselStore();
+  const { topic, setTopic, selectedTemplate, setTemplate, selectedModel, setModel, selectedFormat, setFormat, isGenerating, error, slides, setSlides, activePresetId, setActivePreset, setTheme } = useCarouselStore();
 
   const [localTopic, setLocalTopic] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -83,6 +84,11 @@ const CarouselGenerator: React.FC = () => {
       // Restore the color preset if it was saved
       if (carousel.preset_id) {
         setActivePreset(carousel.preset_id);
+      }
+
+      // Restore the format if it was saved
+      if (carousel.format) {
+        setFormat(carousel.format);
       }
 
       // Clear the state so refresh doesn't reload
@@ -397,6 +403,9 @@ const CarouselGenerator: React.FC = () => {
           {/* Branding Settings */}
           <BrandingSelector />
 
+          {/* Format Selection */}
+          <FormatSelector />
+
           {/* Action Button */}
           <div className="mt-auto pt-6 border-t border-white/5">
             {error && (
@@ -468,6 +477,7 @@ const CarouselGenerator: React.FC = () => {
         theme={getTheme()}
         slides={slides}
         presetId={activePresetId}
+        format={selectedFormat}
         defaultTitle={localTopic}
       />
     </div>

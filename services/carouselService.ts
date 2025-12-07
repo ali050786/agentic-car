@@ -21,6 +21,7 @@ export interface CarouselData {
   slides: any[];
   presetId: string | null;
   isPublic: boolean;
+  format: 'portrait' | 'square';
 }
 
 export interface Carousel extends CarouselData {
@@ -43,7 +44,8 @@ export const createCarousel = async (
   theme: any,
   slides: any[],
   isPublic: boolean = false,
-  presetId: string | null = null
+  presetId: string | null = null,
+  format: 'portrait' | 'square' = 'portrait'
 ): Promise<{ data: Carousel | null; error: any }> => {
   try {
     console.log('[createCarousel] Starting save...', { userId, title, templateType });
@@ -56,6 +58,7 @@ export const createCarousel = async (
       slides: JSON.stringify(slides),
       presetId: presetId || null,
       isPublic,
+      format,
     };
 
     const document = await databases.createDocument(
@@ -77,6 +80,7 @@ export const createCarousel = async (
       templateType: document.templateType as 'template1' | 'template2',
       presetId: document.presetId,
       isPublic: document.isPublic,
+      format: (document.format as 'portrait' | 'square') || 'portrait', // Default to portrait for backwards compatibility
     };
 
     // Update user analytics (non-blocking)
@@ -175,6 +179,7 @@ export const getUserCarousels = async (
       templateType: doc.templateType as 'template1' | 'template2',
       presetId: doc.presetId,
       isPublic: doc.isPublic,
+      format: (doc.format as 'portrait' | 'square') || 'portrait',
     }));
 
     return { data: carousels, error: null };
@@ -206,6 +211,7 @@ export const getCarouselById = async (
       templateType: document.templateType as 'template1' | 'template2',
       presetId: document.presetId,
       isPublic: document.isPublic,
+      format: (document.format as 'portrait' | 'square') || 'portrait',
     };
 
     return { data: carousel, error: null };
@@ -242,6 +248,7 @@ export const searchUserCarousels = async (
       templateType: doc.templateType as 'template1' | 'template2',
       presetId: doc.presetId,
       isPublic: doc.isPublic,
+      format: (doc.format as 'portrait' | 'square') || 'portrait',
     }));
 
     return { data: carousels, error: null };
@@ -284,6 +291,7 @@ export const updateCarousel = async (
       templateType: document.templateType as 'template1' | 'template2',
       presetId: document.presetId,
       isPublic: document.isPublic,
+      format: (document.format as 'portrait' | 'square') || 'portrait',
     };
 
     return { data: carousel, error: null };
