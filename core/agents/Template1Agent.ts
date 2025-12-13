@@ -89,6 +89,9 @@ export const Template1Agent = {
 
     const result = await generateContentFromAgent(prompt, T1_SCHEMA);
 
+    // 🔍 DEBUG: Log raw LLM response
+    console.log('🤖 [Template1Agent] RAW LLM Response:', JSON.stringify(result, null, 2));
+
     // Validate response structure
     if (!result || typeof result !== 'object') {
       console.error('[Template1Agent] Invalid API response:', result);
@@ -97,6 +100,7 @@ export const Template1Agent = {
 
     // Handle both direct format and Claude's nested format
     const data = result.carousel || result;
+    console.log('📦 [Template1Agent] Extracted data:', JSON.stringify(data, null, 2));
 
     if (!data.slides || !Array.isArray(data.slides)) {
       console.error('[Template1Agent] Missing or invalid slides array:', result);
@@ -104,16 +108,45 @@ export const Template1Agent = {
       throw new Error('API response missing slides array. Check console for details.');
     }
 
+    // 🔍 DEBUG: Log each slide before processing
+    console.log(`📊 [Template1Agent] Processing ${data.slides.length} slides...`);
+    data.slides.forEach((s: any, i: number) => {
+      console.log(`  Slide ${i + 1}:`, {
+        variant: s.variant,
+        hasListItems: !!s.listItems,
+        listItemsCount: s.listItems?.length || 0,
+        listItems: s.listItems,
+        headline: s.headline?.substring(0, 30) + '...'
+      });
+    });
+
     // Post-processing
-    const slides = data.slides.map((s: any, i: number) => ({
-      id: `t1-slide-${i}`,
+    const slides = data.slides.map((s: any, i: number) => {
+      // ⚠️ FIX: LLM sometimes returns 'type' instead of 'variant'
+      const slideVariant = s.variant || s.type;
+
+      if (s.type && !s.variant) {
+        console.warn(`[Template1Agent] Slide ${i + 1}: LLM returned 'type' instead of 'variant', auto-fixing...`);
+      }
+
+      return {
+        id: `t1-slide-${i}`,
+        variant: slideVariant,
+        headline: s.headline?.toUpperCase() || '',
+        preHeader: s.preHeader?.toUpperCase() || '',
+        body: s.body || '',
+        listItems: s.listItems || [],
+        footer: s.footer || ''
+      };
+    });
+
+    // 🔍 DEBUG: Log final processed slides
+    console.log('✅ [Template1Agent] Final processed slides:', slides.map(s => ({
+      id: s.id,
       variant: s.variant,
-      headline: s.headline?.toUpperCase() || '',
-      preHeader: s.preHeader?.toUpperCase() || '',
-      body: s.body || '',
-      listItems: s.listItems || [],
-      footer: s.footer || ''
-    }));
+      listItemsCount: s.listItems.length,
+      hasListItems: s.listItems.length > 0
+    })));
 
     return { slides, theme: data.theme };
   }

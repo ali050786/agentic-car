@@ -1,19 +1,11 @@
 import React from 'react';
 import { useCarouselStore } from '../store/useCarouselStore';
-import { User } from 'lucide-react';
 
 export const BrandingSelector: React.FC = () => {
     const { branding, setBranding } = useCarouselStore();
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-                <User size={14} className="text-neutral-400" />
-                <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-                    Branding
-                </label>
-            </div>
-
             {/* Enable/Disable Toggle */}
             <div className="flex items-center justify-between p-3 bg-black/40 border border-white/10 rounded-lg">
                 <span className="text-sm text-white">Show Signature</span>
@@ -74,8 +66,8 @@ export const BrandingSelector: React.FC = () => {
                             <button
                                 onClick={() => setBranding({ position: 'bottom-left' })}
                                 className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${branding.position === 'bottom-left'
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-black/40 border border-white/10 text-neutral-400 hover:border-white/30'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-black/40 border border-white/10 text-neutral-400 hover:border-white/30'
                                     }`}
                             >
                                 Bottom Left
@@ -83,8 +75,8 @@ export const BrandingSelector: React.FC = () => {
                             <button
                                 onClick={() => setBranding({ position: 'top-left' })}
                                 className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${branding.position === 'top-left'
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-black/40 border border-white/10 text-neutral-400 hover:border-white/30'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-black/40 border border-white/10 text-neutral-400 hover:border-white/30'
                                     }`}
                             >
                                 Top Left
@@ -92,8 +84,8 @@ export const BrandingSelector: React.FC = () => {
                             <button
                                 onClick={() => setBranding({ position: 'top-right' })}
                                 className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${branding.position === 'top-right'
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-black/40 border border-white/10 text-neutral-400 hover:border-white/30'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-black/40 border border-white/10 text-neutral-400 hover:border-white/30'
                                     }`}
                             >
                                 Top Right

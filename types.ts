@@ -1,5 +1,5 @@
 export type TemplateId = 'template-1' | 'template-2';
-export type SlideVariant = 'hero' | 'body' | 'list' | 'cta';
+export type SlideVariant = 'hero' | 'body' | 'list' | 'cta' | 'closing';  // 'closing' is what LLM generates, 'cta' is template name
 export type AIModel = 'groq-llama' | 'claude-haiku';
 export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';
 export type CarouselFormat = 'portrait' | 'square';
@@ -12,13 +12,18 @@ export interface BrandingConfig {
   position: SignaturePosition;
 }
 
+export interface ListItemObject {
+  bullet: string;
+  description: string;
+}
+
 export interface SlideContent {
   id: string;
   variant: SlideVariant;
   preHeader?: string;
   headline: string;
   body?: string;
-  listItems?: string[];
+  listItems?: (string | ListItemObject)[];
   footer?: string;
 }
 

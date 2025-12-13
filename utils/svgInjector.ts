@@ -29,7 +29,10 @@ export const injectContentIntoSvg = (
         case 'hero': baseSvg = T1_HERO_SVG_SQUARE; break;
         case 'body': baseSvg = T1_BODY_SVG_SQUARE; break;
         case 'list': baseSvg = T1_LIST_SVG_SQUARE; break;
-        case 'cta': baseSvg = T1_CTA_SVG_SQUARE; break;
+        case 'cta':
+        case 'closing':  // LLM uses 'closing' variant
+          baseSvg = T1_CTA_SVG_SQUARE;
+          break;
         default: baseSvg = T1_HERO_SVG_SQUARE;
       }
     } else {
@@ -37,7 +40,10 @@ export const injectContentIntoSvg = (
         case 'hero': baseSvg = T1_HERO_SVG; break;
         case 'body': baseSvg = T1_BODY_SVG; break;
         case 'list': baseSvg = T1_LIST_SVG; break;
-        case 'cta': baseSvg = T1_CTA_SVG; break;
+        case 'cta':
+        case 'closing':  // LLM uses 'closing' variant
+          baseSvg = T1_CTA_SVG;
+          break;
         default: baseSvg = T1_HERO_SVG;
       }
     }
@@ -70,9 +76,19 @@ export const injectContentIntoSvg = (
 
     listHtml = content.listItems && content.listItems.length > 0
       ? content.listItems.map((item) => {
-        const parts = item.split(':');
-        const title = parts.length > 1 ? parts[0] + ':' : '';
-        const desc = parts.length > 1 ? parts.slice(1).join(':') : item;
+        // Handle both string format and object format
+        let title = '';
+        let desc = '';
+
+        if (typeof item === 'string') {
+          const parts = item.split(':');
+          title = parts.length > 1 ? parts[0] + ':' : '';
+          desc = parts.length > 1 ? parts.slice(1).join(':') : item;
+        } else if (typeof item === 'object' && item !== null) {
+          // Object format: { bullet: 'Key:', description: 'Value' }
+          title = item.bullet || '';
+          desc = item.description || '';
+        }
 
         return `
           <div style="display: flex; align-items: flex-start; gap: 24px; font-family: 'Lato', sans-serif; font-weight: 500; font-size: ${listFontSize}; color: var(--text-default); line-height: ${listLineHeight};">
@@ -93,7 +109,10 @@ export const injectContentIntoSvg = (
         case 'hero': baseSvg = T2_HERO_SVG_SQUARE; break;
         case 'body': baseSvg = T2_BODY_SVG_SQUARE; break;
         case 'list': baseSvg = T2_LIST_SVG_SQUARE; break;
-        case 'cta': baseSvg = T2_CTA_SVG_SQUARE; break;
+        case 'cta':
+        case 'closing':  // LLM uses 'closing' variant
+          baseSvg = T2_CTA_SVG_SQUARE;
+          break;
         default: baseSvg = T2_HERO_SVG_SQUARE;
       }
     } else {
@@ -101,7 +120,10 @@ export const injectContentIntoSvg = (
         case 'hero': baseSvg = T2_HERO_SVG; break;
         case 'body': baseSvg = T2_BODY_SVG; break;
         case 'list': baseSvg = T2_LIST_SVG; break;
-        case 'cta': baseSvg = T2_CTA_SVG; break;
+        case 'cta':
+        case 'closing':  // LLM uses 'closing' variant
+          baseSvg = T2_CTA_SVG;
+          break;
         default: baseSvg = T2_HERO_SVG;
       }
     }
@@ -137,10 +159,20 @@ export const injectContentIntoSvg = (
     // T2 List Style (Matching PDF Slide 7: Bullet + Bold Key)
     listHtml = content.listItems && content.listItems.length > 0
       ? content.listItems.map((item) => {
-        // Split "Key: Value" -> ["Key", "Value"]
-        const parts = item.split(':');
-        const title = parts.length > 1 ? parts[0] + ':' : '';
-        const desc = parts.length > 1 ? parts.slice(1).join(':') : item;
+        // Handle both string format and object format
+        let title = '';
+        let desc = '';
+
+        if (typeof item === 'string') {
+          // Split "Key: Value" -> ["Key", "Value"]
+          const parts = item.split(':');
+          title = parts.length > 1 ? parts[0] + ':' : '';
+          desc = parts.length > 1 ? parts.slice(1).join(':') : item;
+        } else if (typeof item === 'object' && item !== null) {
+          // Object format: { bullet: 'Key:', description: 'Value' }
+          title = item.bullet || '';
+          desc = item.description || '';
+        }
 
         return `
           <div style="display: flex; align-items: flex-start; gap: 20px; font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.4;">

@@ -1,91 +1,118 @@
 /**
- * Theme Selector Component
+ * Compact Theme Selector Component
  * 
- * Displays available color presets in a grid with visual previews.
- * Users can select a preset to apply custom brand colors.
+ * Dropdown-based color preset selector with visual preview.
+ * Much more compact than the grid layout (~80px vs ~400px).
  * 
  * Location: src/components/ThemeSelector.tsx
  */
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useCarouselStore } from '../store/useCarouselStore';
 import { PRESETS } from '../config/colorPresets';
-import { Check } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 
 export const ThemeSelector: React.FC = () => {
     const { activePresetId, setActivePreset } = useCarouselStore();
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen]);
+
+    const activePreset = PRESETS.find(p => p.id === activePresetId) || PRESETS[0];
 
     return (
-        <div className="flex flex-col gap-4">
-            <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-                3. Color Preset
+        <div className="flex flex-col gap-3">
+            <label className="text-xs font-medium text-neutral-500">
+                Color Preset
             </label>
 
-            <div className="grid grid-cols-2 gap-3">
-                {PRESETS.map((preset) => {
-                    const isActive = activePresetId === preset.id;
+            {/* Dropdown Trigger */}
+            <div className="relative" ref={dropdownRef}>
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="w-full p-3 bg-black/40 border border-white/10 rounded-lg hover:border-white/30 transition-colors text-left flex items-center justify-between group"
+                >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {/* Color Preview Strip */}
+                        <div className="flex gap-0.5 h-6 rounded overflow-hidden flex-shrink-0" style={{ width: '48px' }}>
+                            <div className="flex-1" style={{ backgroundColor: activePreset.seeds.primary }} />
+                            <div className="flex-1" style={{ backgroundColor: activePreset.seeds.secondary }} />
+                            <div className="flex-1" style={{ backgroundColor: activePreset.seeds.text }} />
+                            <div className="flex-1" style={{ backgroundColor: activePreset.seeds.background }} />
+                        </div>
 
-                    return (
-                        <button
-                            key={preset.id}
-                            onClick={() => setActivePreset(preset.id)}
-                            className={`group p-3 rounded-xl border text-left transition-all relative overflow-hidden ${isActive
-                                    ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
-                                    : 'border-white/10 hover:border-white/30 bg-black/20'
-                                }`}
-                        >
-                            {/* Preset Name */}
-                            <div className="relative z-10 mb-3">
-                                <div className="font-bold text-white text-sm mb-1 flex justify-between items-center">
-                                    <span>{preset.name}</span>
+                        {/* Preset Name */}
+                        <span className="text-sm font-medium text-white truncate">
+                            {activePreset.name}
+                        </span>
+                    </div>
+
+                    {/* Chevron */}
+                    <ChevronDown
+                        size={16}
+                        className={`text-neutral-400 group-hover:text-neutral-300 transition-all flex-shrink-0 ${isOpen ? 'rotate-180' : ''
+                            }`}
+                    />
+                </button>
+
+                {/* Dropdown Menu */}
+                {isOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-neutral-800 border border-white/10 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
+                        {PRESETS.map((preset) => {
+                            const isActive = activePresetId === preset.id;
+
+                            return (
+                                <button
+                                    key={preset.id}
+                                    onClick={() => {
+                                        setActivePreset(preset.id);
+                                        setIsOpen(false);
+                                    }}
+                                    className={`w-full p-3 text-left hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0 flex items-center gap-3 ${isActive ? 'bg-blue-500/10' : ''
+                                        }`}
+                                >
+                                    {/* Color Preview Strip */}
+                                    <div className="flex gap-0.5 h-6 rounded overflow-hidden flex-shrink-0" style={{ width: '48px' }}>
+                                        <div className="flex-1" style={{ backgroundColor: preset.seeds.primary }} />
+                                        <div className="flex-1" style={{ backgroundColor: preset.seeds.secondary }} />
+                                        <div className="flex-1" style={{ backgroundColor: preset.seeds.text }} />
+                                        <div className="flex-1" style={{ backgroundColor: preset.seeds.background }} />
+                                    </div>
+
+                                    {/* Preset Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-white text-sm truncate">{preset.name}</div>
+                                        {preset.description && (
+                                            <div className="text-xs text-neutral-400 truncate mt-0.5">{preset.description}</div>
+                                        )}
+                                    </div>
+
+                                    {/* Check Mark */}
                                     {isActive && (
-                                        <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                                            <Check className="w-3 h-3 text-white" />
-                                        </div>
+                                        <Check size={16} className="text-blue-400 flex-shrink-0" />
                                     )}
-                                </div>
-                            </div>
-
-                            {/* Color Preview Strip */}
-                            <div className="flex gap-1 h-6 rounded overflow-hidden">
-                                <div
-                                    className="flex-1"
-                                    style={{ backgroundColor: preset.seeds.primary }}
-                                    title="Primary"
-                                />
-                                <div
-                                    className="flex-1"
-                                    style={{ backgroundColor: preset.seeds.secondary }}
-                                    title="Secondary"
-                                />
-                                <div
-                                    className="flex-1"
-                                    style={{ backgroundColor: preset.seeds.text }}
-                                    title="Text"
-                                />
-                                <div
-                                    className="flex-1"
-                                    style={{ backgroundColor: preset.seeds.background }}
-                                    title="Background"
-                                />
-                            </div>
-
-                            {/* Hover Effect */}
-                            <div className={`absolute inset-0 bg-gradient-to-br from-white/0 to-white/0 group-hover:from-white/5 group-hover:to-transparent transition-all ${isActive ? 'opacity-0' : ''
-                                }`} />
-                        </button>
-                    );
-                })}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
-
-            {/* Active Preset Description */}
-            {activePresetId && (
-                <div className="p-3 bg-black/40 border border-white/10 rounded-lg">
-                    <p className="text-xs text-neutral-400">
-                        {PRESETS.find(p => p.id === activePresetId)?.description}
-                    </p>
-                </div>
-            )}
         </div>
     );
 };

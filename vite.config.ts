@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 import { StateGraph, MessagesAnnotation } from '@langchain/langgraph';
 import { ChatGroq } from '@langchain/groq';
 import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const aiModelProxyPlugin = (env: Record<string, string>) => ({
   name: 'ai-model-proxy',
@@ -56,6 +57,74 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
           const out = await graph.invoke({ messages: [] });
           const last = out.messages[out.messages.length - 1];
           result = (typeof last.content === 'string' ? last.content : JSON.stringify(last.content)) || '{"slides":[]}';
+
+        } else if (selectedModel === 'gemini-flash') {
+          // Gemini Flash (direct API)
+          const geminiKey = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || '';
+          if (!geminiKey) {
+            console.error('[ai-proxy] Missing GEMINI_API_KEY');
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ error: 'Missing GEMINI_API_KEY' }));
+          }
+
+          console.log('[ai-proxy] Using Gemini 2.5 Flash');
+          const genAI = new GoogleGenerativeAI(geminiKey);
+          const model = genAI.getGenerativeModel({
+            model: 'gemini-2.5-flash',
+          });
+
+          const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. You MUST respond with ONLY valid JSON. No comments, no extra text, no markdown code blocks. Pure JSON only.';
+          const fullPrompt = `${systemPrompt}\n\n${prompt}`;
+
+          const geminiResult = await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+            },
+          });
+          const response = geminiResult.response;
+          result = response.text() || '{"slides":[]}';
+
+        } else if (selectedModel === 'openrouter-gemini') {
+          // OpenRouter Gemini 2.0 Flash (via OpenRouter)
+          const openrouterKey = process.env.OPENROUTER_API_KEY || env.OPENROUTER_API_KEY || '';
+          if (!openrouterKey) {
+            console.error('[ai-proxy] Missing OPENROUTER_API_KEY');
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ error: 'Missing OPENROUTER_API_KEY' }));
+          }
+
+          console.log('[ai-proxy] Using OpenRouter Gemini 2.0 Flash');
+
+          const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. You MUST respond with ONLY valid JSON. No comments, no extra text, no markdown code blocks. Pure JSON only.';
+
+          const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openrouterKey}`,
+              'HTTP-Referer': 'http://localhost:3000',
+              'X-Title': 'Agentic Carousel Generator',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.0-flash-exp:free',
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: prompt }
+              ],
+              temperature: 0.2,
+            })
+          });
+
+          if (!openrouterResponse.ok) {
+            const errorText = await openrouterResponse.text();
+            throw new Error(`OpenRouter API error: ${errorText}`);
+          }
+
+          const openrouterData = await openrouterResponse.json();
+          result = openrouterData.choices[0]?.message?.content || '{"slides":[]}';
 
         } else {
           // Claude Haiku 3.5 (direct API)
@@ -122,8 +191,9 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [react(), aiModelProxyPlugin(env)],
     define: {
-      // Claude API Key
+      // AI Model API Keys
       'process.env.CLAUDE_API_KEY': JSON.stringify(env.CLAUDE_API_KEY || process.env.CLAUDE_API_KEY),
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
 
       // Supabase Configuration
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL),

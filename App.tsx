@@ -35,6 +35,9 @@ import { AuthCallback } from './pages/AuthCallback';
 import CarouselLibrary from './pages/CarouselLibrary';
 import { PublicCarouselViewer } from './pages/PublicCarouselViewer';
 
+// Components
+import { CollapsibleSection } from './components/CollapsibleSection';
+
 import {
   Layout,
   Sparkles,
@@ -44,6 +47,9 @@ import {
   Library as LibraryIcon,
   Plus,
   CheckCircle,
+  Settings,
+  Palette,
+  Wand2,
 } from 'lucide-react';
 
 const SUGGESTED_TOPICS = [
@@ -254,7 +260,7 @@ const CarouselGenerator: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel: Controls */}
-        <aside className="w-80 border-r border-white/10 flex flex-col gap-6 p-6 bg-neutral-900 overflow-y-auto">
+        <aside className="w-80 border-r border-white/10 flex flex-col gap-5 p-6 bg-neutral-900 overflow-y-auto">
           {/* Edit Mode Alert */}
           {editMode && editingCarousel && (
             <div className="p-3 bg-blue-500/10 border border-blue-500/50 rounded-lg">
@@ -277,134 +283,190 @@ const CarouselGenerator: React.FC = () => {
             </div>
           )}
 
-          {/* Topic Input (only in generate mode) */}
-          {!editMode && (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-                  1. Your Topic
+          {/* CONTENT SECTION - Always visible */}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 py-2">
+              <Layout size={14} className="text-neutral-400" />
+              <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
+                Content
+              </span>
+            </div>
+
+            {/* Topic Input (only in generate mode) */}
+            {!editMode && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-neutral-500">
+                    Your Topic
+                  </label>
+                  <button
+                    onClick={handleRandomTopic}
+                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                  >
+                    <Sparkles size={12} />
+                    Random
+                  </button>
+                </div>
+                <textarea
+                  className="w-full h-24 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition-colors resize-none text-sm"
+                  placeholder="What should this carousel be about?"
+                  value={localTopic}
+                  onChange={(e) => setLocalTopic(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* Topic Display (in edit mode) */}
+            {editMode && (
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-medium text-neutral-500">
+                  Topic
                 </label>
+                <div className="p-3 bg-black/40 border border-white/10 rounded-xl text-white text-sm">
+                  {localTopic || 'No topic'}
+                </div>
+              </div>
+            )}
+
+            {/* Template Selection */}
+            <div className="flex flex-col gap-3">
+              <label className="text-xs font-medium text-neutral-500">
+                Template
+              </label>
+              <div className="grid grid-cols-1 gap-3">
                 <button
-                  onClick={handleRandomTopic}
-                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                  onClick={() => setTemplate('template-1')}
+                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedTemplate === 'template-1'
+                    ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
+                    : 'border-white/10 hover:border-white/30 bg-black/20'
+                    }`}
                 >
-                  <Sparkles size={12} />
-                  Random
+                  <div className="relative z-10">
+                    <div className="font-bold text-white mb-1 flex justify-between">
+                      The Truth
+                      {selectedTemplate === 'template-1' && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
+                    </div>
+                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300">Bold, industrial, high contrast.</div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setTemplate('template-2')}
+                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedTemplate === 'template-2'
+                    ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
+                    : 'border-white/10 hover:border-white/30 bg-black/20'
+                    }`}
+                >
+                  <div className="relative z-10">
+                    <div className="font-bold text-white mb-1 flex justify-between">
+                      The Clarity
+                      {selectedTemplate === 'template-2' && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
+                    </div>
+                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300">Clean, tech-forward, gradients.</div>
+                  </div>
                 </button>
               </div>
-              <textarea
-                className="w-full h-24 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition-colors resize-none text-sm"
-                placeholder="What should this carousel be about?"
-                value={localTopic}
-                onChange={(e) => setLocalTopic(e.target.value)}
-              />
             </div>
-          )}
+          </div>
 
-          {/* Topic Display (in edit mode) */}
-          {editMode && (
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-                Topic
+          {/* GENERATION SETTINGS - Collapsible, expanded by default */}
+          <CollapsibleSection title="Generation Settings" icon={Settings} defaultExpanded={true}>
+            <div className="flex flex-col gap-3">
+              <label className="text-xs font-medium text-neutral-500">
+                AI Model
               </label>
-              <div className="p-3 bg-black/40 border border-white/10 rounded-xl text-white text-sm">
-                {localTopic || 'No topic'}
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  onClick={() => setModel('groq-llama')}
+                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'groq-llama'
+                    ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
+                    : 'border-white/10 hover:border-white/30 bg-black/20'
+                    }`}
+                >
+                  <div className="relative z-10">
+                    <div className="font-bold text-white mb-1 flex justify-between items-center">
+                      <span>Groq Llama 3.3</span>
+                      {selectedModel === 'groq-llama' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
+                    </div>
+                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
+                      <span>⚡ Fast generation, generous limits</span>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setModel('claude-haiku')}
+                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'claude-haiku'
+                    ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
+                    : 'border-white/10 hover:border-white/30 bg-black/20'
+                    }`}
+                >
+                  <div className="relative z-10">
+                    <div className="font-bold text-white mb-1 flex justify-between items-center">
+                      <span>Claude Haiku 3.5</span>
+                      {selectedModel === 'claude-haiku' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
+                    </div>
+                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
+                      <span>🧠 Smart reasoning, better limits</span>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setModel('gemini-flash')}
+                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'gemini-flash'
+                    ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
+                    : 'border-white/10 hover:border-white/30 bg-black/20'
+                    }`}
+                >
+                  <div className="relative z-10">
+                    <div className="font-bold text-white mb-1 flex justify-between items-center">
+                      <span>Gemini 2.5 Flash</span>
+                      {selectedModel === 'gemini-flash' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
+                    </div>
+                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
+                      <span>🚀 Google direct API, latest</span>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setModel('openrouter-gemini')}
+                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'openrouter-gemini'
+                    ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
+                    : 'border-white/10 hover:border-white/30 bg-black/20'
+                    }`}
+                >
+                  <div className="relative z-10">
+                    <div className="font-bold text-white mb-1 flex justify-between items-center">
+                      <span>Gemini 2.0 Flash (OpenRouter)</span>
+                      {selectedModel === 'openrouter-gemini' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
+                    </div>
+                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
+                      <span>⚡ Via OpenRouter, experimental</span>
+                    </div>
+                  </div>
+                </button>
               </div>
             </div>
-          )}
+          </CollapsibleSection>
 
-          {/* Template Selection */}
-          <div className="flex flex-col gap-4">
-            <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-              {editMode ? 'Template' : '2. Agent Persona'}
-            </label>
-            <div className="grid grid-cols-1 gap-3">
-              <button
-                onClick={() => setTemplate('template-1')}
-                className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedTemplate === 'template-1'
-                  ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
-                  : 'border-white/10 hover:border-white/30 bg-black/20'
-                  }`}
-              >
-                <div className="relative z-10">
-                  <div className="font-bold text-white mb-1 flex justify-between">
-                    The Truth
-                    {selectedTemplate === 'template-1' && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
-                  </div>
-                  <div className="text-xs text-neutral-400 group-hover:text-neutral-300">Bold, industrial, high contrast.</div>
-                </div>
-              </button>
+          {/* STYLING - Collapsible, collapsed by default */}
+          <CollapsibleSection title="Styling" icon={Palette} defaultExpanded={false}>
+            {/* Theme/Color Preset Selection */}
+            <ThemeSelector />
 
-              <button
-                onClick={() => setTemplate('template-2')}
-                className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedTemplate === 'template-2'
-                  ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
-                  : 'border-white/10 hover:border-white/30 bg-black/20'
-                  }`}
-              >
-                <div className="relative z-10">
-                  <div className="font-bold text-white mb-1 flex justify-between">
-                    The Clarity
-                    {selectedTemplate === 'template-2' && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
-                  </div>
-                  <div className="text-xs text-neutral-400 group-hover:text-neutral-300">Clean, tech-forward, gradients.</div>
-                </div>
-              </button>
+            {/* Format Selection */}
+            <div className="mt-4">
+              <FormatSelector />
             </div>
-          </div>
+          </CollapsibleSection>
 
-          {/* AI Model Selection */}
-          <div className="flex flex-col gap-4">
-            <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-              {editMode ? 'AI Model' : '3. AI Model'}
-            </label>
-            <div className="grid grid-cols-1 gap-3">
-              <button
-                onClick={() => setModel('groq-llama')}
-                className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'groq-llama'
-                  ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
-                  : 'border-white/10 hover:border-white/30 bg-black/20'
-                  }`}
-              >
-                <div className="relative z-10">
-                  <div className="font-bold text-white mb-1 flex justify-between items-center">
-                    <span>Groq Llama 3.3</span>
-                    {selectedModel === 'groq-llama' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
-                  </div>
-                  <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
-                    <span>⚡ Fast generation, generous limits</span>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setModel('claude-haiku')}
-                className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'claude-haiku'
-                  ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
-                  : 'border-white/10 hover:border-white/30 bg-black/20'
-                  }`}
-              >
-                <div className="relative z-10">
-                  <div className="font-bold text-white mb-1 flex justify-between items-center">
-                    <span>Claude Haiku 3.5</span>
-                    {selectedModel === 'claude-haiku' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
-                  </div>
-                  <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
-                    <span>🧠 Smart reasoning, better limits</span>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Theme/Color Preset Selection */}
-          <ThemeSelector />
-
-          {/* Branding Settings */}
-          <BrandingSelector />
-
-          {/* Format Selection */}
-          <FormatSelector />
+          {/* ADVANCED - Collapsible, collapsed by default */}
+          <CollapsibleSection title="Advanced" icon={Wand2} defaultExpanded={false}>
+            {/* Branding Settings */}
+            <BrandingSelector />
+          </CollapsibleSection>
 
           {/* Action Button */}
           <div className="mt-auto pt-6 border-t border-white/5">
