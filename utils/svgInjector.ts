@@ -5,6 +5,7 @@ import { T1_HERO_SVG_SQUARE, T1_BODY_SVG_SQUARE, T1_LIST_SVG_SQUARE, T1_CTA_SVG_
 import { T2_HERO_SVG_SQUARE, T2_BODY_SVG_SQUARE, T2_LIST_SVG_SQUARE, T2_CTA_SVG_SQUARE } from '../assets/templates/template2_square';
 import { generateSignatureCard } from './signatureCardGenerator';
 import { generatePatternSVG } from './patternGenerator';
+import { generateIconSVG } from './iconGenerator';
 
 /**
  * The Injector Engine.
@@ -220,12 +221,19 @@ export const injectContentIntoSvg = (
   // Inject List HTML
   baseSvg = replaceSafe('{{LIST_ITEMS}}', listHtml);
 
+  // Inject Icon SVG
+  const iconSize = content.variant === 'hero' ? 150 : 80;
+  const iconColor = theme?.background || '#141414';  // Icon color matches background
+  const iconSvg = generateIconSVG(content.icon, iconSize, iconColor);
+  baseSvg = replaceSafe('{{ICON_SVG}}', iconSvg);
+
   // 5. Cleanup
   baseSvg = replaceSafe('{{PREHEADER}}', '');
   baseSvg = replaceSafe('{{HEADLINE}}', '');
   baseSvg = replaceSafe('{{BODY}}', '');
   baseSvg = replaceSafe('{{FOOTER}}', '');
   baseSvg = replaceSafe('{{LIST_ITEMS}}', '');
+  baseSvg = replaceSafe('{{ICON_SVG}}', '');  // Cleanup icon placeholder
 
   // 6. Inject Signature Card from Branding Config
   let signatureCardHtml = '';

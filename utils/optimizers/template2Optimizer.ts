@@ -2,6 +2,7 @@ import { SlideContent, CarouselTheme, BrandingConfig, CarouselFormat } from '../
 import { getWrappedTextSpans } from './textUtils';
 import { imageUrlToBase64 } from '../imageUtils';
 import { generatePatternPNG } from '../patternGenerator';
+import { generateIconSVG } from '../iconGenerator';
 
 /**
  * Generates a Native SVG (without foreignObject) for Template 2 - Figma Export
@@ -32,6 +33,20 @@ export const generateTemplate2Native = async (
 
   // Vertical Stack Cursor
   let currentY = isSquare ? 250 : 280;
+
+  // Icon Circle - positioned at top, using button color for Template 2
+  const iconSize = slide.variant === 'hero' ? 150 : 80;
+  const iconSvg = generateIconSVG(slide.icon, iconSize, bg);
+  const iconCircleRadius = iconSize / 2;
+  const iconCircleCx = CONTENT_X + iconCircleRadius;
+  const iconCircleCy = currentY - 80; // Position above content
+
+  const iconCircleSvg = slide.icon ? `
+    <circle cx="${iconCircleCx}" cy="${iconCircleCy}" r="${iconCircleRadius}" fill="${textHighlight}"/>
+    <g transform="translate(${iconCircleCx - iconSize * 0.3}, ${iconCircleCy - iconSize * 0.3})">
+      ${iconSvg}
+    </g>
+  ` : '';
 
   // PreHeader (FIXED: Now uses textHighlight color)
   const preHeaderObj = getWrappedTextSpans(slide.preHeader || '', TEXT_WIDTH, 32, CONTENT_X);
@@ -197,6 +212,7 @@ export const generateTemplate2Native = async (
       </defs>
       ${backgroundSvg}
       <image x="0" y="0" width="${WIDTH}" height="${HEIGHT}" href="${patternBase64}" preserveAspectRatio="none"/>
+      ${iconCircleSvg}
       ${preHeaderSvg}
       ${hlSvg}
       ${bodySvg}

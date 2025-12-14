@@ -25,6 +25,11 @@ export const T1_HERO_SVG = `
   <foreignObject x="150" y="220" width="780" height="800">
     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 50px;">
       
+      <!-- Icon Circle (Hero - 150px) -->
+      <div style="width: 150px; height: 150px; border-radius: 50%; background: var(--background-2); display: flex; align-items: center; justify-content: center;">
+        {{ICON_SVG}}
+      </div>
+      
       <!-- PreHeader -->
       <div style="font-family: 'Lato', sans-serif; font-weight: 700; font-size: 32px; color: var(--text-highlight); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1;">
         {{PREHEADER}}
@@ -73,6 +78,11 @@ export const T1_BODY_SVG = `
   <foreignObject x="150" y="220" width="780" height="800">
     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 60px;">
       
+      <!-- Icon Circle (Body - 80px) -->
+      <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--background-2); display: flex; align-items: center; justify-content: center;">
+        {{ICON_SVG}}
+      </div>
+      
       <!-- PreHeader -->
       <div style="font-family: 'Lato', sans-serif; font-weight: 700; font-size: 32px; color: var(--text-highlight); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1;">
         {{PREHEADER}}
@@ -120,6 +130,11 @@ export const T1_LIST_SVG = `
   <foreignObject x="150" y="220" width="780" height="880">
     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 50px;">
       
+      <!-- Icon Circle (List - 80px) -->
+      <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--background-2); display: flex; align-items: center; justify-content: center;">
+        {{ICON_SVG}}
+      </div>
+      
       <!-- PreHeader -->
       <div style="font-family: 'Lato', sans-serif; font-weight: 700; font-size: 32px; color: var(--text-highlight); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1;">
         {{PREHEADER}}
@@ -166,6 +181,11 @@ export const T1_CTA_SVG = `
   
   <foreignObject x="150" y="220" width="600" height="700">
     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 50px;">
+      
+      <!-- Icon Circle (Closing - 80px) -->
+      <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--background-2); display: flex; align-items: center; justify-content: center;">
+        {{ICON_SVG}}
+      </div>
       
       <!-- PreHeader -->
       <div style="font-family: 'Lato', sans-serif; font-weight: 700; font-size: 32px; color: var(--text-highlight); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1;">

@@ -42,6 +42,10 @@ export const T2_HERO_SVG = `
   <foreignObject x="150" y="240" width="800" height="800">
     <body xmlns="http://www.w3.org/1999/xhtml" style="margin:0; padding:0; background:transparent;">
       <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 50px;">
+        <!-- Icon Circle (Hero - 150px) -->
+        <div style="width: 150px; height: 150px; border-radius: 50%; background: var(--button-color); display: flex; align-items: center; justify-content: center;">
+          {{ICON_SVG}}
+        </div>
         <!-- PreHeader -->
         <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-highlight); line-height: 1;">
           {{PREHEADER}}
@@ -82,6 +86,10 @@ export const T2_BODY_SVG = `
   <foreignObject x="150" y="240" width="800" height="800">
     <body xmlns="http://www.w3.org/1999/xhtml" style="margin:0; padding:0; background:transparent;">
       <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 60px;">
+        <!-- Icon Circle (Body - 80px) -->
+        <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--button-color); display: flex; align-items: center; justify-content: center;">
+          {{ICON_SVG}}
+        </div>
         <!-- PreHeader -->
         <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-highlight); line-height: 1;">
           {{PREHEADER}}
@@ -126,6 +134,10 @@ export const T2_LIST_SVG = `
   <foreignObject x="150" y="240" width="800" height="800">
     <body xmlns="http://www.w3.org/1999/xhtml" style="margin:0; padding:0; background:transparent;">
       <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 60px;">
+        <!-- Icon Circle (List - 80px) -->
+        <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--button-color); display: flex; align-items: center; justify-content: center;">
+          {{ICON_SVG}}
+        </div>
         <!-- PreHeader -->
         <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-highlight); line-height: 1;">
           {{PREHEADER}}
@@ -170,6 +182,10 @@ export const T2_CTA_SVG = `
   <foreignObject x="150" y="240" width="800" height="800">
     <body xmlns="http://www.w3.org/1999/xhtml" style="margin:0; padding:0; background:transparent;">
       <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 60px;">
+        <!-- Icon Circle (Closing - 80px) -->
+        <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--button-color); display: flex; align-items: center; justify-content: center;">
+          {{ICON_SVG}}
+        </div>
         <!-- PreHeader -->
         <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-highlight); line-height: 1;">
           {{PREHEADER}}

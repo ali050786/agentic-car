@@ -2,6 +2,7 @@ import { SlideContent, CarouselTheme, BrandingConfig, CarouselFormat } from '../
 import { getWrappedTextSpans } from './textUtils';
 import { imageUrlToBase64 } from '../imageUtils';
 import { generatePatternPNG } from '../patternGenerator';
+import { generateIconSVG } from '../iconGenerator';
 
 /**
  * Generates a Native SVG (without foreignObject or Satori paths) for Template 1.
@@ -29,6 +30,20 @@ export const generateTemplate1Native = async (
 
   // Vertical Stack Cursor
   let currentY = 300; // Start Y position
+
+  // Icon Circle - positioned at top
+  const iconSize = slide.variant === 'hero' ? 150 : 80;
+  const iconSvg = generateIconSVG(slide.icon, iconSize, bg);
+  const iconCircleRadius = iconSize / 2;
+  const iconCircleCx = CONTENT_X + iconCircleRadius;
+  const iconCircleCy = currentY - 80; // Position above content
+
+  const iconCircleSvg = slide.icon ? `
+    <circle cx="${iconCircleCx}" cy="${iconCircleCy}" r="${iconCircleRadius}" fill="${bg2}"/>
+    <g transform="translate(${iconCircleCx - iconSize * 0.3}, ${iconCircleCy - iconSize * 0.3})">
+      ${iconSvg}
+    </g>
+  ` : '';
 
   // Preheader
   const preHeaderObj = getWrappedTextSpans(slide.preHeader || '', TEXT_WIDTH, 32, CONTENT_X);
@@ -192,6 +207,7 @@ export const generateTemplate1Native = async (
       <rect width="${WIDTH}" height="${HEIGHT}" fill="${bg}"/>
       <image x="0" y="0" width="${WIDTH}" height="${HEIGHT}" href="${patternBase64}" preserveAspectRatio="none"/>
       ${linesSvg}
+      ${iconCircleSvg}
       ${preHeaderSvg}
       ${hlSvg}
       ${bodySvg}

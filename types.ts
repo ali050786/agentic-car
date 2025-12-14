@@ -25,6 +25,7 @@ export interface SlideContent {
   body?: string;
   listItems?: (string | ListItemObject)[];
   footer?: string;
+  icon?: string;  // Lucide icon name (e.g., "Lightbulb", "Target", "TrendingUp")
 }
 
 export interface CarouselTheme {

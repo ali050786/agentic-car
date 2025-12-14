@@ -29,7 +29,8 @@ const T2_SCHEMA = {
             type: 'array',
             items: { type: 'string' }
           },
-          footer: { type: 'string' }
+          footer: { type: 'string' },
+          icon: { type: 'string', description: 'Lucide icon name (e.g., "Lightbulb", "Target", "TrendingUp", "Rocket", "Brain", "Users", "Shield", "Zap", "Award", "Star")' }
         },
         required: ['variant', 'headline']
       }
@@ -84,6 +85,12 @@ export const Template2Agent = {
           - headline (Complete strong title, Max 45 chars).
           - body (Impact statement, Max 100 chars).
           - footer (Call to action, Max 35 chars, e.g. "Craft Today").
+      
+      **ICON SELECTION**:
+      - For each slide, suggest a relevant Lucide icon name that visually represents the content
+      - Available icons: Lightbulb, Target, TrendingUp, TrendingDown, Zap, Award, CheckCircle, Star, Rocket, Brain, Users, MessageSquare, Shield, Globe, Compass, Heart, Clock, Calendar, Book, Briefcase, DollarSign, BarChart, Layers, Package, Settings, AlertCircle, Info, Sparkles
+      - Choose icons that match the slide's theme and message
+      - Every slide should have an icon
           
       Return JSON fitting the schema including the Theme.
     `;
@@ -137,7 +144,8 @@ export const Template2Agent = {
         preHeader: s.preHeader || '',
         body: s.body || '',
         listItems: s.listItems || [],
-        footer: s.footer || ''
+        footer: s.footer || '',
+        icon: s.icon || 'Lightbulb'  // Default to Lightbulb if no icon suggested
       };
     });
 

@@ -28,7 +28,8 @@ const T1_SCHEMA = {
             type: 'array',
             items: { type: 'string' }
           },
-          footer: { type: 'string' }
+          footer: { type: 'string' },
+          icon: { type: 'string', description: 'Lucide icon name (e.g., "Lightbulb", "Target", "TrendingUp", "Rocket", "Brain", "Users", "Shield", "Zap", "Award", "Star")' }
         },
         required: ['variant', 'headline']
       }
@@ -82,8 +83,13 @@ export const Template1Agent = {
           - preHeader (Concise, Max 60 chars)
           - headline (Complete title, Max 50 chars).
           - body (final philosophical statement Max 80 chars).
+      
+      **ICON SELECTION**:
+      - For each slide, suggest a relevant Lucide icon name that visually represents the content
+      - Available icons: Lightbulb, Target, TrendingUp, TrendingDown, Zap, Award, CheckCircle, Star, Rocket, Brain, Users, MessageSquare, Shield, Globe, Compass, Heart, Clock, Calendar, Book, Briefcase, DollarSign, BarChart, Layers, Package, Settings, AlertCircle, Info, Sparkles
+      - Choose icons that match the slide's theme and message
+      - Every slide should have an icon
           
-         
       Return JSON fitting the schema including the Theme.
     `;
 
@@ -136,7 +142,8 @@ export const Template1Agent = {
         preHeader: s.preHeader?.toUpperCase() || '',
         body: s.body || '',
         listItems: s.listItems || [],
-        footer: s.footer || ''
+        footer: s.footer || '',
+        icon: s.icon || 'Lightbulb'  // Default to Lightbulb if no icon suggested
       };
     });
 
