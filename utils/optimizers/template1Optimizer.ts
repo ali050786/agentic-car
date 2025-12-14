@@ -1,6 +1,7 @@
 import { SlideContent, CarouselTheme, BrandingConfig, CarouselFormat } from '../../types';
 import { getWrappedTextSpans } from './textUtils';
 import { imageUrlToBase64 } from '../imageUtils';
+import { generatePatternPNG } from '../patternGenerator';
 
 /**
  * Generates a Native SVG (without foreignObject or Satori paths) for Template 1.
@@ -9,12 +10,15 @@ export const generateTemplate1Native = async (
   slide: SlideContent,
   theme: CarouselTheme,
   branding?: BrandingConfig,
-  format: CarouselFormat = 'portrait'
+  format: CarouselFormat = 'portrait',
+  patternId?: number
 ): Promise<string> => {
   const bg = theme.background || '#141414';
-  const bg2 = theme.background2 || '#333333';
+  const bg2 = theme.background2 || '#FFFFFF';
   const textDefault = theme.textDefault || '#A2A2A2';
   const textHighlight = theme.textHighlight || '#FFFFFF';
+  const patternColor = theme.patternColor || '#FFFFFF';
+  const patternOpacity = theme.patternOpacity || '0.1';
 
   // Format-specific dimensions
   const isSquare = format === 'square';
@@ -91,20 +95,19 @@ export const generateTemplate1Native = async (
   // Footer/Bottom Area with updated swipe components (format-specific)
   const bottomRectY = isSquare ? 845 : 1104;
   const bottomSvg = `
-    <rect x="0" y="${bottomRectY}" width="${WIDTH}" height="${isSquare ? 235 : 275}" fill="${bg2}"/>
     ${slide.variant === 'hero' ? `
     <!-- Hero: Full swipe with text -->
-    <rect x="${isSquare ? 788.35 : 788}" y="${bottomRectY}" width="${isSquare ? 291.65 : 292}" height="${isSquare ? 115 : 125}" fill="${textHighlight}"/>
+    <rect x="${isSquare ? 788.35 : 788}" y="${bottomRectY}" width="${isSquare ? 291.65 : 292}" height="${isSquare ? 115 : 125}" fill="${bg2}"/>
     <text x="864" y="${bottomRectY + (isSquare ? 67 : 75)}" font-family="Lato, sans-serif" font-weight="700" font-size="32" fill="${bg}">SWIPE</text>
     <path d="M1018,${bottomRectY + (isSquare ? 45 : 54)} l19,9 l-19,9" stroke="${bg}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M980,${bottomRectY + (isSquare ? 54 : 64)} h47" stroke="${bg}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     ` : slide.variant === 'cta' ? `
     <!-- CTA: FOLLOW US button -->
-    <rect x="${isSquare ? 788.35 : 700}" y="${isSquare ? bottomRectY + 6 : bottomRectY + 6}" width="${isSquare ? 291.65 : 292}" height="${isSquare ? 115 : 125}" fill="${textHighlight}"/>
+    <rect x="${isSquare ? 788.35 : 700}" y="${isSquare ? bottomRectY + 6 : bottomRectY + 6}" width="${isSquare ? 291.65 : 292}" height="${isSquare ? 115 : 125}" fill="${bg2}"/>
     <text x="${isSquare ? 934 : 846}" y="${isSquare ? bottomRectY + 73 : bottomRectY + 81}" font-family="Lato, sans-serif" font-weight="700" font-size="32" fill="${bg}" text-anchor="middle">FOLLOW US</text>
     ` : `
     <!-- Body/List: Arrow-only narrow swipe -->
-    <rect x="${isSquare ? 915.27 : 915}" y="${bottomRectY}" width="${isSquare ? 164.73 : 165}" height="${isSquare ? 115 : 125}" fill="${textHighlight}"/>
+    <rect x="${isSquare ? 915.27 : 915}" y="${bottomRectY}" width="${isSquare ? 164.73 : 165}" height="${isSquare ? 115 : 125}" fill="${bg2}"/>
     <path d="M1018,${bottomRectY + (isSquare ? 45 : 54)} l19,9 l-19,9" stroke="${bg}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M980,${bottomRectY + (isSquare ? 54 : 64)} h47" stroke="${bg}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     `}
@@ -175,13 +178,24 @@ export const generateTemplate1Native = async (
     }
   }
 
+  // Get pattern from store or use default
+  const selectedPatternId = patternId || 1;
+
+  // Generate Figma-compatible pattern as PNG base64
+  const patternBase64 = generatePatternPNG(selectedPatternId, WIDTH, HEIGHT, patternColor, patternOpacity);
+
+  // Split bottom section into rect and button for proper z-index
+  const bottomRectSvg = `<rect x="0" y="${bottomRectY}" width="${WIDTH}" height="${isSquare ? 235 : 275}" fill="${bg2}" opacity="0.2"/>`;
+
   return `
     <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
       <rect width="${WIDTH}" height="${HEIGHT}" fill="${bg}"/>
+      <image x="0" y="0" width="${WIDTH}" height="${HEIGHT}" href="${patternBase64}" preserveAspectRatio="none"/>
       ${linesSvg}
       ${preHeaderSvg}
       ${hlSvg}
       ${bodySvg}
+      ${bottomRectSvg}
       ${bottomSvg}
       ${signatureSvg}
     </svg>

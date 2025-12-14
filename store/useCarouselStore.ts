@@ -6,6 +6,7 @@ export const useCarouselStore = create<CarouselState>((set) => ({
   selectedTemplate: 'template-1',
   selectedModel: 'groq-llama',
   selectedFormat: 'portrait',
+  selectedPattern: 1,  // Default pattern (Diagonal Lines)
   slides: [],
   theme: null,
   isGenerating: false,
@@ -28,6 +29,7 @@ export const useCarouselStore = create<CarouselState>((set) => ({
   setTemplate: (selectedTemplate) => set({ selectedTemplate }),
   setModel: (selectedModel) => set({ selectedModel }),
   setFormat: (selectedFormat) => set({ selectedFormat }),
+  setPattern: (selectedPattern) => set({ selectedPattern }),
   setGenerating: (isGenerating) => set({ isGenerating }),
   setError: (error) => set({ error }),
   setSlides: (slides) => set({ slides }),

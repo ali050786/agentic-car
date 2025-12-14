@@ -21,6 +21,7 @@ import { dbToAppTemplate } from './utils/templateConverter';
 import { ThemeSelector } from './components/ThemeSelector';
 import { BrandingSelector } from './components/BrandingSelector';
 import { FormatSelector } from './components/FormatSelector';
+import { PatternSelector } from './components/PatternSelector';
 import { resolveTheme } from './utils/brandUtils';
 import { getPresetById } from './config/colorPresets';
 
@@ -460,6 +461,11 @@ const CarouselGenerator: React.FC = () => {
             <div className="mt-4">
               <FormatSelector />
             </div>
+
+            {/* Pattern Selection */}
+            <div className="mt-4">
+              <PatternSelector />
+            </div>
           </CollapsibleSection>
 
           {/* ADVANCED - Collapsible, collapsed by default */}
@@ -535,7 +541,7 @@ const CarouselGenerator: React.FC = () => {
       <SaveCarouselModal
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
-        templateType={selectedTemplate as any}
+        templateType={selectedTemplate}
         theme={getTheme()}
         slides={slides}
         presetId={activePresetId}

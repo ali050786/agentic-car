@@ -1,6 +1,7 @@
 import { SlideContent, CarouselTheme, BrandingConfig, CarouselFormat } from '../../types';
 import { getWrappedTextSpans } from './textUtils';
 import { imageUrlToBase64 } from '../imageUtils';
+import { generatePatternPNG } from '../patternGenerator';
 
 /**
  * Generates a Native SVG (without foreignObject) for Template 2 - Figma Export
@@ -10,7 +11,8 @@ export const generateTemplate2Native = async (
   slide: SlideContent,
   theme: CarouselTheme,
   branding?: BrandingConfig,
-  format: CarouselFormat = 'portrait'
+  format: CarouselFormat = 'portrait',
+  patternId?: number
 ): Promise<string> => {
   const bg = theme.background || '#091c33';
   const textHighlight = theme.textHighlight || '#f4782d';
@@ -18,6 +20,8 @@ export const generateTemplate2Native = async (
   const textDefault = theme.textDefault || '#ffffff';
   const bgGradStart = theme.bgGradStart || '#6d51a2';
   const bgGradEnd = theme.bgGradEnd || '#091c33';
+  const patternColor = theme.patternColor || '#FFFFFF';
+  const patternOpacity = theme.patternOpacity || '0.1';
 
   // Format-specific dimensions
   const isSquare = format === 'square';
@@ -108,7 +112,7 @@ export const generateTemplate2Native = async (
 
   const backgroundSvg = `
     <rect width="${WIDTH}" height="${HEIGHT}" fill="${bg}"/>
-    <!-- Gradient Design Element with Transform -->
+    <!-- Gradient Design Element (behind pattern) -->
     <g transform="translate(2, -5)">
       <path d="M386.97,5.06c0,2.31,0,4.61.02,6.92,3.77,382.43,312.55,690.44,693,695.27V5.06H386.97Z" fill="url(#t2-native-grad)"/>
     </g>
@@ -177,10 +181,22 @@ export const generateTemplate2Native = async (
     }
   }
 
+  // Get pattern from store or use default
+  const selectedPatternId = patternId || 1;
+
+  // Generate Figma-compatible pattern as PNG base64
+  const patternBase64 = generatePatternPNG(selectedPatternId, WIDTH, HEIGHT, patternColor, patternOpacity);
+
   return `
     <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-      ${defs}
+      <defs>
+        <radialGradient id="t2-native-grad" cx="845.36" cy="241.41" fx="1157.19" fy="-34.3" r="416.24" gradientUnits="userSpaceOnUse" gradientTransform="translate(-517.29 -50.02) scale(1.48 1.68)">
+          <stop offset="0" stop-color="${bgGradStart}"/>
+          <stop offset="0.59" stop-color="${bgGradEnd}"/>
+        </radialGradient>
+      </defs>
       ${backgroundSvg}
+      <image x="0" y="0" width="${WIDTH}" height="${HEIGHT}" href="${patternBase64}" preserveAspectRatio="none"/>
       ${preHeaderSvg}
       ${hlSvg}
       ${bodySvg}

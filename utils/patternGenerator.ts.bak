@@ -1,0 +1,142 @@
+/**
+ * Pattern Generator for Background Patterns
+ * 
+ * Generates randomized SVG pattern definitions for carousel backgrounds.
+ * Supports 12 different pattern types with theme-aware colors.
+ * Enhanced with larger sizes and better spacing for visibility.
+ * 
+ * Location: src/utils/patternGenerator.ts
+ */
+
+/**
+ * Returns a random pattern number (1-12)
+ */
+export const getRandomPattern = (): number => {
+  return Math.floor(Math.random() * 12) + 1;
+};
+
+/**
+ * Generates SVG pattern definition based on pattern ID
+ * 
+ * @param patternId - Pattern identifier (1-12)
+ * @returns Complete SVG <pattern> element string
+ */
+export const generatePatternSVG = (patternId: number): string => {
+  const patterns: Record<number, string> = {
+    // 1. Diagonal Lines (/) - Increased spacing and width
+    1: `
+      <pattern id="bgPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="30" x2="30" y2="0" stroke="var(--pattern-color)" stroke-width="2" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 2. Diagonal Lines (\) - Increased spacing and width
+    2: `
+      <pattern id="bgPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="0" x2="30" y2="30" stroke="var(--pattern-color)" stroke-width="2" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 3. Cross-hatch (Grid) - Larger grid with thicker lines
+    3: `
+      <pattern id="bgPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="30" x2="30" y2="0" stroke="var(--pattern-color)" stroke-width="1.5" opacity="0.1"/>
+        <line x1="0" y1="0" x2="30" y2="30" stroke="var(--pattern-color)" stroke-width="1.5" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 4. Dots - Larger dots with more spacing
+    4: `
+      <pattern id="bgPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <circle cx="15" cy="15" r="3" fill="var(--pattern-color)" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 5. Squares - Larger squares
+    5: `
+      <pattern id="bgPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <rect x="10" y="10" width="10" height="10" fill="var(--pattern-color)" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 6. Plus Signs - Larger plus signs
+    6: `
+      <pattern id="bgPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <line x1="15" y1="8" x2="15" y2="22" stroke="var(--pattern-color)" stroke-width="2" opacity="0.1"/>
+        <line x1="8" y1="15" x2="22" y2="15" stroke="var(--pattern-color)" stroke-width="2" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 7. X Pattern (Crosses) - Larger X's
+    7: `
+      <pattern id="bgPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <line x1="8" y1="8" x2="22" y2="22" stroke="var(--pattern-color)" stroke-width="2" opacity="0.1"/>
+        <line x1="22" y1="8" x2="8" y2="22" stroke="var(--pattern-color)" stroke-width="2" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 8. Horizontal Stripes - Increased spacing and width
+    8: `
+      <pattern id="bgPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="15" x2="30" y2="15" stroke="var(--pattern-color)" stroke-width="2" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 9. Vertical Stripes - Increased spacing and width
+    9: `
+      <pattern id="bgPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <line x1="15" y1="0" x2="15" y2="30" stroke="var(--pattern-color)" stroke-width="2" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 10. Triangles - Larger triangles
+    10: `
+      <pattern id="bgPattern" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+        <polygon points="15,8 22,20 8,20" fill="var(--pattern-color)" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 11. Hexagons (Honeycomb) - Larger hexagons with better spacing
+    11: `
+      <pattern id="bgPattern" x="0" y="0" width="42" height="36" patternUnits="userSpaceOnUse">
+        <path d="M 21,3 L 30,9 L 30,21 L 21,27 L 12,21 L 12,9 Z" 
+              fill="none" stroke="var(--pattern-color)" stroke-width="2" opacity="0.1"/>
+      </pattern>
+    `,
+
+    // 12. Waves - Larger, more pronounced waves
+    12: `
+      <pattern id="bgPattern" x="0" y="0" width="60" height="30" patternUnits="userSpaceOnUse">
+        <path d="M 0,15 Q 15,8 30,15 T 60,15" 
+              fill="none" stroke="var(--pattern-color)" stroke-width="2" opacity="0.1"/>
+      </pattern>
+    `,
+  };
+
+  return patterns[patternId] || patterns[1]; // Default to diagonal lines if invalid ID
+};
+
+/**
+ * Get a descriptive name for a pattern
+ * 
+ * @param patternId - Pattern identifier (1-12)
+ * @returns Human-readable pattern name
+ */
+export const getPatternName = (patternId: number): string => {
+  const names: Record<number, string> = {
+    1: 'Diagonal Lines (/)',
+    2: 'Diagonal Lines (\\)',
+    3: 'Cross-hatch',
+    4: 'Dots',
+    5: 'Squares',
+    6: 'Plus Signs',
+    7: 'X Pattern',
+    8: 'Horizontal Stripes',
+    9: 'Vertical Stripes',
+    10: 'Triangles',
+    11: 'Hexagons',
+    12: 'Waves',
+  };
+
+  return names[patternId] || 'Unknown Pattern';
+};

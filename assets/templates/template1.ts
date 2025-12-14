@@ -6,6 +6,7 @@ const COMMON_DEFS = `
       @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;500;700&family=Oswald:wght@700&display=swap');
       {{THEME_CSS}}
     </style>
+    {{PATTERN_DEFINITION}}
   </defs>
 `;
 
@@ -15,6 +16,7 @@ export const T1_HERO_SVG = `
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
   
   <!-- Decorative Lines -->
   <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
@@ -42,10 +44,10 @@ export const T1_HERO_SVG = `
   </foreignObject>
 
   <!-- Bottom Section -->
-  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)"/>
+  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)" opacity="0.2"/>
   
   <!-- Swipe Component -->
-  <rect x="788.35" y="1104.56" width="292" height="125" fill="var(--text-highlight)"/>
+  <rect x="788.35" y="1104.56" width="292" height="125" fill="var(--background-2)"/>
   <text x="864.8" y="1179.43" style="font-family: 'Lato', sans-serif; font-weight:700; font-size:32px; fill:var(--background);" transform="scale(1.01,1)">SWIPE</text>
   <g fill="none" stroke="var(--background)" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
     <path d="M1018.01,1158.95 l19.31,9.18 l-19.31,9.18"/>
@@ -62,6 +64,7 @@ export const T1_BODY_SVG = `
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
   
   <!-- Decorative Lines -->
   <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
@@ -89,10 +92,10 @@ export const T1_BODY_SVG = `
   </foreignObject>
 
   <!-- Bottom Section -->
-  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)"/>
+  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)" opacity="0.2"/>
   
   <!-- Swipe Component (Arrow Only) -->
-  <rect x="915.62" y="1104.56" width="164.73" height="125" fill="var(--text-highlight)"/>
+  <rect x="915.62" y="1104.56" width="164.73" height="125" fill="var(--background-2)"/>
   <g fill="none" stroke="var(--background)" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
     <path d="M1018.01,1158.95 l19.31,9.18 l-19.31,9.18"/>
     <path d="M980.78,1168.13 h46.54"/>
@@ -108,6 +111,7 @@ export const T1_LIST_SVG = `
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
   
   <!-- Decorative Lines -->
   <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
@@ -135,10 +139,10 @@ export const T1_LIST_SVG = `
   </foreignObject>
 
   <!-- Bottom Section -->
-  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)"/>
+  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)" opacity="0.2"/>
   
   <!-- Swipe Component (Arrow Only) -->
-  <rect x="915.62" y="1104.56" width="164.73" height="125" fill="var(--text-highlight)"/>
+  <rect x="915.62" y="1104.56" width="164.73" height="125" fill="var(--background-2)"/>
   <g fill="none" stroke="var(--background)" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
     <path d="M1018.01,1158.95 l19.31,9.18 l-19.31,9.18"/>
     <path d="M980.78,1168.13 h46.54"/>
@@ -154,6 +158,7 @@ export const T1_CTA_SVG = `
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
   
   <!-- Decorative Lines -->
   <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
@@ -180,14 +185,14 @@ export const T1_CTA_SVG = `
     </div>
   </foreignObject>
 
+  <!-- Bottom Section -->
+  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)" opacity="0.2"/>
+  
   <!-- Follow Us Button (CTA) -->
   <g transform="translate(700, 1110)">
-    <rect width="292" height="125" fill="var(--text-highlight)"/>
+    <rect width="292" height="125" fill="var(--background-2)"/>
     <text x="146" y="75" style="font-family: 'Lato', sans-serif; font-weight:700; font-size:32px; fill:var(--background); text-anchor: middle;" transform="scale(1.01,1)">FOLLOW US</text>
   </g>
-
-  <!-- Bottom Section -->
-  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)"/>
   
   {{SIGNATURE_CARD}}
 </svg>

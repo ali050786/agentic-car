@@ -12,6 +12,7 @@ export const runAgentWorkflow = async (topic: string) => {
 
   store.setGenerating(true);
   store.setError(null);
+  store.setSlides([]); // Clear previous slides
 
   try {
     let result: { slides: SlideContent[], theme: CarouselTheme };

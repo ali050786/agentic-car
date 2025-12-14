@@ -6,6 +6,7 @@ const COMMON_DEFS = `
       @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
       {{THEME_CSS}}
     </style>
+    {{PATTERN_DEFINITION}}
     <!-- Radial Gradient using System Variables -->
     <radialGradient id="radial-gradient-hero" cx="845.36" cy="241.41" fx="1157.19" fy="-34.3" r="416.24" gradientTransform="translate(-517.29 -50.02) scale(1.48 1.68)" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="var(--bg-grad-start)"/>
@@ -19,11 +20,16 @@ const BACKGROUND_ELEMENTS = `
   <!-- 1. Background -->
   <rect id="Background" width="1080" height="1374.14" fill="var(--background)"/>
   
-  <!-- 2. Complex Design Elements -->
+  <!-- 2. Complex Design Elements (behind pattern) -->
   <g transform="translate(2, -5)">
     <path id="Gradiant_Design_element" fill="url(#radial-gradient-hero)" d="M386.97,5.06c0,2.31,0,4.61.02,6.92,3.77,382.43,312.55,690.44,693,695.27V5.06H386.97Z"/>
   </g>
-  <path id="Bottom_archDesign" fill="var(--background-2)" d="M839.49,1326.66c23.07-116.89,125.7-197.83,240.51-197.7v-112.29c-197.43,0-357.47,160.04-357.47,357.47h112.29c.02-15.66,1.52-31.54,4.67-47.48Z"/>
+  
+  <!-- 3. Pattern Overlay (on top of gradient) -->
+  <rect width="1080" height="1374.14" fill="url(#bgPattern)"/>
+  
+  <!-- 4. Bottom Arch Design -->
+  <path id="Bottom_archDesign" fill="var(--background-2)" opacity="0.2" d="M839.49,1326.66c23.07-116.89,125.7-197.83,240.51-197.7v-112.29c-197.43,0-357.47,160.04-357.47,357.47h112.29c.02-15.66,1.52-31.54,4.67-47.48Z"/>
 `;
 
 // Variant 1: Hero
@@ -50,7 +56,7 @@ export const T2_HERO_SVG = `
 
   <!-- 4. Swipe Component -->
   <g id="swipeComponent" transform="translate(508, 150)">
-    <rect id="swipeRectangle" x="150" y="903.03" width="292" height="125" fill="var(--text-highlight)"/>
+    <rect id="swipeRectangle" x="150" y="903.03" width="292" height="125" fill="var(--button-color)"/>
     <g id="innerComponent">
       <text id="swipeText" x="227.13" y="977.9" style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 32px; letter-spacing: 0.05em; fill: var(--background);">
         SWIPE
@@ -94,7 +100,7 @@ export const T2_BODY_SVG = `
 
   <!-- 4. Swipe Component -->
   <g id="swipeComponent" transform="translate(508, 150)">
-    <rect id="swipeRectangle" x="150" y="903.03" width="292" height="125" fill="var(--text-highlight)"/>
+    <rect id="swipeRectangle" x="150" y="903.03" width="292" height="125" fill="var(--button-color)"/>
     <g id="innerComponent">
       <text id="swipeText" x="227.13" y="977.9" style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 32px; letter-spacing: 0.05em; fill: var(--background);">
         SWIPE
@@ -138,7 +144,7 @@ export const T2_LIST_SVG = `
   
   <!-- 4. Swipe Component -->
   <g id="swipeComponent" transform="translate(508, 150)">
-    <rect id="swipeRectangle" x="150" y="903.03" width="292" height="125" fill="var(--text-highlight)"/>
+    <rect id="swipeRectangle" x="150" y="903.03" width="292" height="125" fill="var(--button-color)"/>
     <g id="innerComponent">
       <text id="swipeText" x="227.13" y="977.9" style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 32px; letter-spacing: 0.05em; fill: var(--background);">
         SWIPE
@@ -182,7 +188,7 @@ export const T2_CTA_SVG = `
 
   <!-- 4. Follow Us Component -->
   <g id="followComponent" transform="translate(508, 150)">
-    <rect id="followRectangle" x="150" y="903.03" width="292" height="125" fill="var(--text-highlight)"/>
+    <rect id="followRectangle" x="150" y="903.03" width="292" height="125" fill="var(--button-color)"/>
     <g id="innerComponent">
       <text id="followText" x="296" y="977.9" style="font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 32px; letter-spacing: 0.05em; fill: var(--background); text-anchor: middle;">
         FOLLOW US

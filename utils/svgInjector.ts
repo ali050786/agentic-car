@@ -4,6 +4,7 @@ import { T2_HERO_SVG, T2_BODY_SVG, T2_LIST_SVG, T2_CTA_SVG } from '../assets/tem
 import { T1_HERO_SVG_SQUARE, T1_BODY_SVG_SQUARE, T1_LIST_SVG_SQUARE, T1_CTA_SVG_SQUARE } from '../assets/templates/template1_square';
 import { T2_HERO_SVG_SQUARE, T2_BODY_SVG_SQUARE, T2_LIST_SVG_SQUARE, T2_CTA_SVG_SQUARE } from '../assets/templates/template2_square';
 import { generateSignatureCard } from './signatureCardGenerator';
+import { generatePatternSVG } from './patternGenerator';
 
 /**
  * The Injector Engine.
@@ -14,7 +15,8 @@ export const injectContentIntoSvg = (
   content: SlideContent,
   theme: CarouselTheme | null,
   branding?: BrandingConfig,
-  format?: CarouselFormat
+  format?: CarouselFormat,
+  patternId?: number  // NEW: pattern ID for background pattern
 ): string => {
   let baseSvg = '';
   let listHtml = '';
@@ -65,7 +67,9 @@ export const injectContentIntoSvg = (
         --text-default: ${theme?.textDefault || '#A2A2A2'};
         --text-highlight: ${theme?.textHighlight || '#FFFFFF'};
         --background: ${theme?.background || '#141414'};
-        --background-2: ${theme?.background2 || 'rgba(255, 255, 255, 0.1)'};
+        --background-2: ${theme?.background2 || '#FFFFFF'};
+        --pattern-color: ${theme?.patternColor || '#2A2A2A'};
+        --pattern-opacity: ${theme?.patternOpacity || '0.1'};
       }
     `;
 
@@ -148,7 +152,10 @@ export const injectContentIntoSvg = (
         --background: ${theme?.background || '#091c33'};
         --text-highlight: ${theme?.textHighlight || '#f4782d'};
         --background-2: ${theme?.background2 || '#6d51a2'};
+        --button-color: ${theme?.buttonColor || theme?.textHighlight || '#f4782d'};
         --text-default: ${theme?.textDefault || '#ffffff'};
+        --pattern-color: ${theme?.patternColor || '#1A3A52'};
+        --pattern-opacity: ${theme?.patternOpacity || '0.1'};
         
         /* Gradient Stops */
         --bg-grad-start: ${theme?.bgGradStart || '#6d51a2'};
@@ -189,6 +196,10 @@ export const injectContentIntoSvg = (
 
   // Inject Theme CSS
   baseSvg = baseSvg.replace('{{THEME_CSS}}', themeCss);
+
+  // Inject Background Pattern Definition
+  const patternSvg = patternId ? generatePatternSVG(patternId) : generatePatternSVG(1); // Default to pattern 1
+  baseSvg = baseSvg.replace('{{PATTERN_DEFINITION}}', patternSvg);
 
   // Also inject individual color variables for square templates
   baseSvg = baseSvg.replace(/\{\{TEXT_COLOR\}\}/g, theme?.textDefault || '#A2A2A2');

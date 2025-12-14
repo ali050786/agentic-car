@@ -11,7 +11,7 @@ const T1_SCHEMA = {
         textDefault: { type: 'string', description: 'Hex color for normal text (e.g., #A2A2A2)' },
         textHighlight: { type: 'string', description: 'Hex color for highlights (e.g., #FFFFFF)' },
         background: { type: 'string', description: 'Hex color for main background (Dark, e.g., #141414)' },
-        background2: { type: 'string', description: 'RGBA string for secondary elements (e.g., rgba(255,255,255,0.1))' }
+        background2: { type: 'string', description: 'Hex color for secondary/accent color (e.g., #FFFFFF or #333333)' }
       },
       required: ['textDefault', 'textHighlight', 'background']
     },

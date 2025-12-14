@@ -33,17 +33,24 @@ export interface CarouselTheme {
   textHighlight?: string;    // --text-highlight
   background?: string;       // --background
   background2?: string;      // --background-2 (Secondary/Accent)
+  patternColor?: string;     // --pattern-color (white or black)
+  patternOpacity?: string;   // --pattern-opacity (0.1 or 0.2)
 
   // Template 2 Specific Gradient Stops
   bgGradStart?: string;      // --bg-grad-start
   bgGradEnd?: string;        // --bg-grad-end
+  buttonColor?: string;      // --button-color (Template 2 Swipe/Follow buttons)
+
+  // Customization flag (future use)
+  customized?: boolean;
 }
 
 export interface CarouselState {
   topic: string;
-  selectedTemplate: string;
+  selectedTemplate: TemplateId;
   selectedModel: string;
   selectedFormat: CarouselFormat;
+  selectedPattern: number;  // Background pattern ID (1-12)
   slides: SlideContent[];
   theme: CarouselTheme | null;
   isGenerating: boolean;
@@ -58,9 +65,10 @@ export interface CarouselState {
 
   // Actions
   setTopic: (topic: string) => void;
-  setTemplate: (selectedTemplate: string) => void;
+  setTemplate: (selectedTemplate: TemplateId) => void;
   setModel: (selectedModel: string) => void;
   setFormat: (selectedFormat: CarouselFormat) => void;
+  setPattern: (selectedPattern: number) => void;
   setGenerating: (isGenerating: boolean) => void;
   setError: (error: string | null) => void;
   setSlides: (slides: SlideContent[]) => void;

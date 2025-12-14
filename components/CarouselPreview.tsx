@@ -18,7 +18,13 @@ const SlideEditor: React.FC<{
 
   const handleListChange = (index: number, value: string) => {
     const newList = [...(formData.listItems || [])];
-    newList[index] = value;
+    const currentItem = newList[index];
+    // If the current item is an object, preserve the structure
+    if (typeof currentItem === 'object' && currentItem !== null) {
+      newList[index] = { ...currentItem, bullet: value };
+    } else {
+      newList[index] = value;
+    }
     setFormData(prev => ({ ...prev, listItems: newList }));
   };
 
@@ -65,7 +71,7 @@ const SlideEditor: React.FC<{
               {formData.listItems?.map((item, idx) => (
                 <input
                   key={idx}
-                  value={item}
+                  value={typeof item === 'object' && item !== null ? item.bullet : item}
                   onChange={(e) => handleListChange(idx, e.target.value)}
                   className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white"
                 />
@@ -97,7 +103,7 @@ const SlideEditor: React.FC<{
 };
 
 export const CarouselPreview: React.FC = () => {
-  const { slides, selectedTemplate, selectedFormat, isGenerating, updateSlide, theme, branding } = useCarouselStore();
+  const { slides, selectedTemplate, selectedFormat, selectedPattern, isGenerating, updateSlide, theme, branding } = useCarouselStore();
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isCopying, setIsCopying] = useState(false);
@@ -107,7 +113,7 @@ export const CarouselPreview: React.FC = () => {
 
     try {
       // Generate SVG (Synchronous Native Generator)
-      const optimizedSvg = await optimizeSvgForFigma(slide, theme, selectedTemplate, selectedFormat, branding);
+      const optimizedSvg = await optimizeSvgForFigma(slide, theme, selectedTemplate, selectedFormat, branding, selectedPattern);
 
       await navigator.clipboard.writeText(optimizedSvg);
       setCopiedIndex(index);
@@ -146,7 +152,7 @@ export const CarouselPreview: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
         {slides.map((slide, index) => {
           // Preview with carousel-level branding
-          const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, branding, selectedFormat);
+          const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, branding, selectedFormat, selectedPattern);
           const isEditing = editingIndex === index;
           const isCopied = copiedIndex === index;
 
