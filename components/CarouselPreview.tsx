@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useCarouselStore } from '../store/useCarouselStore';
 import { injectContentIntoSvg } from '../utils/svgInjector';
 import { optimizeSvgForFigma } from '../utils/figmaOptimizer';
-import { Edit2, Download, RefreshCw, Copy, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { exportSlideToJpg } from '../utils/jpgExporter';
+import { exportSlideToPdf } from '../utils/pdfExporter';
+import { Edit2, Download, RefreshCw, Copy, CheckCircle, ChevronLeft, ChevronRight, Image, FileText } from 'lucide-react';
 import { SlideContent } from '../types';
 import { ViewModeToggle } from './ViewModeToggle';
 
@@ -10,6 +12,9 @@ export const CarouselPreview: React.FC = () => {
   const { slides, selectedTemplate, selectedFormat, selectedPattern, patternOpacity, isGenerating, theme, branding, selectedSlideIndex, setSelectedSlideIndex, setRightPanelOpen, viewMode } = useCarouselStore();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isCopying, setIsCopying] = useState(false);
+  const [exportingIndex, setExportingIndex] = useState<number | null>(null);
+  const [exportingPdfIndex, setExportingPdfIndex] = useState<number | null>(null);
+  const slideRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   const handleCopy = async (slide: SlideContent, index: number) => {
     setIsCopying(true);
@@ -25,6 +30,46 @@ export const CarouselPreview: React.FC = () => {
       console.error("Failed to copy", err);
     } finally {
       setIsCopying(false);
+    }
+  };
+
+  const handleExportJpg = async (index: number, event?: React.MouseEvent) => {
+    if (event) event.stopPropagation();
+
+    setExportingIndex(index);
+
+    try {
+      const slideElement = slideRefs.current[index];
+      if (!slideElement) {
+        throw new Error('Slide element not found');
+      }
+
+      await exportSlideToJpg(slideElement, index, selectedFormat);
+    } catch (err) {
+      console.error('Failed to export JPG:', err);
+      alert('Failed to export JPG. Please try again.');
+    } finally {
+      setExportingIndex(null);
+    }
+  };
+
+  const handleExportPdf = async (index: number, event?: React.MouseEvent) => {
+    if (event) event.stopPropagation();
+
+    setExportingPdfIndex(index);
+
+    try {
+      const slideElement = slideRefs.current[index];
+      if (!slideElement) {
+        throw new Error('Slide element not found');
+      }
+
+      await exportSlideToPdf(slideElement, index, selectedFormat);
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+      alert('Failed to export PDF. Please try again.');
+    } finally {
+      setExportingPdfIndex(null);
     }
   };
 
@@ -166,6 +211,22 @@ export const CarouselPreview: React.FC = () => {
                             >
                               {isCopied ? <CheckCircle size={14} /> : <Copy size={14} />}
                             </button>
+                            <button
+                              onClick={(e) => handleExportJpg(index, e)}
+                              disabled={exportingIndex === index}
+                              className="p-1.5 bg-neutral-800/80 hover:bg-orange-600 text-white rounded-md transition-colors backdrop-blur-sm"
+                              title="Export as JPG"
+                            >
+                              <Image size={14} />
+                            </button>
+                            <button
+                              onClick={(e) => handleExportPdf(index, e)}
+                              disabled={exportingPdfIndex === index}
+                              className="p-1.5 bg-neutral-800/80 hover:bg-red-600 text-white rounded-md transition-colors backdrop-blur-sm"
+                              title="Export as PDF"
+                            >
+                              <FileText size={14} />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -184,6 +245,7 @@ export const CarouselPreview: React.FC = () => {
                         `}
                       </style>
                       <div
+                        ref={(el) => { slideRefs.current[index] = el; }}
                         className="svg-preview-container w-full h-full flex items-center justify-center"
                         dangerouslySetInnerHTML={{ __html: svgString }}
                       />
@@ -278,6 +340,22 @@ export const CarouselPreview: React.FC = () => {
                       {isCopied ? <CheckCircle size={14} /> : <Copy size={14} />}
                       {isCopied && <span className="text-[10px] font-bold px-1">COPIED</span>}
                     </button>
+                    <button
+                      onClick={() => handleExportJpg(index)}
+                      disabled={exportingIndex === index}
+                      className="p-1.5 bg-neutral-800 hover:bg-orange-600 text-white rounded-md transition-colors"
+                      title="Export as JPG"
+                    >
+                      <Image size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleExportPdf(index)}
+                      disabled={exportingPdfIndex === index}
+                      className="p-1.5 bg-neutral-800 hover:bg-red-600 text-white rounded-md transition-colors"
+                      title="Export as PDF"
+                    >
+                      <FileText size={14} />
+                    </button>
                   </div>
                 </div>
 
@@ -307,6 +385,7 @@ export const CarouselPreview: React.FC = () => {
                       `}
                     </style>
                     <div
+                      ref={(el) => { slideRefs.current[index] = el; }}
                       className="svg-preview-container w-full h-full flex items-center justify-center"
                       dangerouslySetInnerHTML={{ __html: svgString }}
                     />

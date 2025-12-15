@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layout, Save, Download, Library as LibraryIcon, CheckCircle, Loader, AlertCircle } from 'lucide-react';
+import { Layout, Save, Download, Library as LibraryIcon, CheckCircle, Loader, AlertCircle, FileText } from 'lucide-react';
 import { UserMenu } from './UserMenu';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'limit-reached';
@@ -10,6 +10,8 @@ interface FloatingTopBarProps {
     hasUser: boolean;
     saveStatus?: SaveStatus;  // Auto-save status
     onDownload: () => void;
+    onDownloadPdf?: () => void;  // New: Download all as PDF
+    isExportingPdf?: boolean;    // New: PDF export status
 }
 
 export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
@@ -17,6 +19,8 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
     hasUser,
     saveStatus = 'idle',
     onDownload,
+    onDownloadPdf,
+    isExportingPdf = false,
 }) => {
     const navigate = useNavigate();
     const [showLimitTooltip, setShowLimitTooltip] = useState(false);
@@ -115,6 +119,25 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                     <LibraryIcon size={16} />
                     <span className="hidden sm:inline">My Carousels</span>
                 </Link>
+
+                {/* PDF All Button */}
+                {slidesCount > 0 && onDownloadPdf && (
+                    <button
+                        onClick={onDownloadPdf}
+                        disabled={isExportingPdf}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 disabled:bg-red-600/50 disabled:cursor-not-allowed border border-red-500/50 rounded-lg text-sm font-medium text-white transition-colors"
+                        title="Download all slides as PDF"
+                    >
+                        {isExportingPdf ? (
+                            <Loader size={16} className="animate-spin" />
+                        ) : (
+                            <FileText size={16} />
+                        )}
+                        <span className="hidden sm:inline">
+                            {isExportingPdf ? 'Exporting...' : 'PDF All'}
+                        </span>
+                    </button>
+                )}
 
                 {/* Download Button */}
                 {slidesCount > 0 && (

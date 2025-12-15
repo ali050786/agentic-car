@@ -1,18 +1,11 @@
-/**
- * App Component - Phase 6 Complete
- * 
- * Main application with public carousel viewing and sharing.
- * 
- * Location: src/App.tsx
- */
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCarouselStore } from './store/useCarouselStore';
 import { useAuthStore } from './store/useAuthStore';
 import { runAgentWorkflow } from './core/agents/MainAgent';
 import { CarouselPreview } from './components/CarouselPreview';
 import { downloadAllSvgs } from './utils/downloadUtils';
+import { exportAllSlidesToPdf } from './utils/pdfExportAll';
 import { UserMenu } from './components/UserMenu';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { updateCarouselContent, Carousel } from './services/carouselService';
@@ -103,6 +96,7 @@ const CarouselGenerator: React.FC = () => {
   const [localTopic, setLocalTopic] = useState('');
   const [currentCarouselId, setCurrentCarouselId] = useState<string | null>(null);
   const [editingCarousel, setEditingCarousel] = useState<Carousel | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // Load carousel if navigating from library with edit mode
   useEffect(() => {
@@ -216,6 +210,41 @@ const CarouselGenerator: React.FC = () => {
     downloadAllSvgs(slides, selectedTemplate);
   };
 
+  const handleDownloadAllPdf = async () => {
+    // Directly query all slide preview containers
+    const slideContainers = document.querySelectorAll('.svg-preview-container');
+
+    if (slideContainers.length === 0) {
+      alert('No slide elements found. Please ensure slides are generated.');
+      return;
+    }
+
+    if (slideContainers.length !== slides.length) {
+      alert(`Expected ${slides.length} slides but found ${slideContainers.length} in DOM. Please refresh and try again.`);
+      return;
+    }
+
+    const slideElements = Array.from(slideContainers) as HTMLElement[];
+
+    console.log('Found', slideElements.length, 'slide elements for PDF export');
+
+    setIsExportingPdf(true);
+    try {
+      await exportAllSlidesToPdf(
+        slideElements,
+        selectedFormat,
+        (current, total) => {
+          console.log(`Exporting slide ${current}/${total}`);
+        }
+      );
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+      alert('Failed to export PDF. Please try again.');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   const handleNewCarousel = () => {
     // Clear edit mode and start fresh
     setEditingCarousel(null);
@@ -233,6 +262,8 @@ const CarouselGenerator: React.FC = () => {
         hasUser={!!user}
         saveStatus={saveStatus}
         onDownload={handleDownload}
+        onDownloadPdf={handleDownloadAllPdf}
+        isExportingPdf={isExportingPdf}
       />
 
       {/* Floating Left Sidebar */}

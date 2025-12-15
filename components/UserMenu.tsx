@@ -22,7 +22,7 @@ import {
 
 export const UserMenu: React.FC = () => {
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuthStore();
+  const { user, signOut } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [carouselCount, setCarouselCount] = useState<number>(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -63,9 +63,9 @@ export const UserMenu: React.FC = () => {
 
   if (!user) return null;
 
-  const displayName = getDisplayName(profile?.full_name || null, user.email || '');
-  const initials = getUserInitials(profile?.full_name || user.email || '');
-  const avatarUrl = profile?.avatar_url;
+  const displayName = getDisplayName(user.name || null, user.email || '');
+  const initials = getUserInitials(user.name || user.email || '');
+  const avatarUrl = null; // Avatar URL not currently stored in auth state
 
   return (
     <div className="relative" ref={menuRef}>
