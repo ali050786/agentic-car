@@ -15,7 +15,6 @@ import { CarouselPreview } from './components/CarouselPreview';
 import { downloadAllSvgs } from './utils/downloadUtils';
 import { UserMenu } from './components/UserMenu';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { SaveCarouselModal } from './components/SaveCarouselModal';
 import { updateCarouselContent, Carousel } from './services/carouselService';
 import { dbToAppTemplate } from './utils/templateConverter';
 import { ThemeSelector } from './components/ThemeSelector';
@@ -24,6 +23,7 @@ import { FormatSelector } from './components/FormatSelector';
 import { PatternSelector } from './components/PatternSelector';
 import { resolveTheme } from './utils/brandUtils';
 import { getPresetById } from './config/colorPresets';
+import { useAutoSave } from './hooks/useAutoSave';
 
 // Auth Pages
 import { SignUp } from './pages/SignUp';
@@ -69,37 +69,74 @@ const CarouselGenerator: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { topic, setTopic, selectedTemplate, setTemplate, selectedModel, setModel, selectedFormat, setFormat, isGenerating, error, slides, setSlides, activePresetId, setActivePreset, setTheme, updateSlide, selectedSlideIndex, setSelectedSlideIndex, bottomToolExpanded, setBottomToolExpanded, rightPanelOpen, setRightPanelOpen } = useCarouselStore();
+  const {
+    topic,
+    setTopic,
+    selectedTemplate,
+    setTemplate,
+    selectedModel,
+    setModel,
+    selectedFormat,
+    setFormat,
+    isGenerating,
+    error,
+    slides,
+    setSlides,
+    activePresetId,
+    setActivePreset,
+    setTheme,
+    updateSlide,
+    selectedSlideIndex,
+    setSelectedSlideIndex,
+    bottomToolExpanded,
+    setBottomToolExpanded,
+    rightPanelOpen,
+    setRightPanelOpen,
+    selectedPattern,
+    setPattern,
+    patternOpacity,
+    setPatternOpacity,
+    branding,
+    setBranding
+  } = useCarouselStore();
 
   const [localTopic, setLocalTopic] = useState('');
-  const [showSaveModal, setShowSaveModal] = useState(false);
-
-  // Edit mode state
-  const [editMode, setEditMode] = useState(false);
+  const [currentCarouselId, setCurrentCarouselId] = useState<string | null>(null);
   const [editingCarousel, setEditingCarousel] = useState<Carousel | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Load carousel if navigating from library with edit mode
   useEffect(() => {
     const state = location.state as any;
     if (state?.editMode && state?.carousel) {
       const carousel = state.carousel;
-      setEditMode(true);
       setEditingCarousel(carousel);
+      setCurrentCarouselId(carousel.$id);
       setLocalTopic(carousel.title || '');
       setTopic(carousel.title || '');
-      setTemplate(dbToAppTemplate(carousel.template_type));
+      setTemplate(dbToAppTemplate(carousel.templateType));
       setSlides(carousel.slides as any);
 
       // Restore the color preset if it was saved
-      if (carousel.preset_id) {
-        setActivePreset(carousel.preset_id);
+      if (carousel.presetId) {
+        setActivePreset(carousel.presetId);
       }
 
       // Restore the format if it was saved
       if (carousel.format) {
         setFormat(carousel.format);
+      }
+
+      // Restore pattern and opacity if saved
+      if (carousel.selectedPattern !== undefined) {
+        setPattern(carousel.selectedPattern);
+      }
+      if (carousel.patternOpacity !== undefined) {
+        setPatternOpacity(carousel.patternOpacity);
+      }
+
+      // Restore branding if saved
+      if (carousel.branding) {
+        setBranding(carousel.branding);
       }
 
       // Clear the state so refresh doesn't reload
@@ -141,42 +178,7 @@ const CarouselGenerator: React.FC = () => {
     setLocalTopic(random);
   };
 
-  const handleDownload = () => {
-    downloadAllSvgs(slides, selectedTemplate);
-  };
-
-  const handleSaveClick = () => {
-    if (slides.length > 0 && user) {
-      setShowSaveModal(true);
-    }
-  };
-
-  const handleSaveChanges = async () => {
-    if (!editingCarousel || !user) return;
-
-    setIsSaving(true);
-
-    const theme = editingCarousel.theme;
-    const { data, error } = await updateCarouselContent(editingCarousel.$id, theme, slides);
-
-    setIsSaving(false);
-
-    if (!error) {
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-    }
-  };
-
-  const handleNewCarousel = () => {
-    // Clear edit mode and start fresh
-    setEditMode(false);
-    setEditingCarousel(null);
-    setLocalTopic('');
-    setTopic('');
-    setSlides([]);
-    setSaveSuccess(false);
-  };
-
+  // Helper to get theme for auto-save
   const getTheme = () => {
     if (editingCarousel?.theme) {
       return editingCarousel.theme;
@@ -187,23 +189,55 @@ const CarouselGenerator: React.FC = () => {
       : { background: '#ffffff', textColor: '#000000', accentColor: '#8b5cf6' };
   };
 
+  // Auto-save hook integration
+  const { saveStatus, currentCarouselId: autoSavedId, errorMessage } = useAutoSave({
+    carouselId: editingCarousel?.$id || currentCarouselId,
+    slides,
+    theme: getTheme(),
+    topic: topic || localTopic,
+    userId: user?.$id || '',
+    templateType: selectedTemplate,
+    presetId: activePresetId,
+    format: selectedFormat,
+    selectedPattern,
+    patternOpacity,
+    branding
+  });
+
+  // Watch auto-saved ID and update local state
+  useEffect(() => {
+    if (autoSavedId && autoSavedId !== currentCarouselId) {
+      console.log('[App] Carousel auto-saved with ID:', autoSavedId);
+      setCurrentCarouselId(autoSavedId);
+    }
+  }, [autoSavedId]);
+
+  const handleDownload = () => {
+    downloadAllSvgs(slides, selectedTemplate);
+  };
+
+  const handleNewCarousel = () => {
+    // Clear edit mode and start fresh
+    setEditingCarousel(null);
+    setCurrentCarouselId(null);
+    setLocalTopic('');
+    setTopic('');
+    setSlides([]);
+  };
+
   return (
     <div className="h-screen bg-neutral-950 relative">
       {/* Floating Top Bar */}
       <FloatingTopBar
-        editMode={editMode}
-        saveSuccess={saveSuccess}
-        isSaving={isSaving}
         slidesCount={slides.length}
         hasUser={!!user}
-        onSave={editMode ? undefined : handleSaveClick}
-        onSaveChanges={editMode ? handleSaveChanges : undefined}
+        saveStatus={saveStatus}
         onDownload={handleDownload}
       />
 
       {/* Floating Left Sidebar */}
       <FloatingSidebar
-        editMode={editMode}
+        editMode={!!editingCarousel}
         editingCarousel={editingCarousel}
         localTopic={localTopic}
         setLocalTopic={setLocalTopic}
@@ -241,18 +275,6 @@ const CarouselGenerator: React.FC = () => {
         onSave={(index, content) => {
           updateSlide(index, content);
         }}
-      />
-
-      {/* Save Modal */}
-      <SaveCarouselModal
-        isOpen={showSaveModal}
-        onClose={() => setShowSaveModal(false)}
-        templateType={selectedTemplate}
-        theme={getTheme()}
-        slides={slides}
-        presetId={activePresetId}
-        format={selectedFormat}
-        defaultTitle={localTopic}
       />
     </div>
   );

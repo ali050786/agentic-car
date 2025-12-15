@@ -13,6 +13,14 @@ import { Query } from 'appwrite';
 // TYPES
 // ============================================================================
 
+export interface BrandingConfig {
+  enabled: boolean;
+  name: string;
+  title: string;
+  imageUrl: string;
+  position: 'bottom-left' | 'top-left' | 'top-right';
+}
+
 export interface CarouselData {
   userId: string;
   title: string;
@@ -22,6 +30,9 @@ export interface CarouselData {
   presetId: string | null;
   isPublic: boolean;
   format: 'portrait' | 'square';
+  selectedPattern: number;           // Background pattern ID (1-12)
+  patternOpacity: number;             // Pattern opacity (0-1)
+  branding: BrandingConfig;           // Signature/branding config
 }
 
 export interface Carousel extends CarouselData {
@@ -29,6 +40,43 @@ export interface Carousel extends CarouselData {
   $createdAt: string;
   $updatedAt: string;
 }
+
+// ============================================================================
+// CUSTOM ERRORS
+// ============================================================================
+
+export class StorageLimitError extends Error {
+  constructor(message: string = 'Storage limit reached') {
+    super(message);
+    this.name = 'StorageLimitError';
+  }
+}
+
+// ============================================================================
+// LIMIT CHECKING
+// ============================================================================
+
+/**
+ * Check if user has reached carousel limit (5 carousels)
+ */
+export const checkCarouselLimit = async (userId: string): Promise<boolean> => {
+  try {
+    const { total } = await databases.listDocuments(
+      config.databaseId,
+      config.carouselsCollectionId,
+      [
+        Query.equal('userId', userId),
+        Query.limit(1) // We only need the count
+      ]
+    );
+
+    return total >= 5;
+  } catch (error) {
+    console.error('[checkCarouselLimit] Error:', error);
+    // If there's an error checking, allow the operation (fail open)
+    return false;
+  }
+};
 
 // ============================================================================
 // CREATE OPERATIONS
@@ -45,10 +93,26 @@ export const createCarousel = async (
   slides: any[],
   isPublic: boolean = false,
   presetId: string | null = null,
-  format: 'portrait' | 'square' = 'portrait'
+  format: 'portrait' | 'square' = 'portrait',
+  selectedPattern: number = 1,
+  patternOpacity: number = 0.2,
+  branding: BrandingConfig = {
+    enabled: true,
+    name: '',
+    title: '',
+    imageUrl: '',
+    position: 'bottom-left'
+  }
 ): Promise<{ data: Carousel | null; error: any }> => {
   try {
     console.log('[createCarousel] Starting save...', { userId, title, templateType });
+
+    // Check carousel limit before creating
+    const limitReached = await checkCarouselLimit(userId);
+    if (limitReached) {
+      console.warn('[createCarousel] User has reached carousel limit');
+      throw new StorageLimitError('You have reached the maximum of 5 carousels. Please delete old ones to save new work.');
+    }
 
     const carouselData = {
       userId,
@@ -59,6 +123,9 @@ export const createCarousel = async (
       presetId: presetId || null,
       isPublic,
       format,
+      selectedPattern,
+      patternOpacity,
+      branding: JSON.stringify(branding), // Store branding as JSON string
     };
 
     const document = await databases.createDocument(
@@ -75,12 +142,15 @@ export const createCarousel = async (
       ...document,
       theme: JSON.parse(document.theme as string),
       slides: JSON.parse(document.slides as string),
+      branding: JSON.parse(document.branding as string),
       userId: document.userId,
       title: document.title,
       templateType: document.templateType as 'template1' | 'template2',
       presetId: document.presetId,
       isPublic: document.isPublic,
-      format: (document.format as 'portrait' | 'square') || 'portrait', // Default to portrait for backwards compatibility
+      format: (document.format as 'portrait' | 'square') || 'portrait',
+      selectedPattern: document.selectedPattern || 1,
+      patternOpacity: document.patternOpacity || 0.2,
     };
 
     // Update user analytics (non-blocking)
@@ -174,12 +244,15 @@ export const getUserCarousels = async (
       ...doc,
       theme: JSON.parse(doc.theme as string),
       slides: JSON.parse(doc.slides as string),
+      branding: JSON.parse(doc.branding as string || '{}'),
       userId: doc.userId,
       title: doc.title,
       templateType: doc.templateType as 'template1' | 'template2',
       presetId: doc.presetId,
       isPublic: doc.isPublic,
       format: (doc.format as 'portrait' | 'square') || 'portrait',
+      selectedPattern: doc.selectedPattern || 1,
+      patternOpacity: doc.patternOpacity || 0.2,
     }));
 
     return { data: carousels, error: null };
@@ -206,12 +279,15 @@ export const getCarouselById = async (
       ...document,
       theme: JSON.parse(document.theme as string),
       slides: JSON.parse(document.slides as string),
+      branding: JSON.parse(document.branding as string || '{}'),
       userId: document.userId,
       title: document.title,
       templateType: document.templateType as 'template1' | 'template2',
       presetId: document.presetId,
       isPublic: document.isPublic,
       format: (document.format as 'portrait' | 'square') || 'portrait',
+      selectedPattern: document.selectedPattern || 1,
+      patternOpacity: document.patternOpacity || 0.2,
     };
 
     return { data: carousel, error: null };
@@ -243,12 +319,15 @@ export const searchUserCarousels = async (
       ...doc,
       theme: JSON.parse(doc.theme as string),
       slides: JSON.parse(doc.slides as string),
+      branding: JSON.parse(doc.branding as string || '{}'),
       userId: doc.userId,
       title: doc.title,
       templateType: doc.templateType as 'template1' | 'template2',
       presetId: doc.presetId,
       isPublic: doc.isPublic,
       format: (doc.format as 'portrait' | 'square') || 'portrait',
+      selectedPattern: doc.selectedPattern || 1,
+      patternOpacity: doc.patternOpacity || 0.2,
     }));
 
     return { data: carousels, error: null };
@@ -274,6 +353,7 @@ export const updateCarousel = async (
     const updateData: any = { ...updates };
     if (updates.theme) updateData.theme = JSON.stringify(updates.theme);
     if (updates.slides) updateData.slides = JSON.stringify(updates.slides);
+    if (updates.branding) updateData.branding = JSON.stringify(updates.branding);
 
     const document = await databases.updateDocument(
       config.databaseId,
@@ -286,12 +366,15 @@ export const updateCarousel = async (
       ...document,
       theme: JSON.parse(document.theme as string),
       slides: JSON.parse(document.slides as string),
+      branding: JSON.parse(document.branding as string || '{}'),
       userId: document.userId,
       title: document.title,
       templateType: document.templateType as 'template1' | 'template2',
       presetId: document.presetId,
       isPublic: document.isPublic,
       format: (document.format as 'portrait' | 'square') || 'portrait',
+      selectedPattern: document.selectedPattern || 1,
+      patternOpacity: document.patternOpacity || 0.2,
     };
 
     return { data: carousel, error: null };
@@ -312,14 +395,27 @@ export const updateCarouselTitle = async (
 };
 
 /**
- * Update carousel content (theme and slides)
+ * Update carousel content (theme, slides, pattern, branding, template, preset, format)
  */
 export const updateCarouselContent = async (
   carouselId: string,
   theme: any,
-  slides: any[]
+  slides: any[],
+  selectedPattern?: number,
+  patternOpacity?: number,
+  branding?: BrandingConfig,
+  templateType?: 'template1' | 'template2',
+  presetId?: string | null,
+  format?: 'portrait' | 'square'
 ): Promise<{ data: Carousel | null; error: any }> => {
-  return updateCarousel(carouselId, { theme, slides });
+  const updates: Partial<CarouselData> = { theme, slides };
+  if (selectedPattern !== undefined) updates.selectedPattern = selectedPattern;
+  if (patternOpacity !== undefined) updates.patternOpacity = patternOpacity;
+  if (branding !== undefined) updates.branding = branding;
+  if (templateType !== undefined) updates.templateType = templateType;
+  if (presetId !== undefined) updates.presetId = presetId;
+  if (format !== undefined) updates.format = format;
+  return updateCarousel(carouselId, updates);
 };
 
 /**
@@ -462,4 +558,5 @@ export default {
   deleteCarousels,
   getUserAnalytics,
   duplicateCarousel,
+  checkCarouselLimit,
 };

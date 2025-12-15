@@ -15,8 +15,8 @@ export const T1_HERO_SVG = `
 <svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg">
   ${COMMON_DEFS}
   
-  <rect x="0" y="0" width="1080" height="1380"  opacity="0.2" fill="var(--background)"/>
-  <rect x="0" y="0" width="1080" height="1380"  opacity="0.2" fill="url(#bgPattern)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
   
   <!-- Decorative Lines -->
   <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>

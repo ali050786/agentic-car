@@ -10,19 +10,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { getUserCarousels } from '../services/carouselService';
 import { getUserInitials, getDisplayName } from '../utils/authUtils';
-import { 
-  User, 
-  LogOut, 
+import {
+  User,
+  LogOut,
   ChevronDown,
   Settings,
-  HelpCircle 
+  HelpCircle
 } from 'lucide-react';
 
 export const UserMenu: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
+  const [carouselCount, setCarouselCount] = useState<number>(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -36,6 +38,22 @@ export const UserMenu: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Fetch carousel count
+  useEffect(() => {
+    const fetchCarouselCount = async () => {
+      if (user?.$id) {
+        const { data } = await getUserCarousels(user.$id);
+        if (data) {
+          setCarouselCount(data.length);
+        }
+      }
+    };
+
+    if (isOpen) {
+      fetchCarouselCount();
+    }
+  }, [user, isOpen]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -71,8 +89,8 @@ export const UserMenu: React.FC = () => {
           <div className="text-xs text-neutral-400">{user.email}</div>
         </div>
 
-        <ChevronDown 
-          size={16} 
+        <ChevronDown
+          size={16}
           className={`text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
@@ -93,6 +111,10 @@ export const UserMenu: React.FC = () => {
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-white truncate">{displayName}</div>
                 <div className="text-xs text-neutral-400 truncate">{user.email}</div>
+                <div className={`text-xs mt-1 font-medium ${carouselCount >= 5 ? 'text-red-400' : 'text-neutral-500'
+                  }`}>
+                  Usage: {carouselCount}/5 carousels
+                </div>
               </div>
             </div>
           </div>
