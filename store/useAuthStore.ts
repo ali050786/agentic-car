@@ -9,7 +9,7 @@
 
 import { create } from 'zustand';
 import { account, AppwriteUser } from '../lib/appwriteClient';
-import { Models } from 'appwrite';
+import { Models, OAuthProvider } from 'appwrite';
 
 // ============================================================================
 // TYPES
@@ -45,6 +45,7 @@ interface AuthState {
   initialize: () => Promise<void>;
   signUp: (data: SignUpData) => Promise<AuthResponse>;
   signIn: (data: SignInData) => Promise<AuthResponse>;
+  signInWithGoogle: () => Promise<AuthResponse>;
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<AuthResponse>;
   refreshSession: () => Promise<void>;
@@ -143,6 +144,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error: any) {
       return {
         error: { message: error.message || 'An error occurred during sign in' },
+        success: false
+      };
+    }
+  },
+
+  // ============================================================================
+  // GOOGLE OAUTH - Sign in with Google
+  // ============================================================================
+
+  signInWithGoogle: async () => {
+    try {
+      // Get current URL for redirect
+      const currentUrl = window.location.origin;
+      const successUrl = `${currentUrl}/auth/callback`;
+      const failureUrl = `${currentUrl}/login?error=oauth_failed`;
+
+      // Create OAuth2 session with Google
+      account.createOAuth2Session(
+        OAuthProvider.Google,
+        successUrl,
+        failureUrl
+      );
+
+      // The redirect happens automatically, so we return success
+      // The actual auth state will be updated after redirect
+      return { error: null, success: true };
+    } catch (error: any) {
+      return {
+        error: { message: error.message || 'An error occurred with Google sign in' },
         success: false
       };
     }

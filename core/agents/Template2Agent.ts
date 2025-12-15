@@ -1,5 +1,6 @@
 import { generateContentFromAgent } from '../../services/geminiService';
 import { SlideContent, CarouselTheme } from '../../types';
+import { AgentContext } from './MainAgent';
 
 const T2_SCHEMA = {
   type: 'object',
@@ -39,15 +40,51 @@ const T2_SCHEMA = {
   required: ['slides']
 };
 
+// Helper to format input mode for display
+const formatContextType = (inputMode: string): string => {
+  const typeMap: { [key: string]: string } = {
+    topic: 'Topic/Idea',
+    text: 'Article/Text',
+    url: 'Web URL',
+    video: 'Video Transcript',
+    pdf: 'PDF Document'
+  };
+  return typeMap[inputMode] || inputMode;
+};
+
 export const Template2Agent = {
   id: 'template-2',
   name: 'The Clarity',
 
-  generate: async (topic: string): Promise<{ slides: SlideContent[], theme: CarouselTheme }> => {
+  generate: async (context: AgentContext): Promise<{ slides: SlideContent[], theme: CarouselTheme }> => {
+    const { inputMode, sourceContent, customInstructions, outputLanguage, slideCount } = context;
+
     const prompt = `
       You are the "Clarity" Agent. You create modern, tech-forward LinkedIn carousels.
-      Topic: "${topic}"
-
+      
+      ═══════════════════════════════════════════════════════════════════════
+      CONTEXT INFORMATION
+      ═══════════════════════════════════════════════════════════════════════
+      CONTEXT_TYPE: ${formatContextType(inputMode)}
+      TARGET_LANGUAGE: ${outputLanguage}
+      SLIDE_COUNT: ${slideCount} slides (must generate exactly ${slideCount} slides)
+      ${customInstructions ? `USER_INSTRUCTIONS: ${customInstructions}` : ''}
+      
+      SOURCE_MATERIAL:
+      """
+      ${sourceContent}
+      """
+      
+      ═══════════════════════════════════════════════════════════════════════
+      CRITICAL INSTRUCTION - SOURCE MATERIAL ADHERENCE
+      ═══════════════════════════════════════════════════════════════════════
+      If SOURCE_MATERIAL is provided above, you MUST:
+      - STRICTLY base the carousel content on that material
+      - Extract key points, facts, and narratives directly from the source
+      - Do NOT hallucinate or add outside facts unless absolutely necessary to fill gaps
+      - Maintain the core message and tone of the source material
+      - If the source is insufficient, acknowledge gaps rather than inventing information
+      
       Design Constraints:
       - Tone: Educational, professional, clean, optimistic.
       - **Color Design System**: You MUST generate a palette matching these exact variables:
@@ -58,10 +95,11 @@ export const Template2Agent = {
         5. bgGradStart & bgGradEnd: Colors for the subtle radial gradient overlay.
       
       Instructions:
-      1. Create a helpful, educational guide between 5 and 10 slides long.
+      1. Create a helpful, educational guide with EXACTLY ${slideCount} slides.
       2. **Slide 1 must be 'hero' variant**.
       3. **Last Slide must be 'closing' variant**.
       4. **Middle Slides**: Mix 'body' (for explanations) and 'list' (for actionable steps).
+      5. **Generate all content in ${outputLanguage}**.
       
       **CRITICAL - Headline Rule**:
       - Generate complete, impactful headlines in the headline field

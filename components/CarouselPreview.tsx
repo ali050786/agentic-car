@@ -2,109 +2,12 @@ import React, { useState } from 'react';
 import { useCarouselStore } from '../store/useCarouselStore';
 import { injectContentIntoSvg } from '../utils/svgInjector';
 import { optimizeSvgForFigma } from '../utils/figmaOptimizer';
-import { Edit2, Download, Check, X, RefreshCw, Copy, CheckCircle } from 'lucide-react';
+import { Edit2, Download, RefreshCw, Copy, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SlideContent } from '../types';
-
-const SlideEditor: React.FC<{
-  slide: SlideContent;
-  onSave: (c: Partial<SlideContent>) => void;
-  onCancel: () => void
-}> = ({ slide, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ ...slide });
-
-  const handleChange = (field: keyof SlideContent, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleListChange = (index: number, value: string) => {
-    const newList = [...(formData.listItems || [])];
-    const currentItem = newList[index];
-    // If the current item is an object, preserve the structure
-    if (typeof currentItem === 'object' && currentItem !== null) {
-      newList[index] = { ...currentItem, bullet: value };
-    } else {
-      newList[index] = value;
-    }
-    setFormData(prev => ({ ...prev, listItems: newList }));
-  };
-
-  return (
-    <div className="absolute inset-0 bg-neutral-900/95 backdrop-blur-sm z-10 p-4 flex flex-col gap-3 overflow-y-auto border border-blue-500/50 rounded-lg">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-white font-bold text-sm uppercase">Edit Slide</h3>
-        <button onClick={onCancel} className="p-1 hover:bg-white/10 rounded"><X size={16} /></button>
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <label className="text-xs text-neutral-400 block mb-1">Preheader</label>
-          <input
-            value={formData.preHeader || ''}
-            onChange={(e) => handleChange('preHeader', e.target.value)}
-            className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-neutral-400 block mb-1">Headline</label>
-          <input
-            value={formData.headline}
-            onChange={(e) => handleChange('headline', e.target.value)}
-            className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white font-bold"
-          />
-        </div>
-
-        {formData.variant !== 'list' && (
-          <div>
-            <label className="text-xs text-neutral-400 block mb-1">Body Text</label>
-            <textarea
-              value={formData.body || ''}
-              onChange={(e) => handleChange('body', e.target.value)}
-              className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white h-20"
-            />
-          </div>
-        )}
-
-        {formData.variant === 'list' && (
-          <div>
-            <label className="text-xs text-neutral-400 block mb-1">List Items</label>
-            <div className="space-y-2">
-              {formData.listItems?.map((item, idx) => (
-                <input
-                  key={idx}
-                  value={typeof item === 'object' && item !== null ? item.bullet : item}
-                  onChange={(e) => handleListChange(idx, e.target.value)}
-                  className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white"
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div>
-          <label className="text-xs text-neutral-400 block mb-1">Footer</label>
-          <input
-            value={formData.footer || ''}
-            onChange={(e) => handleChange('footer', e.target.value)}
-            className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white"
-          />
-        </div>
-      </div>
-
-      <div className="mt-auto pt-4 flex gap-2">
-        <button
-          onClick={() => onSave(formData)}
-          className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded text-sm font-medium flex items-center justify-center gap-2"
-        >
-          <Check size={14} /> Save
-        </button>
-      </div>
-    </div>
-  );
-};
+import { ViewModeToggle } from './ViewModeToggle';
 
 export const CarouselPreview: React.FC = () => {
-  const { slides, selectedTemplate, selectedFormat, selectedPattern, isGenerating, updateSlide, theme, branding } = useCarouselStore();
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const { slides, selectedTemplate, selectedFormat, selectedPattern, patternOpacity, isGenerating, theme, branding, selectedSlideIndex, setSelectedSlideIndex, setRightPanelOpen, viewMode } = useCarouselStore();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isCopying, setIsCopying] = useState(false);
 
@@ -113,7 +16,7 @@ export const CarouselPreview: React.FC = () => {
 
     try {
       // Generate SVG (Synchronous Native Generator)
-      const optimizedSvg = await optimizeSvgForFigma(slide, theme, selectedTemplate, selectedFormat, branding, selectedPattern);
+      const optimizedSvg = await optimizeSvgForFigma(slide, theme, selectedTemplate, selectedFormat, branding, selectedPattern, patternOpacity);
 
       await navigator.clipboard.writeText(optimizedSvg);
       setCopiedIndex(index);
@@ -122,6 +25,31 @@ export const CarouselPreview: React.FC = () => {
       console.error("Failed to copy", err);
     } finally {
       setIsCopying(false);
+    }
+  };
+
+  const handleSlideClick = (index: number) => {
+    setSelectedSlideIndex(index);
+    setRightPanelOpen(true);
+  };
+
+  const handleFocusSlideClick = (index: number) => {
+    setSelectedSlideIndex(index);
+  };
+
+  const handlePrevSlide = () => {
+    if (selectedSlideIndex === null) {
+      setSelectedSlideIndex(0);
+    } else {
+      setSelectedSlideIndex(selectedSlideIndex > 0 ? selectedSlideIndex - 1 : slides.length - 1);
+    }
+  };
+
+  const handleNextSlide = () => {
+    if (selectedSlideIndex === null) {
+      setSelectedSlideIndex(0);
+    } else {
+      setSelectedSlideIndex(selectedSlideIndex < slides.length - 1 ? selectedSlideIndex + 1 : 0);
     }
   };
 
@@ -147,85 +75,247 @@ export const CarouselPreview: React.FC = () => {
     );
   }
 
-  return (
-    <div className="w-full h-full overflow-y-auto bg-neutral-900 p-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
-        {slides.map((slide, index) => {
-          // Preview with carousel-level branding
-          const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, branding, selectedFormat, selectedPattern);
-          const isEditing = editingIndex === index;
-          const isCopied = copiedIndex === index;
+  // Focus View - 3D Carousel
+  if (viewMode === 'focus') {
+    const centerIndex = selectedSlideIndex ?? 0;
 
-          return (
-            <div key={index} className="flex flex-col gap-3 group relative">
-              {/* Header */}
-              <div className="flex justify-between items-center px-1">
-                <span className="text-xs text-white/40 font-mono uppercase tracking-widest">
-                  Slide 0{index + 1}
-                </span>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => setEditingIndex(index)}
-                    className="p-1.5 bg-neutral-800 hover:bg-blue-600 text-white rounded-md transition-colors"
-                    title="Edit Content"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    onClick={() => handleCopy(slide, index)}
-                    disabled={isCopying}
-                    className={`p-1.5 rounded-md transition-all flex items-center gap-1 ${isCopied
-                      ? 'bg-green-600 text-white'
-                      : 'bg-neutral-800 hover:bg-purple-600 text-white'
-                      }`}
-                    title="Copy optimized SVG for Figma"
-                  >
-                    {isCopied ? <CheckCircle size={14} /> : <Copy size={14} />}
-                    {isCopied && <span className="text-[10px] font-bold px-1">COPIED</span>}
-                  </button>
-                </div>
-              </div>
+    return (
+      <div className="w-full h-full flex flex-col">
+        {/* Header with View Toggle */}
+        <div className="flex justify-between items-center px-8 py-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-white/60">
+              {slides.length} slide{slides.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          <ViewModeToggle />
+        </div>
 
-              {/* Card Container */}
-              <div className={`relative ${selectedFormat === 'square' ? 'aspect-square' : 'aspect-[4/5]'} w-full bg-black shadow-2xl rounded-xl overflow-hidden border border-white/10 group-hover:border-white/20 transition-all`}>
-                {/* SVG Render (DOM) */}
+        {/* 3D Carousel Container */}
+        <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+          <div
+            className="relative w-full h-full flex items-center justify-center"
+            style={{
+              perspective: '2000px',
+              perspectiveOrigin: '50% 50%'
+            }}
+          >
+            {slides.map((slide, index) => {
+              const offset = index - centerIndex;
+              const absOffset = Math.abs(offset);
+
+              // Only show slides within range
+              if (absOffset > 2) return null;
+
+              const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, branding, selectedFormat, selectedPattern, patternOpacity);
+              const isCenter = offset === 0;
+              const isCopied = copiedIndex === index;
+
+              // Calculate transforms
+              const translateX = offset * 45; // Percentage
+              const translateZ = isCenter ? 0 : -300 - (absOffset - 1) * 100;
+              const rotateY = offset * -25; // Degrees
+              const scale = isCenter ? 1 : 0.75 - (absOffset - 1) * 0.1;
+              const opacity = isCenter ? 1 : 0.5 - (absOffset - 1) * 0.2;
+
+              return (
                 <div
-                  className="w-full h-full flex items-center justify-center"
+                  key={index}
+                  className="absolute transition-all duration-500 ease-out cursor-pointer"
                   style={{
-                    overflow: 'hidden'
+                    transform: `translateX(${translateX}%) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
+                    opacity: opacity,
+                    zIndex: isCenter ? 20 : 10 - absOffset,
+                    width: selectedFormat === 'square' ? '400px' : '432px',
+                    height: selectedFormat === 'square' ? '400px' : '540px',
                   }}
+                  onClick={() => handleFocusSlideClick(index)}
                 >
-                  <style>
-                    {`
-                      .svg-preview-container svg {
-                        max-width: 100%;
-                        max-height: 100%;
-                        width: auto;
-                        height: auto;
-                      }
-                    `}
-                  </style>
-                  <div
-                    className="svg-preview-container w-full h-full flex items-center justify-center"
-                    dangerouslySetInnerHTML={{ __html: svgString }}
-                  />
+                  {/* Slide Card */}
+                  <div className={`relative w-full h-full bg-black shadow-2xl rounded-xl overflow-hidden border transition-all ${isCenter ? 'border-blue-500 ring-2 ring-blue-500/50' : 'border-white/10'
+                    }`}>
+                    {/* Slide Number & Actions - Only show on center slide */}
+                    {isCenter && (
+                      <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black/80 to-transparent">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-white/60 font-mono uppercase tracking-widest">
+                            Slide {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSlideClick(index);
+                              }}
+                              className="p-1.5 bg-neutral-800/80 hover:bg-blue-600 text-white rounded-md transition-colors backdrop-blur-sm"
+                              title="Edit Content"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopy(slide, index);
+                              }}
+                              disabled={isCopying}
+                              className={`p-1.5 rounded-md transition-all flex items-center gap-1 backdrop-blur-sm ${isCopied
+                                ? 'bg-green-600 text-white'
+                                : 'bg-neutral-800/80 hover:bg-purple-600 text-white'
+                                }`}
+                              title="Copy optimized SVG for Figma"
+                            >
+                              {isCopied ? <CheckCircle size={14} /> : <Copy size={14} />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SVG Render */}
+                    <div className="w-full h-full flex items-center justify-center" style={{ overflow: 'hidden' }}>
+                      <style>
+                        {`
+                          .svg-preview-container svg {
+                            max-width: 100%;
+                            max-height: 100%;
+                            width: auto;
+                            height: auto;
+                          }
+                        `}
+                      </style>
+                      <div
+                        className="svg-preview-container w-full h-full flex items-center justify-center"
+                        dangerouslySetInnerHTML={{ __html: svgString }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Navigation Arrows */}
+          <button
+            onClick={handlePrevSlide}
+            className="absolute left-8 top-1/2 -translate-y-1/2 z-30 p-3 bg-neutral-900/80 hover:bg-neutral-800 border border-white/10 rounded-full transition-all backdrop-blur-sm group"
+            title="Previous Slide"
+          >
+            <ChevronLeft size={24} className="text-white/60 group-hover:text-white" />
+          </button>
+          <button
+            onClick={handleNextSlide}
+            className="absolute right-8 top-1/2 -translate-y-1/2 z-30 p-3 bg-neutral-900/80 hover:bg-neutral-800 border border-white/10 rounded-full transition-all backdrop-blur-sm group"
+            title="Next Slide"
+          >
+            <ChevronRight size={24} className="text-white/60 group-hover:text-white" />
+          </button>
+        </div>
+
+        {/* Bottom Indicator */}
+        <div className="flex justify-center items-center gap-2 py-6">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setSelectedSlideIndex(index)}
+              className={`h-1.5 rounded-full transition-all ${index === centerIndex
+                ? 'w-8 bg-blue-500'
+                : 'w-1.5 bg-white/20 hover:bg-white/40'
+                }`}
+              title={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Grid View (Original)
+  return (
+    <div className="w-full h-full flex flex-col">
+      {/* Header with View Toggle */}
+      <div className="flex justify-between items-center px-8 py-4">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-white/60">
+            {slides.length} slide{slides.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+        <ViewModeToggle />
+      </div>
+
+      {/* Grid */}
+      <div className="flex-1 overflow-y-auto px-8 pb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
+          {slides.map((slide, index) => {
+            // Preview with carousel-level branding
+            const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, branding, selectedFormat, selectedPattern, patternOpacity);
+            const isSelected = selectedSlideIndex === index;
+            const isCopied = copiedIndex === index;
+
+            return (
+              <div key={index} className="flex flex-col gap-3 group relative">
+                {/* Header */}
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-xs text-white/40 font-mono uppercase tracking-widest">
+                    Slide 0{index + 1}
+                  </span>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleSlideClick(index)}
+                      className="p-1.5 bg-neutral-800 hover:bg-blue-600 text-white rounded-md transition-colors"
+                      title="Edit Content"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleCopy(slide, index)}
+                      disabled={isCopying}
+                      className={`p-1.5 rounded-md transition-all flex items-center gap-1 ${isCopied
+                        ? 'bg-green-600 text-white'
+                        : 'bg-neutral-800 hover:bg-purple-600 text-white'
+                        }`}
+                      title="Copy optimized SVG for Figma"
+                    >
+                      {isCopied ? <CheckCircle size={14} /> : <Copy size={14} />}
+                      {isCopied && <span className="text-[10px] font-bold px-1">COPIED</span>}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Edit Overlay */}
-                {isEditing && (
-                  <SlideEditor
-                    slide={slide}
-                    onCancel={() => setEditingIndex(null)}
-                    onSave={(newContent) => {
-                      updateSlide(index, newContent);
-                      setEditingIndex(null);
+                {/* Card Container */}
+                <div
+                  className={`relative ${selectedFormat === 'square' ? 'aspect-square' : 'aspect-[4/5]'} w-full bg-black shadow-2xl rounded-xl overflow-hidden border transition-all cursor-pointer ${isSelected
+                    ? 'border-blue-500 ring-2 ring-blue-500/50'
+                    : 'border-white/10 group-hover:border-white/20'
+                    }`}
+                  onClick={() => handleSlideClick(index)}
+                >
+                  {/* SVG Render (DOM) */}
+                  <div
+                    className="w-full h-full flex items-center justify-center"
+                    style={{
+                      overflow: 'hidden'
                     }}
-                  />
-                )}
+                  >
+                    <style>
+                      {`
+                        .svg-preview-container svg {
+                          max-width: 100%;
+                          max-height: 100%;
+                          width: auto;
+                          height: auto;
+                        }
+                      `}
+                    </style>
+                    <div
+                      className="svg-preview-container w-full h-full flex items-center justify-center"
+                      dangerouslySetInnerHTML={{ __html: svgString }}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -96,7 +96,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
             return res.end(JSON.stringify({ error: 'Missing OPENROUTER_API_KEY' }));
           }
 
-          console.log('[ai-proxy] Using OpenRouter Gemini 2.0 Flash');
+          console.log('[ai-proxy] Using OpenRouter DeepSeek R1T Chimera');
 
           const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. You MUST respond with ONLY valid JSON. No comments, no extra text, no markdown code blocks. Pure JSON only.';
 
@@ -109,7 +109,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'google/gemini-2.0-flash-exp:free',
+              model: 'tngtech/deepseek-r1t-chimera:free',
               messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: prompt }
@@ -188,16 +188,18 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      proxy: {
+        '/api/youtube-transcript': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+        }
+      }
     },
     plugins: [react(), aiModelProxyPlugin(env)],
     define: {
       // AI Model API Keys
       'process.env.CLAUDE_API_KEY': JSON.stringify(env.CLAUDE_API_KEY || process.env.CLAUDE_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
-
-      // Supabase Configuration
-      'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL),
-      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY)
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY)
     },
     resolve: {
       alias: {

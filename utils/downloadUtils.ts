@@ -5,12 +5,12 @@ import { optimizeSvgForFigma } from './figmaOptimizer';
  * Trigger a download of the SVG file for a specific slide.
  */
 export const downloadSvg = async (slide: SlideContent, templateId: string, index: number, theme: CarouselTheme | null) => {
-  // Get selectedPattern from carousel store
+  // Get selectedPattern and patternOpacity from carousel store
   const { useCarouselStore } = await import('../store/useCarouselStore');
-  const selectedPattern = useCarouselStore.getState().selectedPattern;
+  const { selectedPattern, patternOpacity } = useCarouselStore.getState();
 
   // Use Satori to generate the clean SVG
-  const svgString = await optimizeSvgForFigma(slide, theme, templateId, undefined, undefined, selectedPattern);
+  const svgString = await optimizeSvgForFigma(slide, theme, templateId, undefined, undefined, selectedPattern, patternOpacity);
 
   const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);

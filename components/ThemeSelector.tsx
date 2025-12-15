@@ -73,7 +73,7 @@ export const ThemeSelector: React.FC = () => {
 
                 {/* Dropdown Menu */}
                 {isOpen && (
-                    <div className="absolute z-50 w-full mt-1 bg-neutral-800 border border-white/10 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
+                    <div className="absolute z-50 w-full bottom-full mb-1 bg-neutral-800 border border-white/10 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
                         {PRESETS.map((preset) => {
                             const isActive = activePresetId === preset.id;
 

@@ -182,7 +182,7 @@ export const T1_CTA_SVG_SQUARE = `
   <line x1="150" x2="150" y1="0" y2="1080" stroke="var(--background-2)" stroke-miterlimit="10"/>
   <line x1="788.35" y1="0" x2="788.35" y2="1080" stroke="var(--background-2)" stroke-miterlimit="10"/>
   
-  <foreignObject x="150" y="180" width="800" height="620">
+  <foreignObject x="150" y="180" width="780" height="620">
     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 40px;">
       
       <!-- Icon Circle (Closing - 80px) -->

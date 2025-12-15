@@ -230,7 +230,7 @@ SWIPE
 
 </svg>
 
-**Variant - 2 - Body**
+
 
 <?xml version="1.0" encoding="UTF-8"?>
 

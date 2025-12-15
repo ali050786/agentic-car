@@ -3,6 +3,7 @@ export type SlideVariant = 'hero' | 'body' | 'list' | 'cta' | 'closing';  // 'cl
 export type AIModel = 'groq-llama' | 'claude-haiku';
 export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';
 export type CarouselFormat = 'portrait' | 'square';
+export type ViewMode = 'focus' | 'grid';
 
 export interface BrandingConfig {
   enabled: boolean;
@@ -52,10 +53,18 @@ export interface CarouselState {
   selectedModel: string;
   selectedFormat: CarouselFormat;
   selectedPattern: number;  // Background pattern ID (1-12)
+  patternOpacity: number;   // User-controlled pattern opacity (0-1)
   slides: SlideContent[];
   theme: CarouselTheme | null;
   isGenerating: boolean;
   error: string | null;
+
+  // Multi-modal Input State
+  inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf';
+  slideCount: number;
+  customInstructions?: string;
+  outputLanguage: string;
+  sourceContent: string;
 
   // Brand Kit State
   activePresetId: string;
@@ -64,17 +73,31 @@ export interface CarouselState {
   // Branding (Signature Card) State
   branding: BrandingConfig;
 
+  // UI State for Floating Toolbars
+  selectedSlideIndex: number | null;
+  bottomToolExpanded: string | null;
+  rightPanelOpen: boolean;
+  viewMode: ViewMode;
+
   // Actions
   setTopic: (topic: string) => void;
   setTemplate: (selectedTemplate: TemplateId) => void;
   setModel: (selectedModel: string) => void;
   setFormat: (selectedFormat: CarouselFormat) => void;
   setPattern: (selectedPattern: number) => void;
+  setPatternOpacity: (opacity: number) => void;
   setGenerating: (isGenerating: boolean) => void;
   setError: (error: string | null) => void;
   setSlides: (slides: SlideContent[]) => void;
   setTheme: (theme: CarouselTheme) => void;
   updateSlide: (index: number, content: Partial<SlideContent>) => void;
+
+  // Multi-modal Input Actions
+  setInputMode: (inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf') => void;
+  setSlideCount: (slideCount: number) => void;
+  setCustomInstructions: (customInstructions: string) => void;
+  setOutputLanguage: (outputLanguage: string) => void;
+  setSourceContent: (sourceContent: string) => void;
 
   // Brand Kit Actions
   setActivePreset: (presetId: string | null) => void;
@@ -82,6 +105,12 @@ export interface CarouselState {
 
   // Branding Actions
   setBranding: (branding: Partial<BrandingConfig>) => void;
+
+  // UI Actions
+  setSelectedSlideIndex: (index: number | null) => void;
+  setBottomToolExpanded: (tool: string | null) => void;
+  setRightPanelOpen: (open: boolean) => void;
+  setViewMode: (mode: ViewMode) => void;
 }
 
 export interface TemplateAgent {

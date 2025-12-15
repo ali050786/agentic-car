@@ -1,5 +1,6 @@
 import { generateContentFromAgent } from '../../services/geminiService';
 import { SlideContent, CarouselTheme } from '../../types';
+import { AgentContext } from './MainAgent';
 
 // JSON Schema used for AI structured outputs (Claude/Groq)
 const T1_SCHEMA = {
@@ -38,15 +39,51 @@ const T1_SCHEMA = {
   required: ['slides']
 };
 
+// Helper to format input mode for display
+const formatContextType = (inputMode: string): string => {
+  const typeMap: { [key: string]: string } = {
+    topic: 'Topic/Idea',
+    text: 'Article/Text',
+    url: 'Web URL',
+    video: 'Video Transcript',
+    pdf: 'PDF Document'
+  };
+  return typeMap[inputMode] || inputMode;
+};
+
 export const Template1Agent = {
   id: 'template-1',
   name: 'The Truth',
 
-  generate: async (topic: string): Promise<{ slides: SlideContent[], theme: CarouselTheme }> => {
+  generate: async (context: AgentContext): Promise<{ slides: SlideContent[], theme: CarouselTheme }> => {
+    const { inputMode, sourceContent, customInstructions, outputLanguage, slideCount } = context;
+
     const prompt = `
       You are the "Truth" Agent. You create bold, industrial-style LinkedIn carousels.
-      Topic: "${topic}"
-
+      
+      ═══════════════════════════════════════════════════════════════════════
+      CONTEXT INFORMATION
+      ═══════════════════════════════════════════════════════════════════════
+      CONTEXT_TYPE: ${formatContextType(inputMode)}
+      TARGET_LANGUAGE: ${outputLanguage}
+      SLIDE_COUNT: ${slideCount} slides (must generate exactly ${slideCount} slides)
+      ${customInstructions ? `USER_INSTRUCTIONS: ${customInstructions}` : ''}
+      
+      SOURCE_MATERIAL:
+      """
+      ${sourceContent}
+      """
+      
+      ═══════════════════════════════════════════════════════════════════════
+      CRITICAL INSTRUCTION - SOURCE MATERIAL ADHERENCE
+      ═══════════════════════════════════════════════════════════════════════
+      If SOURCE_MATERIAL is provided above, you MUST:
+      - STRICTLY base the carousel content on that material
+      - Extract key points, facts, and narratives directly from the source
+      - Do NOT hallucinate or add outside facts unless absolutely necessary to fill gaps
+      - Maintain the core message and tone of the source material
+      - If the source is insufficient, acknowledge gaps rather than inventing information
+      
       Design Constraints:
       - Tone: Direct, slightly contrarian, authoritative.
       - Font styles: Bold headlines, punchy short body text.
@@ -55,10 +92,11 @@ export const Template1Agent = {
         - Use the topic to decide if the accent is Red (Warning), Blue (Tech), Green (Money), etc.
       
       Instructions:
-      1. Create a comprehensive narrative between 5 and 10 slides long.
+      1. Create a comprehensive narrative with EXACTLY ${slideCount} slides.
       2. **Slide 1 must be 'hero' variant**: A strong hook/title.
       3. **Last Slide must be 'closing' variant**: A strong takeaway/CTA.
       4. **Middle Slides**: Dynamically choose between 'body' (for concepts/definitions) and 'list' (for strategies/steps) based on the content flow.
+      5. **Generate all content in ${outputLanguage}**.
       
       **CRITICAL - Headline Rule**:
       - Generate complete, impactful headlines in the headline field

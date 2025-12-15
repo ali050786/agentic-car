@@ -13,7 +13,8 @@ export const generateTemplate2Native = async (
   theme: CarouselTheme,
   branding?: BrandingConfig,
   format: CarouselFormat = 'portrait',
-  patternId?: number
+  patternId?: number,
+  userPatternOpacity?: number
 ): Promise<string> => {
   const bg = theme.background || '#091c33';
   const textHighlight = theme.textHighlight || '#f4782d';
@@ -22,7 +23,7 @@ export const generateTemplate2Native = async (
   const bgGradStart = theme.bgGradStart || '#6d51a2';
   const bgGradEnd = theme.bgGradEnd || '#091c33';
   const patternColor = theme.patternColor || '#FFFFFF';
-  const patternOpacity = theme.patternOpacity || '0.1';
+  const patternOpacity = userPatternOpacity !== undefined ? String(userPatternOpacity) : (theme.patternOpacity || '0.2');
 
   // Format-specific dimensions
   const isSquare = format === 'square';
@@ -75,10 +76,23 @@ export const generateTemplate2Native = async (
   let bodySvg = '';
   if (slide.variant === 'list' && slide.listItems) {
     const listItemsSvg = slide.listItems.map((item, i) => {
-      const parts = item.split(':');
-      const hasKey = parts.length > 1;
-      const key = hasKey ? parts[0] + ':' : '';
-      const val = hasKey ? parts.slice(1).join(':') : item;
+      // Handle both string and ListItemObject types
+      let key = '';
+      let val = '';
+      let hasKey = false;
+
+      if (typeof item === 'string') {
+        // Original string handling logic
+        const parts = item.split(':');
+        hasKey = parts.length > 1;
+        key = hasKey ? parts[0] + ':' : '';
+        val = hasKey ? parts.slice(1).join(':') : item;
+      } else {
+        // Handle ListItemObject
+        key = item.bullet ? item.bullet + ':' : '';
+        val = item.description;
+        hasKey = !!item.bullet;
+      }
 
       const itemY = currentY;
 

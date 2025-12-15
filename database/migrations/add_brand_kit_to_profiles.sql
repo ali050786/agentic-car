@@ -3,7 +3,7 @@
 -- ============================================================================
 -- 
 -- This migration adds the brand_kit column to the profiles table.
--- Run this in your Supabase SQL Editor.
+-- Run this in your database SQL editor (Appwrite/Supabase).
 -- 
 -- Location: database/migrations/add_brand_kit_to_profiles.sql
 -- ============================================================================

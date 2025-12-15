@@ -38,6 +38,10 @@ import { PublicCarouselViewer } from './pages/PublicCarouselViewer';
 
 // Components
 import { CollapsibleSection } from './components/CollapsibleSection';
+import { FloatingTopBar } from './components/FloatingTopBar';
+import { FloatingSidebar } from './components/FloatingSidebar';
+import { FloatingBottomBar } from './components/FloatingBottomBar';
+import { SlideEditPanel } from './components/SlideEditPanel';
 
 import {
   Layout,
@@ -65,7 +69,7 @@ const CarouselGenerator: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { topic, setTopic, selectedTemplate, setTemplate, selectedModel, setModel, selectedFormat, setFormat, isGenerating, error, slides, setSlides, activePresetId, setActivePreset, setTheme } = useCarouselStore();
+  const { topic, setTopic, selectedTemplate, setTemplate, selectedModel, setModel, selectedFormat, setFormat, isGenerating, error, slides, setSlides, activePresetId, setActivePreset, setTheme, updateSlide, selectedSlideIndex, setSelectedSlideIndex, bottomToolExpanded, setBottomToolExpanded, rightPanelOpen, setRightPanelOpen } = useCarouselStore();
 
   const [localTopic, setLocalTopic] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -118,8 +122,17 @@ const CarouselGenerator: React.FC = () => {
   }, [selectedTemplate, activePresetId, slides.length, isGenerating]);
 
   const handleGenerate = () => {
-    if (!localTopic) return;
-    setTopic(localTopic);
+    // Get sourceContent from store to support multi-modal inputs
+    const { sourceContent, inputMode } = useCarouselStore.getState();
+
+    // For topic mode, use localTopic. For other modes, sourceContent should already be set by FloatingSidebar
+    if (inputMode === 'topic' && !localTopic) return;
+    if (inputMode !== 'topic' && !sourceContent) return;
+
+    // Set topic for display purposes (will show in UI/save modal)
+    setTopic(localTopic || 'AI Generated Carousel');
+
+    // Trigger the workflow (MainAgent will use context including sourceContent)
     runAgentWorkflow(localTopic);
   };
 
@@ -175,367 +188,60 @@ const CarouselGenerator: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-neutral-950">
-      {/* Top Header */}
-      <header className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-neutral-900 backdrop-blur-sm z-10">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-lg shadow-blue-900/20">
-            <Layout className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold tracking-tight text-white">Agentic Carousel</h1>
-            <p className="text-[10px] text-neutral-500 -mt-0.5 uppercase tracking-wider font-medium">
-              {editMode ? 'Edit Mode' : 'Generator'}
-            </p>
-          </div>
-        </div>
+    <div className="h-screen bg-neutral-950 relative">
+      {/* Floating Top Bar */}
+      <FloatingTopBar
+        editMode={editMode}
+        saveSuccess={saveSuccess}
+        isSaving={isSaving}
+        slidesCount={slides.length}
+        hasUser={!!user}
+        onSave={editMode ? undefined : handleSaveClick}
+        onSaveChanges={editMode ? handleSaveChanges : undefined}
+        onDownload={handleDownload}
+      />
 
-        <div className="flex items-center gap-3">
-          {/* Edit Mode Success Indicator */}
-          {editMode && saveSuccess && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/50 rounded-lg text-green-400 text-sm">
-              <CheckCircle size={16} />
-              Saved!
-            </div>
-          )}
+      {/* Floating Left Sidebar */}
+      <FloatingSidebar
+        editMode={editMode}
+        editingCarousel={editingCarousel}
+        localTopic={localTopic}
+        setLocalTopic={setLocalTopic}
+        selectedModel={selectedModel}
+        setModel={setModel}
+        isGenerating={isGenerating}
+        error={error}
+        onGenerate={handleGenerate}
+        onRandomTopic={handleRandomTopic}
+        onNewCarousel={handleNewCarousel}
+      />
 
-          {/* Library Button */}
-          <Link
-            to="/library"
-            className="flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-lg text-sm font-medium text-white transition-colors"
-          >
-            <LibraryIcon size={16} />
-            <span className="hidden sm:inline">My Carousels</span>
-          </Link>
+      {/* Center: Preview Area */}
+      <main className="pt-16 pb-24 pl-[20rem] pr-6 h-full bg-neutral-950 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-neutral-900/50 via-neutral-950 to-neutral-950">
+        <CarouselPreview />
+      </main>
 
-          {/* Save Button (only in generate mode when slides exist) */}
-          {!editMode && slides.length > 0 && user && (
-            <button
-              onClick={handleSaveClick}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-lg text-sm font-medium text-white transition-all"
-            >
-              <Save size={16} />
-              <span className="hidden sm:inline">Save</span>
-            </button>
-          )}
+      {/* Floating Bottom Bar */}
+      <FloatingBottomBar
+        expandedTool={bottomToolExpanded}
+        setExpandedTool={setBottomToolExpanded}
+        selectedTemplate={selectedTemplate}
+        setTemplate={setTemplate}
+      />
 
-          {/* Save Changes Button (only in edit mode) */}
-          {editMode && (
-            <button
-              onClick={handleSaveChanges}
-              disabled={isSaving || slides.length === 0}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${isSaving || slides.length === 0
-                ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white'
-                }`}
-            >
-              {isSaving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  Save Changes
-                </>
-              )}
-            </button>
-          )}
-
-          {/* Download Button */}
-          {slides.length > 0 && (
-            <button
-              onClick={handleDownload}
-              className="flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-lg text-sm font-medium text-white transition-colors"
-            >
-              <Download size={16} />
-              <span className="hidden sm:inline">Download</span>
-            </button>
-          )}
-
-          <UserMenu />
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel: Controls */}
-        <aside className="w-80 border-r border-white/10 flex flex-col gap-5 p-6 bg-neutral-900 overflow-y-auto">
-          {/* Edit Mode Alert */}
-          {editMode && editingCarousel && (
-            <div className="p-3 bg-blue-500/10 border border-blue-500/50 rounded-lg">
-              <div className="flex items-start gap-2 mb-2">
-                <AlertCircle className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-medium text-blue-400 text-sm">Editing</h3>
-                  <p className="text-xs text-blue-200/80 mt-1">
-                    {editingCarousel.title}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleNewCarousel}
-                className="w-full mt-2 py-2 px-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded text-xs font-medium text-blue-300 transition-colors flex items-center justify-center gap-2"
-              >
-                <Plus size={14} />
-                New Carousel
-              </button>
-            </div>
-          )}
-
-          {/* CONTENT SECTION - Always visible */}
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 py-2">
-              <Layout size={14} className="text-neutral-400" />
-              <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-                Content
-              </span>
-            </div>
-
-            {/* Topic Input (only in generate mode) */}
-            {!editMode && (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-neutral-500">
-                    Your Topic
-                  </label>
-                  <button
-                    onClick={handleRandomTopic}
-                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-                  >
-                    <Sparkles size={12} />
-                    Random
-                  </button>
-                </div>
-                <textarea
-                  className="w-full h-24 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition-colors resize-none text-sm"
-                  placeholder="What should this carousel be about?"
-                  value={localTopic}
-                  onChange={(e) => setLocalTopic(e.target.value)}
-                />
-              </div>
-            )}
-
-            {/* Topic Display (in edit mode) */}
-            {editMode && (
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-medium text-neutral-500">
-                  Topic
-                </label>
-                <div className="p-3 bg-black/40 border border-white/10 rounded-xl text-white text-sm">
-                  {localTopic || 'No topic'}
-                </div>
-              </div>
-            )}
-
-            {/* Template Selection */}
-            <div className="flex flex-col gap-3">
-              <label className="text-xs font-medium text-neutral-500">
-                Template
-              </label>
-              <div className="grid grid-cols-1 gap-3">
-                <button
-                  onClick={() => setTemplate('template-1')}
-                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedTemplate === 'template-1'
-                    ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
-                    : 'border-white/10 hover:border-white/30 bg-black/20'
-                    }`}
-                >
-                  <div className="relative z-10">
-                    <div className="font-bold text-white mb-1 flex justify-between">
-                      The Truth
-                      {selectedTemplate === 'template-1' && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
-                    </div>
-                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300">Bold, industrial, high contrast.</div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => setTemplate('template-2')}
-                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedTemplate === 'template-2'
-                    ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
-                    : 'border-white/10 hover:border-white/30 bg-black/20'
-                    }`}
-                >
-                  <div className="relative z-10">
-                    <div className="font-bold text-white mb-1 flex justify-between">
-                      The Clarity
-                      {selectedTemplate === 'template-2' && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
-                    </div>
-                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300">Clean, tech-forward, gradients.</div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* GENERATION SETTINGS - Collapsible, expanded by default */}
-          <CollapsibleSection title="Generation Settings" icon={Settings} defaultExpanded={true}>
-            <div className="flex flex-col gap-3">
-              <label className="text-xs font-medium text-neutral-500">
-                AI Model
-              </label>
-              <div className="grid grid-cols-1 gap-3">
-                <button
-                  onClick={() => setModel('groq-llama')}
-                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'groq-llama'
-                    ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
-                    : 'border-white/10 hover:border-white/30 bg-black/20'
-                    }`}
-                >
-                  <div className="relative z-10">
-                    <div className="font-bold text-white mb-1 flex justify-between items-center">
-                      <span>Groq Llama 3.3</span>
-                      {selectedModel === 'groq-llama' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
-                    </div>
-                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
-                      <span>⚡ Fast generation, generous limits</span>
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => setModel('claude-haiku')}
-                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'claude-haiku'
-                    ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
-                    : 'border-white/10 hover:border-white/30 bg-black/20'
-                    }`}
-                >
-                  <div className="relative z-10">
-                    <div className="font-bold text-white mb-1 flex justify-between items-center">
-                      <span>Claude Haiku 3.5</span>
-                      {selectedModel === 'claude-haiku' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
-                    </div>
-                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
-                      <span>🧠 Smart reasoning, better limits</span>
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => setModel('gemini-flash')}
-                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'gemini-flash'
-                    ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
-                    : 'border-white/10 hover:border-white/30 bg-black/20'
-                    }`}
-                >
-                  <div className="relative z-10">
-                    <div className="font-bold text-white mb-1 flex justify-between items-center">
-                      <span>Gemini 2.5 Flash</span>
-                      {selectedModel === 'gemini-flash' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
-                    </div>
-                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
-                      <span>🚀 Google direct API, latest</span>
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => setModel('openrouter-gemini')}
-                  className={`group p-4 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === 'openrouter-gemini'
-                    ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
-                    : 'border-white/10 hover:border-white/30 bg-black/20'
-                    }`}
-                >
-                  <div className="relative z-10">
-                    <div className="font-bold text-white mb-1 flex justify-between items-center">
-                      <span>Gemini 2.0 Flash (OpenRouter)</span>
-                      {selectedModel === 'openrouter-gemini' && <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
-                    </div>
-                    <div className="text-xs text-neutral-400 group-hover:text-neutral-300 flex items-center gap-1">
-                      <span>⚡ Via OpenRouter, experimental</span>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </CollapsibleSection>
-
-          {/* STYLING - Collapsible, collapsed by default */}
-          <CollapsibleSection title="Styling" icon={Palette} defaultExpanded={false}>
-            {/* Theme/Color Preset Selection */}
-            <ThemeSelector />
-
-            {/* Format Selection */}
-            <div className="mt-4">
-              <FormatSelector />
-            </div>
-
-            {/* Pattern Selection */}
-            <div className="mt-4">
-              <PatternSelector />
-            </div>
-          </CollapsibleSection>
-
-          {/* ADVANCED - Collapsible, collapsed by default */}
-          <CollapsibleSection title="Advanced" icon={Wand2} defaultExpanded={false}>
-            {/* Branding Settings */}
-            <BrandingSelector />
-          </CollapsibleSection>
-
-          {/* Action Button */}
-          <div className="mt-auto pt-6 border-t border-white/5">
-            {error && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg flex items-center gap-2 text-xs text-red-200">
-                <AlertCircle size={14} />
-                {error}
-              </div>
-            )}
-
-            {!editMode && (
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating || !localTopic}
-                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all transform active:scale-95 ${isGenerating || !localTopic
-                  ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-900/30'
-                  }`}
-              >
-                {isGenerating ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={18} />
-                    Generate Carousel
-                  </>
-                )}
-              </button>
-            )}
-
-            {editMode && (
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all transform active:scale-95 ${isGenerating
-                  ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-900/30'
-                  }`}
-              >
-                {isGenerating ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Regenerating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={18} />
-                    Regenerate
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        </aside>
-
-        {/* Right Panel: Preview */}
-        <main className="flex-1 relative bg-neutral-950 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-neutral-900/50 via-neutral-950 to-neutral-950">
-          <CarouselPreview />
-        </main>
-      </div>
+      {/* Right Edit Panel */}
+      <SlideEditPanel
+        isOpen={rightPanelOpen && selectedSlideIndex !== null}
+        slide={selectedSlideIndex !== null ? slides[selectedSlideIndex] : null}
+        slideIndex={selectedSlideIndex}
+        onClose={() => {
+          setRightPanelOpen(false);
+          setSelectedSlideIndex(null);
+        }}
+        onSave={(index, content) => {
+          updateSlide(index, content);
+        }}
+      />
 
       {/* Save Modal */}
       <SaveCarouselModal

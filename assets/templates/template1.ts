@@ -15,8 +15,8 @@ export const T1_HERO_SVG = `
 <svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg">
   ${COMMON_DEFS}
   
-  <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
-  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
+  <rect x="0" y="0" width="1080" height="1380"  opacity="0.2" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380"  opacity="0.2" fill="url(#bgPattern)"/>
   
   <!-- Decorative Lines -->
   <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
@@ -179,7 +179,7 @@ export const T1_CTA_SVG = `
   <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
   <line x1="788.35" y1="0" x2="788.35" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
   
-  <foreignObject x="150" y="220" width="600" height="700">
+  <foreignObject x="150" y="220" width="780" height="700">
     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 50px;">
       
       <!-- Icon Circle (Closing - 80px) -->

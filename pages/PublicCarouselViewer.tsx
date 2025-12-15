@@ -10,7 +10,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCarouselById } from '../services/carouselService';
-import { trackCarouselView } from '../services/analyticsService';
 import { Carousel } from '../services/carouselService';
 import {
   Layout,
@@ -59,9 +58,6 @@ export const PublicCarouselViewer: React.FC = () => {
 
     setCarousel(data);
     setLoading(false);
-
-    // Track the view
-    await trackCarouselView(id);
   };
 
   const formatDate = (dateString: string) => {

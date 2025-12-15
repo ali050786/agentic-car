@@ -11,7 +11,8 @@ export const optimizeSvgForFigma = async (
   templateId: string,
   format?: CarouselFormat,
   branding?: BrandingConfig,
-  patternId?: number
+  patternId?: number,
+  patternOpacity?: number
 ): Promise<string> => {
   if (!theme) return '<svg></svg>';
 
@@ -19,12 +20,12 @@ export const optimizeSvgForFigma = async (
   let svg = '';
 
   if (templateId === 'template-1') {
-    svg = await generateTemplate1Native(slide, theme, branding, format, patternId);
+    svg = await generateTemplate1Native(slide, theme, branding, format, patternId, patternOpacity);
   } else if (templateId === 'template-2') {
-    svg = await generateTemplate2Native(slide, theme, branding, format, patternId);
+    svg = await generateTemplate2Native(slide, theme, branding, format, patternId, patternOpacity);
   } else {
     // Fallback default
-    svg = await generateTemplate1Native(slide, theme, branding, format, patternId);
+    svg = await generateTemplate1Native(slide, theme, branding, format, patternId, patternOpacity);
   }
 
   return svg;

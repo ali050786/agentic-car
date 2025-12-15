@@ -15,7 +15,7 @@ export const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Supabase handles the callback automatically
+    // Appwrite handles the callback automatically
     // Just wait a moment then redirect to home
     const timer = setTimeout(() => {
       navigate('/', { replace: true });
@@ -32,7 +32,7 @@ export const AuthCallback: React.FC = () => {
             <Layout className="w-6 h-6 text-white" />
           </div>
         </div>
-        
+
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
           <div>

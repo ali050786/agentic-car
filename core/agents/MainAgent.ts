@@ -5,25 +5,45 @@ import { SlideContent, CarouselTheme } from '../../types';
 import { resolveTheme } from '../../utils/brandUtils';
 import { getPresetById } from '../../config/colorPresets';
 
+// Context object for AI agents
+export interface AgentContext {
+  inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf';
+  sourceContent: string;
+  customInstructions?: string;
+  outputLanguage: string;
+  slideCount: number;
+}
+
 export const runAgentWorkflow = async (topic: string) => {
   const store = useCarouselStore.getState();
 
-  if (!topic) return;
+  if (!topic && !store.sourceContent) return;
 
   store.setGenerating(true);
   store.setError(null);
   store.setSlides([]); // Clear previous slides
 
   try {
+    // Build context object from store
+    const context: AgentContext = {
+      inputMode: store.inputMode,
+      sourceContent: store.sourceContent || topic,
+      customInstructions: store.customInstructions,
+      outputLanguage: store.outputLanguage,
+      slideCount: store.slideCount,
+    };
+
+    console.log('[MainAgent] Context:', context);
+
     let result: { slides: SlideContent[], theme: CarouselTheme };
 
     // Routing Logic: Get slides from appropriate template agent
     if (store.selectedTemplate === 'template-1') {
-      result = await Template1Agent.generate(topic);
+      result = await Template1Agent.generate(context);
     } else if (store.selectedTemplate === 'template-2') {
-      result = await Template2Agent.generate(topic);
+      result = await Template2Agent.generate(context);
     } else {
-      result = await Template1Agent.generate(topic); // Fallback
+      result = await Template1Agent.generate(context); // Fallback
     }
 
     // ========================================================================

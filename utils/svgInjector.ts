@@ -17,7 +17,8 @@ export const injectContentIntoSvg = (
   theme: CarouselTheme | null,
   branding?: BrandingConfig,
   format?: CarouselFormat,
-  patternId?: number  // NEW: pattern ID for background pattern
+  patternId?: number,  // Pattern ID for background pattern
+  patternOpacity?: number  // User-controlled pattern opacity (0-1)
 ): string => {
   let baseSvg = '';
   let listHtml = '';
@@ -70,7 +71,7 @@ export const injectContentIntoSvg = (
         --background: ${theme?.background || '#141414'};
         --background-2: ${theme?.background2 || '#FFFFFF'};
         --pattern-color: ${theme?.patternColor || '#2A2A2A'};
-        --pattern-opacity: ${theme?.patternOpacity || '0.1'};
+        --pattern-opacity: ${patternOpacity !== undefined ? patternOpacity : (theme?.patternOpacity || '0.2')};
       }
     `;
 
@@ -156,7 +157,7 @@ export const injectContentIntoSvg = (
         --button-color: ${theme?.buttonColor || theme?.textHighlight || '#f4782d'};
         --text-default: ${theme?.textDefault || '#ffffff'};
         --pattern-color: ${theme?.patternColor || '#1A3A52'};
-        --pattern-opacity: ${theme?.patternOpacity || '0.1'};
+        --pattern-opacity: ${patternOpacity !== undefined ? patternOpacity : (theme?.patternOpacity || '0.2')};
         
         /* Gradient Stops */
         --bg-grad-start: ${theme?.bgGradStart || '#6d51a2'};

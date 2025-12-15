@@ -98,7 +98,7 @@ export const isValidFullName = (name: string): boolean => {
 // ============================================================================
 
 /**
- * Format Supabase auth errors for display
+ * Format auth errors for display
  */
 export const formatAuthError = (error: any): string => {
   if (!error) return 'An unknown error occurred';
