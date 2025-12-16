@@ -6,7 +6,7 @@ import { optimizeSvgForFigma } from './figmaOptimizer';
  */
 export const downloadSvg = async (slide: SlideContent, templateId: string, index: number, theme: CarouselTheme | null) => {
   // Get selectedPattern and patternOpacity from carousel store
-  const { useCarouselStore } = await import('../store/useCarouselStore');
+  const { useCarouselStore } = await import('../store/useCarouselStore.ts');
   const { selectedPattern, patternOpacity } = useCarouselStore.getState();
 
   // Use Satori to generate the clean SVG
@@ -28,7 +28,7 @@ export const downloadSvg = async (slide: SlideContent, templateId: string, index
  */
 export const downloadAllSvgs = async (slides: SlideContent[], templateId: string) => {
   // Dynamic import to avoid circular dependency
-  const { useCarouselStore } = await import('../store/useCarouselStore');
+  const { useCarouselStore } = await import('../store/useCarouselStore.ts');
   const theme = useCarouselStore.getState().theme;
 
   for (let i = 0; i < slides.length; i++) {

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCarouselStore } from '../store/useCarouselStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { injectContentIntoSvg } from '../utils/svgInjector';
 import { optimizeSvgForFigma } from '../utils/figmaOptimizer';
 import { exportSlideToJpg } from '../utils/jpgExporter';
@@ -9,19 +10,27 @@ import { SlideContent } from '../types';
 import { ViewModeToggle } from './ViewModeToggle';
 
 export const CarouselPreview: React.FC = () => {
-  const { slides, selectedTemplate, selectedFormat, selectedPattern, patternOpacity, isGenerating, theme, branding, selectedSlideIndex, setSelectedSlideIndex, setRightPanelOpen, viewMode } = useCarouselStore();
+  const { slides, selectedTemplate, selectedFormat, selectedPattern, patternOpacity, isGenerating, theme, brandMode, brandKit, signaturePosition, selectedSlideIndex, setSelectedSlideIndex, setRightPanelOpen, viewMode } = useCarouselStore();
+  const { globalBrandKit } = useAuthStore();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   const [exportingIndex, setExportingIndex] = useState<number | null>(null);
   const [exportingPdfIndex, setExportingPdfIndex] = useState<number | null>(null);
   const slideRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
+  // Get effective branding based on mode
+  const effectiveBranding = {
+    enabled: true,
+    ...(brandMode === 'global' && globalBrandKit ? globalBrandKit.identity : brandKit.identity),
+    position: signaturePosition
+  };
+
   const handleCopy = async (slide: SlideContent, index: number) => {
     setIsCopying(true);
 
     try {
       // Generate SVG (Synchronous Native Generator)
-      const optimizedSvg = await optimizeSvgForFigma(slide, theme, selectedTemplate, selectedFormat, branding, selectedPattern, patternOpacity);
+      const optimizedSvg = await optimizeSvgForFigma(slide, theme, selectedTemplate, selectedFormat, effectiveBranding, selectedPattern, patternOpacity);
 
       await navigator.clipboard.writeText(optimizedSvg);
       setCopiedIndex(index);
@@ -152,7 +161,7 @@ export const CarouselPreview: React.FC = () => {
               // Only show slides within range
               if (absOffset > 2) return null;
 
-              const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, branding, selectedFormat, selectedPattern, patternOpacity);
+              const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity);
               const isCenter = offset === 0;
               const isCopied = copiedIndex === index;
 
@@ -309,7 +318,7 @@ export const CarouselPreview: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
           {slides.map((slide, index) => {
             // Preview with carousel-level branding
-            const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, branding, selectedFormat, selectedPattern, patternOpacity);
+            const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity);
             const isSelected = selectedSlideIndex === index;
             const isCopied = copiedIndex === index;
 

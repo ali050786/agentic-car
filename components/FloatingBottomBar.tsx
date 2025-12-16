@@ -11,6 +11,7 @@ interface FloatingBottomBarProps {
     setExpandedTool: (tool: string | null) => void;
     selectedTemplate: string;
     setTemplate: (template: string) => void;
+    onOpenBrandEditor?: (mode: 'global' | 'local') => void;
 }
 
 export const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
@@ -18,6 +19,7 @@ export const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     setExpandedTool,
     selectedTemplate,
     setTemplate,
+    onOpenBrandEditor,
 }) => {
     const bottomBarRef = useRef<HTMLDivElement>(null);
 
@@ -105,7 +107,7 @@ export const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
                 >
                     <div className="flex flex-col gap-3">
                         <h3 className="text-xs font-bold text-white uppercase tracking-wider">Color Preset</h3>
-                        <ThemeSelector />
+                        <ThemeSelector onOpenBrandEditor={onOpenBrandEditor} />
                     </div>
                 </BottomToolItem>
 
@@ -144,7 +146,7 @@ export const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
                 >
                     <div className="flex flex-col gap-3">
                         <h3 className="text-xs font-bold text-white uppercase tracking-wider">Branding</h3>
-                        <BrandingSelector />
+                        <BrandingSelector onOpenBrandEditor={onOpenBrandEditor} />
                     </div>
                 </BottomToolItem>
             </div>

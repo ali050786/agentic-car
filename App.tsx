@@ -18,6 +18,7 @@ import { PatternSelector } from './components/PatternSelector';
 import { resolveTheme } from './utils/brandUtils';
 import { getPresetById } from './config/colorPresets';
 import { useAutoSave } from './hooks/useAutoSave';
+import BrandEditorPanel from './components/BrandEditorPanel';
 
 // Auth Pages
 import { SignUp } from './pages/SignUp';
@@ -36,6 +37,10 @@ import { FloatingTopBar } from './components/FloatingTopBar';
 import { FloatingSidebar } from './components/FloatingSidebar';
 import { FloatingBottomBar } from './components/FloatingBottomBar';
 import { SlideEditPanel } from './components/SlideEditPanel';
+import { Toast } from './components/Toast';
+import { useToast } from './hooks/useToast';
+import { ApiKeyModal } from './components/ApiKeyModal';
+import { FreeLimitError } from './services/aiService';
 
 import {
   Layout,
@@ -62,7 +67,7 @@ const SUGGESTED_TOPICS = [
 const CarouselGenerator: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, globalBrandKit } = useAuthStore();
   const {
     topic,
     setTopic,
@@ -76,8 +81,14 @@ const CarouselGenerator: React.FC = () => {
     error,
     slides,
     setSlides,
-    activePresetId,
-    setActivePreset,
+    brandMode,
+    presetId,
+    brandKit,
+    setBrandMode,
+    setPresetId,
+    setBrandKit,
+    signaturePosition,
+    setSignaturePosition,
     setTheme,
     updateSlide,
     selectedSlideIndex,
@@ -90,14 +101,24 @@ const CarouselGenerator: React.FC = () => {
     setPattern,
     patternOpacity,
     setPatternOpacity,
-    branding,
-    setBranding
+    viewMode,
+    setViewMode
   } = useCarouselStore();
+
+  // Toast notifications
+  const { toasts, showToast, removeToast } = useToast();
 
   const [localTopic, setLocalTopic] = useState('');
   const [currentCarouselId, setCurrentCarouselId] = useState<string | null>(null);
   const [editingCarousel, setEditingCarousel] = useState<Carousel | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  // Brand Editor Panel state
+  const [brandEditorOpen, setBrandEditorOpen] = useState(false);
+  const [brandEditorMode, setBrandEditorMode] = useState<'global' | 'local'>('local');
+
+  // API Key Modal state
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
 
   // Load carousel if navigating from library with edit mode
   useEffect(() => {
@@ -111,9 +132,18 @@ const CarouselGenerator: React.FC = () => {
       setTemplate(dbToAppTemplate(carousel.templateType));
       setSlides(carousel.slides as any);
 
-      // Restore the color preset if it was saved
+      // Restore brand mode and preset if saved
+      if (carousel.brandMode) {
+        setBrandMode(carousel.brandMode);
+      }
       if (carousel.presetId) {
-        setActivePreset(carousel.presetId);
+        setPresetId(carousel.presetId);
+      }
+      if (carousel.brandKit) {
+        setBrandKit(carousel.brandKit);
+      }
+      if (carousel.signaturePosition) {
+        setSignaturePosition(carousel.signaturePosition);
       }
 
       // Restore the format if it was saved
@@ -129,31 +159,49 @@ const CarouselGenerator: React.FC = () => {
         setPatternOpacity(carousel.patternOpacity);
       }
 
-      // Restore branding if saved
-      if (carousel.branding) {
-        setBranding(carousel.branding);
-      }
-
       // Clear the state so refresh doesn't reload
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
-  // Reactive Theme Update: Recalculate theme when template or preset changes
+  // Reactive Theme Update: 3-Mode System (global/preset/custom)
   useEffect(() => {
     // Only update if we have slides (carousel already generated)
     if (slides.length > 0 && !isGenerating) {
-      const preset = getPresetById(activePresetId || 'ocean-tech');
+      let newTheme;
 
-      if (preset) {
-        const newTheme = resolveTheme(preset.seeds, selectedTemplate);
+      switch (brandMode) {
+        case 'global':
+          // Use global brand colors from auth store
+          if (globalBrandKit) {
+            newTheme = resolveTheme(globalBrandKit.colors, selectedTemplate);
+            console.log('[App] Theme updated: Global Brand + ' + selectedTemplate);
+          }
+          break;
+
+        case 'preset':
+          // Use preset colors
+          const preset = getPresetById(presetId || 'ocean-tech');
+          if (preset) {
+            newTheme = resolveTheme(preset.seeds, selectedTemplate);
+            console.log(`[App] Theme updated: ${preset.name} + ${selectedTemplate}`);
+          }
+          break;
+
+        case 'custom':
+          // Use custom carousel brand kit colors
+          newTheme = resolveTheme(brandKit.colors, selectedTemplate);
+          console.log('[App] Theme updated: Custom Brand + ' + selectedTemplate);
+          break;
+      }
+
+      if (newTheme) {
         setTheme(newTheme);
-        console.log(`[App] Theme updated reactively: ${preset.name} + ${selectedTemplate}`);
       }
     }
-  }, [selectedTemplate, activePresetId, slides.length, isGenerating]);
+  }, [selectedTemplate, brandMode, presetId, brandKit, globalBrandKit, slides.length, isGenerating]);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     // Get sourceContent from store to support multi-modal inputs
     const { sourceContent, inputMode } = useCarouselStore.getState();
 
@@ -164,8 +212,19 @@ const CarouselGenerator: React.FC = () => {
     // Set topic for display purposes (will show in UI/save modal)
     setTopic(localTopic || 'AI Generated Carousel');
 
-    // Trigger the workflow (MainAgent will use context including sourceContent)
-    runAgentWorkflow(localTopic);
+    // Trigger the workflow with error handling for free tier limit
+    try {
+      await runAgentWorkflow(localTopic);
+    } catch (error) {
+      // Check if it's a free tier limit error
+      if (error instanceof FreeLimitError) {
+        console.warn('[App] Free tier limit reached, opening API key modal');
+        setApiKeyModalOpen(true);
+      } else {
+        // Re-throw other errors to be handled by the agent
+        throw error;
+      }
+    }
   };
 
   const handleRandomTopic = () => {
@@ -178,10 +237,8 @@ const CarouselGenerator: React.FC = () => {
     if (editingCarousel?.theme) {
       return editingCarousel.theme;
     }
-    // Default themes
-    return selectedTemplate === 'template-1'
-      ? { background: '#000000', textColor: '#ffffff', accentColor: '#3b82f6' }
-      : { background: '#ffffff', textColor: '#000000', accentColor: '#8b5cf6' };
+    // Return a minimal theme object for auto-save
+    return { background: '#000000', textColor: '#ffffff', accentColor: '#3b82f6' };
   };
 
   // Auto-save hook integration
@@ -192,11 +249,13 @@ const CarouselGenerator: React.FC = () => {
     topic: topic || localTopic,
     userId: user?.$id || '',
     templateType: selectedTemplate,
-    presetId: activePresetId,
+    brandMode,
+    presetId,
+    brandKit,
+    signaturePosition,
     format: selectedFormat,
     selectedPattern,
     patternOpacity,
-    branding
   });
 
   // Watch auto-saved ID and update local state
@@ -235,37 +294,74 @@ const CarouselGenerator: React.FC = () => {
   };
 
   const handleDownloadAllPdf = async () => {
-    // Directly query all slide preview containers
-    const slideContainers = document.querySelectorAll('.svg-preview-container');
+    // Track if we need to switch back to focus view
+    const wasInFocusMode = viewMode === 'focus';
+    let currentToastId: string | null = null;
 
-    if (slideContainers.length === 0) {
-      alert('No slide elements found. Please ensure slides are generated.');
-      return;
-    }
-
-    if (slideContainers.length !== slides.length) {
-      alert(`Expected ${slides.length} slides but found ${slideContainers.length} in DOM. Please refresh and try again.`);
-      return;
-    }
-
-    const slideElements = Array.from(slideContainers) as HTMLElement[];
-
-    console.log('Found', slideElements.length, 'slide elements for PDF export');
-
-    setIsExportingPdf(true);
     try {
+      // If in focus mode, switch to grid view first
+      if (wasInFocusMode) {
+        currentToastId = showToast('Switching to grid view for export...', 'info', 0); // Persistent toast
+        setViewMode('grid');
+        // Wait for DOM to update and render all slides
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Remove view switch toast
+        if (currentToastId) removeToast(currentToastId);
+      }
+
+      // Directly query all slide preview containers
+      const slideContainers = document.querySelectorAll('.svg-preview-container');
+
+      if (slideContainers.length === 0) {
+        showToast('No slide elements found. Please ensure slides are generated.', 'error', 5000);
+        return;
+      }
+
+      if (slideContainers.length !== slides.length) {
+        showToast(`Expected ${slides.length} slides but found ${slideContainers.length} in DOM.`, 'error', 5000);
+        return;
+      }
+
+      const slideElements = Array.from(slideContainers) as HTMLElement[];
+
+      console.log('Found', slideElements.length, 'slide elements for PDF export');
+
+      // Show persistent exporting toast
+      currentToastId = showToast(`Exporting ${slides.length} slides to PDF...`, 'info', 0);
+      setIsExportingPdf(true);
+
       await exportAllSlidesToPdf(
         slideElements,
         selectedFormat,
         (current, total) => {
           console.log(`Exporting slide ${current}/${total}`);
+          // Update the toast message with progress
+          if (currentToastId) removeToast(currentToastId);
+          currentToastId = showToast(`Exporting slide ${current}/${total}...`, 'info', 0);
         }
       );
+
+      // Remove exporting toast
+      if (currentToastId) removeToast(currentToastId);
+
+      // Success!
+      showToast('PDF downloaded successfully!', 'success', 4000);
+
     } catch (err) {
       console.error('Failed to export PDF:', err);
-      alert('Failed to export PDF. Please try again.');
+      if (currentToastId) removeToast(currentToastId);
+      showToast('Failed to export PDF. Please try again.', 'error', 5000);
     } finally {
       setIsExportingPdf(false);
+
+      // Switch back to focus mode if we auto-switched
+      if (wasInFocusMode) {
+        const switchBackToastId = showToast('Switching back to focus view...', 'info', 0);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setViewMode('focus');
+        removeToast(switchBackToastId);
+      }
     }
   };
 
@@ -278,6 +374,30 @@ const CarouselGenerator: React.FC = () => {
     setSlides([]);
   };
 
+  // Brand Editor Panel handlers
+  const handleOpenBrandEditor = (mode: 'global' | 'local') => {
+    setBrandEditorMode(mode);
+    setBrandEditorOpen(true);
+  };
+
+  const handleBrandSave = (brandKitData: any, scope: 'global' | 'local') => {
+    if (scope === 'local') {
+      // Update carousel brand kit
+      setBrandKit(brandKitData);
+      showToast('Brand updated for this carousel', 'success', 3000);
+    } else {
+      // Global brand is handled by BrandEditorPanel calling authStore.updateGlobalBrandKit
+      showToast('Global brand saved successfully', 'success', 3000);
+    }
+  };
+
+  const getCurrentBrandKit = () => {
+    if (brandEditorMode === 'global') {
+      return globalBrandKit || brandKit;
+    }
+    return brandKit;
+  };
+
   return (
     <div className="h-screen bg-neutral-950 relative">
       {/* Floating Top Bar */}
@@ -288,6 +408,7 @@ const CarouselGenerator: React.FC = () => {
         onDownload={handleDownload}
         onDownloadPdf={handleDownloadAllPdf}
         isExportingPdf={isExportingPdf}
+        onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
       />
 
       {/* Floating Left Sidebar */}
@@ -316,6 +437,7 @@ const CarouselGenerator: React.FC = () => {
         setExpandedTool={setBottomToolExpanded}
         selectedTemplate={selectedTemplate}
         setTemplate={setTemplate}
+        onOpenBrandEditor={handleOpenBrandEditor}
       />
 
       {/* Right Edit Panel */}
@@ -330,6 +452,24 @@ const CarouselGenerator: React.FC = () => {
         onSave={(index, content) => {
           updateSlide(index, content);
         }}
+      />
+
+      {/* Brand Editor Panel */}
+      <BrandEditorPanel
+        isOpen={brandEditorOpen}
+        mode={brandEditorMode}
+        initialBrandKit={getCurrentBrandKit()}
+        onSave={handleBrandSave}
+        onClose={() => setBrandEditorOpen(false)}
+      />
+
+      {/* Toast Notifications */}
+      <Toast toasts={toasts} onRemove={removeToast} />
+
+      {/* API Key Modal */}
+      <ApiKeyModal
+        isOpen={apiKeyModalOpen}
+        onClose={() => setApiKeyModalOpen(false)}
       />
     </div>
   );

@@ -10,6 +10,8 @@
 import { create } from 'zustand';
 import { account, AppwriteUser } from '../lib/appwriteClient';
 import { Models, OAuthProvider } from 'appwrite';
+import { BrandKit } from '../types';
+import { getUserBrandKit, updateUserBrandKit, initializeDefaultBrandKit, getFreeUsageCount } from '../services/profileService';
 
 // ============================================================================
 // TYPES
@@ -41,6 +43,26 @@ interface AuthState {
   loading: boolean;
   initialized: boolean;
 
+  /**
+   * Global brand kit from user profile
+   * null = not yet fetched, or user has no global brand
+   */
+  globalBrandKit: BrandKit | null;
+  brandKitLoading: boolean;
+
+  /**
+   * User's API key for BYOK (Bring Your Own Key)
+   * Stored in localStorage for persistence
+   */
+  userApiKey: string | null;
+  apiKeyProvider: 'openrouter' | 'openai' | 'anthropic' | null;
+
+  /**
+   * Free tier usage tracking
+   */
+  freeUsageCount: number;
+  freeUsageLoading: boolean;
+
   // Actions
   initialize: () => Promise<void>;
   signUp: (data: SignUpData) => Promise<AuthResponse>;
@@ -49,6 +71,28 @@ interface AuthState {
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<AuthResponse>;
   refreshSession: () => Promise<void>;
+
+  /**
+   * Fetch global brand kit from profile
+   */
+  fetchGlobalBrandKit: () => Promise<void>;
+
+  /**
+   * Update global brand kit in profile
+   */
+  updateGlobalBrandKit: (brandKit: BrandKit) => Promise<void>;
+
+  /**
+   * API Key Management (BYOK)
+   */
+  setUserApiKey: (key: string, provider: 'openrouter' | 'openai' | 'anthropic') => void;
+  clearUserApiKey: () => void;
+
+  /**
+   * Free usage tracking
+   */
+  fetchFreeUsageCount: () => Promise<void>;
+  refreshFreeUsageCount: () => Promise<void>;
 }
 
 // ============================================================================
@@ -63,6 +107,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
   initialized: false,
+  globalBrandKit: null,
+  brandKitLoading: false,
+  userApiKey: typeof window !== 'undefined' ? localStorage.getItem('user_api_key') : null,
+  apiKeyProvider: typeof window !== 'undefined' ? localStorage.getItem('api_key_provider') as any : null,
+  freeUsageCount: 0,
+  freeUsageLoading: false,
 
   // ============================================================================
   // INITIALIZE - Setup auth and get current session
@@ -78,6 +128,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         loading: false,
         initialized: true
       });
+
+      // Fetch global brand kit in background
+      get().fetchGlobalBrandKit();
+
+      // Fetch free usage count in background
+      get().fetchFreeUsageCount();
     } catch (error) {
       // No active session
       set({
@@ -139,6 +195,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const user = await account.get();
 
       set({ user });
+
+      // Fetch global brand kit in background
+      get().fetchGlobalBrandKit();
+
+      // Fetch free usage count in background
+      get().fetchFreeUsageCount();
 
       return { error: null, success: true };
     } catch (error: any) {
@@ -227,10 +289,130 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const user = await account.get();
       set({ user });
+
+      // Refresh brand kit too
+      get().fetchGlobalBrandKit();
     } catch (error) {
       console.error('Error refreshing session:', error);
       set({ user: null });
     }
+  },
+
+  // ============================================================================
+  // BRAND KIT MANAGEMENT
+  // ============================================================================
+
+  /**
+   * Fetch global brand kit from user profile
+   */
+  fetchGlobalBrandKit: async () => {
+    const { user } = get();
+    if (!user) {
+      console.log('[AuthStore] No user, skipping brand kit fetch');
+      return;
+    }
+
+    set({ brandKitLoading: true });
+
+    try {
+      const brandKit = await getUserBrandKit(user.$id);
+
+      if (brandKit) {
+        set({ globalBrandKit: brandKit, brandKitLoading: false });
+        console.log('[AuthStore] Global brand kit fetched successfully');
+      } else {
+        // No brand kit exists, initialize with defaults
+        console.log('[AuthStore] No brand kit found, initializing defaults');
+        const defaultBrandKit = await initializeDefaultBrandKit(user.$id, user.name || user.email);
+        set({ globalBrandKit: defaultBrandKit, brandKitLoading: false });
+      }
+    } catch (error) {
+      console.error('[AuthStore] Failed to fetch brand kit:', error);
+      set({ brandKitLoading: false });
+    }
+  },
+
+  /**
+   * Update global brand kit and save to profile
+   */
+  updateGlobalBrandKit: async (brandKit: BrandKit) => {
+    const { user } = get();
+    if (!user) {
+      throw new Error('No user logged in');
+    }
+
+    set({ brandKitLoading: true });
+
+    try {
+      await updateUserBrandKit(user.$id, brandKit);
+      set({ globalBrandKit: brandKit, brandKitLoading: false });
+      console.log('[AuthStore] Global brand kit updated successfully');
+    } catch (error) {
+      set({ brandKitLoading: false });
+      console.error('[AuthStore] Failed to update brand kit:', error);
+      throw error;
+    }
+  },
+
+  // ============================================================================
+  // API KEY MANAGEMENT (BYOK)
+  // ============================================================================
+
+  /**
+   * Save user's API key to localStorage and state
+   */
+  setUserApiKey: (key: string, provider: 'openrouter' | 'openai' | 'anthropic') => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user_api_key', key);
+      localStorage.setItem('api_key_provider', provider);
+    }
+    set({ userApiKey: key, apiKeyProvider: provider });
+    console.log(`[AuthStore] User API key saved (${provider})`);
+  },
+
+  /**
+   * Clear user's API key from localStorage and state
+   */
+  clearUserApiKey: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user_api_key');
+      localStorage.removeItem('api_key_provider');
+    }
+    set({ userApiKey: null, apiKeyProvider: null });
+    console.log('[AuthStore] User API key cleared');
+  },
+
+  // ============================================================================
+  // FREE USAGE TRACKING
+  // ============================================================================
+
+  /**
+   * Fetch free usage count from Appwrite
+   */
+  fetchFreeUsageCount: async () => {
+    const { user } = get();
+    if (!user) {
+      console.log('[AuthStore] No user, skipping free usage count fetch');
+      return;
+    }
+
+    set({ freeUsageLoading: true });
+
+    try {
+      const count = await getFreeUsageCount(user.$id);
+      set({ freeUsageCount: count, freeUsageLoading: false });
+      console.log(`[AuthStore] Free usage count: ${count}/3`);
+    } catch (error) {
+      console.error('[AuthStore] Failed to fetch free usage count:', error);
+      set({ freeUsageLoading: false });
+    }
+  },
+
+  /**
+   * Refresh free usage count (alias for fetchFreeUsageCount)
+   */
+  refreshFreeUsageCount: async () => {
+    await get().fetchFreeUsageCount();
   },
 }));
 

@@ -8,19 +8,21 @@ export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'limit-reached'
 interface FloatingTopBarProps {
     slidesCount: number;
     hasUser: boolean;
-    saveStatus?: SaveStatus;  // Auto-save status
+    saveStatus: SaveStatus;
     onDownload: () => void;
-    onDownloadPdf?: () => void;  // New: Download all as PDF
-    isExportingPdf?: boolean;    // New: PDF export status
+    onDownloadPdf: () => void;
+    isExportingPdf: boolean;
+    onOpenApiKeyModal: () => void;
 }
 
 export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
     slidesCount,
     hasUser,
-    saveStatus = 'idle',
+    saveStatus,
     onDownload,
     onDownloadPdf,
-    isExportingPdf = false,
+    isExportingPdf,
+    onOpenApiKeyModal,
 }) => {
     const navigate = useNavigate();
     const [showLimitTooltip, setShowLimitTooltip] = useState(false);
@@ -197,7 +199,8 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                     </div>
                 )}
 
-                <UserMenu />
+                {/* User Menu */}
+                {hasUser && <UserMenu onOpenApiKeyModal={onOpenApiKeyModal} />}
             </div>
         </header>
     );

@@ -1,4 +1,4 @@
-import { generateContentFromAgent } from '../../services/geminiService';
+import { generateContentFromAgent } from '../../services/aiService';
 import { SlideContent, CarouselTheme } from '../../types';
 import { AgentContext } from './MainAgent';
 

@@ -3,6 +3,15 @@
 
 <head>
   <meta charset="UTF-8" />
+  <!-- Content Security Policy: Prevent XSS attacks -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://aistudiocdn.com https://esm.sh;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com;
+    connect-src 'self' https://cloud.appwrite.io https://sgp.cloud.appwrite.io https://openrouter.ai https://api.openai.com https://api.anthropic.com;
+    img-src 'self' data: blob:;
+  ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Agentic Carousel Generator</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -25,6 +34,23 @@
   }
 }
 </script>
+  <style>
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-slideDown {
+      animation: slideDown 0.3s ease-out forwards;
+    }
+  </style>
 </head>
 
 <body>

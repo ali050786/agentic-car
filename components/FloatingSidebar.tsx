@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Carousel } from '../services/carouselService';
 import { useCarouselStore } from '../store/useCarouselStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { extractTextFromFile, isSupportedFile, formatFileSize, getFileTypeDescription, SUPPORTED_EXTENSIONS } from '../utils/fileProcessor';
 import {
     getVideoID,
@@ -39,25 +40,80 @@ interface FloatingSidebarProps {
 }
 
 const MODEL_OPTIONS = [
+    // OpenRouter Models
     {
-        id: 'groq-llama',
-        name: 'Groq Llama 3.3',
-        description: '⚡ Fast generation, generous limits',
+        id: 'deepseek-r1t',
+        name: 'DeepSeek R1T Chimera',
+        description: '⚡ Fast reasoning (Free)',
+        freeTier: true,
+        freeTierOnly: false, // Available for both free tier and BYOK
+        provider: 'openrouter',
+    },
+    {
+        id: 'claude-haiku-openrouter',
+        name: 'Claude Haiku 3.5',
+        description: '🧠 Smart & efficient (Free)',
+        freeTier: true,
+        freeTierOnly: true, // ONLY for free tier users, not BYOK
+        provider: 'openrouter',
+    },
+    {
+        id: 'gemini-2.5-flash',
+        name: 'Gemini 2.5 Flash',
+        description: '🚀 Google latest (Paid via OpenRouter)',
+        freeTier: false,
+        freeTierOnly: false,
+        provider: 'openrouter',
+    },
+    {
+        id: 'gemini-2.0-flash-exp',
+        name: 'Gemini 2.0 Flash Exp',
+        description: '🆓 Google experimental (Paid via OpenRouter)',
+        freeTier: false,
+        freeTierOnly: false,
+        provider: 'openrouter',
+    },
+    {
+        id: 'grok-4.1-fast',
+        name: 'Grok 4.1 Fast',
+        description: '⚡ xAI model (Paid via OpenRouter)',
+        freeTier: false,
+        freeTierOnly: false,
+        provider: 'openrouter',
+    },
+    // OpenAI Models
+    {
+        id: 'gpt-4o',
+        name: 'GPT-4o',
+        description: '🚀 OpenAI latest model',
+        freeTier: false,
+        freeTierOnly: false,
+        provider: 'openai',
+    },
+    {
+        id: 'gpt-4-turbo',
+        name: 'GPT-4 Turbo',
+        description: '⚡ Fast & powerful',
+        freeTier: false,
+        freeTierOnly: false,
+        provider: 'openai',
+    },
+    // Anthropic Models (Direct API)
+    {
+        id: 'claude-sonnet',
+        name: 'Claude Sonnet 3.5',
+        description: '🧠 Best reasoning',
+        freeTier: false,
+        freeTierOnly: false,
+        provider: 'anthropic',
     },
     {
         id: 'claude-haiku',
         name: 'Claude Haiku 3.5',
-        description: '🧠 Smart reasoning, better limits',
-    },
-    {
-        id: 'gemini-flash',
-        name: 'Gemini 2.5 Flash',
-        description: '🚀 Google direct API, latest',
-    },
-    {
-        id: 'openrouter-gemini',
-        name: 'DeepSeek R1T Chimera',
-        description: '⚡ Via OpenRouter, free',
+        description: '⚡ Fast & efficient',
+        freeTier: false,
+        freeTierOnly: false,
+        provider: 'anthropic',
     },
 ];
 
@@ -98,6 +154,17 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
     onRandomTopic,
     onNewCarousel,
 }) => {
+    // Get user API key status and provider
+    const { userApiKey, apiKeyProvider } = useAuthStore();
+    const hasApiKey = !!userApiKey;
+
+    // Filter models based on API provider
+    const availableModels = hasApiKey && apiKeyProvider
+        ? apiKeyProvider === 'openrouter'
+            ? MODEL_OPTIONS.filter(m => m.provider === 'openrouter' && m.freeTier && !m.freeTierOnly) // OpenRouter BYOK: only non-exclusive free models (just DeepSeek)
+            : MODEL_OPTIONS.filter(m => m.provider === apiKeyProvider) // OpenAI/Anthropic: all their models
+        : MODEL_OPTIONS.filter(m => m.freeTier && m.provider === 'openrouter'); // Free tier: all free OpenRouter models (DeepSeek + Claude Haiku)
+
     // Local state for inputs
     const [activeInputMode, setActiveInputMode] = useState<InputMode>('topic');
     const [localSlideCount, setLocalSlideCount] = useState(8);
@@ -488,8 +555,21 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                 {/* Model Selection */}
                 <div className="flex flex-col gap-3">
                     <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest">AI Model</label>
+                    {!hasApiKey ? (
+                        <div className="p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                            <p className="text-xs text-blue-300">
+                                🎁 Free tier: {availableModels.length} free models. Add API key for premium models.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+                            <p className="text-xs text-green-300">
+                                ✅ Using {apiKeyProvider === 'openrouter' ? 'OpenRouter' : apiKeyProvider === 'openai' ? 'OpenAI' : 'Anthropic'} - {availableModels.length} models available
+                            </p>
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 gap-2">
-                        {MODEL_OPTIONS.map((model) => (
+                        {availableModels.map((model) => (
                             <button
                                 key={model.id}
                                 onClick={() => setModel(model.id)}

@@ -5,6 +5,52 @@ export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';
 export type CarouselFormat = 'portrait' | 'square';
 export type ViewMode = 'focus' | 'grid';
 
+// ============================================================================
+// BRAND KIT SYSTEM - Unified Branding with Global/Local Inheritance
+// ============================================================================
+
+/**
+ * Brand identity components (name, title, image)
+ */
+export interface BrandIdentity {
+  name: string;
+  title: string;
+  imageUrl: string;
+}
+
+/**
+ * Brand color palette (primary, secondary, text, background)
+ * These are the 4 seed colors that generate full theme via brandUtils
+ */
+export interface BrandColors {
+  primary: string;
+  secondary: string;
+  text: string;
+  background: string;
+}
+
+/**
+ * Complete Brand Kit container
+ * Stored in user profile (global) and can be overridden per carousel (local)
+ */
+export interface BrandKit {
+  enabled: boolean;
+  identity: BrandIdentity;
+  colors: BrandColors;
+}
+
+/**
+ * Brand mode determines the source of branding for a carousel
+ * - global: Use brand kit from user profile
+ * - preset: Use color preset from config/colorPresets.ts
+ * - custom: Use carousel-specific brand kit
+ */
+export type BrandMode = 'global' | 'preset' | 'custom';
+
+/**
+ * Legacy branding config - kept for backward compatibility
+ * @deprecated Use BrandKit instead
+ */
 export interface BrandingConfig {
   enabled: boolean;
   name: string;
@@ -66,12 +112,34 @@ export interface CarouselState {
   outputLanguage: string;
   sourceContent: string;
 
-  // Brand Kit State
-  activePresetId: string;
-  isBrandKitActive: boolean;
+  // ============================================================================
+  // BRAND KIT STATE - Unified Branding System
+  // ============================================================================
 
-  // Branding (Signature Card) State
-  branding: BrandingConfig;
+  /**
+   * Brand mode: determines the source of branding
+   * - 'global': Use global brand from user profile
+   * - 'preset': Use color preset (for colors only, identity from global)
+   * - 'custom': Use custom brand kit specific to this carousel
+   */
+  brandMode: BrandMode;
+
+  /**
+   * Brand kit (only used when brandMode === 'custom')
+   * For 'global' mode, this is fetched from auth store
+   * For 'preset' mode, only identity is used (colors from preset)
+   */
+  brandKit: BrandKit;
+
+  /**
+   * Active preset ID (only used when brandMode === 'preset')
+   */
+  presetId: string;
+
+  /**
+   * Signature position (carousel-specific, always shown)
+   */
+  signaturePosition: SignaturePosition;
 
   // UI State for Floating Toolbars
   selectedSlideIndex: number | null;
@@ -99,12 +167,35 @@ export interface CarouselState {
   setOutputLanguage: (outputLanguage: string) => void;
   setSourceContent: (sourceContent: string) => void;
 
-  // Brand Kit Actions
-  setActivePreset: (presetId: string | null) => void;
-  toggleBrandKit: (isActive: boolean) => void;
+  // ============================================================================
+  // BRAND KIT ACTIONS - Unified Branding System
+  // ============================================================================
 
-  // Branding Actions
-  setBranding: (branding: Partial<BrandingConfig>) => void;
+  /**
+   * Set brand mode (global, preset, or custom)
+   */
+  setBrandMode: (mode: BrandMode) => void;
+
+  /**
+   * Update brand kit (used for custom mode)
+   */
+  setBrandKit: (brandKit: Partial<BrandKit>) => void;
+
+  /**
+   * Set active preset ID (used for preset mode)
+   */
+  setPresetId: (presetId: string) => void;
+
+  /**
+   * Set signature position
+   */
+  setSignaturePosition: (position: SignaturePosition) => void;
+
+  /**
+   * Reset brand to global (convenience method)
+   * Sets brandMode to 'global' and clears custom brandKit
+   */
+  resetToGlobalBrand: () => void;
 
   // UI Actions
   setSelectedSlideIndex: (index: number | null) => void;

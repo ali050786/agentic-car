@@ -1,79 +1,195 @@
+/**
+ * Carousel Store - Zustand
+ * 
+ * Manages carousel generation state including slides, templates, themes,
+ * branding, and UI state for the carousel generator.
+ * 
+ * Location: src/store/useCarouselStore.ts
+ */
+
 import { create } from 'zustand';
-import { CarouselState } from '../types';
+import { CarouselState, SlideContent, CarouselTheme, TemplateId, CarouselFormat, BrandKit, BrandMode, SignaturePosition, ViewMode } from '../types';
 
-export const useCarouselStore = create<CarouselState>((set) => ({
-  topic: '',
-  selectedTemplate: 'template-1',
-  selectedModel: 'groq-llama',
-  selectedFormat: 'portrait',
-  selectedPattern: 1,  // Default pattern (Diagonal Lines)
-  patternOpacity: 0.2,  // Default pattern opacity
-  slides: [],
-  theme: null,
-  isGenerating: false,
-  error: null,
+// ============================================================================
+// DEFAULT VALUES
+// ============================================================================
 
-  // Multi-modal Input State
-  inputMode: 'topic',
-  slideCount: 8,
-  customInstructions: '',
-  outputLanguage: 'English',
-  sourceContent: '',
+const DEFAULT_BRAND_KIT: BrandKit = {
+    enabled: false,
+    identity: {
+        name: '',
+        title: '',
+        imageUrl: '',
+    },
+    colors: {
+        primary: '#3b82f6',
+        secondary: '#8b5cf6',
+        text: '#ffffff',
+        background: '#000000',
+    },
+};
 
-  // Brand Kit State - Default to 'ocean-tech' preset, inactive
-  activePresetId: 'ocean-tech',
-  isBrandKitActive: false,
+// ============================================================================
+// CREATE STORE
+// ============================================================================
 
-  // Branding State - Always enabled by default
-  branding: {
-    enabled: true,
-    name: 'Sikandar Ali',
-    title: 'Founder',
-    imageUrl: 'https://images.unsplash.com/photo-1695927621677-ec96e048dce2?q=80&w=870',
-    position: 'bottom-left'
-  },
+export const useCarouselStore = create<CarouselState>((set, get) => ({
+    // ============================================================================
+    // INITIAL STATE
+    // ============================================================================
 
-  // UI State for Floating Toolbars
-  selectedSlideIndex: null,
-  bottomToolExpanded: null,
-  rightPanelOpen: false,
-  viewMode: 'focus',
+    // Core carousel data
+    topic: '',
+    selectedTemplate: 'template-1',
+    selectedModel: 'groq-llama',
+    selectedFormat: 'portrait',
+    selectedPattern: 1,
+    patternOpacity: 0.1,
+    slides: [],
+    theme: null,
+    isGenerating: false,
+    error: null,
 
-  setTopic: (topic) => set({ topic }),
-  setTemplate: (selectedTemplate) => set({ selectedTemplate }),
-  setModel: (selectedModel) => set({ selectedModel }),
-  setFormat: (selectedFormat) => set({ selectedFormat }),
-  setPattern: (selectedPattern) => set({ selectedPattern }),
-  setPatternOpacity: (patternOpacity) => set({ patternOpacity }),
-  setGenerating: (isGenerating) => set({ isGenerating }),
-  setError: (error) => set({ error }),
-  setSlides: (slides) => set({ slides }),
-  setTheme: (theme) => set({ theme }),
-  updateSlide: (index, content) => set((state) => {
-    const newSlides = [...state.slides];
-    newSlides[index] = { ...newSlides[index], ...content };
-    return { slides: newSlides };
-  }),
+    // Multi-modal input state
+    inputMode: 'topic',
+    slideCount: 10,
+    customInstructions: '',
+    outputLanguage: 'English',
+    sourceContent: '',
 
-  // Multi-modal Input Actions
-  setInputMode: (inputMode) => set({ inputMode }),
-  setSlideCount: (slideCount) => set({ slideCount }),
-  setCustomInstructions: (customInstructions) => set({ customInstructions }),
-  setOutputLanguage: (outputLanguage) => set({ outputLanguage }),
-  setSourceContent: (sourceContent) => set({ sourceContent }),
+    // Brand kit state
+    brandMode: 'preset',
+    brandKit: DEFAULT_BRAND_KIT,
+    presetId: 'ocean-tech',
+    signaturePosition: 'bottom-left',
 
-  // Brand Kit Actions
-  setActivePreset: (presetId) => set({ activePresetId: presetId }),
-  toggleBrandKit: (isActive) => set({ isBrandKitActive: isActive }),
+    // UI state
+    selectedSlideIndex: null,
+    bottomToolExpanded: null,
+    rightPanelOpen: false,
+    viewMode: 'grid',
 
-  // Branding Actions
-  setBranding: (branding) => set((state) => ({
-    branding: { ...state.branding, ...branding }
-  })),
+    // Getter for activePresetId (for backward compatibility)
+    get activePresetId() {
+        return get().presetId;
+    },
 
-  // UI Actions
-  setSelectedSlideIndex: (index) => set({ selectedSlideIndex: index }),
-  setBottomToolExpanded: (tool) => set({ bottomToolExpanded: tool }),
-  setRightPanelOpen: (open) => set({ rightPanelOpen: open }),
-  setViewMode: (mode) => set({ viewMode: mode }),
+    // ============================================================================
+    // CORE ACTIONS
+    // ============================================================================
+
+    setTopic: (topic: string) => set({ topic }),
+
+    setTemplate: (selectedTemplate: TemplateId) => set({ selectedTemplate }),
+
+    setModel: (selectedModel: string) => set({ selectedModel }),
+
+    setFormat: (selectedFormat: CarouselFormat) => set({ selectedFormat }),
+
+    setPattern: (selectedPattern: number) => set({ selectedPattern }),
+
+    setPatternOpacity: (patternOpacity: number) => set({ patternOpacity }),
+
+    setGenerating: (isGenerating: boolean) => set({ isGenerating }),
+
+    setError: (error: string | null) => set({ error }),
+
+    setSlides: (slides: SlideContent[]) => set({ slides }),
+
+    setTheme: (theme: CarouselTheme) => set({ theme }),
+
+    updateSlide: (index: number, content: Partial<SlideContent>) => {
+        const slides = get().slides;
+        if (index >= 0 && index < slides.length) {
+            const updatedSlides = [...slides];
+            updatedSlides[index] = { ...updatedSlides[index], ...content };
+            set({ slides: updatedSlides });
+        }
+    },
+
+    // ============================================================================
+    // MULTI-MODAL INPUT ACTIONS
+    // ============================================================================
+
+    setInputMode: (inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf') => set({ inputMode }),
+
+    setSlideCount: (slideCount: number) => set({ slideCount }),
+
+    setCustomInstructions: (customInstructions: string) => set({ customInstructions }),
+
+    setOutputLanguage: (outputLanguage: string) => set({ outputLanguage }),
+
+    setSourceContent: (sourceContent: string) => set({ sourceContent }),
+
+    // ============================================================================
+    // BRAND KIT ACTIONS
+    // ============================================================================
+
+    setBrandMode: (brandMode: BrandMode) => set({ brandMode }),
+
+    setBrandKit: (brandKit: Partial<BrandKit>) => {
+        const currentBrandKit = get().brandKit;
+        set({
+            brandKit: {
+                ...currentBrandKit,
+                ...brandKit,
+                identity: {
+                    ...currentBrandKit.identity,
+                    ...(brandKit.identity || {}),
+                },
+                colors: {
+                    ...currentBrandKit.colors,
+                    ...(brandKit.colors || {}),
+                },
+            },
+        });
+    },
+
+    setPresetId: (presetId: string) => set({ presetId }),
+
+    setSignaturePosition: (signaturePosition: SignaturePosition) => set({ signaturePosition }),
+
+    resetToGlobalBrand: () => {
+        set({
+            brandMode: 'global',
+            brandKit: DEFAULT_BRAND_KIT,
+        });
+    },
+
+    // ============================================================================
+    // UI ACTIONS
+    // ============================================================================
+
+    setSelectedSlideIndex: (selectedSlideIndex: number | null) => set({ selectedSlideIndex }),
+
+    setBottomToolExpanded: (bottomToolExpanded: string | null) => set({ bottomToolExpanded }),
+
+    setRightPanelOpen: (rightPanelOpen: boolean) => set({ rightPanelOpen }),
+
+    setViewMode: (viewMode: ViewMode) => set({ viewMode }),
 }));
+
+// ============================================================================
+// UTILITY HOOKS
+// ============================================================================
+
+/**
+ * Hook to get carousel generation status
+ */
+export const useIsGenerating = () => {
+    return useCarouselStore(state => state.isGenerating);
+};
+
+/**
+ * Hook to get slides
+ */
+export const useSlides = () => {
+    return useCarouselStore(state => state.slides);
+};
+
+/**
+ * Hook to get current theme
+ */
+export const useTheme = () => {
+    return useCarouselStore(state => state.theme);
+};

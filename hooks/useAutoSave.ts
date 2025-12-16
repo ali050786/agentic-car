@@ -14,8 +14,9 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { createCarousel, updateCarouselContent, StorageLimitError, BrandingConfig } from '../services/carouselService';
+import { createCarousel, updateCarouselContent, StorageLimitError } from '../services/carouselService';
 import { appToDbTemplate } from '../utils/templateConverter';
+import { BrandKit, BrandMode, SignaturePosition } from '../types';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'limit-reached';
 
@@ -26,11 +27,13 @@ interface UseAutoSaveParams {
     topic: string;
     userId: string;
     templateType: 'template-1' | 'template-2';
-    presetId: string | null;
+    brandMode: BrandMode;
+    presetId: string;
+    brandKit: BrandKit;
+    signaturePosition: SignaturePosition;
     format: 'portrait' | 'square';
     selectedPattern: number;
     patternOpacity: number;
-    branding: BrandingConfig;
 }
 
 interface UseAutoSaveReturn {
@@ -49,11 +52,13 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
         topic,
         userId,
         templateType,
+        brandMode,
         presetId,
+        brandKit,
+        signaturePosition,
         format,
         selectedPattern,
-        patternOpacity,
-        branding
+        patternOpacity
     } = params;
 
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
@@ -82,11 +87,13 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
             slides,
             theme,
             templateType,
+            brandMode,
             presetId,
+            brandKit,
+            signaturePosition,
             format,
             selectedPattern,
-            patternOpacity,
-            branding
+            patternOpacity
         });
 
         // Skip if data hasn't changed
@@ -113,11 +120,13 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                         theme,
                         slides,
                         false, // isPublic
+                        brandMode,
                         presetId,
+                        brandKit,
+                        signaturePosition,
                         format,
                         selectedPattern,
-                        patternOpacity,
-                        branding
+                        patternOpacity
                     );
 
                     if (error) {
@@ -149,11 +158,13 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                         currentCarouselId,
                         theme,
                         slides,
+                        brandMode,
+                        presetId,
+                        brandKit,
+                        signaturePosition,
                         selectedPattern,
                         patternOpacity,
-                        branding,
                         dbTemplateType,
-                        presetId,
                         format
                     );
 
@@ -195,11 +206,13 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
         userId,
         topic,
         templateType,
+        brandMode,
         presetId,
+        brandKit,
+        signaturePosition,
         format,
         selectedPattern,
-        patternOpacity,
-        branding
+        patternOpacity
     ]);
 
     // Update local carousel ID when prop changes

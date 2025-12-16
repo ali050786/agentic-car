@@ -45,7 +45,7 @@ You'll also need API keys for:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/agentic-car.git
+git clone https://github.com/ali050786/agentic-car.git
 cd agentic-car
 ```
 
@@ -348,7 +348,7 @@ This project is licensed under the MIT License.
 
 For issues and questions:
 - Open an issue on GitHub
-- Contact: your-email@example.com
+- Contact: ali050786@gmail.com
 
 ---
 

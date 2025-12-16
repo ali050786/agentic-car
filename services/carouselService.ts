@@ -8,11 +8,13 @@
 
 import { databases, config, ID } from '../lib/appwriteClient';
 import { Query } from 'appwrite';
+import { BrandKit, BrandMode, SignaturePosition } from '../types';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
+// Legacy type for backward compatibility
 export interface BrandingConfig {
   enabled: boolean;
   name: string;
@@ -27,12 +29,17 @@ export interface CarouselData {
   templateType: 'template1' | 'template2';
   theme: any;
   slides: any[];
-  presetId: string | null;
   isPublic: boolean;
   format: 'portrait' | 'square';
-  selectedPattern: number;           // Background pattern ID (1-12)
-  patternOpacity: number;             // Pattern opacity (0-1)
-  branding: BrandingConfig;           // Signature/branding config
+  selectedPattern: number;
+  patternOpacity: number;
+  // New Brand Kit fields
+  brandMode: BrandMode;
+  presetId: string;
+  brandKit: BrandKit;
+  signaturePosition: SignaturePosition;
+  // Legacy field for backward compatibility
+  branding?: BrandingConfig;
 }
 
 export interface Carousel extends CarouselData {
@@ -92,17 +99,17 @@ export const createCarousel = async (
   theme: any,
   slides: any[],
   isPublic: boolean = false,
-  presetId: string | null = null,
+  brandMode: BrandMode = 'preset',
+  presetId: string = 'ocean-tech',
+  brandKit: BrandKit = {
+    enabled: true,
+    identity: { name: '', title: '', imageUrl: '' },
+    colors: { primary: '#0EA5E9', secondary: '#06B6D4', text: '#E0F2FE', background: '#0C4A6E' }
+  },
+  signaturePosition: SignaturePosition = 'bottom-left',
   format: 'portrait' | 'square' = 'portrait',
   selectedPattern: number = 1,
-  patternOpacity: number = 0.2,
-  branding: BrandingConfig = {
-    enabled: true,
-    name: '',
-    title: '',
-    imageUrl: '',
-    position: 'bottom-left'
-  }
+  patternOpacity: number = 0.2
 ): Promise<{ data: Carousel | null; error: any }> => {
   try {
     console.log('[createCarousel] Starting save...', { userId, title, templateType });
@@ -114,18 +121,32 @@ export const createCarousel = async (
       throw new StorageLimitError('You have reached the maximum of 5 carousels. Please delete old ones to save new work.');
     }
 
+    // Store brand kit in existing branding field (extended format)
+    const extendedBranding = {
+      // Keep old fields for backward compatibility
+      enabled: brandKit.enabled,
+      name: brandKit.identity.name,
+      title: brandKit.identity.title,
+      imageUrl: brandKit.identity.imageUrl,
+      position: signaturePosition,
+      // New brand kit fields
+      brandMode,
+      presetId,
+      colors: brandKit.colors
+    };
+
     const carouselData = {
       userId,
       title,
       templateType,
-      theme: JSON.stringify(theme), // Appwrite stores as string
+      theme: JSON.stringify(theme),
       slides: JSON.stringify(slides),
-      presetId: presetId || null,
+      presetId,
       isPublic,
       format,
       selectedPattern,
       patternOpacity,
-      branding: JSON.stringify(branding), // Store branding as JSON string
+      branding: JSON.stringify(extendedBranding),
     };
 
     const document = await databases.createDocument(
@@ -137,16 +158,33 @@ export const createCarousel = async (
 
     console.log('[createCarousel] Successfully saved carousel:', document.$id);
 
-    // Parse JSON strings back to objects
+    // Parse branding with brand kit data
+    const parsedBranding = JSON.parse(document.branding as string || '{}');
+
     const carousel: Carousel = {
       ...document,
       theme: JSON.parse(document.theme as string),
       slides: JSON.parse(document.slides as string),
-      branding: JSON.parse(document.branding as string),
+      brandMode: (parsedBranding.brandMode as BrandMode) || 'preset',
+      presetId: parsedBranding.presetId || document.presetId || 'ocean-tech',
+      brandKit: {
+        enabled: parsedBranding.enabled !== undefined ? parsedBranding.enabled : true,
+        identity: {
+          name: parsedBranding.name || '',
+          title: parsedBranding.title || '',
+          imageUrl: parsedBranding.imageUrl || ''
+        },
+        colors: parsedBranding.colors || {
+          primary: '#0EA5E9',
+          secondary: '#06B6D4',
+          text: '#E0F2FE',
+          background: '#0C4A6E'
+        }
+      },
+      signaturePosition: (parsedBranding.position as SignaturePosition) || 'bottom-left',
       userId: document.userId,
       title: document.title,
       templateType: document.templateType as 'template1' | 'template2',
-      presetId: document.presetId,
       isPublic: document.isPublic,
       format: (document.format as 'portrait' | 'square') || 'portrait',
       selectedPattern: document.selectedPattern || 1,
@@ -240,20 +278,59 @@ export const getUserCarousels = async (
       ]
     );
 
-    const carousels: Carousel[] = documents.map(doc => ({
-      ...doc,
-      theme: JSON.parse(doc.theme as string),
-      slides: JSON.parse(doc.slides as string),
-      branding: JSON.parse(doc.branding as string || '{}'),
-      userId: doc.userId,
-      title: doc.title,
-      templateType: doc.templateType as 'template1' | 'template2',
-      presetId: doc.presetId,
-      isPublic: doc.isPublic,
-      format: (doc.format as 'portrait' | 'square') || 'portrait',
-      selectedPattern: doc.selectedPattern || 1,
-      patternOpacity: doc.patternOpacity || 0.2,
-    }));
+    const carousels: Carousel[] = documents.map(doc => {
+      // Backward compatibility: migrate old branding to brandKit if needed
+      let brandMode: BrandMode = (doc.brandMode as BrandMode) || 'preset';
+      let brandKit: BrandKit;
+      let signaturePosition: SignaturePosition = (doc.signaturePosition as SignaturePosition) || 'bottom-left';
+
+      if (doc.brandKit) {
+        brandKit = JSON.parse(doc.brandKit as string);
+      } else if (doc.branding) {
+        // Migrate old branding format
+        const oldBranding = JSON.parse(doc.branding as string);
+        brandKit = {
+          enabled: oldBranding.enabled,
+          identity: {
+            name: oldBranding.name || '',
+            title: oldBranding.title || '',
+            imageUrl: oldBranding.imageUrl || ''
+          },
+          colors: {
+            primary: '#0EA5E9',
+            secondary: '#06B6D4',
+            text: '#E0F2FE',
+            background: '#0C4A6E'
+          }
+        };
+        signaturePosition = oldBranding.position || 'bottom-left';
+        brandMode = 'preset'; // Default to preset for migrated carousels
+      } else {
+        // Fallback defaults
+        brandKit = {
+          enabled: true,
+          identity: { name: '', title: '', imageUrl: '' },
+          colors: { primary: '#0EA5E9', secondary: '#06B6D4', text: '#E0F2FE', background: '#0C4A6E' }
+        };
+      }
+
+      return {
+        ...doc,
+        theme: JSON.parse(doc.theme as string),
+        slides: JSON.parse(doc.slides as string),
+        brandMode,
+        presetId: doc.presetId || 'ocean-tech',
+        brandKit,
+        signaturePosition,
+        userId: doc.userId,
+        title: doc.title,
+        templateType: doc.templateType as 'template1' | 'template2',
+        isPublic: doc.isPublic,
+        format: (doc.format as 'portrait' | 'square') || 'portrait',
+        selectedPattern: doc.selectedPattern || 1,
+        patternOpacity: doc.patternOpacity || 0.2,
+      };
+    });
 
     return { data: carousels, error: null };
   } catch (error: any) {
@@ -275,15 +352,33 @@ export const getCarouselById = async (
       carouselId
     );
 
+    // Parse branding with brand kit data
+    const parsedBranding = JSON.parse(document.branding as string || '{}');
+
     const carousel: Carousel = {
       ...document,
       theme: JSON.parse(document.theme as string),
       slides: JSON.parse(document.slides as string),
-      branding: JSON.parse(document.branding as string || '{}'),
+      brandMode: (parsedBranding.brandMode as BrandMode) || 'preset',
+      presetId: parsedBranding.presetId || document.presetId || 'ocean-tech',
+      brandKit: {
+        enabled: parsedBranding.enabled !== undefined ? parsedBranding.enabled : true,
+        identity: {
+          name: parsedBranding.name || '',
+          title: parsedBranding.title || '',
+          imageUrl: parsedBranding.imageUrl || ''
+        },
+        colors: parsedBranding.colors || {
+          primary: '#0EA5E9',
+          secondary: '#06B6D4',
+          text: '#E0F2FE',
+          background: '#0C4A6E'
+        }
+      },
+      signaturePosition: (parsedBranding.position as SignaturePosition) || 'bottom-left',
       userId: document.userId,
       title: document.title,
       templateType: document.templateType as 'template1' | 'template2',
-      presetId: document.presetId,
       isPublic: document.isPublic,
       format: (document.format as 'portrait' | 'square') || 'portrait',
       selectedPattern: document.selectedPattern || 1,
@@ -315,20 +410,40 @@ export const searchUserCarousels = async (
       ]
     );
 
-    const carousels: Carousel[] = documents.map(doc => ({
-      ...doc,
-      theme: JSON.parse(doc.theme as string),
-      slides: JSON.parse(doc.slides as string),
-      branding: JSON.parse(doc.branding as string || '{}'),
-      userId: doc.userId,
-      title: doc.title,
-      templateType: doc.templateType as 'template1' | 'template2',
-      presetId: doc.presetId,
-      isPublic: doc.isPublic,
-      format: (doc.format as 'portrait' | 'square') || 'portrait',
-      selectedPattern: doc.selectedPattern || 1,
-      patternOpacity: doc.patternOpacity || 0.2,
-    }));
+    const carousels: Carousel[] = documents.map(doc => {
+      // Parse extended branding format
+      const parsedBranding = JSON.parse(doc.branding as string || '{}');
+
+      return {
+        ...doc,
+        theme: JSON.parse(doc.theme as string),
+        slides: JSON.parse(doc.slides as string),
+        brandMode: (parsedBranding.brandMode as BrandMode) || 'preset',
+        presetId: parsedBranding.presetId || doc.presetId || 'ocean-tech',
+        brandKit: {
+          enabled: parsedBranding.enabled !== undefined ? parsedBranding.enabled : true,
+          identity: {
+            name: parsedBranding.name || '',
+            title: parsedBranding.title || '',
+            imageUrl: parsedBranding.imageUrl || ''
+          },
+          colors: parsedBranding.colors || {
+            primary: '#0EA5E9',
+            secondary: '#06B6D4',
+            text: '#E0F2FE',
+            background: '#0C4A6E'
+          }
+        },
+        signaturePosition: (parsedBranding.position as SignaturePosition) || 'bottom-left',
+        userId: doc.userId,
+        title: doc.title,
+        templateType: doc.templateType as 'template1' | 'template2',
+        isPublic: doc.isPublic,
+        format: (doc.format as 'portrait' | 'square') || 'portrait',
+        selectedPattern: doc.selectedPattern || 1,
+        patternOpacity: doc.patternOpacity || 0.2,
+      };
+    });
 
     return { data: carousels, error: null };
   } catch (error: any) {
@@ -353,7 +468,27 @@ export const updateCarousel = async (
     const updateData: any = { ...updates };
     if (updates.theme) updateData.theme = JSON.stringify(updates.theme);
     if (updates.slides) updateData.slides = JSON.stringify(updates.slides);
-    if (updates.branding) updateData.branding = JSON.stringify(updates.branding);
+
+    // Convert brand kit to extended branding format
+    if (updates.brandKit || updates.brandMode || updates.signaturePosition) {
+      const extendedBranding: any = {};
+      if (updates.brandKit) {
+        extendedBranding.enabled = updates.brandKit.enabled;
+        extendedBranding.name = updates.brandKit.identity.name;
+        extendedBranding.title = updates.brandKit.identity.title;
+        extendedBranding.imageUrl = updates.brandKit.identity.imageUrl;
+        extendedBranding.colors = updates.brandKit.colors;
+      }
+      if (updates.brandMode) extendedBranding.brandMode = updates.brandMode;
+      if (updates.presetId) extendedBranding.presetId = updates.presetId;
+      if (updates.signaturePosition) extendedBranding.position = updates.signaturePosition;
+
+      updateData.branding = JSON.stringify(extendedBranding);
+      // Remove the separate fields since we're storing in branding
+      delete updateData.brandKit;
+      delete updateData.brandMode;
+      delete updateData.signaturePosition;
+    }
 
     const document = await databases.updateDocument(
       config.databaseId,
@@ -362,15 +497,49 @@ export const updateCarousel = async (
       updateData
     );
 
+    // Parse document with backward compatibility
+    let brandMode: BrandMode = (document.brandMode as BrandMode) || 'preset';
+    let brandKit: BrandKit;
+    let signaturePosition: SignaturePosition = (document.signaturePosition as SignaturePosition) || 'bottom-left';
+
+    if (document.brandKit) {
+      brandKit = JSON.parse(document.brandKit as string);
+    } else if (document.branding) {
+      const oldBranding = JSON.parse(document.branding as string || '{}');
+      brandKit = {
+        enabled: oldBranding.enabled || true,
+        identity: {
+          name: oldBranding.name || '',
+          title: oldBranding.title || '',
+          imageUrl: oldBranding.imageUrl || ''
+        },
+        colors: {
+          primary: '#0EA5E9',
+          secondary: '#06B6D4',
+          text: '#E0F2FE',
+          background: '#0C4A6E'
+        }
+      };
+      signaturePosition = oldBranding.position || 'bottom-left';
+    } else {
+      brandKit = {
+        enabled: true,
+        identity: { name: '', title: '', imageUrl: '' },
+        colors: { primary: '#0EA5E9', secondary: '#06B6D4', text: '#E0F2FE', background: '#0C4A6E' }
+      };
+    }
+
     const carousel: Carousel = {
       ...document,
       theme: JSON.parse(document.theme as string),
       slides: JSON.parse(document.slides as string),
-      branding: JSON.parse(document.branding as string || '{}'),
+      brandMode,
+      presetId: document.presetId || 'ocean-tech',
+      brandKit,
+      signaturePosition,
       userId: document.userId,
       title: document.title,
       templateType: document.templateType as 'template1' | 'template2',
-      presetId: document.presetId,
       isPublic: document.isPublic,
       format: (document.format as 'portrait' | 'square') || 'portrait',
       selectedPattern: document.selectedPattern || 1,
@@ -395,25 +564,32 @@ export const updateCarouselTitle = async (
 };
 
 /**
- * Update carousel content (theme, slides, pattern, branding, template, preset, format)
+ * Update carousel content (theme, slides, pattern, brand kit, template, format)
  */
 export const updateCarouselContent = async (
   carouselId: string,
   theme: any,
   slides: any[],
+  brandMode: BrandMode,
+  presetId: string,
+  brandKit: BrandKit,
+  signaturePosition: SignaturePosition,
   selectedPattern?: number,
   patternOpacity?: number,
-  branding?: BrandingConfig,
   templateType?: 'template1' | 'template2',
-  presetId?: string | null,
   format?: 'portrait' | 'square'
 ): Promise<{ data: Carousel | null; error: any }> => {
-  const updates: Partial<CarouselData> = { theme, slides };
+  const updates: Partial<CarouselData> = {
+    theme,
+    slides,
+    brandMode,
+    presetId,
+    brandKit,
+    signaturePosition
+  };
   if (selectedPattern !== undefined) updates.selectedPattern = selectedPattern;
   if (patternOpacity !== undefined) updates.patternOpacity = patternOpacity;
-  if (branding !== undefined) updates.branding = branding;
   if (templateType !== undefined) updates.templateType = templateType;
-  if (presetId !== undefined) updates.presetId = presetId;
   if (format !== undefined) updates.format = format;
   return updateCarousel(carouselId, updates);
 };
