@@ -6,6 +6,7 @@ import { runAgentWorkflow } from './core/agents/MainAgent';
 import { CarouselPreview } from './components/CarouselPreview';
 import { downloadAllSvgs } from './utils/downloadUtils';
 import { exportAllSlidesToPdf } from './utils/pdfExportAll';
+import { exportSlideToJpg } from './utils/jpgExporter';
 import { UserMenu } from './components/UserMenu';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { updateCarouselContent, Carousel } from './services/carouselService';
@@ -206,8 +207,31 @@ const CarouselGenerator: React.FC = () => {
     }
   }, [autoSavedId]);
 
-  const handleDownload = () => {
-    downloadAllSvgs(slides, selectedTemplate);
+  const handleDownload = async () => {
+    // Export current/selected slide as JPG
+    const slideIndex = selectedSlideIndex ?? 0; // Default to first slide if none selected
+
+    // Query the specific slide preview container
+    const slideContainers = document.querySelectorAll('.svg-preview-container');
+
+    if (slideContainers.length === 0) {
+      alert('No slide elements found. Please ensure slides are generated.');
+      return;
+    }
+
+    const slideElement = slideContainers[slideIndex] as HTMLElement;
+
+    if (!slideElement) {
+      alert('Selected slide element not found.');
+      return;
+    }
+
+    try {
+      await exportSlideToJpg(slideElement, slideIndex, selectedFormat);
+    } catch (err) {
+      console.error('Failed to export JPG:', err);
+      alert('Failed to export JPG. Please try again.');
+    }
   };
 
   const handleDownloadAllPdf = async () => {

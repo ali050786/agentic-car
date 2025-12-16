@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layout, Save, Download, Library as LibraryIcon, CheckCircle, Loader, AlertCircle, FileText } from 'lucide-react';
+import { Layout, Save, Download, Library as LibraryIcon, CheckCircle, Loader, AlertCircle, FileText, ChevronDown } from 'lucide-react';
 import { UserMenu } from './UserMenu';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'limit-reached';
@@ -24,6 +24,20 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
 }) => {
     const navigate = useNavigate();
     const [showLimitTooltip, setShowLimitTooltip] = useState(false);
+    const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+    const downloadDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (downloadDropdownRef.current && !downloadDropdownRef.current.contains(event.target as Node)) {
+                setShowDownloadDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const renderAutoSaveStatus = () => {
         if (!hasUser || slidesCount === 0) return null;
@@ -120,34 +134,67 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                     <span className="hidden sm:inline">My Carousels</span>
                 </Link>
 
-                {/* PDF All Button */}
-                {slidesCount > 0 && onDownloadPdf && (
-                    <button
-                        onClick={onDownloadPdf}
-                        disabled={isExportingPdf}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 disabled:bg-red-600/50 disabled:cursor-not-allowed border border-red-500/50 rounded-lg text-sm font-medium text-white transition-colors"
-                        title="Download all slides as PDF"
-                    >
-                        {isExportingPdf ? (
-                            <Loader size={16} className="animate-spin" />
-                        ) : (
-                            <FileText size={16} />
-                        )}
-                        <span className="hidden sm:inline">
-                            {isExportingPdf ? 'Exporting...' : 'PDF All'}
-                        </span>
-                    </button>
-                )}
-
-                {/* Download Button */}
+                {/* Download Dropdown Button */}
                 {slidesCount > 0 && (
-                    <button
-                        onClick={onDownload}
-                        className="flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-lg text-sm font-medium text-white transition-colors"
-                    >
-                        <Download size={16} />
-                        <span className="hidden sm:inline">Download</span>
-                    </button>
+                    <div className="relative" ref={downloadDropdownRef}>
+                        <button
+                            onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 border border-blue-500/50 rounded-lg text-sm font-medium text-white transition-colors"
+                        >
+                            <Download size={16} />
+                            <span className="hidden sm:inline">Download</span>
+                            <ChevronDown size={14} className={`transition-transform ${showDownloadDropdown ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {showDownloadDropdown && (
+                            <div className="absolute top-full mt-2 right-0 w-56 bg-neutral-800 border border-white/10 rounded-lg shadow-xl overflow-hidden z-50">
+                                {/* Current Slide JPG Option */}
+                                <button
+                                    onClick={() => {
+                                        onDownload();
+                                        setShowDownloadDropdown(false);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-neutral-700 text-left text-sm text-white transition-colors"
+                                >
+                                    <Download size={16} className="text-blue-400" />
+                                    <div>
+                                        <div className="font-medium">Current Slide (JPG)</div>
+                                        <div className="text-xs text-neutral-400">Download active slide as image</div>
+                                    </div>
+                                </button>
+
+                                {/* Divider */}
+                                <div className="border-t border-white/10" />
+
+                                {/* All Slides PDF Option */}
+                                {onDownloadPdf && (
+                                    <button
+                                        onClick={() => {
+                                            onDownloadPdf();
+                                            setShowDownloadDropdown(false);
+                                        }}
+                                        disabled={isExportingPdf}
+                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed text-left text-sm text-white transition-colors"
+                                    >
+                                        {isExportingPdf ? (
+                                            <Loader size={16} className="text-red-400 animate-spin" />
+                                        ) : (
+                                            <FileText size={16} className="text-red-400" />
+                                        )}
+                                        <div>
+                                            <div className="font-medium">
+                                                {isExportingPdf ? 'Exporting...' : 'All Slides (PDF)'}
+                                            </div>
+                                            <div className="text-xs text-neutral-400">
+                                                {isExportingPdf ? 'Please wait...' : 'Download all slides as PDF'}
+                                            </div>
+                                        </div>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 <UserMenu />
