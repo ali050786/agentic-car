@@ -3,7 +3,20 @@
  */
 export const imageUrlToBase64 = async (url: string): Promise<string> => {
     try {
-        const response = await fetch(url);
+        // Append cache buster to avoid cached CORS errors
+        const fetchUrl = new URL(url);
+        fetchUrl.searchParams.set('t', Date.now().toString());
+
+        const response = await fetch(fetchUrl.toString(), {
+            mode: 'cors',
+            credentials: 'include', // Send cookies if needed (Appwrite session)
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.statusText}`);
+        }
+
         const blob = await response.blob();
 
         return new Promise((resolve, reject) => {
@@ -16,7 +29,8 @@ export const imageUrlToBase64 = async (url: string): Promise<string> => {
         });
     } catch (error) {
         console.error('Failed to convert image to base64:', error);
-        // Return a placeholder or empty data URI on error
+        // Look for the image in the DOM as a fallback? 
+        // For now return empty, but maybe we should try to get it from an existing image tag?
         return 'data:image/png;base64,';
     }
 };
@@ -77,4 +91,33 @@ export const createCircularImage = async (imageUrl: string, size: number = 88): 
         }
         return canvas.toDataURL('image/png');
     }
+};
+
+/**
+ * Scans an element for <image> tags and converts external URLs to base64
+ * This is crucial for html2canvas to render images correctly in PDF/JPG exports
+ */
+export const embedImagesInSvg = async (element: Element): Promise<void> => {
+    const images = Array.from(element.querySelectorAll('image'));
+
+    // Process all images in parallel
+    await Promise.all(images.map(async (img) => {
+        const href = img.getAttribute('href') || img.getAttribute('xlink:href');
+
+        if (href && (href.startsWith('http') || href.startsWith('//'))) {
+            try {
+                // Add crossOrigin attribute just in case
+                img.setAttribute('crossOrigin', 'anonymous');
+
+                // Fetch and convert to base64
+                const base64 = await imageUrlToBase64(href);
+
+                // Update attributes
+                img.setAttribute('href', base64);
+                img.setAttribute('xlink:href', base64);
+            } catch (err) {
+                console.warn('Failed to embed image:', href, err);
+            }
+        }
+    }));
 };

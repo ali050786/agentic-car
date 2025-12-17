@@ -13,7 +13,8 @@ import {
     Shuffle,
     X,
     ChevronRight,
-    ChevronLeft
+    ChevronLeft,
+    ChevronDown
 } from 'lucide-react';
 import { Carousel } from '../services/carouselService';
 import { useCarouselStore } from '../store/useCarouselStore';
@@ -146,6 +147,13 @@ const LANGUAGE_OPTIONS = [
     'Hindi',
 ];
 
+const TONE_OPTIONS = [
+    { id: 'contrarian', label: '🌶️ Contrarian', value: "Angle: Controversial/Debate. Challenge the status quo." },
+    { id: 'analytical', label: '🧠 Analytical', value: "Angle: Data-driven. Use facts, numbers, and logical reasoning." },
+    { id: 'storyteller', label: '📖 Storyteller', value: "Angle: Personal Narrative. Use 'I' statements and emotional hooks." },
+    { id: 'actionable', label: '⚡ Actionable', value: "Angle: Tutorial. No fluff, step-by-step instructions only." }
+];
+
 export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
     isOpen,
     onToggle,
@@ -180,10 +188,12 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
     const [localUrl, setLocalUrl] = useState('');
     const [localCustomInstructions, setLocalCustomInstructions] = useState('');
     const [localOutputLanguage, setLocalOutputLanguage] = useState('English');
+    const [selectedToneId, setSelectedToneId] = useState<string | null>(null);
     const [isProcessingContent, setIsProcessingContent] = useState(false);
     const [contentError, setContentError] = useState<string | null>(null);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [fileUploadError, setFileUploadError] = useState<string | null>(null);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     // Global store actions
     const {
@@ -205,7 +215,17 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
             // Sync basic settings to store
             setInputMode(activeInputMode);
             setSlideCount(localSlideCount);
-            setCustomInstructions(localCustomInstructions);
+
+            // Combine tone with custom instructions if selected
+            let finalInstructions = localCustomInstructions;
+            if (selectedToneId) {
+                const tone = TONE_OPTIONS.find(t => t.id === selectedToneId);
+                if (tone) {
+                    finalInstructions = `${tone.value} \n Additional User Notes: ${localCustomInstructions}`;
+                }
+            }
+            setCustomInstructions(finalInstructions);
+
             setOutputLanguage(localOutputLanguage);
 
             let processedContent = '';
@@ -505,18 +525,9 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                                         onChange={(e) => setLocalTopic(e.target.value)}
                                     />
 
-                                    {/* Slide Count */}
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-medium text-neutral-500">Slide Count</label>
-                                        <input
-                                            type="number"
-                                            min="3"
-                                            max="15"
-                                            value={localSlideCount}
-                                            onChange={(e) => setLocalSlideCount(parseInt(e.target.value) || 8)}
-                                            className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
-                                        />
-                                    </div>
+
+
+
                                 </div>
                             )}
 
@@ -658,84 +669,110 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                         </div>
                     )}
 
-                    {/* Model Selection - Hide if only 1 model available (Clean UX) */}
-                    {availableModels.length > 1 && (
-                        <div className="flex flex-col gap-3">
-                            <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest">AI Model</label>
-                            {!hasApiKey ? (
-                                <div className="p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                                    <p className="text-xs text-blue-300">
-                                        🎁 Free tier: {availableModels.length} free models. Add API key for premium models.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
-                                    <p className="text-xs text-green-300">
-                                        ✅ Using {apiKeyProvider === 'openrouter' ? 'OpenRouter' : apiKeyProvider === 'openai' ? 'OpenAI' : 'Anthropic'} - {availableModels.length} models available
-                                    </p>
-                                </div>
-                            )}
-                            <div className="grid grid-cols-1 gap-2">
-                                {availableModels.map((model) => (
-                                    <button
-                                        key={model.id}
-                                        onClick={() => setModel(model.id)}
-                                        className={`group p-3 rounded-xl border text-left transition-all relative overflow-hidden ${selectedModel === model.id
-                                            ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]'
-                                            : 'border-white/10 hover:border-white/30 bg-black/20'
-                                            }`}
-                                    >
-                                        <div className="relative z-10">
-                                            <div className="font-bold text-white text-sm mb-0.5 flex justify-between items-center">
-                                                <span>{model.name}</span>
-                                                {selectedModel === model.id && (
-                                                    <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-                                                )}
-                                            </div>
-                                            <div className="text-xs text-neutral-400 group-hover:text-neutral-300">
-                                                {model.description}
+                    {/* Global Style/Tone Selector (Always Visible) */}
+                    <div className="flex flex-col gap-2 pt-4 border-t border-white/5">
+                        <label className="text-xs font-medium text-neutral-500">Choose a Style</label>
+                        <div className="flex flex-wrap gap-2">
+                            {TONE_OPTIONS.map((tone) => (
+                                <button
+                                    key={tone.id}
+                                    onClick={() => setSelectedToneId(selectedToneId === tone.id ? null : tone.id)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${selectedToneId === tone.id
+                                        ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-900/20'
+                                        : 'bg-neutral-800/50 border-white/5 text-neutral-400 hover:bg-neutral-800 hover:text-white hover:border-white/10'
+                                        }`}
+                                >
+                                    {tone.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Collapsible Advanced Settings */}
+                    <div className="pt-4 border-t border-white/5">
+                        <button
+                            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                            className="flex items-center justify-between w-full group"
+                        >
+                            <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest group-hover:text-white transition-colors">
+                                Advanced Settings
+                            </span>
+                            <ChevronDown
+                                size={16}
+                                className={`text-neutral-400 group-hover:text-white transition-transform duration-200 ${isSettingsOpen ? 'rotate-180' : ''}`}
+                            />
+                        </button>
+
+                        {isSettingsOpen && (
+                            <div className="mt-4 space-y-6 animate-in fade-in slide-in-from-top-2">
+                                {/* Compact Model & Slide Count Row */}
+                                <div className="flex gap-2">
+                                    {/* Model Selector (Flex Grow) */}
+                                    <div className="flex-1 space-y-1">
+                                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">AI Model {availableModels.length > 1 && `(${availableModels.length})`}</label>
+                                        <div className="relative">
+                                            <select
+                                                value={selectedModel}
+                                                onChange={(e) => setModel(e.target.value)}
+                                                className="w-full pl-8 pr-4 py-2 bg-neutral-800/50 border border-white/10 rounded-lg text-xs text-white appearance-none focus:border-blue-500 focus:outline-none cursor-pointer hover:bg-neutral-800 transition-colors"
+                                            >
+                                                {availableModels.map(m => (
+                                                    <option key={m.id} value={m.id} className="bg-neutral-900">{m.name} {m.freeTier ? '(Free)' : ''}</option>
+                                                ))}
+                                            </select>
+                                            {/* Icon Overlay */}
+                                            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                                                <Sparkles size={12} className="text-purple-400" />
                                             </div>
                                         </div>
-                                    </button>
-                                ))}
+                                    </div>
+
+                                    {/* Slide Count (Fixed Width) */}
+                                    <div className="w-20 space-y-1">
+                                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Slides</label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                min="3"
+                                                max="15"
+                                                value={localSlideCount}
+                                                onChange={(e) => setLocalSlideCount(parseInt(e.target.value) || 8)}
+                                                className="w-full pl-2 pr-1 py-2 bg-neutral-800/50 border border-white/10 rounded-lg text-xs text-center text-white focus:border-blue-500 focus:outline-none hover:bg-neutral-800 transition-colors"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Custom Instructions */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-neutral-500">
+                                        Custom Instructions (Optional)
+                                    </label>
+                                    <textarea
+                                        className="w-full h-20 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition-colors resize-none text-sm"
+                                        placeholder="Add any specific instructions for the AI..."
+                                        value={localCustomInstructions}
+                                        onChange={(e) => setLocalCustomInstructions(e.target.value)}
+                                    />
+                                </div>
+
+                                {/* Output Language */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-neutral-500">Output Language</label>
+                                    <select
+                                        value={localOutputLanguage}
+                                        onChange={(e) => setLocalOutputLanguage(e.target.value)}
+                                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500 transition-colors text-sm appearance-none cursor-pointer"
+                                    >
+                                        {LANGUAGE_OPTIONS.map((lang) => (
+                                            <option key={lang} value={lang} className="bg-neutral-900">
+                                                {lang}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                    )}
-
-                    {/* Global Settings */}
-                    <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
-                        <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-                            Settings
-                        </span>
-
-                        {/* Custom Instructions */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-neutral-500">
-                                Custom Instructions (Optional)
-                            </label>
-                            <textarea
-                                className="w-full h-20 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition-colors resize-none text-sm"
-                                placeholder="Add any specific instructions for the AI..."
-                                value={localCustomInstructions}
-                                onChange={(e) => setLocalCustomInstructions(e.target.value)}
-                            />
-                        </div>
-
-                        {/* Output Language */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-neutral-500">Output Language</label>
-                            <select
-                                value={localOutputLanguage}
-                                onChange={(e) => setLocalOutputLanguage(e.target.value)}
-                                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500 transition-colors text-sm appearance-none cursor-pointer"
-                            >
-                                {LANGUAGE_OPTIONS.map((lang) => (
-                                    <option key={lang} value={lang} className="bg-neutral-900">
-                                        {lang}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        )}
                     </div>
                 </div>
 

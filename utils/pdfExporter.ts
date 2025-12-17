@@ -1,4 +1,5 @@
 import { CarouselFormat } from '../types';
+import { embedImagesInSvg } from './imageUtils';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -109,6 +110,15 @@ export const exportSlideToPdf = async (
             // Remove foreignObject from SVG
             fo.remove();
         });
+
+        // Embed external images as base64 to ensure they render in PDF
+        try {
+            await embedImagesInSvg(svgElement);
+            // Also process extracted divs for images
+            await Promise.all(extractedDivs.map(div => embedImagesInSvg(div)));
+        } catch (e) {
+            console.warn('Error embedding images:', e);
+        }
 
         // Replace CSS variables in SVG
         applyComputedColors(svgElement, svgContainerElement);
