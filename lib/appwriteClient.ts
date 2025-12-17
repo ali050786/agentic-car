@@ -7,7 +7,7 @@
  * Location: src/lib/appwriteClient.ts
  */
 
-import { Client, Account, Databases, ID } from 'appwrite';
+import { Client, Account, Databases, Storage, ID } from 'appwrite';
 
 // ============================================================================
 // ENVIRONMENT VARIABLES
@@ -18,6 +18,7 @@ const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
 const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 const carouselsCollectionId = import.meta.env.VITE_APPWRITE_CAROUSELS_COLLECTION_ID;
 const analyticsCollectionId = import.meta.env.VITE_APPWRITE_ANALYTICS_COLLECTION_ID;
+const storageBucketId = import.meta.env.VITE_APPWRITE_STORAGE_BUCKET_ID;
 
 // Validate environment variables
 if (!endpoint || !projectId) {
@@ -38,6 +39,7 @@ const client = new Client()
 
 export const account = new Account(client);
 export const databases = new Databases(client);
+export const storage = new Storage(client);
 
 // ============================================================================
 // CONFIGURATION
@@ -47,17 +49,17 @@ export const config = {
     databaseId: databaseId || '',
     carouselsCollectionId: carouselsCollectionId || '',
     analyticsCollectionId: analyticsCollectionId || '',
+    storageBucketId: storageBucketId || '',
 };
 
 // ============================================================================
 // HELPER: Generate ID
-// ============================================================================
-
+// =================================
 export { ID };
 
-// ============================================================================
+// =================================
 // TYPESCRIPT TYPES FOR DATABASE
-// ============================================================================
+// =================================
 
 /**
  * User Profile (from Appwrite auth)
@@ -99,8 +101,8 @@ export interface UserAnalyticsDocument {
     $updatedAt: string;
 }
 
-// ============================================================================
+// ===========================
 // EXPORTS
-// ============================================================================
+// ===========================
 
 export default client;

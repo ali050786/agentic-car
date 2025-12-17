@@ -12,7 +12,7 @@ const COMMON_DEFS = `
 
 // Variant 1: Hero (Slide-1)
 export const T1_HERO_SVG = `
-<svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
@@ -65,7 +65,7 @@ export const T1_HERO_SVG = `
 
 // Variant 2: Body (Slide-2)
 export const T1_BODY_SVG = `
-<svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
@@ -117,7 +117,7 @@ export const T1_BODY_SVG = `
 
 // Variant 3: List (Slide-3)
 export const T1_LIST_SVG = `
-<svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
@@ -169,7 +169,7 @@ export const T1_LIST_SVG = `
 
 // Variant 4: CTA/Closing (Slide-6)
 export const T1_CTA_SVG = `
-<svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>

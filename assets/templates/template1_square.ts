@@ -12,7 +12,7 @@ const COMMON_DEFS = `
 
 // Variant 1: Hero (Square)
 export const T1_HERO_SVG_SQUARE = `
-<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
@@ -66,7 +66,7 @@ export const T1_HERO_SVG_SQUARE = `
 
 // Variant 2: Body (Square)
 export const T1_BODY_SVG_SQUARE = `
-<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
@@ -119,7 +119,7 @@ export const T1_BODY_SVG_SQUARE = `
 
 // Variant 3: List (Square)
 export const T1_LIST_SVG_SQUARE = `
-<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
@@ -172,7 +172,7 @@ export const T1_LIST_SVG_SQUARE = `
 
 // Variant 4: CTA/Closing (Square)
 export const T1_CTA_SVG_SQUARE = `
-<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>

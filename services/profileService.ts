@@ -114,7 +114,7 @@ export const initializeDefaultBrandKit = async (
         identity: {
             name: userName || 'Your Name',
             title: 'Creator',
-            imageUrl: ''
+            imageUrl: 'https://sgp.cloud.appwrite.io/v1/storage/buckets/693df05200140fb6514a/files/694278bd001f8831ffc8/view?project=6932ab3b00290095e2e1'
         },
         colors: {
             primary: '#0EA5E9',    // Ocean Tech blue

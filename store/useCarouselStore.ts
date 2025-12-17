@@ -19,7 +19,7 @@ const DEFAULT_BRAND_KIT: BrandKit = {
     identity: {
         name: 'Sikandar Ali',
         title: 'Founder',
-        imageUrl: 'https://media.licdn.com/dms/image/v2/D4D03AQHMksCzze9wKg/profile-displayphoto-scale_400_400/B4DZsIrKqXJkAc-/0/1765377096878?e=1767830400&v=beta&t=Ij_r9DOhr6NjLug9WboneRiAyhPVqF-o9V8Q_paR18E',
+        imageUrl: 'https://sgp.cloud.appwrite.io/v1/storage/buckets/693df05200140fb6514a/files/694278bd001f8831ffc8/view?project=6932ab3b00290095e2e1',
     },
     colors: {
         primary: '#3b82f6',

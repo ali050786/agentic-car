@@ -13,6 +13,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Upload, Save } from 'lucide-react';
 import { BrandKit } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
+import { storage, ID, config } from '../lib/appwriteClient';
 
 interface BrandEditorPanelProps {
     isOpen: boolean;
@@ -30,6 +31,8 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
     onClose,
 }) => {
     const { updateGlobalBrandKit } = useAuthStore();
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Local state for editing
     const [brandKit, setBrandKit] = useState<BrandKit>({
@@ -37,7 +40,7 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
         identity: {
             name: 'Sikandar Ali',
             title: 'Founder',
-            imageUrl: 'https://media.licdn.com/dms/image/v2/D4D03AQHMksCzze9wKg/profile-displayphoto-scale_400_400/B4DZsIrKqXJkAc-/0/1765377096878?e=1767830400&v=beta&t=Ij_r9DOhr6NjLug9WboneRiAyhPVqF-o9V8Q_paR18E',
+            imageUrl: 'https://sgp.cloud.appwrite.io/v1/storage/buckets/693df05200140fb6514a/files/694278bd001f8831ffc8/view?project=6932ab3b00290095e2e1',
         },
         colors: {
             primary: '#3b82f6',
@@ -69,6 +72,47 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
             // Save to local carousel
             onSave(brandKit, 'local');
             onClose();
+        }
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!config.storageBucketId) {
+            alert('Appwrite storage bucket ID is not configured. Please check your .env file.');
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            // 1. Upload file to Appwrite Storage
+            const response = await storage.createFile(
+                config.storageBucketId,
+                ID.unique(),
+                file
+            );
+
+            // 2. Get file view URL
+            const fileUrl = storage.getFileView(
+                config.storageBucketId,
+                response.$id
+            );
+
+            // 3. Update state with new URL
+            setBrandKit({
+                ...brandKit,
+                identity: { ...brandKit.identity, imageUrl: fileUrl }
+            });
+        } catch (error) {
+            console.error('Failed to upload image:', error);
+            alert('Failed to upload image. Please try again.');
+        } finally {
+            setIsUploading(false);
+            // Reset input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -164,12 +208,25 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
                                     placeholder="https://example.com/logo.png"
                                     className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
                                 />
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                />
                                 <button
-                                    className="px-3 py-2 bg-black/40 border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                    className="px-3 py-2 bg-black/40 border border-white/10 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     title="Upload Brand Image"
                                     aria-label="Upload Brand Image"
                                 >
-                                    <Upload className="w-4 h-4 text-neutral-400" />
+                                    {isUploading ? (
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <Upload className="w-4 h-4 text-neutral-400" />
+                                    )}
                                 </button>
                             </div>
                             {brandKit.identity.imageUrl && (

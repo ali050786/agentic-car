@@ -52,7 +52,7 @@ export const generateSignatureCard = (
         <circle style="fill: #fff;" cx="390" cy="46" r="44"/>
         <circle style="fill: #fff;" cx="390" cy="46" r="40"/>
         <g style="clip-path: url(#${clipPathId});">
-          <image x="345" y="2" width="90" href="${escapedImageUrl}"/>
+          <image x="345" y="2" width="90" height="90" preserveAspectRatio="xMidYMid slice" href="${escapedImageUrl}" xlink:href="${escapedImageUrl}"/>
         </g>
         <text style="fill: var(--text-highlight); font-family: ${fontFamily}, sans-serif; font-size: 28px; font-weight: 500; text-anchor: end;" transform="translate(335 44)">
           ${escapeXml(data.name)}
@@ -76,7 +76,7 @@ export const generateSignatureCard = (
       <circle style="fill: #fff;" cx="46" cy="46" r="44"/>
       <circle style="fill: #fff;" cx="46" cy="46" r="40"/>
       <g style="clip-path: url(#${clipPathId});">
-        <image x="-1" y="-1" width="90" href="${escapedImageUrl}"/>
+        <image x="-1" y="-1" width="90" height="90" preserveAspectRatio="xMidYMid slice" href="${escapedImageUrl}" xlink:href="${escapedImageUrl}"/>
       </g>
       <text style="fill: var(--text-highlight); font-family: ${fontFamily}, sans-serif; font-size: 28px; font-weight: 500;" transform="translate(106 44)">
         ${escapeXml(data.name)}
