@@ -114,6 +114,8 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
             onClick={handleClose}
             disabled={isSaving || success}
             className="p-2 hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Close modal"
+            title="Close modal"
           >
             <X size={20} className="text-neutral-400" />
           </button>

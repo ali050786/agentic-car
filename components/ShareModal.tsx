@@ -68,6 +68,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           <button
             onClick={onClose}
             className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+            title="Close Share Modal"
+            aria-label="Close Share Modal"
           >
             <X size={20} className="text-neutral-400" />
           </button>
@@ -121,6 +123,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 onClick={openInNewTab}
                 className="px-4 py-3 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-lg transition-colors"
                 title="Open in new tab"
+                aria-label="Open in new tab"
               >
                 <ExternalLink size={16} />
               </button>

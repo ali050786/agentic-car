@@ -161,7 +161,7 @@ export const CarouselPreview: React.FC = () => {
               // Only show slides within range
               if (absOffset > 2) return null;
 
-              const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity);
+              const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, `focus-${index}`);
               const isCenter = offset === 0;
               const isCopied = copiedIndex === index;
 
@@ -180,8 +180,8 @@ export const CarouselPreview: React.FC = () => {
                     transform: `translateX(${translateX}%) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
                     opacity: opacity,
                     zIndex: isCenter ? 20 : 10 - absOffset,
-                    width: selectedFormat === 'square' ? '400px' : '432px',
-                    height: selectedFormat === 'square' ? '400px' : '540px',
+                    width: selectedFormat === 'square' ? '65vh' : 'calc(65vh * 0.8)',
+                    height: '65vh',
                   }}
                   onClick={() => handleFocusSlideClick(index)}
                 >
@@ -203,6 +203,7 @@ export const CarouselPreview: React.FC = () => {
                               }}
                               className="p-1.5 bg-neutral-800/80 hover:bg-blue-600 text-white rounded-md transition-colors backdrop-blur-sm"
                               title="Edit Content"
+                              aria-label="Edit Content"
                             >
                               <Edit2 size={14} />
                             </button>
@@ -217,6 +218,7 @@ export const CarouselPreview: React.FC = () => {
                                 : 'bg-neutral-800/80 hover:bg-purple-600 text-white'
                                 }`}
                               title="Copy optimized SVG for Figma"
+                              aria-label="Copy optimized SVG for Figma"
                             >
                               {isCopied ? <CheckCircle size={14} /> : <Copy size={14} />}
                             </button>
@@ -225,6 +227,7 @@ export const CarouselPreview: React.FC = () => {
                               disabled={exportingIndex === index}
                               className="p-1.5 bg-neutral-800/80 hover:bg-orange-600 text-white rounded-md transition-colors backdrop-blur-sm"
                               title="Export as JPG"
+                              aria-label="Export as JPG"
                             >
                               <Image size={14} />
                             </button>
@@ -233,6 +236,7 @@ export const CarouselPreview: React.FC = () => {
                               disabled={exportingPdfIndex === index}
                               className="p-1.5 bg-neutral-800/80 hover:bg-red-600 text-white rounded-md transition-colors backdrop-blur-sm"
                               title="Export as PDF"
+                              aria-label="Export as PDF"
                             >
                               <FileText size={14} />
                             </button>
@@ -270,6 +274,7 @@ export const CarouselPreview: React.FC = () => {
             onClick={handlePrevSlide}
             className="absolute left-8 top-1/2 -translate-y-1/2 z-30 p-3 bg-neutral-900/80 hover:bg-neutral-800 border border-white/10 rounded-full transition-all backdrop-blur-sm group"
             title="Previous Slide"
+            aria-label="Previous Slide"
           >
             <ChevronLeft size={24} className="text-white/60 group-hover:text-white" />
           </button>
@@ -277,6 +282,7 @@ export const CarouselPreview: React.FC = () => {
             onClick={handleNextSlide}
             className="absolute right-8 top-1/2 -translate-y-1/2 z-30 p-3 bg-neutral-900/80 hover:bg-neutral-800 border border-white/10 rounded-full transition-all backdrop-blur-sm group"
             title="Next Slide"
+            aria-label="Next Slide"
           >
             <ChevronRight size={24} className="text-white/60 group-hover:text-white" />
           </button>
@@ -293,6 +299,7 @@ export const CarouselPreview: React.FC = () => {
                 : 'w-1.5 bg-white/20 hover:bg-white/40'
                 }`}
               title={`Go to slide ${index + 1}`}
+              aria-label={`Go to slide ${index + 1}`}
             />
           ))}
         </div>
@@ -318,7 +325,7 @@ export const CarouselPreview: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
           {slides.map((slide, index) => {
             // Preview with carousel-level branding
-            const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity);
+            const svgString = injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, `grid-${index}`);
             const isSelected = selectedSlideIndex === index;
             const isCopied = copiedIndex === index;
 
@@ -334,6 +341,7 @@ export const CarouselPreview: React.FC = () => {
                       onClick={() => handleSlideClick(index)}
                       className="p-1.5 bg-neutral-800 hover:bg-blue-600 text-white rounded-md transition-colors"
                       title="Edit Content"
+                      aria-label="Edit Content"
                     >
                       <Edit2 size={14} />
                     </button>
@@ -345,6 +353,7 @@ export const CarouselPreview: React.FC = () => {
                         : 'bg-neutral-800 hover:bg-purple-600 text-white'
                         }`}
                       title="Copy optimized SVG for Figma"
+                      aria-label="Copy optimized SVG for Figma"
                     >
                       {isCopied ? <CheckCircle size={14} /> : <Copy size={14} />}
                       {isCopied && <span className="text-[10px] font-bold px-1">COPIED</span>}
@@ -354,6 +363,7 @@ export const CarouselPreview: React.FC = () => {
                       disabled={exportingIndex === index}
                       className="p-1.5 bg-neutral-800 hover:bg-orange-600 text-white rounded-md transition-colors"
                       title="Export as JPG"
+                      aria-label="Export as JPG"
                     >
                       <Image size={14} />
                     </button>
@@ -362,6 +372,7 @@ export const CarouselPreview: React.FC = () => {
                       disabled={exportingPdfIndex === index}
                       className="p-1.5 bg-neutral-800 hover:bg-red-600 text-white rounded-md transition-colors"
                       title="Export as PDF"
+                      aria-label="Export as PDF"
                     >
                       <FileText size={14} />
                     </button>

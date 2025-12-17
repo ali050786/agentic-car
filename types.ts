@@ -146,6 +146,7 @@ export interface CarouselState {
   bottomToolExpanded: string | null;
   rightPanelOpen: boolean;
   viewMode: ViewMode;
+  isMobileMenuOpen: boolean;
 
   // Actions
   setTopic: (topic: string) => void;
@@ -202,6 +203,8 @@ export interface CarouselState {
   setBottomToolExpanded: (tool: string | null) => void;
   setRightPanelOpen: (open: boolean) => void;
   setViewMode: (mode: ViewMode) => void;
+  toggleMobileMenu: () => void;
+  setMobileMenuOpen: (isOpen: boolean) => void;
 }
 
 export interface TemplateAgent {

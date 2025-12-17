@@ -45,6 +45,8 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenApiKeyModal }) => {
       {/* Menu Trigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        title="User Menu"
+        aria-label="User Menu"
         className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
       >
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-sm font-medium">

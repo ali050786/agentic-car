@@ -17,9 +17,9 @@ import { CarouselState, SlideContent, CarouselTheme, TemplateId, CarouselFormat,
 const DEFAULT_BRAND_KIT: BrandKit = {
     enabled: false,
     identity: {
-        name: '',
-        title: '',
-        imageUrl: '',
+        name: 'Sikandar Ali',
+        title: 'Founder',
+        imageUrl: 'https://media.licdn.com/dms/image/v2/D4D03AQHMksCzze9wKg/profile-displayphoto-scale_400_400/B4DZsIrKqXJkAc-/0/1765377096878?e=1767830400&v=beta&t=Ij_r9DOhr6NjLug9WboneRiAyhPVqF-o9V8Q_paR18E',
     },
     colors: {
         primary: '#3b82f6',
@@ -41,7 +41,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     // Core carousel data
     topic: '',
     selectedTemplate: 'template-1',
-    selectedModel: 'groq-llama',
+    selectedModel: 'deepseek-r1t',
     selectedFormat: 'portrait',
     selectedPattern: 1,
     patternOpacity: 0.1,
@@ -67,7 +67,8 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     selectedSlideIndex: null,
     bottomToolExpanded: null,
     rightPanelOpen: false,
-    viewMode: 'grid',
+    viewMode: 'focus',
+    isMobileMenuOpen: false,
 
     // Getter for activePresetId (for backward compatibility)
     get activePresetId() {
@@ -79,6 +80,24 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     // ============================================================================
 
     setTopic: (topic: string) => set({ topic }),
+
+
+
+    // ============================================================================
+    // UI ACTIONS
+    // ============================================================================
+
+    setSelectedSlideIndex: (selectedSlideIndex: number | null) => set({ selectedSlideIndex }),
+
+    setBottomToolExpanded: (bottomToolExpanded: string | null) => set({ bottomToolExpanded }),
+
+    setRightPanelOpen: (rightPanelOpen: boolean) => set({ rightPanelOpen }),
+
+    setViewMode: (viewMode: ViewMode) => set({ viewMode }),
+
+    toggleMobileMenu: () => set(state => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
+
+    setMobileMenuOpen: (isOpen: boolean) => set({ isMobileMenuOpen: isOpen }),
 
     setTemplate: (selectedTemplate: TemplateId) => set({ selectedTemplate }),
 
@@ -156,17 +175,6 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
         });
     },
 
-    // ============================================================================
-    // UI ACTIONS
-    // ============================================================================
-
-    setSelectedSlideIndex: (selectedSlideIndex: number | null) => set({ selectedSlideIndex }),
-
-    setBottomToolExpanded: (bottomToolExpanded: string | null) => set({ bottomToolExpanded }),
-
-    setRightPanelOpen: (rightPanelOpen: boolean) => set({ rightPanelOpen }),
-
-    setViewMode: (viewMode: ViewMode) => set({ viewMode }),
 }));
 
 // ============================================================================

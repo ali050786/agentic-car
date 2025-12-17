@@ -75,6 +75,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => 
                     onClick={onClose}
                     className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
                     aria-label="Close modal"
+                    title="Close modal"
                 >
                     <X size={24} />
                 </button>

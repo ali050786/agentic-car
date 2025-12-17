@@ -13,6 +13,7 @@ interface FloatingTopBarProps {
     onDownloadPdf: () => void;
     isExportingPdf: boolean;
     onOpenApiKeyModal: () => void;
+    onOpenAuthModal: () => void;
 }
 
 export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
@@ -23,6 +24,7 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
     onDownloadPdf,
     isExportingPdf,
     onOpenApiKeyModal,
+    onOpenAuthModal
 }) => {
     const navigate = useNavigate();
     const [showLimitTooltip, setShowLimitTooltip] = useState(false);
@@ -42,7 +44,19 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
     }, []);
 
     const renderAutoSaveStatus = () => {
-        if (!hasUser || slidesCount === 0) return null;
+        if (!hasUser) {
+            return (
+                <div
+                    onClick={onOpenAuthModal}
+                    className="flex items-center gap-2 px-3 py-2 bg-neutral-800 border border-white/10 rounded-lg text-neutral-400 text-sm cursor-pointer hover:bg-neutral-700 hover:text-white transition-colors"
+                >
+                    <AlertCircle size={16} />
+                    Guest Mode (Unsaved)
+                </div>
+            );
+        }
+
+        if (slidesCount === 0) return null;
 
         switch (saveStatus) {
             case 'saving':
@@ -67,6 +81,8 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                         className="relative flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm cursor-pointer hover:bg-red-500/20 transition-colors"
                         onClick={() => setShowLimitTooltip(!showLimitTooltip)}
                         onMouseEnter={() => setShowLimitTooltip(true)}
+                        title="Storage Limit Reached"
+                        aria-label="Storage Limit Reached"
                         onMouseLeave={() => setShowLimitTooltip(false)}
                     >
                         <AlertCircle size={16} />
@@ -130,6 +146,8 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                 {/* Library Button */}
                 <Link
                     to="/library"
+                    title="My Carousels"
+                    aria-label="My Carousels"
                     className="flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-lg text-sm font-medium text-white transition-colors"
                 >
                     <LibraryIcon size={16} />
@@ -141,6 +159,8 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                     <div className="relative" ref={downloadDropdownRef}>
                         <button
                             onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
+                            title="Download Options"
+                            aria-label="Download Options"
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 border border-blue-500/50 rounded-lg text-sm font-medium text-white transition-colors"
                         >
                             <Download size={16} />
@@ -199,8 +219,17 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                     </div>
                 )}
 
-                {/* User Menu */}
-                {hasUser && <UserMenu onOpenApiKeyModal={onOpenApiKeyModal} />}
+                {/* User Menu or Sign Up Button */}
+                {hasUser ? (
+                    <UserMenu onOpenApiKeyModal={onOpenApiKeyModal} />
+                ) : (
+                    <button
+                        onClick={onOpenAuthModal}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-900/20 transition-all"
+                    >
+                        Sign Up
+                    </button>
+                )}
             </div>
         </header>
     );

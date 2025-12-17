@@ -40,6 +40,7 @@ import { SlideEditPanel } from './components/SlideEditPanel';
 import { Toast } from './components/Toast';
 import { useToast } from './hooks/useToast';
 import { ApiKeyModal } from './components/ApiKeyModal';
+import { AuthModal } from './components/AuthModal';
 import { FreeLimitError } from './services/aiService';
 
 import {
@@ -54,6 +55,7 @@ import {
   Settings,
   Palette,
   Wand2,
+  Menu,
 } from 'lucide-react';
 
 const SUGGESTED_TOPICS = [
@@ -102,7 +104,8 @@ const CarouselGenerator: React.FC = () => {
     patternOpacity,
     setPatternOpacity,
     viewMode,
-    setViewMode
+    setViewMode,
+    toggleMobileMenu
   } = useCarouselStore();
 
   // Toast notifications
@@ -119,6 +122,53 @@ const CarouselGenerator: React.FC = () => {
 
   // API Key Modal state
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+
+  // Auth Modal state
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMessage, setAuthModalMessage] = useState('Create an account to save your work');
+  const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
+
+  // 1. Add Sidebar State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // 2. Determine "Studio Mode" (Has slides)
+  const hasSlides = slides.length > 0;
+
+  // 3. Auto-collapse sidebar when generation finishes (slides appear)
+  useEffect(() => {
+    if (hasSlides && !isGenerating) {
+      setIsSidebarOpen(false);
+    }
+  }, [hasSlides, isGenerating]);
+
+  // Check guest usage
+  const checkGuestLimit = (): boolean => {
+    if (user) return true; // Logged in users always pass
+
+    const guestUsage = parseInt(localStorage.getItem('guest_usage_count') || '0');
+    if (guestUsage >= 1) {
+      setAuthModalMessage('Create an account to generate more carousels');
+      setAuthMode('signup');
+      setAuthModalOpen(true);
+      return false;
+    }
+    return true;
+  };
+
+  const incrementGuestUsage = () => {
+    if (!user) {
+      const guestUsage = parseInt(localStorage.getItem('guest_usage_count') || '0');
+      localStorage.setItem('guest_usage_count', (guestUsage + 1).toString());
+    }
+  };
+
+  const requireAuth = (message: string = 'Sign up to continue'): boolean => {
+    if (user) return true;
+    setAuthModalMessage(message);
+    setAuthMode('signup');
+    setAuthModalOpen(true);
+    return false;
+  };
 
   // Load carousel if navigating from library with edit mode
   useEffect(() => {
@@ -209,12 +259,17 @@ const CarouselGenerator: React.FC = () => {
     if (inputMode === 'topic' && !localTopic) return;
     if (inputMode !== 'topic' && !sourceContent) return;
 
+    // Check guest limit
+    if (!checkGuestLimit()) return;
+
     // Set topic for display purposes (will show in UI/save modal)
     setTopic(localTopic || 'AI Generated Carousel');
 
     // Trigger the workflow with error handling for free tier limit
     try {
       await runAgentWorkflow(localTopic);
+      // Increment guest usage after successful generation trigger
+      incrementGuestUsage();
     } catch (error) {
       // Check if it's a free tier limit error
       if (error instanceof FreeLimitError) {
@@ -280,10 +335,15 @@ const CarouselGenerator: React.FC = () => {
 
     const slideElement = slideContainers[slideIndex] as HTMLElement;
 
+
+
     if (!slideElement) {
       alert('Selected slide element not found.');
       return;
     }
+
+    // Require auth for downloading
+    if (!requireAuth('Sign up to download your masterpiece')) return;
 
     try {
       await exportSlideToJpg(slideElement, slideIndex, selectedFormat);
@@ -297,6 +357,9 @@ const CarouselGenerator: React.FC = () => {
     // Track if we need to switch back to focus view
     const wasInFocusMode = viewMode === 'focus';
     let currentToastId: string | null = null;
+
+    // Require auth for downloading PDF
+    if (!requireAuth('Sign up to download PDF')) return;
 
     try {
       // If in focus mode, switch to grid view first
@@ -366,6 +429,9 @@ const CarouselGenerator: React.FC = () => {
   };
 
   const handleNewCarousel = () => {
+    // Expand sidebar so user can enter new topic
+    setIsSidebarOpen(true);
+
     // Clear edit mode and start fresh
     setEditingCarousel(null);
     setCurrentCarouselId(null);
@@ -409,10 +475,18 @@ const CarouselGenerator: React.FC = () => {
         onDownloadPdf={handleDownloadAllPdf}
         isExportingPdf={isExportingPdf}
         onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
+        onOpenAuthModal={() => {
+          setAuthModalMessage('Sign in to access all features');
+          setAuthMode('login');
+          setAuthModalOpen(true);
+        }}
       />
 
       {/* Floating Left Sidebar */}
       <FloatingSidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        hasSlides={slides.length > 0} // <--- NEW PROP
         editMode={!!editingCarousel}
         editingCarousel={editingCarousel}
         localTopic={localTopic}
@@ -426,19 +500,37 @@ const CarouselGenerator: React.FC = () => {
         onNewCarousel={handleNewCarousel}
       />
 
+      {/* Mobile Menu Button - visible only on mobile */}
+      <button
+        onClick={toggleMobileMenu}
+        className="fixed top-20 left-4 z-30 p-2 bg-neutral-900/90 border border-white/20 rounded-lg md:hidden text-white shadow-lg backdrop-blur-md"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* Center: Preview Area */}
-      <main className="pt-16 pb-24 pl-[20rem] pr-6 h-full bg-neutral-950 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-neutral-900/50 via-neutral-950 to-neutral-950">
+      <main
+        className={`
+          pt-16 pb-24 px-4 h-full bg-neutral-950 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-neutral-900/50 via-neutral-950 to-neutral-950 
+          transition-all duration-500 ease-in-out
+          ${isSidebarOpen ? 'md:pl-[21.5rem]' : 'md:pl-24'} 
+        `}
+      >
         <CarouselPreview />
       </main>
 
       {/* Floating Bottom Bar */}
-      <FloatingBottomBar
-        expandedTool={bottomToolExpanded}
-        setExpandedTool={setBottomToolExpanded}
-        selectedTemplate={selectedTemplate}
-        setTemplate={setTemplate}
-        onOpenBrandEditor={handleOpenBrandEditor}
-      />
+      {slides.length > 0 && (
+        <div className="animate-in slide-in-from-bottom-10 duration-700 fade-in">
+          <FloatingBottomBar
+            expandedTool={bottomToolExpanded}
+            setExpandedTool={setBottomToolExpanded}
+            selectedTemplate={selectedTemplate}
+            setTemplate={setTemplate}
+            onOpenBrandEditor={handleOpenBrandEditor}
+          />
+        </div>
+      )}
 
       {/* Right Edit Panel */}
       <SlideEditPanel
@@ -470,6 +562,14 @@ const CarouselGenerator: React.FC = () => {
       <ApiKeyModal
         isOpen={apiKeyModalOpen}
         onClose={() => setApiKeyModalOpen(false)}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authMode}
+        message={authModalMessage}
       />
     </div>
   );
@@ -506,9 +606,7 @@ const App: React.FC = () => {
         <Route
           path="/"
           element={
-            <ProtectedRoute>
-              <CarouselGenerator />
-            </ProtectedRoute>
+            <CarouselGenerator />
           }
         />
 

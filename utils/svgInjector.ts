@@ -18,7 +18,8 @@ export const injectContentIntoSvg = (
   branding?: BrandingConfig,
   format?: CarouselFormat,
   patternId?: number,  // Pattern ID for background pattern
-  patternOpacity?: number  // User-controlled pattern opacity (0-1)
+  patternOpacity?: number,  // User-controlled pattern opacity (0-1)
+  uniqueId: string = '' // Optional unique identifier for DOM element isolation
 ): string => {
   let baseSvg = '';
   let listHtml = '';
@@ -240,7 +241,7 @@ export const injectContentIntoSvg = (
   let signatureCardHtml = '';
   if (branding && branding.enabled) {
     const fontFamily = templateId === 'template-1' ? 'Lato' : 'Roboto';
-    signatureCardHtml = generateSignatureCard(branding, fontFamily, format);
+    signatureCardHtml = generateSignatureCard(branding, fontFamily, format, uniqueId);
   }
   baseSvg = replaceSafe('{{SIGNATURE_CARD}}', signatureCardHtml);
 

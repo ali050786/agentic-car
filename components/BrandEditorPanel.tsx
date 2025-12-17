@@ -35,9 +35,9 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
     const [brandKit, setBrandKit] = useState<BrandKit>({
         enabled: true,
         identity: {
-            name: '',
-            title: '',
-            imageUrl: '',
+            name: 'Sikandar Ali',
+            title: 'Founder',
+            imageUrl: 'https://media.licdn.com/dms/image/v2/D4D03AQHMksCzze9wKg/profile-displayphoto-scale_400_400/B4DZsIrKqXJkAc-/0/1765377096878?e=1767830400&v=beta&t=Ij_r9DOhr6NjLug9WboneRiAyhPVqF-o9V8Q_paR18E',
         },
         colors: {
             primary: '#3b82f6',
@@ -99,6 +99,8 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                        title="Close Brand Editor"
+                        aria-label="Close Brand Editor"
                     >
                         <X className="w-5 h-5 text-neutral-400" />
                     </button>
@@ -162,7 +164,11 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
                                     placeholder="https://example.com/logo.png"
                                     className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
                                 />
-                                <button className="px-3 py-2 bg-black/40 border border-white/10 rounded-lg hover:bg-white/5 transition-colors">
+                                <button
+                                    className="px-3 py-2 bg-black/40 border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
+                                    title="Upload Brand Image"
+                                    aria-label="Upload Brand Image"
+                                >
                                     <Upload className="w-4 h-4 text-neutral-400" />
                                 </button>
                             </div>

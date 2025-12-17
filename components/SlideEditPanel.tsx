@@ -75,6 +75,8 @@ export const SlideEditPanel: React.FC<SlideEditPanelProps> = ({
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-white/10 rounded-lg transition-colors text-neutral-400 hover:text-white"
+                        title="Close Edit Panel"
+                        aria-label="Close Edit Panel"
                     >
                         <X size={20} />
                     </button>
