@@ -216,7 +216,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   // ============================================================================
-  // GOOGLE OAUTH - Sign in with Google
+  // GOOGLE OAUTH - Sign in with Google (Token-based for Safari compatibility)
   // ============================================================================
 
   signInWithGoogle: async () => {
@@ -226,15 +226,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const successUrl = `${currentUrl}/auth/callback`;
       const failureUrl = `${currentUrl}/login?error=oauth_failed`;
 
-      // Create OAuth2 session with Google
-      account.createOAuth2Session(
+      // Create OAuth2 token session with Google
+      // This uses token-based auth instead of cookies, which works in Safari
+      // Tokens are passed via URL params (userId & secret) to the callback
+      account.createOAuth2Token(
         OAuthProvider.Google,
         successUrl,
         failureUrl
       );
 
       // The redirect happens automatically, so we return success
-      // The actual auth state will be updated after redirect
+      // The actual auth state will be updated after redirect in AuthCallback
       return { error: null, success: true };
     } catch (error: any) {
       return {
