@@ -28,6 +28,19 @@ const cleanJsonResponse = (text: string): string => {
   return text.trim();
 };
 
+/**
+ * AI Model Proxy Plugin for Vite Development Server
+ * 
+ * ⚠️ IMPORTANT: This plugin ONLY works during local development (npm run dev)
+ * 
+ * For production deployment on Vercel, the `/api/generate.ts` serverless function
+ * handles all AI proxy requests. This plugin is ignored in production builds.
+ * 
+ * Both implementations share the same logic:
+ * - Hybrid authentication (BYOK + free tier)
+ * - Multi-provider support (OpenRouter, OpenAI, Anthropic)
+ * - Free tier usage limits (10 generations)
+ */
 const aiModelProxyPlugin = (env: Record<string, string>) => ({
   name: 'ai-model-proxy',
   configureServer(server: any) {

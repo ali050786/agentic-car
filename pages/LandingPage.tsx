@@ -107,18 +107,14 @@ const LandingPage = () => {
                         <div className="absolute inset-[1px] rounded-xl bg-[#0B0F19]/90 z-0" />
 
                         <div className="rounded-lg overflow-hidden bg-[#0B0F19] aspect-[16/9] relative group z-10">
-                            {/* Dashboard Video */}
-                            <video
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
+                            {/* YouTube Video Embed */}
+                            <iframe
+                                src="https://www.youtube.com/embed/RtvqiE0IrBM?autoplay=1&mute=1&loop=1&controls=0&playlist=RtvqiE0IrBM&modestbranding=1&showinfo=0&rel=0"
                                 className="w-full h-full object-cover"
-                                poster="/assets/images/backup.png"
-                            >
-                                <source src="/assets/images/Final-part.mp4" type="video/mp4" />
-                                <source src="/assets/images/Final-part.mov" type="video/quicktime" />
-                            </video>
+                                allow="autoplay; encrypted-media"
+                                allowFullScreen
+                                title="Dashboard Preview"
+                            />
                             {/* Glow effect on the bottom */}
                             <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-blue-600/5 to-transparent pointer-events-none" />
                         </div>
