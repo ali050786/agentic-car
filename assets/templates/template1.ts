@@ -36,7 +36,7 @@ export const T1_HERO_SVG = `
       </div>
       
       <!-- Headline -->
-      <div style="font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 96px; color: var(--text-highlight); text-transform: uppercase; line-height: 1.2;">
+      <div style="font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 80px; color: var(--text-highlight); text-transform: uppercase; line-height: 1.2;">
         {{HEADLINE}}
       </div>
       

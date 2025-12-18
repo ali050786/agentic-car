@@ -192,22 +192,14 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
                             />
                         </div>
 
-                        {/* Brand Image URL */}
+                        {/* Brand Image Upload Widget */}
                         <div>
                             <label className="block text-xs font-medium text-neutral-400 mb-2">
-                                Brand Image URL
+                                Brand Avatar
                             </label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={brandKit.identity.imageUrl}
-                                    onChange={(e) => setBrandKit({
-                                        ...brandKit,
-                                        identity: { ...brandKit.identity, imageUrl: e.target.value }
-                                    })}
-                                    placeholder="https://example.com/logo.png"
-                                    className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                                />
+
+                            <div className="flex flex-col gap-3">
+                                {/* Hidden File Input */}
                                 <input
                                     type="file"
                                     ref={fileInputRef}
@@ -215,33 +207,85 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
                                     accept="image/*"
                                     onChange={handleImageUpload}
                                 />
-                                <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={isUploading}
-                                    className="px-3 py-2 bg-black/40 border border-white/10 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Upload Brand Image"
-                                    aria-label="Upload Brand Image"
-                                >
-                                    {isUploading ? (
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        <Upload className="w-4 h-4 text-neutral-400" />
-                                    )}
-                                </button>
+
+                                {brandKit.identity.imageUrl ? (
+                                    /* Image Preview State */
+                                    <div className="relative group w-24 h-24 mx-auto">
+                                        <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-white/30 transition-colors">
+                                            <img
+                                                src={brandKit.identity.imageUrl}
+                                                alt="Brand Avatar"
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    // Fallback if image fails to load
+                                                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(brandKit.identity.name)}&background=random`;
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Overlay Actions */}
+                                        <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={isUploading}
+                                                className="p-1.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                                                title="Change Image"
+                                            >
+                                                <Upload className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setBrandKit({
+                                                    ...brandKit,
+                                                    identity: { ...brandKit.identity, imageUrl: '' }
+                                                })}
+                                                className="p-1.5 bg-red-500/20 hover:bg-red-500/40 rounded-full text-red-400 transition-colors"
+                                                title="Remove Image"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        {isUploading && (
+                                            <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center z-10">
+                                                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    /* Upload Placeholder State */
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className={`
+                                            cursor-pointer group
+                                            w-full h-32 
+                                            border-2 border-dashed border-white/10 hover:border-blue-500/50
+                                            bg-black/20 hover:bg-blue-500/5
+                                            rounded-xl
+                                            flex flex-col items-center justify-center gap-3
+                                            transition-all duration-200
+                                            ${isUploading ? 'opacity-50 pointer-events-none' : ''}
+                                        `}
+                                    >
+                                        {isUploading ? (
+                                            <div className="w-6 h-6 border-2 border-white/30 border-t-blue-500 rounded-full animate-spin" />
+                                        ) : (
+                                            <>
+                                                <div className="p-3 rounded-full bg-white/5 group-hover:bg-blue-500/10 group-hover:text-blue-500 text-neutral-400 transition-colors">
+                                                    <Upload className="w-5 h-5" />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-xs font-medium text-neutral-300 group-hover:text-blue-400 transition-colors">
+                                                        Click to upload image
+                                                    </p>
+                                                    <p className="text-[10px] text-neutral-500 mt-1">
+                                                        SVG, PNG, JPG (max 2MB)
+                                                    </p>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                            {brandKit.identity.imageUrl && (
-                                <div className="mt-2 flex items-center gap-3">
-                                    <img
-                                        src={brandKit.identity.imageUrl}
-                                        alt="Brand preview"
-                                        className="w-12 h-12 rounded-full object-cover border border-white/20"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                    <span className="text-xs text-neutral-500">Preview</span>
-                                </div>
-                            )}
                         </div>
                     </div>
 

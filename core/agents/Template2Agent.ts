@@ -57,33 +57,33 @@ export const Template2Agent = {
   name: 'The Clarity',
 
   generate: async (context: AgentContext): Promise<{ slides: SlideContent[], theme: CarouselTheme }> => {
-    const { inputMode, sourceContent, customInstructions, outputLanguage, slideCount } = context;
+    const { inputMode, sourceContent, customInstructions, outputLanguage, slideCount, viralAngle } = context;
 
     const prompt = `
-      You are the "Clarity" Agent. You create modern, tech-forward LinkedIn carousels.
+      You are a LinkedIn Ghostwriter specializing in Clarity. 
       
-      ═══════════════════════════════════════════════════════════════════════
-      CONTEXT INFORMATION
-      ═══════════════════════════════════════════════════════════════════════
-      CONTEXT_TYPE: ${formatContextType(inputMode)}
-      TARGET_LANGUAGE: ${outputLanguage}
-      SLIDE_COUNT: ${slideCount} slides (must generate exactly ${slideCount} slides)
-      ${customInstructions ? `USER_INSTRUCTIONS: ${customInstructions}` : ''}
+      The Strategy/Angle: 
+      """
+      ${viralAngle || sourceContent}
+      """
       
-      SOURCE_MATERIAL:
-      """
-      ${sourceContent}
-      """
+      User Constraints: ${customInstructions || 'None'}
+      
+      Task: Write a ${slideCount}-slide carousel.
+      
+      Critical: 
+      - Do NOT write generic advice. 
+      - Stick strictly to the provided Angle. 
+      - If the Angle is 'Contrarian', be aggressive. 
+      - If 'Story', use 'I' statements.
       
       ═══════════════════════════════════════════════════════════════════════
       CRITICAL INSTRUCTION - SOURCE MATERIAL ADHERENCE
       ═══════════════════════════════════════════════════════════════════════
-      If SOURCE_MATERIAL is provided above, you MUST:
+      If Reference Material is provided above/in the angle, you MUST:
       - STRICTLY base the carousel content on that material
       - Extract key points, facts, and narratives directly from the source
       - Do NOT hallucinate or add outside facts unless absolutely necessary to fill gaps
-      - Maintain the core message and tone of the source material
-      - If the source is insufficient, acknowledge gaps rather than inventing information
       
       Design Constraints:
       - Tone: Educational, professional, clean, optimistic.

@@ -504,11 +504,7 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <label className="text-xs font-medium text-neutral-500">Your Topic</label>
-                                            {!hasApiKey && availableModels.length === 1 && (
-                                                <span className="text-[10px] text-neutral-600 bg-neutral-800/50 px-1.5 py-0.5 rounded border border-white/5">
-                                                    Using {availableModels[0].name}
-                                                </span>
-                                            )}
+
                                         </div>
                                         <button
                                             onClick={onRandomTopic}

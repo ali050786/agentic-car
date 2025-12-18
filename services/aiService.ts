@@ -2,6 +2,7 @@
 
 import { useCarouselStore } from '../store/useCarouselStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { FREE_TIER_LIMIT } from '../config/constants';
 
 /**
  * Custom error for when free tier limit is reached
@@ -9,7 +10,7 @@ import { useAuthStore } from '../store/useAuthStore';
 export class FreeLimitError extends Error {
     public usageCount: number;
 
-    constructor(message: string, usageCount: number = 3) {
+    constructor(message: string, usageCount: number = FREE_TIER_LIMIT) {
         super(message);
         this.name = 'FreeLimitError';
         this.usageCount = usageCount;
@@ -27,13 +28,18 @@ export class FreeLimitError extends Error {
 export const generateContentFromAgent = async (prompt: string, responseSchema: any) => {
     try {
         const { selectedModel } = useCarouselStore.getState();
-        const { user, userApiKey, freeUsageCount } = useAuthStore.getState();
+        const { user, freeUsageCount } = useAuthStore.getState();
+
+        // TEMPORARY: Disable BYOK for security reasons
+        // We ignore the stored key and force free tier usage
+        const userApiKey = null;
+
 
         // Check free tier limit BEFORE making request (if no API key)
         if (!userApiKey && user?.$id) {
-            console.log(`[aiService] Free tier check: ${freeUsageCount}/3 used`);
+            console.log(`[aiService] Free tier check: ${freeUsageCount}/${FREE_TIER_LIMIT} used`);
 
-            if (freeUsageCount >= 3) {
+            if (freeUsageCount >= FREE_TIER_LIMIT) {
                 console.warn('[aiService] Free tier limit reached before request');
                 throw new FreeLimitError(
                     'Free trial exhausted. Please add your API key to continue.',
@@ -93,7 +99,7 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
                 console.warn('[aiService] Free tier limit reached:', errorData);
                 throw new FreeLimitError(
                     errorData.message || 'Free trial exhausted. Please add your API key to continue.',
-                    errorData.usageCount || 3
+                    errorData.usageCount || FREE_TIER_LIMIT
                 );
             }
 

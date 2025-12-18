@@ -12,6 +12,7 @@ import { account, AppwriteUser } from '../lib/appwriteClient';
 import { Models, OAuthProvider } from 'appwrite';
 import { BrandKit } from '../types';
 import { getUserBrandKit, updateUserBrandKit, initializeDefaultBrandKit, getFreeUsageCount } from '../services/profileService';
+import { FREE_TIER_LIMIT } from '../config/constants';
 
 // ============================================================================
 // TYPES
@@ -109,8 +110,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialized: false,
   globalBrandKit: null,
   brandKitLoading: false,
-  userApiKey: typeof window !== 'undefined' ? localStorage.getItem('user_api_key') : null,
-  apiKeyProvider: typeof window !== 'undefined' ? localStorage.getItem('api_key_provider') as any : null,
+  // TEMPORARY: Disable BYOK system
+  // userApiKey: typeof window !== 'undefined' ? localStorage.getItem('user_api_key') : null,
+  // apiKeyProvider: typeof window !== 'undefined' ? localStorage.getItem('api_key_provider') as any : null,
+  userApiKey: null,
+  apiKeyProvider: null,
   freeUsageCount: 0,
   freeUsageLoading: false,
 
@@ -401,7 +405,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const count = await getFreeUsageCount(user.$id);
       set({ freeUsageCount: count, freeUsageLoading: false });
-      console.log(`[AuthStore] Free usage count: ${count}/3`);
+      console.log(`[AuthStore] Free usage count: ${count}/${FREE_TIER_LIMIT}`);
     } catch (error) {
       console.error('[AuthStore] Failed to fetch free usage count:', error);
       set({ freeUsageLoading: false });

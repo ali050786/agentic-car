@@ -124,7 +124,7 @@ export const CarouselLibrary: React.FC = () => {
 
   const handleEdit = (carousel: Carousel) => {
     // Navigate to home with carousel data - reuses main interface!
-    navigate('/', {
+    navigate('/app', {
       state: {
         editMode: true,
         carouselId: carousel.$id,
@@ -175,7 +175,8 @@ export const CarouselLibrary: React.FC = () => {
         </div>
 
         <Link
-          to="/"
+          to="/app"
+          state={{ createNew: true }}
           className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-lg text-sm font-medium transition-all"
         >
           <Plus size={16} />
@@ -227,6 +228,24 @@ export const CarouselLibrary: React.FC = () => {
                   {carousels.filter(c => !c.isPublic).length}
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Multi-Model AI Notification */}
+        <div className="mb-6 bg-gradient-to-br from-blue-900/30 to-indigo-900/30 backdrop-blur-sm border border-blue-500/30 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Layout className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-white mb-2">Multi-Model AI</h3>
+              <p className="text-sm text-neutral-300 leading-relaxed">
+                Choose between DeepSeek, Claude 3.5, and GPT-4o to find the perfect voice for your content.
+              </p>
+              <p className="text-xs text-blue-400 mt-2 font-medium">
+                Currently using DeepSeek from OpenRouter • Other models coming soon
+              </p>
             </div>
           </div>
         </div>
@@ -287,7 +306,8 @@ export const CarouselLibrary: React.FC = () => {
               </p>
               {!searchQuery && (
                 <Link
-                  to="/"
+                  to="/app"
+                  state={{ createNew: true }}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-lg font-medium transition-all"
                 >
                   <Plus size={18} />

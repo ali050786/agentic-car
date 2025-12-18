@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layout, Save, Download, Library as LibraryIcon, CheckCircle, Loader, AlertCircle, FileText, ChevronDown } from 'lucide-react';
+import { Layout, Save, Download, Library as LibraryIcon, CheckCircle, Loader, AlertCircle, FileText, ChevronDown, Zap } from 'lucide-react';
 import { UserMenu } from './UserMenu';
+import { useAuthStore } from '../store/useAuthStore';
+import { FREE_TIER_LIMIT } from '../config/constants';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'limit-reached';
 
@@ -27,6 +29,7 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
     onOpenAuthModal
 }) => {
     const navigate = useNavigate();
+    const { userApiKey, freeUsageCount } = useAuthStore();
     const [showLimitTooltip, setShowLimitTooltip] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
     const downloadDropdownRef = useRef<HTMLDivElement>(null);
@@ -86,11 +89,11 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                         onMouseLeave={() => setShowLimitTooltip(false)}
                     >
                         <AlertCircle size={16} />
-                        Storage Full (5/5)
+                        Storage Full ({FREE_TIER_LIMIT}/{FREE_TIER_LIMIT})
                         {showLimitTooltip && (
                             <div className="absolute top-full mt-2 right-0 w-72 p-4 bg-neutral-800 border border-white/10 rounded-lg shadow-xl z-50">
                                 <p className="text-sm text-white mb-2">
-                                    You have reached the free limit of 5 carousels.
+                                    You have reached the free limit of {FREE_TIER_LIMIT} carousels.
                                 </p>
                                 <p className="text-xs text-neutral-400 mb-3">
                                     Please delete old carousels from your library to save new work.
@@ -139,6 +142,25 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
 
             {/* Right: Action Buttons */}
             <div className="flex items-center gap-3">
+
+                {/* Free Tier Usage Slider (Header Version) */}
+                {/* Free Tier Usage Slider (Header Version) */}
+                {hasUser && !userApiKey && (
+                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-neutral-800/50 border border-white/5 rounded-lg mr-1">
+                        <Zap size={14} className="text-blue-400" />
+                        <div className="flex flex-col w-20">
+                            <span className="text-[10px] font-medium text-blue-300 leading-none mb-1">
+                                Free: {freeUsageCount}/{FREE_TIER_LIMIT}
+                            </span>
+                            <div className="w-full bg-neutral-700 rounded-full h-1 overflow-hidden">
+                                <div
+                                    className="bg-blue-400 h-full rounded-full transition-all"
+                                    style={{ width: `${Math.min((freeUsageCount / FREE_TIER_LIMIT) * 100, 100)}%` }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Auto-Save Status Badge (Generator Mode) */}
                 {renderAutoSaveStatus()}

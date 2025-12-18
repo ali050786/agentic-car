@@ -51,8 +51,12 @@ export const T2_HERO_SVG_SQUARE = `
         <div id="preHeader" style="font-family: 'Roboto', sans-serif; font-weight: 400; font-size: 32px; color: var(--text-highlight); line-height: 1;">
           {{PREHEADER}}
         </div>
-        <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 86px; color: var(--text-default); line-height: 1.1;">
+        <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 66px; color: var(--text-default); line-height: 1.1; text-transform: uppercase;">
           {{HEADLINE}}
+        </div>
+        <!-- Body Text -->
+        <div id="content" style="font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 28px; color: var(--text-default); line-height: 1.4;">
+          {{BODY}}
         </div>
       </div>
     </body>

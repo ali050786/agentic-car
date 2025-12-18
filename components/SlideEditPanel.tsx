@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Wand2, Loader2, Sparkles, ChevronRight } from 'lucide-react';
 import { SlideContent } from '../types';
+import { EditorAgent, RefinementGoal } from '../core/agents/EditorAgent';
 
 interface SlideEditPanelProps {
     isOpen: boolean;
@@ -18,6 +19,21 @@ export const SlideEditPanel: React.FC<SlideEditPanelProps> = ({
     onSave,
 }) => {
     const [formData, setFormData] = useState<SlideContent | null>(null);
+    const [activeMagicField, setActiveMagicField] = useState<string | null>(null); // 'headline' | 'body'
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [headlineAlternatives, setHeadlineAlternatives] = useState<string[]>([]);
+    const [showAlternatives, setShowAlternatives] = useState(false);
+
+    // Close magic menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (activeMagicField && !(e.target as Element).closest('.magic-wand-container')) {
+                setActiveMagicField(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [activeMagicField]);
 
     // Update form data when slide changes
     useEffect(() => {
@@ -43,6 +59,48 @@ export const SlideEditPanel: React.FC<SlideEditPanelProps> = ({
             newList[index] = value;
         }
         setFormData((prev) => ({ ...prev!, listItems: newList }));
+    };
+
+    const handleRefineText = async (goal: RefinementGoal) => {
+        if (!formData || !formData.body) return;
+
+        setIsGenerating(true);
+        setActiveMagicField(null); // Close menu
+
+        try {
+            const refined = await EditorAgent.refineText(formData.body, goal, formData.headline);
+            handleChange('body', refined);
+        } catch (error) {
+            console.error('Refinement failed:', error);
+            // Could add a toast here
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handleGenerateHeadlineAlternatives = async () => {
+        if (!formData || !formData.headline) return;
+
+        setIsGenerating(true);
+        // Don't close menu immediately, switch to loading view inside it? 
+        // Or just show loading state.
+
+        try {
+            const alts = await EditorAgent.generateHeadlineAlternatives(formData.headline, formData.body);
+            setHeadlineAlternatives(alts);
+            setShowAlternatives(true);
+            setActiveMagicField(null); // Close main menu, show alternatives modal/list
+        } catch (error) {
+            console.error('Headline generation failed:', error);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const applyHeadlineAlternative = (alt: string) => {
+        handleChange('headline', alt);
+        setShowAlternatives(false);
+        setHeadlineAlternatives([]);
     };
 
     const handleSave = () => {
@@ -97,9 +155,61 @@ export const SlideEditPanel: React.FC<SlideEditPanelProps> = ({
 
                     {/* Headline */}
                     <div>
-                        <label className="text-xs font-medium text-neutral-400 block mb-2">
-                            Headline <span className="text-red-400">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs font-medium text-neutral-400">
+                                Headline <span className="text-red-400">*</span>
+                            </label>
+                            <div className="relative magic-wand-container">
+                                <button
+                                    onClick={() => setActiveMagicField(activeMagicField === 'headline' ? null : 'headline')}
+                                    className={`p-1.5 rounded-md transition-colors ${activeMagicField === 'headline'
+                                        ? 'bg-blue-500/20 text-blue-400'
+                                        : 'hover:bg-white/10 text-neutral-500 hover:text-blue-400'
+                                        }`}
+                                    title="AI Actions"
+                                >
+                                    {isGenerating && activeMagicField === 'headline' ? (
+                                        <Loader2 size={14} className="animate-spin" />
+                                    ) : (
+                                        <Wand2 size={14} />
+                                    )}
+                                </button>
+
+                                {/* Headline Menu */}
+                                {activeMagicField === 'headline' && (
+                                    <div className="absolute right-0 top-8 w-48 bg-neutral-800 border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                        <button
+                                            onClick={handleGenerateHeadlineAlternatives}
+                                            disabled={isGenerating}
+                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-white/5 flex items-center gap-2 group"
+                                        >
+                                            <Sparkles size={12} className="text-purple-400 group-hover:scale-110 transition-transform" />
+                                            Generate 3 Alternatives
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Headline Alternatives Selection UI */}
+                        {showAlternatives && (
+                            <div className="mb-3 p-3 bg-neutral-800/50 border border-blue-500/30 rounded-lg space-y-2 animate-in fade-in slide-in-from-top-2">
+                                <div className="flex items-center justify-between text-xs text-neutral-400 mb-1">
+                                    <span>Select an alternative:</span>
+                                    <button onClick={() => setShowAlternatives(false)} className="hover:text-white"><X size={12} /></button>
+                                </div>
+                                {headlineAlternatives.map((alt, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => applyHeadlineAlternative(alt)}
+                                        className="w-full text-left p-2 rounded bg-neutral-900 border border-white/5 hover:border-blue-500/50 hover:bg-blue-500/10 text-xs text-white transition-all flex items-start gap-2 group"
+                                    >
+                                        <span className="mt-0.5 text-blue-500/50 group-hover:text-blue-400"><ChevronRight size={12} /></span>
+                                        {alt}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         <input
                             value={formData.headline}
                             onChange={(e) => handleChange('headline', e.target.value)}
@@ -111,7 +221,52 @@ export const SlideEditPanel: React.FC<SlideEditPanelProps> = ({
                     {/* Body Text (if not list variant) */}
                     {formData.variant !== 'list' && (
                         <div>
-                            <label className="text-xs font-medium text-neutral-400 block mb-2">Body Text</label>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-xs font-medium text-neutral-400">Body Text</label>
+                                <div className="relative magic-wand-container">
+                                    <button
+                                        onClick={() => setActiveMagicField(activeMagicField === 'body' ? null : 'body')}
+                                        className={`p-1.5 rounded-md transition-colors ${activeMagicField === 'body'
+                                            ? 'bg-blue-500/20 text-blue-400'
+                                            : 'hover:bg-white/10 text-neutral-500 hover:text-blue-400'
+                                            }`}
+                                        title="Refine Text"
+                                    >
+                                        {isGenerating && activeMagicField !== 'headline' ? ( // Rough check, assuming other is body
+                                            <Loader2 size={14} className="animate-spin" />
+                                        ) : (
+                                            <Wand2 size={14} />
+                                        )}
+                                    </button>
+
+                                    {/* Body Menu */}
+                                    {activeMagicField === 'body' && (
+                                        <div className="absolute right-0 top-8 w-48 bg-neutral-800 border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                            <div className="px-3 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider bg-white/5">
+                                                Rewrite For...
+                                            </div>
+                                            <button
+                                                onClick={() => handleRefineText('CLARITY')}
+                                                className="w-full text-left px-3 py-2 text-xs text-white hover:bg-white/5 flex items-center gap-2"
+                                            >
+                                                <span>💧</span> Clarity
+                                            </button>
+                                            <button
+                                                onClick={() => handleRefineText('PUNCHIER')}
+                                                className="w-full text-left px-3 py-2 text-xs text-white hover:bg-white/5 flex items-center gap-2"
+                                            >
+                                                <span>🥊</span> Punchier
+                                            </button>
+                                            <button
+                                                onClick={() => handleRefineText('GRAMMAR')}
+                                                className="w-full text-left px-3 py-2 text-xs text-white hover:bg-white/5 flex items-center gap-2"
+                                            >
+                                                <span>✨</span> Fix Grammar
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                             <textarea
                                 value={formData.body || ''}
                                 onChange={(e) => handleChange('body', e.target.value)}
@@ -130,7 +285,7 @@ export const SlideEditPanel: React.FC<SlideEditPanelProps> = ({
                                     <div key={idx} className="flex items-center gap-2">
                                         <span className="text-xs text-neutral-500 w-6">{idx + 1}.</span>
                                         <input
-                                            value={typeof item === 'object' && item !== null ? (item.bullet || '') : (item || '')}
+                                            value={typeof item === 'object' && item !== null ? (item.bullet || '') : (typeof item === 'string' ? item : '')}
                                             onChange={(e) => handleListChange(idx, e.target.value)}
                                             className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
                                             placeholder={`Item ${idx + 1}`}

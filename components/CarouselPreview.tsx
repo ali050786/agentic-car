@@ -108,11 +108,49 @@ export const CarouselPreview: React.FC = () => {
   };
 
   if (isGenerating) {
+    const { generationStatus, generationProgress } = useCarouselStore.getState();
+
     return (
-      <div className="flex items-center justify-center h-full text-white/50 animate-pulse">
-        <div className="flex flex-col items-center gap-4">
-          <RefreshCw className="animate-spin h-12 w-12 text-blue-500" />
-          <p className="font-mono text-sm">AI Agents are crafting your slides & theme...</p>
+      <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center gap-8 max-w-md w-full px-8 p-12 bg-neutral-900/50 rounded-2xl border border-white/5 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-500">
+
+          {/* Animated Illustration Area */}
+          <div className="relative w-24 h-24 flex items-center justify-center">
+            <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping opacity-20 duration-1000" />
+            <div className="absolute inset-0 border-2 border-blue-500/30 rounded-full animate-[spin_3s_linear_infinite]" />
+            <div className="absolute inset-2 border-2 border-purple-500/30 rounded-full animate-[spin_4s_linear_infinite_reverse]" />
+            <RefreshCw className="w-8 h-8 text-blue-400 animate-[spin_2s_linear_infinite]" />
+          </div>
+
+          <div className="flex flex-col items-center gap-4 w-full text-center">
+            {/* Status Text - Animated */}
+            <div className="h-8 flex items-center justify-center overflow-hidden">
+              <p className="font-medium text-lg text-white animate-in slide-in-from-bottom-2 fade-in duration-300 key={generationStatus}">
+                {generationStatus || 'AI Agents are crafting your slides...'}
+              </p>
+            </div>
+
+            <p className="text-sm text-neutral-400">
+              Our AI agents are researching, writing, and designing your carousel.
+            </p>
+
+            {/* Progress Bar */}
+            <div className="w-full space-y-2 mt-4">
+              <div className="h-2 w-full bg-neutral-800 rounded-full overflow-hidden border border-white/5">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-700 ease-out shadow-[0_0_15px_rgba(59,130,246,0.5)] relative overflow-hidden"
+                  style={{ width: `${Math.max(5, generationProgress || 5)}%` }}
+                >
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite]" />
+                </div>
+              </div>
+              <div className="flex justify-between text-xs text-neutral-500 font-mono">
+                <span>{Math.round(generationProgress || 0)}%</span>
+                <span className="animate-pulse">Processing...</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -221,6 +259,7 @@ export const CarouselPreview: React.FC = () => {
                               aria-label="Copy optimized SVG for Figma"
                             >
                               {isCopied ? <CheckCircle size={14} /> : <Copy size={14} />}
+                              <span className="text-xs font-medium ml-1">{isCopied ? 'Copied' : 'Figma'}</span>
                             </button>
                             <button
                               onClick={(e) => handleExportJpg(index, e)}
@@ -356,7 +395,11 @@ export const CarouselPreview: React.FC = () => {
                       aria-label="Copy optimized SVG for Figma"
                     >
                       {isCopied ? <CheckCircle size={14} /> : <Copy size={14} />}
-                      {isCopied && <span className="text-[10px] font-bold px-1">COPIED</span>}
+                      {isCopied ? (
+                        <span className="text-[10px] font-bold px-1">COPIED</span>
+                      ) : (
+                        <span className="text-xs font-medium px-1">Figma</span>
+                      )}
                     </button>
                     <button
                       onClick={() => handleExportJpg(index)}

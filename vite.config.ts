@@ -6,16 +6,25 @@ import { StateGraph, MessagesAnnotation } from '@langchain/langgraph';
 import { ChatGroq } from '@langchain/groq';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { FREE_TIER_LIMIT } from './config/constants';
 dotenv.config();
 
 // Helper to extract JSON from markdown code blocks
 const cleanJsonResponse = (text: string): string => {
-  // Remove markdown code blocks if present
+  // 1. Try to match markdown code blocks first
   const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
   if (jsonMatch) {
     return jsonMatch[1];
   }
-  // Return as-is if no code blocks found
+
+  // 2. Try to find the first '{' and last '}'
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start !== -1 && end !== -1 && end > start) {
+    return text.substring(start, end + 1);
+  }
+
+  // 3. Return as-is if no structure found (fallback)
   return text.trim();
 };
 
@@ -47,7 +56,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
           console.log('[Vite Proxy] Provider:', apiProvider);
           console.log('[Vite Proxy] Selected model:', selectedModel);
 
-          const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. You MUST respond with ONLY valid JSON. No comments, no extra text, no markdown code blocks. Pure JSON only.';
+          const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. ERROR HANDLING: You MUST respond with ONLY valid JSON. Do NOT include any conversational filler like "Alright" or "Here is the JSON". Do NOT wrap the output in markdown code blocks if possible, but pure JSON string is best. START YOUR RESPONSE WITH { AND END WITH }.';
 
           // Route to correct API based on provider
           if (apiProvider === 'openrouter') {
@@ -176,8 +185,8 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
           const usageCountHeader = req.headers['x-usage-count'] as string | undefined;
           const usageCount = usageCountHeader ? parseInt(usageCountHeader, 10) : 0;
 
-          if (usageCount >= 3) {
-            console.log(`[Vite Proxy] User ${userId} has exhausted free tier (${usageCount}/3)`);
+          if (usageCount >= FREE_TIER_LIMIT) {
+            console.log(`[Vite Proxy] User ${userId} has exhausted free tier (${usageCount}/${FREE_TIER_LIMIT})`);
             res.statusCode = 403;
             res.setHeader('Content-Type', 'application/json');
             return res.end(JSON.stringify({
@@ -188,10 +197,10 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
           }
 
           // Use system keys for free tier
-          console.log(`[Vite Proxy] Using free tier for user ${userId} (${usageCount}/3)`);
+          console.log(`[Vite Proxy] Using free tier for user ${userId} (${usageCount}/${FREE_TIER_LIMIT})`);
           usingSystemKey = true;
 
-          const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. You MUST respond with ONLY valid JSON. No comments, no extra text, no markdown code blocks. Pure JSON only.';
+          const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. ERROR HANDLING: You MUST respond with ONLY valid JSON. Do NOT include any conversational filler like "Alright" or "Here is the JSON". Do NOT wrap the output in markdown code blocks if possible, but pure JSON string is best. START YOUR RESPONSE WITH { AND END WITH }.';
 
           // Free tier: Route based on selected model
           if (selectedModel === 'claude-haiku-openrouter') {

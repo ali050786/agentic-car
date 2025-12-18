@@ -9,6 +9,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, LogOut, Library as LibraryIcon, Key, Zap, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
+import { FREE_TIER_LIMIT } from '../config/constants';
 
 interface UserMenuProps {
   onOpenApiKeyModal: () => void;
@@ -85,11 +86,11 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenApiKeyModal }) => {
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-blue-400" />
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-blue-400">Free Tier: {freeUsageCount}/3</p>
+                  <p className="text-xs font-medium text-blue-400">Free Tier: {freeUsageCount}/{FREE_TIER_LIMIT}</p>
                   <div className="w-full bg-neutral-700 rounded-full h-1.5 mt-1">
                     <div
                       className="bg-blue-400 h-1.5 rounded-full transition-all"
-                      style={{ width: `${(freeUsageCount / 3) * 100}%` }}
+                      style={{ width: `${(freeUsageCount / FREE_TIER_LIMIT) * 100}%` }}
                     />
                   </div>
                 </div>

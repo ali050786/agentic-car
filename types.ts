@@ -105,6 +105,9 @@ export interface CarouselState {
   isGenerating: boolean;
   error: string | null;
 
+  generationStatus: string;
+  generationProgress: number;  // 0-100
+
   // Multi-modal Input State
   inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf';
   slideCount: number;
@@ -156,6 +159,8 @@ export interface CarouselState {
   setPattern: (selectedPattern: number) => void;
   setPatternOpacity: (opacity: number) => void;
   setGenerating: (isGenerating: boolean) => void;
+  setGenerationStatus: (status: string) => void;
+  setGenerationProgress: (progress: number) => void;
   setError: (error: string | null) => void;
   setSlides: (slides: SlideContent[]) => void;
   setTheme: (theme: CarouselTheme) => void;

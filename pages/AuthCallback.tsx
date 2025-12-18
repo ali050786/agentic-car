@@ -18,7 +18,7 @@ export const AuthCallback: React.FC = () => {
     // Appwrite handles the callback automatically
     // Just wait a moment then redirect to home
     const timer = setTimeout(() => {
-      navigate('/', { replace: true });
+      navigate('/app', { replace: true });
     }, 2000);
 
     return () => clearTimeout(timer);

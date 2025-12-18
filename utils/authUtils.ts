@@ -141,7 +141,7 @@ export const isSessionExpired = (session: any): boolean => {
  */
 export const getAuthRedirectUrl = (): string => {
   const params = new URLSearchParams(window.location.search);
-  return params.get('redirectTo') || '/';
+  return params.get('redirectTo') || '/app';
 };
 
 /**

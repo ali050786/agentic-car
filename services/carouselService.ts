@@ -9,6 +9,7 @@
 import { databases, config, ID } from '../lib/appwriteClient';
 import { Query } from 'appwrite';
 import { BrandKit, BrandMode, SignaturePosition } from '../types';
+import { FREE_TIER_LIMIT } from '../config/constants';
 
 // ============================================================================
 // TYPES
@@ -64,7 +65,7 @@ export class StorageLimitError extends Error {
 // ============================================================================
 
 /**
- * Check if user has reached carousel limit (5 carousels)
+ * Check if user has reached carousel limit
  */
 export const checkCarouselLimit = async (userId: string): Promise<boolean> => {
   try {
@@ -77,7 +78,7 @@ export const checkCarouselLimit = async (userId: string): Promise<boolean> => {
       ]
     );
 
-    return total >= 5;
+    return total >= FREE_TIER_LIMIT;
   } catch (error) {
     console.error('[checkCarouselLimit] Error:', error);
     // If there's an error checking, allow the operation (fail open)
@@ -118,7 +119,7 @@ export const createCarousel = async (
     const limitReached = await checkCarouselLimit(userId);
     if (limitReached) {
       console.warn('[createCarousel] User has reached carousel limit');
-      throw new StorageLimitError('You have reached the maximum of 5 carousels. Please delete old ones to save new work.');
+      throw new StorageLimitError(`You have reached the maximum of ${FREE_TIER_LIMIT} carousels. Please delete old ones to save new work.`);
     }
 
     // Store brand kit in existing branding field (extended format)
@@ -707,6 +708,7 @@ export const duplicateCarousel = async (
       original.theme,
       original.slides,
       false,
+      original.brandMode, // Fix: pass brandMode instead of presetId
       original.presetId
     );
 

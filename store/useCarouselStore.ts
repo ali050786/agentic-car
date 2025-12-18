@@ -63,6 +63,10 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     presetId: 'ocean-tech',
     signaturePosition: 'bottom-left',
 
+    // Generation Progress State
+    generationStatus: 'Initializing...',
+    generationProgress: 0,
+
     // UI state
     selectedSlideIndex: null,
     bottomToolExpanded: null,
@@ -110,6 +114,9 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     setPatternOpacity: (patternOpacity: number) => set({ patternOpacity }),
 
     setGenerating: (isGenerating: boolean) => set({ isGenerating }),
+
+    setGenerationStatus: (status: string) => set({ generationStatus: status }),
+    setGenerationProgress: (progress: number) => set({ generationProgress: progress }),
 
     setError: (error: string | null) => set({ error }),
 

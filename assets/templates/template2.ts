@@ -51,8 +51,12 @@ export const T2_HERO_SVG = `
           {{PREHEADER}}
         </div>
         <!-- Headline -->
-        <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 92px; color: var(--text-default); line-height: 1.1;">
+        <div id="header" style="font-family: 'Roboto', sans-serif; font-weight: 900; font-size: 80px; color: var(--text-default); line-height: 1.1; text-transform: uppercase;">
           {{HEADLINE}}
+        </div>
+        <!-- Body Text -->
+        <div id="content" style="font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.4;">
+          {{BODY}}
         </div>
       </div>
     </body>
