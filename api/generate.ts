@@ -246,6 +246,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         selectedModel === 'gemini-2.0-flash-exp' ? 'google/gemini-2.0-flash-exp:free' :
                             'tngtech/deepseek-r1t-chimera:free'; // Default to DeepSeek
 
+                console.log('[Vercel API] Calling OpenRouter with model:', freeModel);
+
                 const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
                     headers: {
@@ -264,10 +266,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     })
                 });
 
+                console.log('[Vercel API] OpenRouter response status:', openrouterResponse.status);
+
                 if (!openrouterResponse.ok) {
                     const errorText = await openrouterResponse.text();
-                    console.error('[Vercel API] OpenRouter API error:', errorText);
-                    throw new Error(`OpenRouter API error: ${errorText}`);
+                    console.error('[Vercel API] OpenRouter API error:', {
+                        status: openrouterResponse.status,
+                        statusText: openrouterResponse.statusText,
+                        model: freeModel,
+                        error: errorText
+                    });
+                    throw new Error(`OpenRouter API error (${openrouterResponse.status}): ${errorText}`);
                 }
 
                 const openrouterData = await openrouterResponse.json();
