@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { FREE_TIER_LIMIT } from '../config/constants';
+
+// Free tier limit - inlined to avoid module resolution issues in Vercel
+const FREE_TIER_LIMIT = 10;
 
 // Helper to extract JSON from markdown code blocks
 const cleanJsonResponse = (text: string): string => {
