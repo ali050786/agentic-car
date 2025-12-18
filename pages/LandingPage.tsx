@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, Sparkles, Zap, Layout, Share2, Layers, Palette, PenTool } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuthStore } from '../store/useAuthStore';
 
 const LandingPage = () => {
+    const { user } = useAuthStore();
     const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {
@@ -40,15 +42,31 @@ const LandingPage = () => {
 
 
                     <div className="flex items-center gap-6">
-                        <Link to="/login" className="text-slate-300 hover:text-white font-medium transition-colors text-sm">
-                            Sign in
-                        </Link>
-                        <Link
-                            to="/app"
-                            className="px-5 py-2 rounded-full bg-white text-slate-950 font-semibold hover:bg-slate-200 transition-colors text-sm"
-                        >
-                            Get Started
-                        </Link>
+                        {user ? (
+                            <>
+                                <Link to="/library" className="text-slate-300 hover:text-white font-medium transition-colors text-sm">
+                                    Dashboard
+                                </Link>
+                                <Link
+                                    to="/app"
+                                    className="px-5 py-2 rounded-full bg-white text-slate-950 font-semibold hover:bg-slate-200 transition-colors text-sm"
+                                >
+                                    Go to App
+                                </Link>
+                            </>
+                        ) : (
+                            <>
+                                <Link to="/login" className="text-slate-300 hover:text-white font-medium transition-colors text-sm">
+                                    Sign in
+                                </Link>
+                                <Link
+                                    to="/app"
+                                    className="px-5 py-2 rounded-full bg-white text-slate-950 font-semibold hover:bg-slate-200 transition-colors text-sm"
+                                >
+                                    Get Started
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -90,10 +108,10 @@ const LandingPage = () => {
                             </div>
 
                             <Link
-                                to="/app"
+                                to={user ? "/app" : "/app"}
                                 className="relative flex items-center gap-3 px-10 py-5 bg-gradient-to-b from-blue-500 to-blue-600 rounded-xl leading-none text-xl font-bold text-white border-t border-blue-400 hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all duration-300 z-10"
                             >
-                                <span>Start Creating for Free</span>
+                                <span>{user ? 'Start Creating' : 'Start Creating for Free'}</span>
                                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-white" />
                             </Link>
                         </div>

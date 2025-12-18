@@ -41,11 +41,10 @@ export interface BrandKit {
 
 /**
  * Brand mode determines the source of branding for a carousel
- * - global: Use brand kit from user profile
- * - preset: Use color preset from config/colorPresets.ts
- * - custom: Use carousel-specific brand kit
+ * - preset: Use color preset from config/colorPresets.ts (identity from global)
+ * - custom: Use carousel-specific brand kit (synced with global profile)
  */
-export type BrandMode = 'global' | 'preset' | 'custom';
+export type BrandMode = 'preset' | 'custom';
 
 /**
  * Legacy branding config - kept for backward compatibility
@@ -121,16 +120,16 @@ export interface CarouselState {
 
   /**
    * Brand mode: determines the source of branding
-   * - 'global': Use global brand from user profile
-   * - 'preset': Use color preset (for colors only, identity from global)
-   * - 'custom': Use custom brand kit specific to this carousel
+   * - 'preset': Use color preset (for colors only, identity from brandKit/global)
+   * - 'custom': Use custom brand kit specific to this carousel (synced with global)
    */
   brandMode: BrandMode;
 
   /**
-   * Brand kit (only used when brandMode === 'custom')
-   * For 'global' mode, this is fetched from auth store
-   * For 'preset' mode, only identity is used (colors from preset)
+   * Brand kit (used in both preset and custom modes)
+   * - In 'custom' mode: used for identity AND colors
+   * - In 'preset' mode: used for identity only
+   * This is always kept in sync with the global profile brand kit.
    */
   brandKit: BrandKit;
 
@@ -198,8 +197,8 @@ export interface CarouselState {
   setSignaturePosition: (position: SignaturePosition) => void;
 
   /**
-   * Reset brand to global (convenience method)
-   * Sets brandMode to 'global' and clears custom brandKit
+   * Reset brand to default state
+   * Sets brandMode to 'preset'
    */
   resetToGlobalBrand: () => void;
 

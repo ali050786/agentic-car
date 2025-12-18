@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getCarouselById } from '../services/carouselService';
 import { Carousel } from '../services/carouselService';
 import {
@@ -127,41 +127,47 @@ export const PublicCarouselViewer: React.FC = () => {
       <header className="border-b border-white/10 bg-neutral-900">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg">
+            <Link to="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity group">
+              <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-lg shadow-blue-900/20 group-hover:scale-105 transition-transform">
                 <Layout className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold">{carousel.title}</h1>
-                <div className="flex items-center gap-3 text-xs text-neutral-400">
-                  <span>{getTemplateLabel(carousel.templateType)}</span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Calendar size={12} />
-                    {formatDate(carousel.$createdAt)}
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Eye size={12} />
-                    {(carousel as any).views || 0} views
-                  </span>
-                </div>
+                <h1 className="text-lg font-bold tracking-tight text-white leading-tight">Agentic Carousel</h1>
+                <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">
+                  Viewing • {carousel.title}
+                </p>
               </div>
-            </div>
+            </Link>
 
-            <button
-              onClick={() => navigate('/login')}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-lg text-sm font-medium transition-all"
-            >
-              <ExternalLink size={16} />
-              Create Yours
-            </button>
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-3 text-xs text-neutral-400 mr-4">
+                <span>{getTemplateLabel(carousel.templateType)}</span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Calendar size={12} />
+                  {formatDate(carousel.$createdAt)}
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Eye size={12} />
+                  {(carousel as any).views || 0} views
+                </span>
+              </div>
+
+              <button
+                onClick={() => navigate('/login')}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-lg text-sm font-medium transition-all"
+              >
+                <ExternalLink size={16} />
+                Create Yours
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Carousel Display */}
-      <main className="flex-1 flex items-center justify-center p-6">
+      < main className="flex-1 flex items-center justify-center p-6" >
         <div className="max-w-md w-full">
           {/* Slide Preview */}
           <div className="aspect-[9/16] bg-neutral-900 rounded-2xl overflow-hidden shadow-2xl mb-6 relative">
@@ -212,10 +218,10 @@ export const PublicCarouselViewer: React.FC = () => {
             </p>
           </div>
         </div>
-      </main>
+      </main >
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-6 bg-neutral-900">
+      < footer className="border-t border-white/10 py-6 bg-neutral-900" >
         <div className="max-w-7xl mx-auto px-6 text-center">
           <p className="text-sm text-neutral-400 mb-3">
             Like this carousel? Create your own with AI
@@ -228,8 +234,8 @@ export const PublicCarouselViewer: React.FC = () => {
             Get Started Free
           </button>
         </div>
-      </footer>
-    </div>
+      </footer >
+    </div >
   );
 };
 

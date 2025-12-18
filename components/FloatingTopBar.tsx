@@ -128,17 +128,17 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
     return (
         <header className="fixed top-0 left-0 right-0 h-16 border-b border-white/10 bg-neutral-900/80 backdrop-blur-md z-50 flex items-center justify-between px-6">
             {/* Left: Logo */}
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-lg shadow-blue-900/20">
+            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
+                <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-lg shadow-blue-900/20 group-hover:scale-105 transition-transform">
                     <Layout className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                    <h1 className="text-lg font-bold tracking-tight text-white">Agentic Carousel</h1>
-                    <p className="text-[10px] text-neutral-500 -mt-0.5 uppercase tracking-wider font-medium">
+                    <h1 className="text-lg font-bold tracking-tight text-white leading-tight">Agentic Carousel</h1>
+                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">
                         Generator
                     </p>
                 </div>
-            </div>
+            </Link>
 
             {/* Right: Action Buttons */}
             <div className="flex items-center gap-3">

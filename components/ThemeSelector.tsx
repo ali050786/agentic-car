@@ -16,7 +16,7 @@ import { PRESETS } from '../config/colorPresets';
 import { Globe, Palette, Edit3 } from 'lucide-react';
 
 interface ThemeSelectorProps {
-    onOpenBrandEditor?: (mode: 'global' | 'local') => void;
+    onOpenBrandEditor?: () => void;
 }
 
 export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ onOpenBrandEditor }) => {
@@ -31,34 +31,13 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ onOpenBrandEditor 
                     Brand Source
                 </label>
 
-                {/* Global Brand Option */}
-                <button
-                    onClick={() => setBrandMode('global')}
-                    className={`p-3 rounded-lg border text-left transition-all ${brandMode === 'global'
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-white/10 bg-black/20 hover:border-white/30'
-                        }`}
-                >
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                            <Globe className="w-4 h-4 text-blue-400" />
-                            <span className="font-bold text-white text-sm">Global Brand</span>
-                        </div>
-                        {brandMode === 'global' && (
-                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                        )}
-                    </div>
-                    <div className="text-xs text-neutral-400 ml-6">
-                        {globalBrandKit?.enabled ? globalBrandKit.identity.name || 'Your brand' : 'Use your profile brand'}
-                    </div>
-                </button>
 
                 {/* Preset Option */}
                 <button
                     onClick={() => setBrandMode('preset')}
                     className={`p-3 rounded-lg border text-left transition-all ${brandMode === 'preset'
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-white/10 bg-black/20 hover:border-white/30'
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-white/10 bg-black/20 hover:border-white/30'
                         }`}
                 >
                     <div className="flex items-center justify-between mb-1">
@@ -77,20 +56,20 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ onOpenBrandEditor 
                 <button
                     onClick={() => setBrandMode('custom')}
                     className={`p-3 rounded-lg border text-left transition-all ${brandMode === 'custom'
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-white/10 bg-black/20 hover:border-white/30'
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-white/10 bg-black/20 hover:border-white/30'
                         }`}
                 >
                     <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
                             <Edit3 className="w-4 h-4 text-amber-400" />
-                            <span className="font-bold text-white text-sm">Custom Brand</span>
+                            <span className="font-bold text-white text-sm">Your Brand</span>
                         </div>
                         {brandMode === 'custom' && (
                             <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                         )}
                     </div>
-                    <div className="text-xs text-neutral-400 ml-6">Carousel-specific branding</div>
+                    <div className="text-xs text-neutral-400 ml-6">Use your personalized branding</div>
                 </button>
             </div>
 
@@ -149,22 +128,12 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ onOpenBrandEditor 
             {/* Edit Brand Buttons */}
             {onOpenBrandEditor && (
                 <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
-                    {brandMode === 'global' && (
-                        <button
-                            onClick={() => onOpenBrandEditor('global')}
-                            className="px-3 py-2 text-xs font-medium text-blue-400 hover:text-blue-300 border border-blue-500/30 hover:border-blue-500/50 rounded-lg transition-colors"
-                        >
-                            Edit Global Brand
-                        </button>
-                    )}
-                    {brandMode === 'custom' && (
-                        <button
-                            onClick={() => onOpenBrandEditor('local')}
-                            className="px-3 py-2 text-xs font-medium text-blue-400 hover:text-blue-300 border border-blue-500/30 hover:border-blue-500/50 rounded-lg transition-colors"
-                        >
-                            Edit Custom Brand
-                        </button>
-                    )}
+                    <button
+                        onClick={() => onOpenBrandEditor()}
+                        className="px-3 py-2 text-xs font-medium text-blue-400 hover:text-blue-300 border border-blue-500/30 hover:border-blue-500/50 rounded-lg transition-colors"
+                    >
+                        Edit Brand Identity
+                    </button>
                 </div>
             )}
         </div>

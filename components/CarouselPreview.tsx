@@ -21,7 +21,7 @@ export const CarouselPreview: React.FC = () => {
   // Get effective branding based on mode
   const effectiveBranding = {
     enabled: true,
-    ...(brandMode === 'global' && globalBrandKit ? globalBrandKit.identity : brandKit.identity),
+    ...brandKit.identity,
     position: signaturePosition
   };
 

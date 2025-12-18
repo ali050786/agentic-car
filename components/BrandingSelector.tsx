@@ -16,15 +16,12 @@ import { SignaturePosition } from '../types';
 import { ArrowDownLeft, ArrowUpLeft, ArrowUpRight, Edit3 } from 'lucide-react';
 
 interface BrandingSelectorProps {
-    onOpenBrandEditor?: (mode: 'global' | 'local') => void;
+    onOpenBrandEditor?: () => void;
 }
 
 export const BrandingSelector: React.FC<BrandingSelectorProps> = ({ onOpenBrandEditor }) => {
-    const { signaturePosition, setSignaturePosition, brandMode, brandKit } = useCarouselStore();
-    const { globalBrandKit } = useAuthStore();
-
-    // Determine which brand kit to display info from
-    const activeBrandKit = brandMode === 'global' ? globalBrandKit : brandKit;
+    const { signaturePosition, setSignaturePosition, brandKit } = useCarouselStore();
+    const activeBrandKit = brandKit;
 
     const positions: { value: SignaturePosition; label: string; icon: typeof ArrowDownLeft }[] = [
         { value: 'bottom-left', label: 'Bottom Left', icon: ArrowDownLeft },
@@ -73,8 +70,8 @@ export const BrandingSelector: React.FC<BrandingSelectorProps> = ({ onOpenBrandE
                             key={value}
                             onClick={() => setSignaturePosition(value)}
                             className={`p-3 rounded-lg border text-left transition-all flex items-center gap-3 ${signaturePosition === value
-                                    ? 'border-blue-500 bg-blue-500/10'
-                                    : 'border-white/10 bg-black/20 hover:border-white/30'
+                                ? 'border-blue-500 bg-blue-500/10'
+                                : 'border-white/10 bg-black/20 hover:border-white/30'
                                 }`}
                         >
                             <Icon className="w-4 h-4 text-blue-400 flex-shrink-0" />
@@ -91,7 +88,7 @@ export const BrandingSelector: React.FC<BrandingSelectorProps> = ({ onOpenBrandE
             {onOpenBrandEditor && (
                 <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
                     <button
-                        onClick={() => onOpenBrandEditor(brandMode === 'global' ? 'global' : 'local')}
+                        onClick={() => onOpenBrandEditor()}
                         className="px-3 py-2 text-xs font-medium text-blue-400 hover:text-blue-300 border border-blue-500/30 hover:border-blue-500/50 rounded-lg transition-colors flex items-center justify-center gap-2"
                     >
                         <Edit3 className="w-3 h-3" />

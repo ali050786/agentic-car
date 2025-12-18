@@ -17,15 +17,13 @@ import { storage, ID, config } from '../lib/appwriteClient';
 
 interface BrandEditorPanelProps {
     isOpen: boolean;
-    mode: 'global' | 'local';
     initialBrandKit: BrandKit | null;
-    onSave: (brandKit: BrandKit, scope: 'global' | 'local') => void;
+    onSave: (brandKit: BrandKit) => void;
     onClose: () => void;
 }
 
 export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
     isOpen,
-    mode,
     initialBrandKit,
     onSave,
     onClose,
@@ -58,20 +56,13 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
     }, [initialBrandKit]);
 
     const handleSave = async () => {
-        if (mode === 'global') {
-            // Save to global profile
-            try {
-                await updateGlobalBrandKit(brandKit);
-                onSave(brandKit, 'global');
-                onClose();
-            } catch (error) {
-                console.error('Failed to save global brand kit:', error);
-                alert('Failed to save global brand. Please try again.');
-            }
-        } else {
-            // Save to local carousel
-            onSave(brandKit, 'local');
+        try {
+            await updateGlobalBrandKit(brandKit);
+            onSave(brandKit);
             onClose();
+        } catch (error) {
+            console.error('Failed to save global brand kit:', error);
+            alert('Failed to save brand identity. Please try again.');
         }
     };
 
@@ -132,12 +123,10 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                     <div>
                         <h2 className="text-lg font-bold text-white">
-                            {mode === 'global' ? 'Edit Global Brand' : 'Edit Custom Brand'}
+                            Edit Brand Identity
                         </h2>
                         <p className="text-xs text-neutral-400 mt-1">
-                            {mode === 'global'
-                                ? 'Changes apply to all future carousels'
-                                : 'Changes only apply to this carousel'}
+                            Changes apply to all your carousels
                         </p>
                     </div>
                     <button

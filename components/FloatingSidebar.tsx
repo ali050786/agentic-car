@@ -209,6 +209,13 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
     // Handle generate click - sync local state to global store and process content
     const handleGenerate = async () => {
         setContentError(null);
+
+        // Final validation for slide count
+        if (localSlideCount < 3 || localSlideCount > 12) {
+            setContentError('Slide count must be between 3 and 12');
+            return;
+        }
+
         setIsProcessingContent(true);
 
         try {
@@ -336,6 +343,10 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
     // Check if generate button should be enabled
     const isGenerateEnabled = () => {
         if (editMode) return true;
+
+        // Check if slide count is within valid range (3-12)
+        const isSlideCountValid = localSlideCount >= 3 && localSlideCount <= 12;
+        if (!isSlideCountValid) return false;
 
         switch (activeInputMode) {
             case 'topic':
@@ -730,11 +741,20 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                                             <input
                                                 type="number"
                                                 min="3"
-                                                max="15"
+                                                max="12"
                                                 value={localSlideCount}
-                                                onChange={(e) => setLocalSlideCount(parseInt(e.target.value) || 8)}
-                                                className="w-full pl-2 pr-1 py-2 bg-neutral-800/50 border border-white/10 rounded-lg text-xs text-center text-white focus:border-blue-500 focus:outline-none hover:bg-neutral-800 transition-colors"
+                                                onChange={(e) => setLocalSlideCount(parseInt(e.target.value) || 0)}
+                                                className={`w-full pl-2 pr-1 py-2 bg-neutral-800/50 border rounded-lg text-xs text-center text-white focus:border-blue-500 focus:outline-none hover:bg-neutral-800 transition-all ${localSlideCount < 3 || localSlideCount > 12
+                                                    ? 'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]'
+                                                    : 'border-white/10'
+                                                    }`}
                                             />
+                                            {(localSlideCount < 3 || localSlideCount > 12) && (
+                                                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-32 bg-red-500 text-white text-[10px] py-1 px-2 rounded shadow-lg z-50 animate-in fade-in slide-in-from-top-1">
+                                                    3-12 slides only
+                                                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-transparent border-b-red-500" />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

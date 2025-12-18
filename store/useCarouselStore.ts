@@ -177,8 +177,8 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
 
     resetToGlobalBrand: () => {
         set({
-            brandMode: 'global',
-            brandKit: DEFAULT_BRAND_KIT,
+            brandMode: 'preset',
+            // Note: brandKit should be loaded from global profile in the component using this hook
         });
     },
 

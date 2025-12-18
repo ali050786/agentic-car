@@ -120,7 +120,6 @@ const CarouselGenerator: React.FC = () => {
 
   // Brand Editor Panel state
   const [brandEditorOpen, setBrandEditorOpen] = useState(false);
-  const [brandEditorMode, setBrandEditorMode] = useState<'global' | 'local'>('local');
 
   // API Key Modal state
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
@@ -227,21 +226,13 @@ const CarouselGenerator: React.FC = () => {
     }
   }, [location.state]);
 
-  // Reactive Theme Update: 3-Mode System (global/preset/custom)
+  // Reactive Theme Update: 2-Mode System (preset/custom)
   useEffect(() => {
     // Only update if we have slides (carousel already generated)
     if (slides.length > 0 && !isGenerating) {
       let newTheme;
 
       switch (brandMode) {
-        case 'global':
-          // Use global brand colors from auth store
-          if (globalBrandKit) {
-            newTheme = resolveTheme(globalBrandKit.colors, selectedTemplate);
-            console.log('[App] Theme updated: Global Brand + ' + selectedTemplate);
-          }
-          break;
-
         case 'preset':
           // Use preset colors
           const preset = getPresetById(presetId || 'ocean-tech');
@@ -252,7 +243,7 @@ const CarouselGenerator: React.FC = () => {
           break;
 
         case 'custom':
-          // Use custom carousel brand kit colors
+          // Use custom carousel brand kit colors (identities are merged)
           newTheme = resolveTheme(brandKit.colors, selectedTemplate);
           console.log('[App] Theme updated: Custom Brand + ' + selectedTemplate);
           break;
@@ -454,26 +445,17 @@ const CarouselGenerator: React.FC = () => {
   };
 
   // Brand Editor Panel handlers
-  const handleOpenBrandEditor = (mode: 'global' | 'local') => {
-    setBrandEditorMode(mode);
+  const handleOpenBrandEditor = () => {
     setBrandEditorOpen(true);
   };
 
-  const handleBrandSave = (brandKitData: any, scope: 'global' | 'local') => {
-    if (scope === 'local') {
-      // Update carousel brand kit
-      setBrandKit(brandKitData);
-      showToast('Brand updated for this carousel', 'success', 3000);
-    } else {
-      // Global brand is handled by BrandEditorPanel calling authStore.updateGlobalBrandKit
-      showToast('Global brand saved successfully', 'success', 3000);
-    }
+  const handleBrandSave = (brandKitData: any) => {
+    // Update carousel brand kit (sync with global is handled in BrandEditorPanel)
+    setBrandKit(brandKitData);
+    showToast('Brand identity updated', 'success', 3000);
   };
 
   const getCurrentBrandKit = () => {
-    if (brandEditorMode === 'global') {
-      return globalBrandKit || brandKit;
-    }
     return brandKit;
   };
 
@@ -562,7 +544,6 @@ const CarouselGenerator: React.FC = () => {
       {/* Brand Editor Panel */}
       <BrandEditorPanel
         isOpen={brandEditorOpen}
-        mode={brandEditorMode}
         initialBrandKit={getCurrentBrandKit()}
         onSave={handleBrandSave}
         onClose={() => setBrandEditorOpen(false)}

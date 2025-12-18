@@ -166,13 +166,17 @@ export const CarouselLibrary: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-neutral-900 to-neutral-950 text-white">
       {/* Header */}
       <header className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-neutral-900">
-        <div className="flex items-center gap-3">
-          <Link to="/" className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-lg shadow-blue-900/20">
+        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
+          <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-lg shadow-blue-900/20 group-hover:scale-105 transition-transform">
             <Layout className="w-5 h-5 text-white" />
-          </Link>
-          <h1 className="text-lg font-bold tracking-tight">My Carousels</h1>
-          <span className="text-sm text-neutral-400">({carousels.length})</span>
-        </div>
+          </div>
+          <div>
+            <h1 className="text-lg font-bold tracking-tight text-white leading-tight">Agentic Carousel</h1>
+            <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">
+              My Library • {carousels.length} Items
+            </p>
+          </div>
+        </Link>
 
         <Link
           to="/app"

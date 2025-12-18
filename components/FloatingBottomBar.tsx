@@ -11,7 +11,7 @@ interface FloatingBottomBarProps {
     setExpandedTool: (tool: string | null) => void;
     selectedTemplate: string;
     setTemplate: (template: string) => void;
-    onOpenBrandEditor?: (mode: 'global' | 'local') => void;
+    onOpenBrandEditor?: () => void;
 }
 
 export const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
