@@ -312,6 +312,82 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
         return res.end(JSON.stringify({ error: 'AI proxy error', message: e?.message || String(e) }));
       }
     });
+
+    server.middlewares.use('/api/generate-image', async (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        return res.end('Method Not Allowed');
+      }
+
+      try {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const bodyStr = Buffer.concat(chunks).toString('utf-8');
+        const { prompt } = JSON.parse(bodyStr || '{}');
+
+        if (!prompt) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ error: 'Prompt is required' }));
+        }
+
+        const replicateToken = process.env.REPLICATE_API_TOKEN || env.REPLICATE_API_TOKEN;
+        if (!replicateToken) {
+          console.error('[Vite Proxy] Missing REPLICATE_API_TOKEN');
+          res.statusCode = 500;
+          return res.end(JSON.stringify({ error: 'Replicate API configuration missing' }));
+        }
+
+        console.log(`[Vite Proxy] Generating image with Replicate (flux-schnell)`);
+
+        const response = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Token ${replicateToken}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'wait'
+          },
+          body: JSON.stringify({
+            input: {
+              prompt: prompt,
+              go_fast: true,
+              megapixels: "1",
+              num_outputs: 1,
+              aspect_ratio: "1:1",
+              output_format: "webp",
+              output_quality: 80,
+              num_inference_steps: 4
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[Vite Proxy] Replicate API error:', errorText);
+          res.statusCode = 500;
+          return res.end(JSON.stringify({ error: `Replicate error: ${errorText}` }));
+        }
+
+        const prediction = await response.json();
+        const imageUrl = prediction.output && prediction.output.length > 0 ? prediction.output[0] : null;
+
+        if (!imageUrl) {
+          console.error('[Vite Proxy] No image output from Replicate');
+          res.statusCode = 500;
+          return res.end(JSON.stringify({ error: 'No image output from Replicate' }));
+        }
+
+        console.log(`[Vite Proxy] 🚀 Image generated: ${imageUrl}`);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({ imageUrl }));
+
+      } catch (e: any) {
+        console.error('[Vite Proxy] Error:', e);
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({ error: 'Image proxy error', message: e?.message || String(e) }));
+      }
+    });
   }
 });
 

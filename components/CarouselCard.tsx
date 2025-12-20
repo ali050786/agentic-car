@@ -66,7 +66,9 @@ export const CarouselCard: React.FC<CarouselCardProps> = ({
             carousel.branding,
             carousel.format,
             carousel.selectedPattern,
-            carousel.patternOpacity
+            carousel.patternOpacity,
+            (carousel as any).patternScale,
+            (carousel as any).patternSpacing
         )
         : null;
 

@@ -1,4 +1,4 @@
-export type TemplateId = 'template-1' | 'template-2';
+export type TemplateId = 'template-1' | 'template-2' | 'template-3';
 export type SlideVariant = 'hero' | 'body' | 'list' | 'cta' | 'closing';  // 'closing' is what LLM generates, 'cta' is template name
 export type AIModel = 'groq-llama' | 'claude-haiku';
 export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';
@@ -72,6 +72,8 @@ export interface SlideContent {
   listItems?: (string | ListItemObject)[];
   footer?: string;
   icon?: string;  // Lucide icon name (e.g., "Lightbulb", "Target", "TrendingUp")
+  doodlePrompt?: string; // AI image prompt for Template-3 doodles
+  doodleUrl?: string;    // Resulting Replicate/Appwrite image URL
 }
 
 export interface CarouselTheme {
@@ -99,6 +101,8 @@ export interface CarouselState {
   selectedFormat: CarouselFormat;
   selectedPattern: number;  // Background pattern ID (1-12)
   patternOpacity: number;   // User-controlled pattern opacity (0-1)
+  patternScale: number;     // User-controlled pattern scale (0.5-2.0)
+  patternSpacing: number;   // User-controlled pattern spacing (scale factor)
   slides: SlideContent[];
   theme: CarouselTheme | null;
   isGenerating: boolean;
@@ -157,6 +161,8 @@ export interface CarouselState {
   setFormat: (selectedFormat: CarouselFormat) => void;
   setPattern: (selectedPattern: number) => void;
   setPatternOpacity: (opacity: number) => void;
+  setPatternScale: (scale: number) => void;
+  setPatternSpacing: (spacing: number) => void;
   setGenerating: (isGenerating: boolean) => void;
   setGenerationStatus: (status: string) => void;
   setGenerationProgress: (progress: number) => void;
@@ -209,6 +215,7 @@ export interface CarouselState {
   setViewMode: (mode: ViewMode) => void;
   toggleMobileMenu: () => void;
   setMobileMenuOpen: (isOpen: boolean) => void;
+  reset: () => void;
 }
 
 export interface TemplateAgent {

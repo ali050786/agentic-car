@@ -12,6 +12,7 @@ interface FloatingBottomBarProps {
     selectedTemplate: string;
     setTemplate: (template: string) => void;
     onOpenBrandEditor?: () => void;
+    onShowToast?: (message: string, type: 'info' | 'success' | 'error' | 'warning') => void;
 }
 
 export const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
@@ -20,6 +21,7 @@ export const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     selectedTemplate,
     setTemplate,
     onOpenBrandEditor,
+    onShowToast,
 }) => {
     const bottomBarRef = useRef<HTMLDivElement>(null);
 
@@ -94,6 +96,22 @@ export const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
                                 </div>
                                 <div className="text-xs text-neutral-400">Clean, tech-forward, gradients</div>
                             </button>
+
+                            <button
+                                onClick={() => setTemplate('template-3')}
+                                className={`p-3 rounded-lg border text-left transition-all ${selectedTemplate === 'template-3'
+                                    ? 'border-blue-500 bg-blue-500/10'
+                                    : 'border-white/10 bg-black/20 hover:border-white/30'
+                                    }`}
+                            >
+                                <div className="font-bold text-white text-sm mb-1 flex justify-between">
+                                    The Sketch
+                                    {selectedTemplate === 'template-3' && (
+                                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                                    )}
+                                </div>
+                                <div className="text-xs text-neutral-400">Visionary, hand-drawn, rocket doodles</div>
+                            </button>
                         </div>
                     </div>
                 </BottomToolItem>
@@ -130,6 +148,8 @@ export const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
                     label="Background"
                     isExpanded={expandedTool === 'pattern'}
                     onClick={() => toggleTool('pattern')}
+                    disabled={selectedTemplate === 'template-3'}
+                    onDisabledClick={() => onShowToast?.('Background patterns are not available for "The Sketch" template.', 'warning')}
                 >
                     <div className="flex flex-col gap-3">
                         <h3 className="text-xs font-bold text-white uppercase tracking-wider">Background Pattern</h3>

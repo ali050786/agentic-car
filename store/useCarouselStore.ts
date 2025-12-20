@@ -45,6 +45,8 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     selectedFormat: 'portrait',
     selectedPattern: 1,
     patternOpacity: 0.1,
+    patternScale: 1,
+    patternSpacing: 1,
     slides: [],
     theme: null,
     isGenerating: false,
@@ -113,6 +115,10 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
 
     setPatternOpacity: (patternOpacity: number) => set({ patternOpacity }),
 
+    setPatternScale: (patternScale: number) => set({ patternScale }),
+
+    setPatternSpacing: (patternSpacing: number) => set({ patternSpacing }),
+
     setGenerating: (isGenerating: boolean) => set({ isGenerating }),
 
     setGenerationStatus: (status: string) => set({ generationStatus: status }),
@@ -179,6 +185,39 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
         set({
             brandMode: 'preset',
             // Note: brandKit should be loaded from global profile in the component using this hook
+        });
+    },
+
+    reset: () => {
+        set({
+            topic: '',
+            selectedTemplate: 'template-1',
+            selectedModel: 'deepseek-r1t',
+            selectedFormat: 'portrait',
+            selectedPattern: 1,
+            patternOpacity: 0.1,
+            patternScale: 1,
+            patternSpacing: 1,
+            slides: [],
+            theme: null,
+            isGenerating: false,
+            error: null,
+            inputMode: 'topic',
+            slideCount: 10,
+            customInstructions: '',
+            outputLanguage: 'English',
+            sourceContent: '',
+            brandMode: 'preset',
+            brandKit: DEFAULT_BRAND_KIT,
+            presetId: 'ocean-tech',
+            signaturePosition: 'bottom-left',
+            generationStatus: 'Initializing...',
+            generationProgress: 0,
+            selectedSlideIndex: null,
+            bottomToolExpanded: null,
+            rightPanelOpen: false,
+            viewMode: 'focus',
+            isMobileMenuOpen: false,
         });
     },
 

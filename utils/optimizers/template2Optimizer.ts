@@ -14,7 +14,9 @@ export const generateTemplate2Native = async (
   branding?: BrandingConfig,
   format: CarouselFormat = 'portrait',
   patternId?: number,
-  userPatternOpacity?: number
+  userPatternOpacity?: number,
+  patternScale: number = 1,
+  patternSpacing: number = 1
 ): Promise<string> => {
   const bg = theme.background || '#091c33';
   const textHighlight = theme.textHighlight || '#f4782d';
@@ -214,7 +216,7 @@ export const generateTemplate2Native = async (
   const selectedPatternId = patternId || 1;
 
   // Generate Figma-compatible pattern as PNG base64
-  const patternBase64 = generatePatternPNG(selectedPatternId, WIDTH, HEIGHT, patternColor, patternOpacity);
+  const patternBase64 = generatePatternPNG(selectedPatternId, WIDTH, HEIGHT, patternColor, patternOpacity, patternScale, patternSpacing);
 
   return `
     <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">

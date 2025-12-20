@@ -26,7 +26,7 @@ interface UseAutoSaveParams {
     theme: any | null;
     topic: string;
     userId: string;
-    templateType: 'template-1' | 'template-2';
+    templateType: 'template-1' | 'template-2' | 'template-3';
     brandMode: BrandMode;
     presetId: string;
     brandKit: BrandKit;

@@ -125,3 +125,28 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
         throw error;
     }
 };
+
+/**
+ * Image generation proxy
+ */
+export const generateImage = async (prompt: string): Promise<{ imageUrl: string }> => {
+    try {
+        const res = await fetch('/api/generate-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt })
+        });
+
+        if (!res.ok) {
+            const msg = await res.text();
+            throw new Error(msg || 'Image generation failed');
+        }
+
+        const data = await res.json();
+        console.log('[aiService] 🎨 Image generated successfully:', data.imageUrl);
+        return data;
+    } catch (error) {
+        console.error('[aiService] Image Generation Error:', error);
+        throw error;
+    }
+};

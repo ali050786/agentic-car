@@ -226,6 +226,25 @@ const CarouselGenerator: React.FC = () => {
     }
   }, [location.state]);
 
+  // T3: Auto-switch to light variant if dark preset is active
+  useEffect(() => {
+    if (selectedTemplate === 'template-3' && brandMode === 'preset') {
+      if (!presetId.endsWith('-light')) {
+        const lightVariant = `${presetId}-light`;
+        // Verify if it exists in PRESETS
+        const exists = getPresetById(lightVariant);
+        if (exists) {
+          console.log(`[App] T3 Autocorrect: Switching ${presetId} -> ${lightVariant}`);
+          setPresetId(lightVariant);
+        } else {
+          // Fallback to default light theme if no direct variant
+          console.log(`[App] T3 Autocorrect: Fallback to ocean-tech-light`);
+          setPresetId('ocean-tech-light');
+        }
+      }
+    }
+  }, [selectedTemplate, brandMode, presetId, setPresetId]);
+
   // Reactive Theme Update: 2-Mode System (preset/custom)
   useEffect(() => {
     // Only update if we have slides (carousel already generated)
@@ -523,6 +542,7 @@ const CarouselGenerator: React.FC = () => {
             selectedTemplate={selectedTemplate}
             setTemplate={setTemplate}
             onOpenBrandEditor={handleOpenBrandEditor}
+            onShowToast={showToast}
           />
         </div>
       )}

@@ -1,8 +1,11 @@
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { Template1Agent } from './Template1Agent';
 import { Template2Agent } from './Template2Agent';
+import { Template3Agent } from './Template3Agent';
 import { StrategistAgent } from './StrategistAgent';
 import { SlideContent, CarouselTheme } from '../../types';
+import { generateImage } from '../../services/aiService';
+import { storage, config, ID } from '../../lib/appwriteClient';
 import { resolveTheme } from '../../utils/brandUtils';
 import { getPresetById } from '../../config/colorPresets';
 
@@ -87,6 +90,8 @@ export const runAgentWorkflow = async (topic: string) => {
       result = await Template1Agent.generate(context);
     } else if (store.selectedTemplate === 'template-2') {
       result = await Template2Agent.generate(context);
+    } else if (store.selectedTemplate === 'template-3') {
+      result = await Template3Agent.generate(context);
     } else {
       result = await Template1Agent.generate(context); // Fallback
     }
@@ -116,6 +121,63 @@ export const runAgentWorkflow = async (topic: string) => {
     // Save slides and theme to store
     store.setSlides(result.slides);
     store.setTheme(result.theme);
+
+    // ========================================================================
+    // TEMPLATE 3: Orchestrate AI Doodle Generation & Persistence
+    // ========================================================================
+    if (store.selectedTemplate === 'template-3' && result.slides.length > 0) {
+      console.log('[MainAgent] 🎨 Template-3: Starting AI Doodle generation...');
+
+      // Parallel generation with promise tracking
+      // We process them one-by-one or in small batches to avoid overloading Rate Limits
+      // but update the store immediately as they finish for progressive UX
+      const generateDoodles = async () => {
+        for (let i = 0; i < result.slides.length; i++) {
+          const slide = result.slides[i];
+          if (slide.doodlePrompt) {
+            try {
+              store.setGenerationStatus(`Sketching doodle for slide ${i + 1}...`);
+
+              // 1. Generate via Replicate
+              const { imageUrl: replicateUrl } = await generateImage(slide.doodlePrompt);
+
+              // 2. Fetch image blob
+              const response = await fetch(replicateUrl);
+              const blob = await response.blob();
+
+              // 3. Persist to Appwrite Storage
+              if (config.storageBucketId) {
+                const file = new File([blob], `doodle-${ID.unique()}.webp`, { type: 'image/webp' });
+                const appwriteResponse = await storage.createFile(
+                  config.storageBucketId,
+                  ID.unique(),
+                  file
+                );
+
+                // 4. Get permanent view URL
+                const permanentUrl = storage.getFileView(
+                  config.storageBucketId,
+                  appwriteResponse.$id
+                ).toString();
+
+                // 5. Update slide in store
+                store.updateSlide(i, { doodleUrl: permanentUrl });
+                console.log(`[MainAgent] ✅ Doodle ${i + 1} finalized and saved to Appwrite:`, permanentUrl);
+              } else {
+                // Fallback: Use Replicate URL directly if Storage is not configured
+                store.updateSlide(i, { doodleUrl: replicateUrl });
+                console.log(`[MainAgent] ⚠️ Doodle ${i + 1} finished but used ephemeral URL (Appwrite Storage not configured):`, replicateUrl);
+              }
+            } catch (err) {
+              console.error(`[MainAgent] Failed to generate doodle for slide ${i + 1}:`, err);
+            }
+          }
+        }
+      };
+
+      // Run in background but don't block the "Done!" status
+      generateDoodles();
+    }
 
     // Complete
     store.setGenerationProgress(100);
