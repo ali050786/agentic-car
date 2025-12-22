@@ -62,14 +62,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 const model =
                     selectedModel === 'deepseek-r1t' ? 'tngtech/deepseek-r1t-chimera:free' :
                         selectedModel === 'claude-haiku-openrouter' ? 'anthropic/claude-3.5-haiku' :
-                            selectedModel === 'gemini-2.5-flash' ? 'google/gemini-2.5-flash' :
-                                selectedModel === 'gemini-2.0-flash-exp' ? 'google/gemini-2.0-flash-exp:free' :
-                                    selectedModel === 'grok-4.1-fast' ? 'x-ai/grok-4.1-fast' :
-                                        selectedModel === 'gpt-4o' ? 'openai/gpt-4o' :
-                                            selectedModel === 'gpt-4-turbo' ? 'openai/gpt-4-turbo' :
-                                                selectedModel === 'claude-sonnet' ? 'anthropic/claude-3.5-sonnet' :
-                                                    selectedModel === 'claude-haiku' ? 'anthropic/claude-3.5-haiku' :
-                                                        'tngtech/deepseek-r1t-chimera:free';
+                            selectedModel === 'claude-sonnet-openrouter' ? 'anthropic/claude-3.5-sonnet' :
+                                selectedModel === 'gemini-2.5-flash' ? 'google/gemini-2.5-flash' :
+                                    selectedModel === 'gemini-2.0-flash-exp' ? 'google/gemini-2.0-flash-exp:free' :
+                                        selectedModel === 'grok-4.1-fast' ? 'x-ai/grok-4.1-fast' :
+                                            selectedModel === 'gpt-4o' ? 'openai/gpt-4o' :
+                                                selectedModel === 'gpt-4-turbo' ? 'openai/gpt-4-turbo' :
+                                                    selectedModel === 'claude-sonnet' ? 'anthropic/claude-3.5-sonnet' :
+                                                        selectedModel === 'claude-haiku' ? 'anthropic/claude-3.5-haiku' :
+                                                            'tngtech/deepseek-r1t-chimera:free';
 
                 const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
@@ -197,58 +198,94 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. ERROR HANDLING: You MUST respond with ONLY valid JSON. Do NOT include any conversational filler like "Alright" or "Here is the JSON". Do NOT wrap the output in markdown code blocks if possible, but pure JSON string is best. START YOUR RESPONSE WITH { AND END WITH }.';
 
             // Free tier: Route based on selected model
-            if (selectedModel === 'claude-haiku-openrouter') {
-                // Use system Anthropic API for Claude Haiku
-                const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
-                if (!anthropicKey) {
-                    console.error('[Vercel API] Missing ANTHROPIC_API_KEY for free tier Claude');
-                    return res.status(500).json({ error: 'Missing ANTHROPIC_API_KEY for free tier' });
+            if (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet' || selectedModel === 'claude-haiku-openrouter' || selectedModel === 'claude-sonnet-openrouter') {
+                // Try direct Anthropic first if key available
+                const anthropicKey = process.env.CLAUDE_API_KEY;
+
+                if (anthropicKey && (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet')) {
+                    console.log(`[Vercel API] Using system Anthropic API for ${selectedModel}`);
+                    const model = selectedModel === 'claude-sonnet' ? 'claude-sonnet-4-5-20250929' : 'claude-haiku-4-5-20251001';
+
+                    const response = await fetch('https://api.anthropic.com/v1/messages', {
+                        method: 'POST',
+                        headers: {
+                            'x-api-key': anthropicKey,
+                            'anthropic-version': '2023-06-01',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model,
+                            max_tokens: 4096,
+                            messages: [
+                                { role: 'user', content: `${systemPrompt}\n\n${prompt}` }
+                            ],
+                            temperature: 0.2,
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        result = cleanJsonResponse(data.content[0]?.text || '{"slides":[]}');
+                    } else {
+                        const errorText = await response.text();
+                        console.error('[Vercel API] Anthropic error fallback:', errorText);
+                        // Fall back to OpenRouter below
+                    }
                 }
 
-                console.log('[Vercel API] Using system Anthropic API for Claude Haiku');
+                if (!result) {
+                    // Use system OpenRouter API for Claude models
+                    const openrouterKey = process.env.OPENROUTER_API_KEY || '';
+                    if (!openrouterKey) {
+                        console.error('[Vercel API] Missing OPENROUTER_API_KEY for free tier');
+                        return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY for free tier' });
+                    }
 
-                const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: {
-                        'x-api-key': anthropicKey,
-                        'anthropic-version': '2023-06-01',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: 'claude-3-5-haiku-20241022',
-                        max_tokens: 4096,
-                        messages: [
-                            { role: 'user', content: `${systemPrompt}\n\n${prompt}` }
-                        ],
-                        temperature: 0.2,
-                    })
-                });
+                    const freeModel = (selectedModel === 'claude-haiku-openrouter' || selectedModel === 'claude-haiku')
+                        ? 'anthropic/claude-3.5-haiku'
+                        : 'anthropic/claude-3.5-sonnet';
 
-                if (!anthropicResponse.ok) {
-                    const errorText = await anthropicResponse.text();
-                    console.error('[Vercel API] Anthropic API error:', errorText);
-                    throw new Error(`Anthropic API error: ${errorText}`);
+                    console.log(`[Vercel API] Using system OpenRouter API for ${selectedModel} (model: ${freeModel})`);
+
+                    const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${openrouterKey}`,
+                            'HTTP-Referer': 'https://agentic-carousel.vercel.app',
+                            'X-Title': 'Agentic Carousel Generator',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model: freeModel,
+                            messages: [
+                                { role: 'system', content: systemPrompt },
+                                { role: 'user', content: prompt }
+                            ],
+                            temperature: 0.2,
+                        })
+                    });
+
+                    if (!openrouterResponse.ok) {
+                        const errorText = await openrouterResponse.text();
+                        console.error('[Vercel API] OpenRouter API error:', errorText);
+                        throw new Error(`OpenRouter API error: ${errorText}`);
+                    }
+
+                    const openrouterData = await openrouterResponse.json();
+                    result = cleanJsonResponse(openrouterData.choices[0]?.message?.content || '{"slides":[]}');
                 }
-
-                const anthropicData = await anthropicResponse.json();
-                result = cleanJsonResponse(anthropicData.content[0]?.text || '{"slides":[]}');
 
             } else {
-                // Use system OpenRouter API for DeepSeek and others
+                // Use system OpenRouter API for DeepSeek (Default)
                 const openrouterKey = process.env.OPENROUTER_API_KEY || '';
                 if (!openrouterKey) {
                     console.error('[Vercel API] Missing OPENROUTER_API_KEY for free tier');
                     return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY for free tier' });
                 }
 
-                console.log('[Vercel API] Using system OpenRouter API for DeepSeek');
+                const freeModel = selectedModel === 'deepseek-r1t' ? 'tngtech/deepseek-r1t-chimera:free' : 'tngtech/deepseek-r1t-chimera:free';
 
-                const freeModel =
-                    selectedModel === 'deepseek-r1t' ? 'tngtech/deepseek-r1t-chimera:free' :
-                        selectedModel === 'gemini-2.0-flash-exp' ? 'google/gemini-2.0-flash-exp:free' :
-                            'tngtech/deepseek-r1t-chimera:free'; // Default to DeepSeek
-
-                console.log('[Vercel API] Calling OpenRouter with model:', freeModel);
+                console.log(`[Vercel API] Using system OpenRouter API for ${selectedModel || 'default'} (model: ${freeModel})`);
 
                 const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
@@ -268,17 +305,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     })
                 });
 
-                console.log('[Vercel API] OpenRouter response status:', openrouterResponse.status);
-
                 if (!openrouterResponse.ok) {
                     const errorText = await openrouterResponse.text();
-                    console.error('[Vercel API] OpenRouter API error:', {
-                        status: openrouterResponse.status,
-                        statusText: openrouterResponse.statusText,
-                        model: freeModel,
-                        error: errorText
-                    });
-                    throw new Error(`OpenRouter API error (${openrouterResponse.status}): ${errorText}`);
+                    console.error('[Vercel API] OpenRouter API error:', errorText);
+                    throw new Error(`OpenRouter API error: ${errorText}`);
                 }
 
                 const openrouterData = await openrouterResponse.json();

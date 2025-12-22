@@ -149,8 +149,8 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
             // Anthropic API - only Claude models
             const model =
               selectedModel === 'claude-sonnet' ? 'claude-sonnet-4-5-20250929' :
-                selectedModel === 'claude-haiku' ? 'claude-3-5-haiku-20241022' :
-                  'claude-3-5-haiku-20241022'; // Default
+                selectedModel === 'claude-haiku' ? 'claude-haiku-4-5-20251001' :
+                  'claude-haiku-4-5-20251001'; // Default
 
             const response = await fetch('https://api.anthropic.com/v1/messages', {
               method: 'POST',
@@ -216,46 +216,87 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
           const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. ERROR HANDLING: You MUST respond with ONLY valid JSON. Do NOT include any conversational filler like "Alright" or "Here is the JSON". Do NOT wrap the output in markdown code blocks if possible, but pure JSON string is best. START YOUR RESPONSE WITH { AND END WITH }.';
 
           // Free tier: Route based on selected model
-          if (selectedModel === 'claude-haiku-openrouter') {
-            // Use system Anthropic API for Claude Haiku
-            const anthropicKey = process.env.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY || '';
-            if (!anthropicKey) {
-              console.error('[Vite Proxy] Missing ANTHROPIC_API_KEY for free tier Claude');
-              res.statusCode = 500;
-              res.setHeader('Content-Type', 'application/json');
-              return res.end(JSON.stringify({ error: 'Missing ANTHROPIC_API_KEY for free tier' }));
+          if (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet') {
+            // Try direct Anthropic first if key available
+            const anthropicKey = process.env.CLAUDE_API_KEY || env.CLAUDE_API_KEY || '';
+
+            if (anthropicKey) {
+              console.log(`[Vite Proxy] Using system Anthropic API for ${selectedModel}`);
+              const model = selectedModel === 'claude-sonnet' ? 'claude-sonnet-4-5-20250929' : 'claude-haiku-4-5-20251001';
+
+              const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                  'x-api-key': anthropicKey,
+                  'anthropic-version': '2023-06-01',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model,
+                  max_tokens: 4096,
+                  messages: [
+                    { role: 'user', content: `${systemPrompt}\n\n${prompt}` }
+                  ],
+                  temperature: 0.2,
+                })
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                result = cleanJsonResponse(data.content[0]?.text || '{"slides":[]}');
+              } else {
+                const errorText = await response.text();
+                console.error('[Vite Proxy] Anthropic error fallback:', errorText);
+                // Fall back to OpenRouter below
+              }
             }
 
-            console.log('[Vite Proxy] Using system Anthropic API for Claude Haiku');
+            if (!result) {
+              // Use system OpenRouter API for Claude models
+              const openrouterKey = process.env.OPENROUTER_API_KEY || env.OPENROUTER_API_KEY || '';
+              if (!openrouterKey) {
+                console.error('[Vite Proxy] Missing OPENROUTER_API_KEY for free tier');
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                return res.end(JSON.stringify({ error: 'Missing OPENROUTER_API_KEY for free tier' }));
+              }
 
-            const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-              method: 'POST',
-              headers: {
-                'x-api-key': anthropicKey,
-                'anthropic-version': '2023-06-01',
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                model: 'claude-3-5-haiku-20241022',
-                max_tokens: 4096,
-                messages: [
-                  { role: 'user', content: `${systemPrompt}\n\n${prompt}` }
-                ],
-                temperature: 0.2,
-              })
-            });
+              const freeModel = selectedModel === 'claude-haiku'
+                ? 'anthropic/claude-3.5-haiku'
+                : 'anthropic/claude-3.5-sonnet';
 
-            if (!anthropicResponse.ok) {
-              const errorText = await anthropicResponse.text();
-              console.error('[Vite Proxy] Anthropic API error:', errorText);
-              throw new Error(`Anthropic API error: ${errorText}`);
+              console.log(`[Vite Proxy] Using system OpenRouter API for ${selectedModel} (model: ${freeModel})`);
+
+              const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${openrouterKey}`,
+                  'HTTP-Referer': 'http://localhost:3000',
+                  'X-Title': 'Agentic Carousel Generator',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model: freeModel,
+                  messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: prompt }
+                  ],
+                  temperature: 0.2,
+                })
+              });
+
+              if (!openrouterResponse.ok) {
+                const errorText = await openrouterResponse.text();
+                console.error('[Vite Proxy] OpenRouter API error:', errorText);
+                throw new Error(`OpenRouter API error: ${errorText}`);
+              }
+
+              const openrouterData = await openrouterResponse.json();
+              result = cleanJsonResponse(openrouterData.choices[0]?.message?.content || '{"slides":[]}');
             }
-
-            const anthropicData = await anthropicResponse.json();
-            result = cleanJsonResponse(anthropicData.content[0]?.text || '{"slides":[]}');
 
           } else {
-            // Use system OpenRouter API for DeepSeek and others
+            // Use system OpenRouter API for DeepSeek (Default)
             const openrouterKey = process.env.OPENROUTER_API_KEY || env.OPENROUTER_API_KEY || '';
             if (!openrouterKey) {
               console.error('[Vite Proxy] Missing OPENROUTER_API_KEY for free tier');
@@ -264,12 +305,9 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
               return res.end(JSON.stringify({ error: 'Missing OPENROUTER_API_KEY for free tier' }));
             }
 
-            console.log('[Vite Proxy] Using system OpenRouter API for DeepSeek');
+            const freeModel = 'tngtech/deepseek-r1t-chimera:free';
 
-            const freeModel =
-              selectedModel === 'deepseek-r1t' ? 'tngtech/deepseek-r1t-chimera:free' :
-                selectedModel === 'gemini-2.0-flash-exp' ? 'google/gemini-2.0-flash-exp:free' :
-                  'tngtech/deepseek-r1t-chimera:free'; // Default to DeepSeek
+            console.log(`[Vite Proxy] Using system OpenRouter API for ${selectedModel || 'default'} (model: ${freeModel})`);
 
             const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
               method: 'POST',
@@ -312,6 +350,82 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
         return res.end(JSON.stringify({ error: 'AI proxy error', message: e?.message || String(e) }));
       }
     });
+
+    server.middlewares.use('/api/generate-image', async (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        return res.end('Method Not Allowed');
+      }
+
+      try {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const bodyStr = Buffer.concat(chunks).toString('utf-8');
+        const { prompt } = JSON.parse(bodyStr || '{}');
+
+        if (!prompt) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ error: 'Prompt is required' }));
+        }
+
+        const replicateToken = process.env.REPLICATE_API_TOKEN || env.REPLICATE_API_TOKEN;
+        if (!replicateToken) {
+          console.error('[Vite Proxy] Missing REPLICATE_API_TOKEN');
+          res.statusCode = 500;
+          return res.end(JSON.stringify({ error: 'Replicate API configuration missing' }));
+        }
+
+        console.log(`[Vite Proxy] Generating image with Replicate (flux-schnell)`);
+
+        const response = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Token ${replicateToken}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'wait'
+          },
+          body: JSON.stringify({
+            input: {
+              prompt: prompt,
+              go_fast: true,
+              megapixels: "1",
+              num_outputs: 1,
+              aspect_ratio: "1:1",
+              output_format: "webp",
+              output_quality: 80,
+              num_inference_steps: 4
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[Vite Proxy] Replicate API error:', errorText);
+          res.statusCode = 500;
+          return res.end(JSON.stringify({ error: `Replicate error: ${errorText}` }));
+        }
+
+        const prediction = await response.json();
+        const imageUrl = prediction.output && prediction.output.length > 0 ? prediction.output[0] : null;
+
+        if (!imageUrl) {
+          console.error('[Vite Proxy] No image output from Replicate');
+          res.statusCode = 500;
+          return res.end(JSON.stringify({ error: 'No image output from Replicate' }));
+        }
+
+        console.log(`[Vite Proxy] 🚀 Image generated: ${imageUrl}`);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({ imageUrl }));
+
+      } catch (e: any) {
+        console.error('[Vite Proxy] Error:', e);
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({ error: 'Image proxy error', message: e?.message || String(e) }));
+      }
+    });
   }
 });
 
@@ -330,10 +444,12 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: '0.0.0.0',
       proxy: {
-        '/api/youtube-transcript': {
-          target: 'http://localhost:3001',
-          changeOrigin: true,
-        }
+        '/api/youtube-transcript': 'http://localhost:3001',
+        '/api/doodles-input': 'http://localhost:3001',
+        '/api/image-output': 'http://localhost:3001',
+        '/api/generate-doodle': 'http://localhost:3001',
+        '/api/proxy-image': 'http://localhost:3001',
+        '/api/save-image-output': 'http://localhost:3001',
       }
     },
     plugins: [react(), aiModelProxyPlugin(env)],

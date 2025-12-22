@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Library as LibraryIcon, Key, Zap, ChevronDown } from 'lucide-react';
+import { User, LogOut, Library as LibraryIcon, Key, Zap, ChevronDown, Image as ImageIcon } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { FREE_TIER_LIMIT } from '../config/constants';
@@ -120,6 +120,28 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenApiKeyModal }) => {
             >
               <LibraryIcon size={16} className="text-neutral-400" />
               <span>My Library</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/generate');
+              }}
+              className="w-full px-4 py-3 text-left text-sm text-cyan-400 hover:bg-cyan-500/10 transition-colors flex items-center gap-3"
+            >
+              <Zap size={16} />
+              <span>Generate Doodles</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/image-refinement');
+              }}
+              className="w-full px-4 py-3 text-left text-sm text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center gap-3"
+            >
+              <ImageIcon size={16} />
+              <span>Refine Images</span>
             </button>
 
             <button

@@ -1,6 +1,6 @@
 import { colord, extend } from 'colord';
 import mixPlugin from 'colord/plugins/mix';
-import { CarouselTheme } from '../types';
+import { CarouselTheme, TemplateId } from '../types';
 
 extend([mixPlugin]);
 
@@ -79,21 +79,29 @@ export const resolveTheme = (
         text: string;
         background: string;
     },
-    template: 'template-1' | 'template-2'
+    template: TemplateId
 ): CarouselTheme => {
     // Detect if dark or light theme
     const brightness = colord(seeds.background).brightness();
-    const isDark = brightness < 0.5;
+    let isDark = brightness < 0.5;
+
+    // T3: Force light mode regardless of seeds
+    if (template === 'template-3' && isDark) {
+        isDark = false;
+        // If it's dark, we don't just use seeds.background, we might want to force white or a very light version
+    }
 
     // For dark themes, darken background by 27% (800 scale)
-    const finalBackground = isDark
+    const finalBackground = (isDark && template !== 'template-3')
         ? colord(seeds.background).darken(0.27).toHex()
-        : seeds.background;
+        : template === 'template-3'
+            ? '#FFFFFF' // Force pure white for T3
+            : seeds.background;
 
     const patternColor = calculatePatternColor(finalBackground);
     const patternOpacity = calculatePatternOpacity(finalBackground);
 
-    if (template === 'template-1') {
+    if (template === 'template-1' || template === 'template-3') {
         // Calculate background2 based on secondary color
         // For dark themes: lighten secondary by 25%
         // For light themes: darken secondary by 15%
@@ -102,7 +110,7 @@ export const resolveTheme = (
             : colord(seeds.secondary).darken(0.15).toHex();
 
         return {
-            textDefault: seeds.text,
+            textDefault: template === 'template-3' ? '#666666' : seeds.text,
             textHighlight: seeds.primary,
             background: finalBackground,
             background2: background2,

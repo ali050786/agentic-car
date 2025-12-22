@@ -8,7 +8,16 @@ import { getPatternName } from '../utils/patternGenerator';
  * Allows users to manually select from 12 background patterns
  */
 export const PatternSelector: React.FC = () => {
-    const { selectedPattern, setPattern, patternOpacity, setPatternOpacity } = useCarouselStore();
+    const {
+        selectedPattern,
+        setPattern,
+        patternOpacity,
+        setPatternOpacity,
+        patternScale,
+        setPatternScale,
+        patternSpacing,
+        setPatternSpacing
+    } = useCarouselStore();
 
     // All 12 patterns
     const patterns = [
@@ -65,6 +74,62 @@ export const PatternSelector: React.FC = () => {
                     step="0.05"
                     value={patternOpacity}
                     onChange={(e) => setPatternOpacity(Number(e.target.value))}
+                    className="w-full h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500 
+                             [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 
+                             [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 
+                             [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg
+                             [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full 
+                             [&::-moz-range-thumb]:bg-blue-500 [&::-moz-range-thumb]:cursor-pointer 
+                             [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-lg"
+                />
+            </div>
+
+            {/* Scale Slider */}
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-neutral-400">
+                        Pattern Scale
+                    </label>
+                    <span className="text-xs text-neutral-500 font-mono">
+                        {patternScale?.toFixed(1) || '1.0'}x
+                    </span>
+                </div>
+
+                <input
+                    type="range"
+                    min="0.5"
+                    max="3"
+                    step="0.1"
+                    value={patternScale || 1}
+                    onChange={(e) => setPatternScale(Number(e.target.value))}
+                    className="w-full h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500 
+                             [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 
+                             [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 
+                             [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg
+                             [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full 
+                             [&::-moz-range-thumb]:bg-blue-500 [&::-moz-range-thumb]:cursor-pointer 
+                             [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-lg"
+                />
+            </div>
+
+            {/* Spacing Slider */}
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-neutral-400">
+                        Pattern Spacing
+                    </label>
+                    <span className="text-xs text-neutral-500 font-mono">
+                        {patternSpacing?.toFixed(1) || '1.0'}x
+                    </span>
+                </div>
+
+                <input
+                    type="range"
+                    min="0.5"
+                    max="4"
+                    step="0.1"
+                    value={patternSpacing || 1}
+                    onChange={(e) => setPatternSpacing(Number(e.target.value))}
                     className="w-full h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500 
                              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 
                              [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 

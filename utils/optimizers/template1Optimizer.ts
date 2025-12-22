@@ -13,7 +13,9 @@ export const generateTemplate1Native = async (
   branding?: BrandingConfig,
   format: CarouselFormat = 'portrait',
   patternId?: number,
-  userPatternOpacity?: number
+  userPatternOpacity?: number,
+  patternScale: number = 1,
+  patternSpacing: number = 1
 ): Promise<string> => {
   const bg = theme.background || '#141414';
   const bg2 = theme.background2 || '#FFFFFF';
@@ -211,7 +213,7 @@ export const generateTemplate1Native = async (
   const selectedPatternId = patternId || 1;
 
   // Generate Figma-compatible pattern as PNG base64
-  const patternBase64 = generatePatternPNG(selectedPatternId, WIDTH, HEIGHT, patternColor, patternOpacity);
+  const patternBase64 = generatePatternPNG(selectedPatternId, WIDTH, HEIGHT, patternColor, patternOpacity, patternScale, patternSpacing);
 
   // Split bottom section into rect and button for proper z-index
   const bottomRectSvg = `<rect x="0" y="${bottomRectY}" width="${WIDTH}" height="${isSquare ? 235 : 275}" fill="${bg2}" opacity="0.2"/>`;

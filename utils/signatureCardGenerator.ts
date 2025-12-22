@@ -7,7 +7,8 @@ export const generateSignatureCard = (
   data: BrandingConfig,
   fontFamily: 'Lato' | 'Roboto',
   format: CarouselFormat = 'portrait',
-  uniqueId: string = ''
+  uniqueId: string = '',
+  templateId?: string
 ): string => {
   // Helper to escape XML special characters
   const escapeXml = (unsafe: string) => {
@@ -26,13 +27,15 @@ export const generateSignatureCard = (
   const escapedImageUrl = escapeXml(data.imageUrl);
 
   // Position coordinates - format-specific
+  const defaultX = templateId === 'template-3' ? 80 : 150;
+
   const positions = format === 'square' ? {
-    'bottom-left': { x: 150, y: 860 },
-    'top-left': { x: 150, y: 85 },
+    'bottom-left': { x: defaultX, y: 860 },
+    'top-left': { x: defaultX, y: 85 },
     'top-right': { x: 550, y: 85 }
   } : {
-    'bottom-left': { x: 150, y: 1120 },
-    'top-left': { x: 150, y: 120 },
+    'bottom-left': { x: defaultX, y: 1120 },
+    'top-left': { x: defaultX, y: 120 },
     'top-right': { x: 540, y: 120 }
   };
 

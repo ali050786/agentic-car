@@ -9,8 +9,8 @@
 // App uses: 'template-1' and 'template-2' (with hyphens)
 // Database uses: 'template1' and 'template2' (without hyphens)
 
-export type AppTemplateType = 'template-1' | 'template-2';
-export type DbTemplateType = 'template1' | 'template2';
+export type AppTemplateType = 'template-1' | 'template-2' | 'template-3';
+export type DbTemplateType = 'template1' | 'template2' | 'template3';
 
 /**
  * Convert app template name to database template name
@@ -39,14 +39,14 @@ export const dbToAppTemplate = (dbTemplate: DbTemplateType | string | null | und
  * Check if template is valid app template
  */
 export const isValidAppTemplate = (template: string): template is AppTemplateType => {
-  return template === 'template-1' || template === 'template-2';
+  return template === 'template-1' || template === 'template-2' || template === 'template-3';
 };
 
 /**
  * Check if template is valid database template
  */
 export const isValidDbTemplate = (template: string): template is DbTemplateType => {
-  return template === 'template1' || template === 'template2';
+  return template === 'template1' || template === 'template2' || template === 'template3';
 };
 
 /**
@@ -54,5 +54,8 @@ export const isValidDbTemplate = (template: string): template is DbTemplateType 
  */
 export const getTemplateDisplayName = (template: AppTemplateType | DbTemplateType): string => {
   const normalized = template.replace('-', '');
-  return normalized === 'template1' ? 'The Truth' : 'The Clarity';
+  if (normalized === 'template1') return 'The Truth';
+  if (normalized === 'template2') return 'The Clarity';
+  if (normalized === 'template3') return 'The Sketch';
+  return 'The Truth';
 };

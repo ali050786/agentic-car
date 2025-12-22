@@ -46,6 +46,8 @@ export const storage = new Storage(client);
 // ============================================================================
 
 export const config = {
+    endpoint: endpoint || '',
+    projectId: projectId || '',
     databaseId: databaseId || '',
     carouselsCollectionId: carouselsCollectionId || '',
     analyticsCollectionId: analyticsCollectionId || '',

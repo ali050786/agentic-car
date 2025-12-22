@@ -27,7 +27,7 @@ export interface BrandingConfig {
 export interface CarouselData {
   userId: string;
   title: string;
-  templateType: 'template1' | 'template2';
+  templateType: 'template1' | 'template2' | 'template3';
   theme: any;
   slides: any[];
   isPublic: boolean;
@@ -96,7 +96,7 @@ export const checkCarouselLimit = async (userId: string): Promise<boolean> => {
 export const createCarousel = async (
   userId: string,
   title: string,
-  templateType: 'template1' | 'template2',
+  templateType: 'template1' | 'template2' | 'template3',
   theme: any,
   slides: any[],
   isPublic: boolean = false,
@@ -577,7 +577,7 @@ export const updateCarouselContent = async (
   signaturePosition: SignaturePosition,
   selectedPattern?: number,
   patternOpacity?: number,
-  templateType?: 'template1' | 'template2',
+  templateType?: 'template1' | 'template2' | 'template3',
   format?: 'portrait' | 'square'
 ): Promise<{ data: Carousel | null; error: any }> => {
   const updates: Partial<CarouselData> = {

@@ -20,11 +20,27 @@ interface ThemeSelectorProps {
 }
 
 export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ onOpenBrandEditor }) => {
-    const { brandMode, setBrandMode, presetId, setPresetId } = useCarouselStore();
+    const { brandMode, setBrandMode, presetId, setPresetId, selectedTemplate } = useCarouselStore();
     const { globalBrandKit } = useAuthStore();
+
+    const isTemplate3 = selectedTemplate === 'template-3';
+
+    // Filter presets for Template-3 (only light themes)
+    const availablePresets = isTemplate3
+        ? PRESETS.filter(p => p.id.endsWith('-light'))
+        : PRESETS;
 
     return (
         <div className="flex flex-col gap-4 w-full min-w-[280px]">
+            {isTemplate3 && (
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-start gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                    <Globe className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-[11px] text-blue-300 leading-relaxed font-medium">
+                        "The Sketch" template is optimized for light themes only to preserve its hand-drawn aesthetic.
+                    </p>
+                </div>
+            )}
+
             {/* Brand Mode Selection */}
             <div className="flex flex-col gap-2">
                 <label className="text-xs font-medium text-neutral-400">
@@ -84,7 +100,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ onOpenBrandEditor 
                         onChange={(e) => setPresetId(e.target.value)}
                         className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
                     >
-                        {PRESETS.map((preset) => (
+                        {availablePresets.map((preset) => (
                             <option key={preset.id} value={preset.id}>
                                 {preset.name}
                             </option>

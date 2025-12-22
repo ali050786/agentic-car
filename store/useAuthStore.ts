@@ -13,6 +13,7 @@ import { Models, OAuthProvider } from 'appwrite';
 import { BrandKit } from '../types';
 import { getUserBrandKit, updateUserBrandKit, initializeDefaultBrandKit, getFreeUsageCount } from '../services/profileService';
 import { FREE_TIER_LIMIT } from '../config/constants';
+import { useCarouselStore } from './useCarouselStore';
 
 // ============================================================================
 // TYPES
@@ -253,11 +254,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     try {
       await account.deleteSession('current');
-      set({ user: null });
+
+      // Reset all stores/state
+      set({
+        user: null,
+        globalBrandKit: null,
+        freeUsageCount: 0,
+        userApiKey: null,
+        apiKeyProvider: null
+      });
+
+      // Reset carousel state
+      useCarouselStore.getState().reset();
+
     } catch (error) {
       console.error('Sign out error:', error);
       // Clear state even on error
-      set({ user: null });
+      set({
+        user: null,
+        globalBrandKit: null,
+        freeUsageCount: 0,
+        userApiKey: null,
+        apiKeyProvider: null
+      });
+
+      // Reset carousel state even on error
+      useCarouselStore.getState().reset();
     }
   },
 
