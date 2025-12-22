@@ -49,7 +49,7 @@ The `MainAgent` manages the workflow:
 ### 4.2 Strategist Agent (`StrategistAgent.ts`)
 Analyzes the source material (text, URL, etc.) and generates a strategic concept. It focuses on the "hook" and the logical flow that makes a "viral" LinkedIn post.
 
-### 4.3 Template Agents (`Template1Agent.ts`, `Template2Agent.ts`)
+### 4.3 Template Agent (`TemplateAgent.ts`)
 Specialized agents that take the viral angle and generate structured JSON containing:
 - Specific copy for each slide (Headline, Body, CTA).
 - Layout suggestions.

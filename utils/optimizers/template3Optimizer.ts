@@ -1,6 +1,6 @@
 import { SlideContent, CarouselTheme, CarouselFormat, BrandingConfig } from '../../types';
 import { imageUrlToBase64 } from '../imageUtils';
-import { generatePatternPNG } from '../patternGenerator';
+import libraryData from '../../image.json';
 
 export const generateTemplate3Native = async (
     slide: SlideContent,
@@ -24,13 +24,23 @@ export const generateTemplate3Native = async (
     const HEIGHT = format === 'square' ? 1080 : 1380;
     const isSquare = format === 'square';
 
-    // Rocket Doodle Image Embedding
-    const rocketUrl = "https://image.pollinations.ai/prompt/A%20simple%20blackpencil%20doodle%20sketch%20of%20a%20rocket%20ship%20launching%20upwards%20representing%20startup%20growth%20isolated%20on%20strict%20pure%20white%20background%20%23FFFFFF?width=600&height=1000&nologo=true";
-    let rocketBase64 = '';
-    try {
-        rocketBase64 = await imageUrlToBase64(rocketUrl);
-    } catch (e) {
-        console.warn('Failed to fetch rocket doodle for Figma:', e);
+    // Doodle Image Embedding (Use slide's doodleUrl or random library fallback)
+    let doodleUrl = slide.doodleUrl || (slide as any).image;
+
+    // Fallback if no image URL is provided in metadata
+    if (!doodleUrl && libraryData && Array.isArray(libraryData) && libraryData.length > 0) {
+        const randomIndex = Math.floor(Math.random() * libraryData.length);
+        doodleUrl = libraryData[randomIndex].url;
+        console.log(`[template3Optimizer] 🎲 No doodleUrl found, picked random fallback: ${libraryData[randomIndex].topic}`);
+    }
+
+    let doodleBase64 = '';
+    if (doodleUrl) {
+        try {
+            doodleBase64 = await imageUrlToBase64(doodleUrl);
+        } catch (e) {
+            console.warn('Failed to fetch doodle for Figma:', e);
+        }
     }
 
     // Text Wrapping Logic
@@ -147,9 +157,9 @@ export const generateTemplate3Native = async (
     const bottomRectSvg = `<rect x="0" y="${bottomRectY}" width="${WIDTH}" height="${isSquare ? 220 : 275}" fill="${background2}" opacity="0.2"/>`;
 
     return `
-    <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+    <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
       <rect width="${WIDTH}" height="${HEIGHT}" fill="${bg}"/>
-      ${rocketBase64 ? `<image href="${rocketBase64}" x="${WIDTH - 550}" y="${HEIGHT - 950}" width="600" height="1000" opacity="0.6" />` : ''}
+      ${doodleBase64 ? `<image href="${doodleBase64}" xlink:href="${doodleBase64}" x="${WIDTH - 550}" y="${HEIGHT - 950}" width="600" height="1000" opacity="0.6" />` : ''}
       ${bottomRectSvg}
       ${contentSvg}
       ${slide.variant !== 'cta' && slide.variant !== 'closing' ? swipeSvg : ''}

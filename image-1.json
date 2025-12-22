@@ -1,0 +1,1452 @@
+[
+    {
+        "topic": "server_rack",
+        "tags": [
+            "hardware",
+            "infrastructure",
+            "backend",
+            "hosting"
+        ],
+        "prompt": "A black pencil sketch doodle of a tall vertical server tower with blinking indicator lights and stacked drive bays. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "api_handshake",
+        "tags": [
+            "integration",
+            "connection",
+            "interface",
+            "web"
+        ],
+        "prompt": "A black pencil sketch doodle of two robotic hands reaching out to clasp each other, representing a digital connection. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "bug_report",
+        "tags": [
+            "testing",
+            "qa",
+            "error",
+            "glitch"
+        ],
+        "prompt": "A black pencil sketch doodle of a small beetle with mechanical legs crawling across a computer chip. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "git_branch",
+        "tags": [
+            "version_control",
+            "coding",
+            "collaboration",
+            "git"
+        ],
+        "prompt": "A black pencil sketch doodle of a tree-like structure with a main trunk splitting into divergent paths and nodes. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "database_cylinder",
+        "tags": [
+            "sql",
+            "storage",
+            "backend",
+            "data"
+        ],
+        "prompt": "A black pencil sketch doodle of three stacked discs or cylinders representing a traditional database icon. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "cyber_shield",
+        "tags": [
+            "security",
+            "firewall",
+            "protection",
+            "infosec"
+        ],
+        "prompt": "A black pencil sketch doodle of a medieval shield with a circuit board pattern etched onto the front. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "cloud_sync",
+        "tags": [
+            "saas",
+            "network",
+            "upload",
+            "internet"
+        ],
+        "prompt": "A black pencil sketch doodle of a fluffy cumulus cloud with two circular arrows rotating in the center. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "code_snippet",
+        "tags": [
+            "programming",
+            "script",
+            "development",
+            "syntax"
+        ],
+        "prompt": "A black pencil sketch doodle of an open text editor window containing indented lines of monospaced code. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "binary_rain",
+        "tags": [
+            "matrix",
+            "data",
+            "algorithm",
+            "digital"
+        ],
+        "prompt": "A black pencil sketch doodle of streams of ones and zeros falling vertically like rain. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "docker_container",
+        "tags": [
+            "devops",
+            "deployment",
+            "virtualization",
+            "shipping"
+        ],
+        "prompt": "A black pencil sketch doodle of a corrugated metal shipping container with a whale logo faintly visible. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "coffee_fuel",
+        "tags": [
+            "caffeine",
+            "lifestyle",
+            "coding",
+            "late_night"
+        ],
+        "prompt": "A black pencil sketch doodle of a steaming mug of coffee with the command '> run' written on the side. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "ethernet_plug",
+        "tags": [
+            "networking",
+            "cable",
+            "internet",
+            "hardware"
+        ],
+        "prompt": "A black pencil sketch doodle of the head of an RJ45 ethernet cable with the plastic clip visible. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "python_script",
+        "tags": [
+            "language",
+            "backend",
+            "datascience",
+            "automation"
+        ],
+        "prompt": "A black pencil sketch doodle of a coiled snake wrapping itself around a parchment file. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "linux_penguin",
+        "tags": [
+            "os",
+            "open_source",
+            "kernel",
+            "terminal"
+        ],
+        "prompt": "A black pencil sketch doodle of a stylized penguin sitting next to a command line prompt symbol. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "cpu_chip",
+        "tags": [
+            "processor",
+            "hardware",
+            "silicon",
+            "computing"
+        ],
+        "prompt": "A black pencil sketch doodle of a square microchip with many small metal pins sticking out of the bottom. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "kanban_board",
+        "tags": [
+            "agile",
+            "scrum",
+            "project_management",
+            "planning"
+        ],
+        "prompt": "A black pencil sketch doodle of a whiteboard divided into columns with several sticky notes attached. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "mobile_responsive",
+        "tags": [
+            "frontend",
+            "ux",
+            "design",
+            "smartphone"
+        ],
+        "prompt": "A black pencil sketch doodle of a smartphone displaying a wireframe grid layout on its screen. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "search_algorithm",
+        "tags": [
+            "find",
+            "query",
+            "data",
+            "indexing"
+        ],
+        "prompt": "A black pencil sketch doodle of a magnifying glass hovering over a stack of documents. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "wifi_signal",
+        "tags": [
+            "wireless",
+            "connectivity",
+            "network",
+            "broadcast"
+        ],
+        "prompt": "A black pencil sketch doodle of a dot with three concentric curved lines radiating upward. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "encryption_key",
+        "tags": [
+            "cryptography",
+            "security",
+            "access",
+            "auth"
+        ],
+        "prompt": "A black pencil sketch doodle of an antique skeleton key made of digital pixel blocks. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "infinite_loop",
+        "tags": [
+            "logic",
+            "recursion",
+            "error",
+            "math"
+        ],
+        "prompt": "A black pencil sketch doodle of a lemniscate (infinity symbol) drawn with a continuous, unbroken line. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "neural_net",
+        "tags": [
+            "ai",
+            "machine_learning",
+            "deep_learning",
+            "nodes"
+        ],
+        "prompt": "A black pencil sketch doodle of several circles connected by a web of intersecting lines resembling a brain synapse. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "terminal_window",
+        "tags": [
+            "cli",
+            "shell",
+            "bash",
+            "admin"
+        ],
+        "prompt": "A black pencil sketch doodle of a retro computer monitor displaying a blinking underscore cursor. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "mechanical_keyboard",
+        "tags": [
+            "input",
+            "typing",
+            "hardware",
+            "peripheral"
+        ],
+        "prompt": "A black pencil sketch doodle of a close-up section of a computer keyboard highlighting the WASD keys. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "rubber_duck",
+        "tags": [
+            "debugging",
+            "help",
+            "problem_solving",
+            "culture"
+        ],
+        "prompt": "A black pencil sketch doodle of a classic rubber bath duck sitting on a desk surface. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "legacy_floppy",
+        "tags": [
+            "save",
+            "history",
+            "retro",
+            "storage"
+        ],
+        "prompt": "A black pencil sketch doodle of a 3.5-inch floppy disk with a sliding metal shutter. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "firewall_brick",
+        "tags": [
+            "network_security",
+            "blocking",
+            "defense",
+            "infrastructure"
+        ],
+        "prompt": "A black pencil sketch doodle of a brick wall being built across a network cable. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "launch_rocket",
+        "tags": [
+            "deploy",
+            "startup",
+            "release",
+            "go_live"
+        ],
+        "prompt": "A black pencil sketch doodle of a sleek rocket ship lifting off with smoke billowing from the engines. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "tech_stack",
+        "tags": [
+            "architecture",
+            "layers",
+            "full_stack",
+            "development"
+        ],
+        "prompt": "A black pencil sketch doodle of a stack of pancakes, each layer labeled with a different technology icon. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "user_profile",
+        "tags": [
+            "account",
+            "frontend",
+            "ui",
+            "identity"
+        ],
+        "prompt": "A black pencil sketch doodle of a circular avatar silhouette of a person's head and shoulders. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "settings_gear",
+        "tags": [
+            "config",
+            "preferences",
+            "system",
+            "maintenance"
+        ],
+        "prompt": "A black pencil sketch doodle of a complex mechanical cogwheel or gear. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "analytics_chart",
+        "tags": [
+            "data_viz",
+            "metrics",
+            "performance",
+            "growth"
+        ],
+        "prompt": "A black pencil sketch doodle of a rising jagged line graph superimposed over a bar chart. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "battery_power",
+        "tags": [
+            "energy",
+            "mobile",
+            "status",
+            "charge"
+        ],
+        "prompt": "A black pencil sketch doodle of a battery icon filled halfway with a lightning bolt in the center. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "chatbot_head",
+        "tags": [
+            "automation",
+            "support",
+            "nlp",
+            "ai"
+        ],
+        "prompt": "A black pencil sketch doodle of a friendly robot head with an antenna and glowing eyes. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "usb_drive",
+        "tags": [
+            "portable",
+            "transfer",
+            "flash_memory",
+            "device"
+        ],
+        "prompt": "A black pencil sketch doodle of a thumb drive with the cap removed. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "html_tags",
+        "tags": [
+            "frontend",
+            "web",
+            "markup",
+            "coding"
+        ],
+        "prompt": "A black pencil sketch doodle of opening and closing angle brackets (< >) with a forward slash. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "error_warning",
+        "tags": [
+            "alert",
+            "exception",
+            "notification",
+            "ui"
+        ],
+        "prompt": "A black pencil sketch doodle of a triangle containing an exclamation mark. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "sprint_timer",
+        "tags": [
+            "agile",
+            "deadline",
+            "time_management",
+            "process"
+        ],
+        "prompt": "A black pencil sketch doodle of a stopwatch with the hand nearing the 60-second mark. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "open_source",
+        "tags": [
+            "community",
+            "sharing",
+            "license",
+            "collaboration"
+        ],
+        "prompt": "A black pencil sketch doodle of an unlocked padlock with the shackle open. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "web_globe",
+        "tags": [
+            "internet",
+            "www",
+            "global",
+            "network"
+        ],
+        "prompt": "A black pencil sketch doodle of the Earth with latitude and longitude grid lines. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "folder_tree",
+        "tags": [
+            "directory",
+            "files",
+            "organization",
+            "os"
+        ],
+        "prompt": "A black pencil sketch doodle of an open manila file folder with papers spilling out. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "construction_crane",
+        "tags": [
+            "build",
+            "compile",
+            "engineering",
+            "wip"
+        ],
+        "prompt": "A black pencil sketch doodle of a tall construction crane lifting a heavy block of code. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "motherboard_trace",
+        "tags": [
+            "pcb",
+            "electronics",
+            "circuit",
+            "path"
+        ],
+        "prompt": "A black pencil sketch doodle of a complex maze of copper pathways on a circuit board. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "email_envelope",
+        "tags": [
+            "communication",
+            "smtp",
+            "messaging",
+            "notification"
+        ],
+        "prompt": "A black pencil sketch doodle of the back of a sealed envelope. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "recycle_bin",
+        "tags": [
+            "delete",
+            "cleanup",
+            "garbage_collection",
+            "maintenance"
+        ],
+        "prompt": "A black pencil sketch doodle of a mesh wastebasket filled with crumpled paper balls. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "headphones_mic",
+        "tags": [
+            "remote_work",
+            "zoom",
+            "communication",
+            "meetings"
+        ],
+        "prompt": "A black pencil sketch doodle of a pair of over-ear headphones with an attached boom microphone. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "idea_bulb",
+        "tags": [
+            "innovation",
+            "startup",
+            "creativity",
+            "solution"
+        ],
+        "prompt": "A black pencil sketch doodle of an incandescent lightbulb with a glowing filament. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "download_arrow",
+        "tags": [
+            "install",
+            "get",
+            "pull",
+            "transfer"
+        ],
+        "prompt": "A black pencil sketch doodle of a thick arrow pointing downwards into a flat tray. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "virtual_reality",
+        "tags": [
+            "vr",
+            "ar",
+            "future",
+            "hardware"
+        ],
+        "prompt": "A black pencil sketch doodle of a bulky VR headset with straps. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "code_review",
+        "tags": [
+            "audit",
+            "quality",
+            "peer_review",
+            "check"
+        ],
+        "prompt": "A black pencil sketch doodle of a pair of eyeglasses resting on a stack of papers. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "neural_network",
+        "tags": [
+            "algorithm",
+            "deep_learning",
+            "nodes",
+            "connection"
+        ],
+        "prompt": "A black pencil sketch doodle of a complex web of nodes connected by thin lines representing a neural network. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "synthetic_brain",
+        "tags": [
+            "intelligence",
+            "hardware",
+            "processor",
+            "mind"
+        ],
+        "prompt": "A black pencil sketch doodle of a human brain shape formed entirely by electronic circuit traces and chips. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "robotic_handshake",
+        "tags": [
+            "robotics",
+            "collaboration",
+            "humanoid",
+            "partnership"
+        ],
+        "prompt": "A black pencil sketch doodle of a human hand shaking a mechanical robotic hand. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "computer_vision",
+        "tags": [
+            "perception",
+            "camera",
+            "sensor",
+            "optical"
+        ],
+        "prompt": "A black pencil sketch doodle of a digital eye with a camera lens pupil and targeting crosshairs. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "binary_waterfall",
+        "tags": [
+            "data",
+            "coding",
+            "stream",
+            "flow"
+        ],
+        "prompt": "A black pencil sketch doodle of zeros and ones cascading down like a waterfall. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "facial_recognition",
+        "tags": [
+            "biometrics",
+            "security",
+            "identity",
+            "scan"
+        ],
+        "prompt": "A black pencil sketch doodle of a human face overlaid with a geometric scanning grid and anchor points. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "chatbot_dialogue",
+        "tags": [
+            "nlp",
+            "communication",
+            "service",
+            "speech"
+        ],
+        "prompt": "A black pencil sketch doodle of two speech bubbles, one containing three dots and the other containing binary code. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "server_rack",
+        "tags": [
+            "infrastructure",
+            "hardware",
+            "storage",
+            "hosting"
+        ],
+        "prompt": "A black pencil sketch doodle of a tall vertical server rack tower with blinking status lights. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "autonomous_vehicle",
+        "tags": [
+            "transportation",
+            "self_driving",
+            "car",
+            "mobility"
+        ],
+        "prompt": "A black pencil sketch doodle of a sleek car emitting sensor waves from its roof in all directions. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "microchip_processor",
+        "tags": [
+            "silicon",
+            "cpu",
+            "computing",
+            "hardware"
+        ],
+        "prompt": "A black pencil sketch doodle of a square central processing unit (CPU) with many pins on the bottom. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "cloud_computing",
+        "tags": [
+            "serverless",
+            "internet",
+            "storage",
+            "remote"
+        ],
+        "prompt": "A black pencil sketch doodle of a fluffy cloud containing a gear icon in the center. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "decision_tree",
+        "tags": [
+            "logic",
+            "classification",
+            "data_science",
+            "flowchart"
+        ],
+        "prompt": "A black pencil sketch doodle of a branching flowchart diagram splitting into multiple outcomes. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "smart_assistant",
+        "tags": [
+            "voice",
+            "home",
+            "iot",
+            "audio"
+        ],
+        "prompt": "A black pencil sketch doodle of a small cylindrical smart speaker emitting sound waves. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "fingerprint_scan",
+        "tags": [
+            "security",
+            "access",
+            "biometric",
+            "identity"
+        ],
+        "prompt": "A black pencil sketch doodle of a fingerprint where the ridges are made of printed circuit board lines. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "data_mining",
+        "tags": [
+            "analytics",
+            "extraction",
+            "pickaxe",
+            "insight"
+        ],
+        "prompt": "A black pencil sketch doodle of a pickaxe striking a rock to reveal binary numbers inside. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "vr_headset",
+        "tags": [
+            "simulation",
+            "virtual_reality",
+            "gaming",
+            "immersion"
+        ],
+        "prompt": "A black pencil sketch doodle of a bulky virtual reality headset with a strap. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "drone_surveillance",
+        "tags": [
+            "uav",
+            "flying",
+            "monitoring",
+            "robot"
+        ],
+        "prompt": "A black pencil sketch doodle of a quadcopter drone with a camera mounted underneath. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "cyber_shield",
+        "tags": [
+            "security",
+            "firewall",
+            "defense",
+            "protection"
+        ],
+        "prompt": "A black pencil sketch doodle of a medieval shield with a digital padlock symbol on the front. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "robot_arm",
+        "tags": [
+            "manufacturing",
+            "automation",
+            "industry",
+            "assembly"
+        ],
+        "prompt": "A black pencil sketch doodle of an articulated mechanical arm holding a wrench. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "dna_sequencing",
+        "tags": [
+            "bioinformatics",
+            "health",
+            "genetics",
+            "medical"
+        ],
+        "prompt": "A black pencil sketch doodle of a double helix DNA strand constructed from ones and zeros. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "search_algorithm",
+        "tags": [
+            "find",
+            "query",
+            "web",
+            "indexing"
+        ],
+        "prompt": "A black pencil sketch doodle of a magnifying glass hovering over a stack of documents. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "gpu_cluster",
+        "tags": [
+            "graphics",
+            "processing",
+            "hardware",
+            "acceleration"
+        ],
+        "prompt": "A black pencil sketch doodle of three graphics cards stacked parallel to each other. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "sentiment_analysis",
+        "tags": [
+            "emotion",
+            "feedback",
+            "social",
+            "rating"
+        ],
+        "prompt": "A black pencil sketch doodle of three masks: one smiling, one neutral, and one frowning. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "predictive_graph",
+        "tags": [
+            "finance",
+            "forecasting",
+            "trend",
+            "statistics"
+        ],
+        "prompt": "A black pencil sketch doodle of a line graph with a dotted line projecting future growth upwards. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "internet_of_things",
+        "tags": [
+            "connectivity",
+            "network",
+            "devices",
+            "smart"
+        ],
+        "prompt": "A black pencil sketch doodle of a house connected by lines to a phone, a bulb, and a car. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "ai_ethics",
+        "tags": [
+            "law",
+            "philosophy",
+            "judgment",
+            "fairness"
+        ],
+        "prompt": "A black pencil sketch doodle of a balance scale weighing a mechanical heart against a law book. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "software_bug",
+        "tags": [
+            "error",
+            "debugging",
+            "coding",
+            "glitch"
+        ],
+        "prompt": "A black pencil sketch doodle of a beetle insect composed of jagged computer code text. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "infinite_loop",
+        "tags": [
+            "programming",
+            "cycle",
+            "process",
+            "iteration"
+        ],
+        "prompt": "A black pencil sketch doodle of an arrow bending into a continuous infinity symbol. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "generative_art",
+        "tags": [
+            "creativity",
+            "painting",
+            "design",
+            "media"
+        ],
+        "prompt": "A black pencil sketch doodle of a paintbrush held by a robotic clamp painting on a canvas. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "maze_solver",
+        "tags": [
+            "pathfinding",
+            "strategy",
+            "solution",
+            "game"
+        ],
+        "prompt": "A black pencil sketch doodle of a square maze with a distinct line tracing the solution path. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "global_network",
+        "tags": [
+            "world",
+            "connection",
+            "internet",
+            "communication"
+        ],
+        "prompt": "A black pencil sketch doodle of a globe with lines connecting different continents. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "language_translation",
+        "tags": [
+            "linguistics",
+            "text",
+            "global",
+            "speech"
+        ],
+        "prompt": "A black pencil sketch doodle of two speech bubbles containing different alphabet characters merging. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "api_connector",
+        "tags": [
+            "interface",
+            "plug",
+            "integration",
+            "software"
+        ],
+        "prompt": "A black pencil sketch doodle of a male plug and female socket about to connect. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "storage_silo",
+        "tags": [
+            "database",
+            "big_data",
+            "archive",
+            "repository"
+        ],
+        "prompt": "A black pencil sketch doodle of a cylindrical metal database drum container. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "wireless_signal",
+        "tags": [
+            "wifi",
+            "broadcasting",
+            "communication",
+            "radio"
+        ],
+        "prompt": "A black pencil sketch doodle of an antenna tower emitting concentric circular waves. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "puzzle_logic",
+        "tags": [
+            "problem_solving",
+            "fit",
+            "missing_piece",
+            "assembly"
+        ],
+        "prompt": "A black pencil sketch doodle of a jigsaw puzzle with one final piece hovering above the gap. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "energy_cell",
+        "tags": [
+            "power",
+            "battery",
+            "sustainability",
+            "charge"
+        ],
+        "prompt": "A black pencil sketch doodle of a battery with a lightning bolt symbol on the side. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "tech_singularity",
+        "tags": [
+            "future",
+            "evolution",
+            "explosion",
+            "sci_fi"
+        ],
+        "prompt": "A black pencil sketch doodle of a lightbulb exploding into smaller geometric shapes. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "user_profile",
+        "tags": [
+            "personalization",
+            "human",
+            "avatar",
+            "account"
+        ],
+        "prompt": "A black pencil sketch doodle of a silhouette of a person's head with a gear inside the brain area. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "cooling_system",
+        "tags": [
+            "thermal",
+            "fan",
+            "hardware",
+            "maintenance"
+        ],
+        "prompt": "A black pencil sketch doodle of a computer case fan with spinning blades. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "nanobot_swarm",
+        "tags": [
+            "microscopic",
+            "medicine",
+            "future",
+            "tiny"
+        ],
+        "prompt": "A black pencil sketch doodle of several tiny, spider-like mechanical robots. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "blockchain_link",
+        "tags": [
+            "crypto",
+            "ledger",
+            "secure",
+            "chain"
+        ],
+        "prompt": "A black pencil sketch doodle of three square blocks linked together by heavy chains. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "smart_glasses",
+        "tags": [
+            "wearable",
+            "ar",
+            "vision",
+            "gadget"
+        ],
+        "prompt": "A black pencil sketch doodle of a pair of spectacles with data projected on the lenses. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "dataset_folder",
+        "tags": [
+            "files",
+            "organization",
+            "training",
+            "documents"
+        ],
+        "prompt": "A black pencil sketch doodle of an open file folder with papers flying out of it. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "satellite_uplink",
+        "tags": [
+            "space",
+            "gps",
+            "orbit",
+            "telecom"
+        ],
+        "prompt": "A black pencil sketch doodle of a satellite with solar panels floating in space. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "machine_learning",
+        "tags": [
+            "education",
+            "training",
+            "book",
+            "knowledge"
+        ],
+        "prompt": "A black pencil sketch doodle of an open book with a computer chip resting on the pages. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "targeted_ads",
+        "tags": [
+            "marketing",
+            "focus",
+            "precision",
+            "consumer"
+        ],
+        "prompt": "A black pencil sketch doodle of a dartboard with a dart hitting the exact center bullseye. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "quantum_qubit",
+        "tags": [
+            "physics",
+            "superposition",
+            "advanced",
+            "atom"
+        ],
+        "prompt": "A black pencil sketch doodle of an atom model with electrons orbiting a nucleus. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "hidden_layer",
+        "tags": [
+            "depth",
+            "stack",
+            "structure",
+            "architecture"
+        ],
+        "prompt": "A black pencil sketch doodle of multiple transparent sheets stacked on top of each other. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "digital_key",
+        "tags": [
+            "encryption",
+            "password",
+            "access",
+            "unlock"
+        ],
+        "prompt": "A black pencil sketch doodle of an old-fashioned skeleton key made of digital pixels. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "wireframe_layout",
+        "tags": [
+            "blueprint",
+            "structure",
+            "planning",
+            "low-fidelity"
+        ],
+        "prompt": "A black pencil sketch doodle of a low-fidelity website layout on a blueprint paper with crossed-out boxes. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "responsive_devices",
+        "tags": [
+            "mobile",
+            "tablet",
+            "desktop",
+            "adaptability"
+        ],
+        "prompt": "A black pencil sketch doodle of a desktop monitor, a tablet, and a smartphone standing side-by-side displaying the same grid. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "color_palette_swatch",
+        "tags": [
+            "color",
+            "design",
+            "ui",
+            "branding"
+        ],
+        "prompt": "A black pencil sketch doodle of a fan deck of Pantone color swatches fanned out. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "typography_specimen",
+        "tags": [
+            "fonts",
+            "text",
+            "serif",
+            "sans-serif"
+        ],
+        "prompt": "A black pencil sketch doodle of the letter 'A' drawn in three different font weights and styles. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "user_persona_card",
+        "tags": [
+            "research",
+            "user",
+            "profile",
+            "empathy"
+        ],
+        "prompt": "A black pencil sketch doodle of an ID card featuring a stick figure silhouette and bullet points of text. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "ab_testing_split",
+        "tags": [
+            "testing",
+            "optimization",
+            "comparison",
+            "analytics"
+        ],
+        "prompt": "A black pencil sketch doodle of a path splitting into two distinct roads labeled 'A' and 'B'. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "hamburger_menu",
+        "tags": [
+            "navigation",
+            "icon",
+            "ui_element",
+            "mobile"
+        ],
+        "prompt": "A black pencil sketch doodle of three horizontal rounded lines stacked vertically. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "toggle_switch",
+        "tags": [
+            "control",
+            "interaction",
+            "settings",
+            "on_off"
+        ],
+        "prompt": "A black pencil sketch doodle of a pill-shaped toggle switch in the 'on' position. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "search_magnifier",
+        "tags": [
+            "find",
+            "query",
+            "navigation",
+            "discovery"
+        ],
+        "prompt": "A black pencil sketch doodle of a magnifying glass hovering over a text input bar. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "loading_spinner",
+        "tags": [
+            "wait",
+            "process",
+            "feedback",
+            "system_status"
+        ],
+        "prompt": "A black pencil sketch doodle of a circular array of dashes indicating a loading animation. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "grid_system",
+        "tags": [
+            "layout",
+            "alignment",
+            "columns",
+            "spacing"
+        ],
+        "prompt": "A black pencil sketch doodle of a series of vertical columns and horizontal gutters forming a layout grid. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "vector_pen_tool",
+        "tags": [
+            "illustration",
+            "bezier",
+            "curves",
+            "creation"
+        ],
+        "prompt": "A black pencil sketch doodle of a fountain pen nib drawing a curved Bezier path with anchor points. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "layer_stack",
+        "tags": [
+            "hierarchy",
+            "depth",
+            "organization",
+            "z-index"
+        ],
+        "prompt": "A black pencil sketch doodle of three flat planes floating above each other isometrically. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "heatmap_analysis",
+        "tags": [
+            "data",
+            "tracking",
+            "user_behavior",
+            "hotspot"
+        ],
+        "prompt": "A black pencil sketch doodle of a webpage layout with concentrated scribbles indicating user focus areas. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "mouse_cursor",
+        "tags": [
+            "pointer",
+            "click",
+            "interaction",
+            "desktop"
+        ],
+        "prompt": "A black pencil sketch doodle of a classic tilted arrow cursor and a pointing hand cursor. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "touch_gesture",
+        "tags": [
+            "mobile",
+            "tap",
+            "swipe",
+            "interaction"
+        ],
+        "prompt": "A black pencil sketch doodle of a finger tracing a curved swipe motion with motion lines. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "accessibility_focus",
+        "tags": [
+            "inclusive",
+            "screen_reader",
+            "compliance",
+            "a11y"
+        ],
+        "prompt": "A black pencil sketch doodle of a human figure with arms outstretched inside a circle (accessibility symbol). Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "dark_mode_toggle",
+        "tags": [
+            "theme",
+            "night",
+            "ui",
+            "preference"
+        ],
+        "prompt": "A black pencil sketch doodle of a crescent moon overlapping a sun icon. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "code_brackets",
+        "tags": [
+            "development",
+            "html",
+            "css",
+            "handoff"
+        ],
+        "prompt": "A black pencil sketch doodle of opening and closing angle brackets containing a forward slash. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "analytics_dashboard",
+        "tags": [
+            "stats",
+            "graph",
+            "data",
+            "metrics"
+        ],
+        "prompt": "A black pencil sketch doodle of a rising line graph and a pie chart on a monitor screen. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "secure_login",
+        "tags": [
+            "authentication",
+            "password",
+            "security",
+            "form"
+        ],
+        "prompt": "A black pencil sketch doodle of a text field with asterisks masked inside and a padlock icon next to it. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "shopping_cart",
+        "tags": [
+            "ecommerce",
+            "checkout",
+            "buy",
+            "conversion"
+        ],
+        "prompt": "A black pencil sketch doodle of a wire shopping trolley containing a small box. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "chat_support",
+        "tags": [
+            "communication",
+            "bot",
+            "help",
+            "feedback"
+        ],
+        "prompt": "A black pencil sketch doodle of two speech bubbles overlapping, one with ellipsis dots. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "error_404",
+        "tags": [
+            "broken_link",
+            "alert",
+            "warning",
+            "fail"
+        ],
+        "prompt": "A black pencil sketch doodle of a confused robot with a '404' sign hanging from its neck. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "success_state",
+        "tags": [
+            "confirmation",
+            "done",
+            "validation",
+            "positive"
+        ],
+        "prompt": "A black pencil sketch doodle of a bold checkmark inside a jagged seal or circle. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "filter_funnel",
+        "tags": [
+            "sort",
+            "refine",
+            "search",
+            "tools"
+        ],
+        "prompt": "A black pencil sketch doodle of a kitchen funnel with data blocks entering the top and a single stream exiting the bottom. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "share_network",
+        "tags": [
+            "social",
+            "connect",
+            "distribute",
+            "viral"
+        ],
+        "prompt": "A black pencil sketch doodle of three dots connected by two lines in a generic share icon shape. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "cloud_sync",
+        "tags": [
+            "storage",
+            "backup",
+            "server",
+            "remote"
+        ],
+        "prompt": "A black pencil sketch doodle of a fluffy cloud with two arrows cycling in a circle inside it. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "settings_gear",
+        "tags": [
+            "config",
+            "preferences",
+            "system",
+            "tools"
+        ],
+        "prompt": "A black pencil sketch doodle of a mechanical cogwheel with distinct teeth. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "notification_bell",
+        "tags": [
+            "alert",
+            "reminder",
+            "update",
+            "push"
+        ],
+        "prompt": "A black pencil sketch doodle of a ringing bell with motion lines indicating sound. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "breadcrumb_trail",
+        "tags": [
+            "navigation",
+            "hierarchy",
+            "path",
+            "orientation"
+        ],
+        "prompt": "A black pencil sketch doodle of a text path separated by small arrowheads (Home > Category > Item). Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "pagination_dots",
+        "tags": [
+            "sequence",
+            "carousel",
+            "steps",
+            "navigation"
+        ],
+        "prompt": "A black pencil sketch doodle of a row of small circles with the center one filled in solid. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "modal_overlay",
+        "tags": [
+            "popup",
+            "dialog",
+            "interrupt",
+            "window"
+        ],
+        "prompt": "A black pencil sketch doodle of a square window floating above a shaded background rectangle. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "tooltip_info",
+        "tags": [
+            "help",
+            "context",
+            "hover",
+            "details"
+        ],
+        "prompt": "A black pencil sketch doodle of a small speech bubble emerging from an 'i' information circle. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "slider_control",
+        "tags": [
+            "input",
+            "range",
+            "volume",
+            "adjustment"
+        ],
+        "prompt": "A black pencil sketch doodle of a horizontal line with a circular handle dragged to the middle. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "radio_selection",
+        "tags": [
+            "option",
+            "choice",
+            "exclusive",
+            "form"
+        ],
+        "prompt": "A black pencil sketch doodle of a circle with a smaller solid dot inside it, indicating selection. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "checkbox_group",
+        "tags": [
+            "multi_select",
+            "list",
+            "form",
+            "tasks"
+        ],
+        "prompt": "A black pencil sketch doodle of a square box with a tick mark inside and another empty box below it. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "calendar_picker",
+        "tags": [
+            "date",
+            "schedule",
+            "time",
+            "booking"
+        ],
+        "prompt": "A black pencil sketch doodle of a monthly calendar grid with one specific day circled. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "map_location",
+        "tags": [
+            "geo",
+            "place",
+            "address",
+            "navigation"
+        ],
+        "prompt": "A black pencil sketch doodle of a folded map with a teardrop-shaped pin marker standing on it. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "user_avatar",
+        "tags": [
+            "profile",
+            "account",
+            "identity",
+            "social"
+        ],
+        "prompt": "A black pencil sketch doodle of a circle containing a simplified head-and-shoulders silhouette. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "media_play",
+        "tags": [
+            "video",
+            "audio",
+            "entertainment",
+            "control"
+        ],
+        "prompt": "A black pencil sketch doodle of a triangle pointing right inside a rounded rectangle. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "image_placeholder",
+        "tags": [
+            "wireframe",
+            "media",
+            "content",
+            "mockup"
+        ],
+        "prompt": "A black pencil sketch doodle of a rectangle with an 'X' crossing through it diagonally. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "golden_ratio",
+        "tags": [
+            "proportion",
+            "balance",
+            "math",
+            "aesthetic"
+        ],
+        "prompt": "A black pencil sketch doodle of a logarithmic spiral inside a series of rectangles. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "kanban_board",
+        "tags": [
+            "agile",
+            "workflow",
+            "management",
+            "tasks"
+        ],
+        "prompt": "A black pencil sketch doodle of a board divided into columns with sticky notes in each column. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    },
+    {
+        "topic": "infinite_scroll",
+        "tags": [
+            "feed",
+            "content",
+            "engagement",
+            "pattern"
+        ],
+        "prompt": "A black pencil sketch doodle of a mouse wheel with an infinity symbol loop wrapped around it. Isolated on a pure white background (#ffffff) with cross-hatch texture."
+    }
+]

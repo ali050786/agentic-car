@@ -14,7 +14,7 @@ The system uses a hierarchical prompting strategy where specialized agents handl
   - **Context Mode**: Extract single most interesting insight from source material.
 - **Constraints**: Ignores generic titles like "How to be a leader" in favor of specific premises like "Stop celebrating 5% growth".
 
-### 1.2 Template Agents (`Template1Agent.ts`, `Template2Agent.ts`)
+### 1.2 Template Agent (`TemplateAgent.ts`)
 **Goal**: Convert a "Viral Angle" into structured slide JSON.
 - **Rules**:
   - STRICT adherence to source material (no hallucinations).

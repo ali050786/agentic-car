@@ -56,7 +56,7 @@ graph TD
 - **Final Output**: A formatted Markdown string containing the premise, audience, and takeaway.
 
 ### Node 3: The Writer (Execution Branch)
-**Location**: `Template1Agent.ts` / `Template2Agent.ts`
+**Location**: `TemplateAgent.ts`
 - **Goal**: Write the actual slide copy and suggest visual elements.
 - **System Prompt (Generic snippet)**:
   > You are a LinkedIn Ghostwriter. Stick strictly to the provided Angle. Write a {count}-slide carousel. Generate complete, impactful headlines. Max headline length: 50 chars.

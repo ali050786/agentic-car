@@ -3,13 +3,11 @@
  */
 export const imageUrlToBase64 = async (url: string): Promise<string> => {
     try {
-        // Append cache buster to avoid cached CORS errors
-        const fetchUrl = new URL(url);
-        fetchUrl.searchParams.set('t', Date.now().toString());
+        // Use backend proxy to avoid CORS issues
+        const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
 
-        const response = await fetch(fetchUrl.toString(), {
+        const response = await fetch(proxyUrl, {
             mode: 'cors',
-            credentials: 'include', // Send cookies if needed (Appwrite session)
             cache: 'no-store'
         });
 
@@ -18,20 +16,35 @@ export const imageUrlToBase64 = async (url: string): Promise<string> => {
         }
 
         const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
 
         return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                resolve(reader.result as string);
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    URL.revokeObjectURL(blobUrl);
+                    reject(new Error('Canvas context failed'));
+                    return;
+                }
+                ctx.drawImage(img, 0, 0);
+                const pngBase64 = canvas.toDataURL('image/png');
+                URL.revokeObjectURL(blobUrl);
+                resolve(pngBase64);
             };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
+            img.onerror = () => {
+                URL.revokeObjectURL(blobUrl);
+                reject(new Error('Image load failed'));
+            };
+            img.src = blobUrl;
         });
     } catch (error) {
         console.error('Failed to convert image to base64:', error);
-        // Look for the image in the DOM as a fallback? 
-        // For now return empty, but maybe we should try to get it from an existing image tag?
-        return 'data:image/png;base64,';
+        // Return a 1x1 transparent PNG as a safe fallback
+        return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     }
 };
 

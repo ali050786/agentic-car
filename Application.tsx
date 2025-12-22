@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCarouselStore } from './store/useCarouselStore';
 import { useAuthStore } from './store/useAuthStore';
-import { runAgentWorkflow } from './core/agents/MainAgent';
+import { runAgentWorkflow, repairVisualAssets } from './core/agents/MainAgent';
 import { CarouselPreview } from './components/CarouselPreview';
 import { downloadAllSvgs } from './utils/downloadUtils';
 import { exportAllSlidesToPdf } from './utils/pdfExportAll';
@@ -31,6 +31,8 @@ import { AuthCallback } from './pages/AuthCallback';
 import CarouselLibrary from './pages/CarouselLibrary';
 import { PublicCarouselViewer } from './pages/PublicCarouselViewer';
 import LandingPage from './pages/LandingPage';
+import GenerateDoodles from './pages/GenerateDoodles';
+import ImageRefinement from './pages/ImageRefinement';
 
 
 // Components
@@ -273,6 +275,13 @@ const CarouselGenerator: React.FC = () => {
       }
     }
   }, [selectedTemplate, brandMode, presetId, brandKit, globalBrandKit, slides.length, isGenerating]);
+
+  // Reactive Visual Asset Repair: Fix missing icons/doodles on template switch
+  useEffect(() => {
+    if (hasSlides && !isGenerating) {
+      repairVisualAssets();
+    }
+  }, [selectedTemplate, hasSlides, isGenerating]);
 
   const handleGenerate = async () => {
     // Get sourceContent from store to support multi-modal inputs
@@ -638,6 +647,8 @@ const App: React.FC = () => {
         {/* Auth Routes */}
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/generate" element={<GenerateDoodles />} />
+        <Route path="/image-refinement" element={<ImageRefinement />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/callback" element={<AuthCallback />} />

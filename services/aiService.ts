@@ -30,9 +30,8 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
         const { selectedModel } = useCarouselStore.getState();
         const { user, freeUsageCount } = useAuthStore.getState();
 
-        // TEMPORARY: Disable BYOK for security reasons
-        // We ignore the stored key and force free tier usage
-        const userApiKey = null;
+        // Use user's API key if available
+        const userApiKey = useAuthStore.getState().userApiKey;
 
 
         // Check free tier limit BEFORE making request (if no API key)

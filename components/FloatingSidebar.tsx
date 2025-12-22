@@ -46,80 +46,29 @@ interface FloatingSidebarProps {
 }
 
 const MODEL_OPTIONS = [
-    // OpenRouter Models
     {
         id: 'deepseek-r1t',
         name: 'DeepSeek R1T Chimera',
         description: '⚡ Fast reasoning (Free)',
         freeTier: true,
-        freeTierOnly: false, // Available for both free tier and BYOK
-        provider: 'openrouter',
-    },
-    {
-        id: 'claude-haiku-openrouter',
-        name: 'Claude Haiku 3.5',
-        description: '🧠 Smart & efficient (Free)',
-        freeTier: false,
-        freeTierOnly: false, // Moved to paid tier
-        provider: 'openrouter',
-    },
-    {
-        id: 'gemini-2.5-flash',
-        name: 'Gemini 2.5 Flash',
-        description: '🚀 Google latest (Paid via OpenRouter)',
-        freeTier: false,
         freeTierOnly: false,
-        provider: 'openrouter',
+        provider: 'openrouter' as const,
     },
-    {
-        id: 'gemini-2.0-flash-exp',
-        name: 'Gemini 2.0 Flash Exp',
-        description: '🆓 Google experimental (Paid via OpenRouter)',
-        freeTier: false,
-        freeTierOnly: false,
-        provider: 'openrouter',
-    },
-    {
-        id: 'grok-4.1-fast',
-        name: 'Grok 4.1 Fast',
-        description: '⚡ xAI model (Paid via OpenRouter)',
-        freeTier: false,
-        freeTierOnly: false,
-        provider: 'openrouter',
-    },
-    // OpenAI Models
-    {
-        id: 'gpt-4o',
-        name: 'GPT-4o',
-        description: '🚀 OpenAI latest model',
-        freeTier: false,
-        freeTierOnly: false,
-        provider: 'openai',
-    },
-    {
-        id: 'gpt-4-turbo',
-        name: 'GPT-4 Turbo',
-        description: '⚡ Fast & powerful',
-        freeTier: false,
-        freeTierOnly: false,
-        provider: 'openai',
-    },
-    // Anthropic Models (Direct API)
     {
         id: 'claude-sonnet',
         name: 'Claude Sonnet 3.5',
-        description: '🧠 Best reasoning',
-        freeTier: false,
+        description: '🧠 Best reasoning (System API)',
+        freeTier: true,
         freeTierOnly: false,
-        provider: 'anthropic',
+        provider: 'anthropic' as const,
     },
     {
         id: 'claude-haiku',
         name: 'Claude Haiku 3.5',
-        description: '⚡ Fast & efficient',
-        freeTier: false,
+        description: '⚡ Fast & efficient (System API)',
+        freeTier: true,
         freeTierOnly: false,
-        provider: 'anthropic',
+        provider: 'anthropic' as const,
     },
 ];
 
@@ -177,9 +126,9 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
     // Filter models based on API provider
     const availableModels = hasApiKey && apiKeyProvider
         ? apiKeyProvider === 'openrouter'
-            ? MODEL_OPTIONS.filter(m => m.provider === 'openrouter' && m.freeTier && !m.freeTierOnly) // OpenRouter BYOK: only non-exclusive free models (just DeepSeek)
+            ? MODEL_OPTIONS.filter(m => m.provider === 'openrouter' || m.freeTier) // OpenRouter BYOK: Show all OpenRouter models + other free models
             : MODEL_OPTIONS.filter(m => m.provider === apiKeyProvider) // OpenAI/Anthropic: all their models
-        : MODEL_OPTIONS.filter(m => m.freeTier && m.provider === 'openrouter'); // Free tier: all free OpenRouter models (DeepSeek + Claude Haiku)
+        : MODEL_OPTIONS.filter(m => m.freeTier && (m.provider === 'openrouter' || m.provider === 'anthropic')); // Free tier: all free models
 
     // Local state for inputs
     const [activeInputMode, setActiveInputMode] = useState<InputMode>('topic');
@@ -202,8 +151,11 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
         setSourceContent,
         setCustomInstructions,
         setOutputLanguage,
+        selectedTemplate,
+        setTemplate,
         isMobileMenuOpen,
         toggleMobileMenu,
+        generationStatus,
     } = useCarouselStore();
 
     // Handle generate click - sync local state to global store and process content
@@ -772,20 +724,44 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                                     />
                                 </div>
 
+                                {/* Template Selector */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-neutral-500">Pick a Template</label>
+                                    <div className="relative">
+                                        <select
+                                            value={selectedTemplate}
+                                            onChange={(e) => setTemplate(e.target.value as any)}
+                                            className="w-full pl-4 pr-10 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500 transition-colors text-sm appearance-none cursor-pointer"
+                                        >
+                                            <option value="template-1" className="bg-neutral-900">The Truth (Industrial/Bold)</option>
+                                            <option value="template-2" className="bg-neutral-900">The Clarity (Clean/Modern)</option>
+                                            <option value="template-3" className="bg-neutral-900">The Sketch (Hand-drawn/Startup)</option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                                            <ChevronDown size={14} />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Output Language */}
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-neutral-500">Output Language</label>
-                                    <select
-                                        value={localOutputLanguage}
-                                        onChange={(e) => setLocalOutputLanguage(e.target.value)}
-                                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500 transition-colors text-sm appearance-none cursor-pointer"
-                                    >
-                                        {LANGUAGE_OPTIONS.map((lang) => (
-                                            <option key={lang} value={lang} className="bg-neutral-900">
-                                                {lang}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <select
+                                            value={localOutputLanguage}
+                                            onChange={(e) => setLocalOutputLanguage(e.target.value)}
+                                            className="w-full pl-4 pr-10 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500 transition-colors text-sm appearance-none cursor-pointer"
+                                        >
+                                            {LANGUAGE_OPTIONS.map((lang) => (
+                                                <option key={lang} value={lang} className="bg-neutral-900">
+                                                    {lang}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                                            <ChevronDown size={14} />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -827,7 +803,7 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                             ) : isGenerating ? (
                                 <>
                                     <Loader className="w-4 h-4 animate-spin" />
-                                    Generating...
+                                    {generationStatus}
                                 </>
                             ) : (
                                 <>
@@ -850,7 +826,7 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                             {isGenerating ? (
                                 <>
                                     <Loader className="w-4 h-4 animate-spin" />
-                                    Regenerating...
+                                    {generationStatus}
                                 </>
                             ) : (
                                 <>
