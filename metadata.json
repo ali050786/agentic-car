@@ -1,5 +1,5 @@
 {
   "name": "Agentic Carousel Generator",
-  "description": "An AI-powered agentic workflow that generates LinkedIn-style carousels by injecting Gemini-generated content into complex SVG templates.",
+  "description": "An AI-powered agentic workflow that generates LinkedIn-style carousels by injecting content into complex SVG templates.",
   "requestFramePermissions": []
 }
