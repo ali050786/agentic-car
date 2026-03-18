@@ -19,6 +19,7 @@ import { resolveTheme } from './utils/brandUtils';
 import { getPresetById } from './config/colorPresets';
 import { useAutoSave } from './hooks/useAutoSave';
 import BrandEditorPanel from './components/BrandEditorPanel';
+import { Analytics } from '@vercel/analytics/react';
 
 // Auth Pages
 import { SignUp } from './pages/SignUp';
@@ -621,6 +622,7 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter>
+      <Analytics />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
