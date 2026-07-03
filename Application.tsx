@@ -40,6 +40,8 @@ import { CollapsibleSection } from './components/CollapsibleSection';
 import { FloatingTopBar } from './components/FloatingTopBar';
 import { FloatingSidebar } from './components/FloatingSidebar';
 import { FloatingBottomBar } from './components/FloatingBottomBar';
+import { ChatPanel } from './components/chat/ChatPanel';
+import { ArtifactPanel } from './components/artifact/ArtifactPanel';
 import { SlideEditPanel } from './components/SlideEditPanel';
 import { Toast } from './components/Toast';
 import { useToast } from './hooks/useToast';
@@ -319,6 +321,15 @@ const CarouselGenerator: React.FC = () => {
     setLocalTopic(random);
   };
 
+  // Chat-driven creation: the first chat message is the generation prompt
+  const handleFirstPrompt = async (text: string) => {
+    if (!checkGuestLimit()) return;
+    setLocalTopic(text);
+    setTopic(text.length > 80 ? text.slice(0, 77) + '…' : text);
+    await runAgentWorkflow(text);
+    incrementGuestUsage();
+  };
+
   // Helper to get theme for auto-save
   const getTheme = () => {
     if (editingCarousel?.theme) {
@@ -470,6 +481,7 @@ const CarouselGenerator: React.FC = () => {
     setLocalTopic('');
     setTopic('');
     setSlides([]);
+    useCarouselStore.getState().clearChat();
   };
 
   // Brand Editor Panel handlers
@@ -505,56 +517,21 @@ const CarouselGenerator: React.FC = () => {
         }}
       />
 
-      {/* Floating Left Sidebar */}
-      <FloatingSidebar
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        hasSlides={slides.length > 0} // <--- NEW PROP
-        editMode={!!editingCarousel}
-        editingCarousel={editingCarousel}
-        localTopic={localTopic}
-        setLocalTopic={setLocalTopic}
-        selectedModel={selectedModel}
-        setModel={setModel}
-        isGenerating={isGenerating}
-        error={error}
-        onGenerate={handleGenerate}
-        onRandomTopic={handleRandomTopic}
-        onNewCarousel={handleNewCarousel}
-      />
-
-      {/* Mobile Menu Button - visible only on mobile */}
-      <button
-        onClick={toggleMobileMenu}
-        className="fixed top-20 left-4 z-30 p-2 bg-neutral-900/90 border border-white/20 rounded-lg md:hidden text-white shadow-lg backdrop-blur-md"
-      >
-        <Menu size={20} />
-      </button>
-
-      {/* Center: Preview Area */}
-      <main
-        className={`
-          pt-16 pb-24 px-4 h-full bg-neutral-950 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-neutral-900/50 via-neutral-950 to-neutral-950 
-          transition-all duration-500 ease-in-out
-          ${isSidebarOpen ? 'md:pl-[21.5rem]' : 'md:pl-24'} 
-        `}
-      >
-        <CarouselPreview />
-      </main>
-
-      {/* Floating Bottom Bar */}
-      {slides.length > 0 && (
-        <div className="animate-in slide-in-from-bottom-10 duration-700 fade-in">
-          <FloatingBottomBar
-            expandedTool={bottomToolExpanded}
-            setExpandedTool={setBottomToolExpanded}
-            selectedTemplate={selectedTemplate}
-            setTemplate={setTemplate}
+      {/* Chat + Artifact split (chat is the control plane, the carousel is the hero) */}
+      <main className="pt-16 h-screen flex bg-neutral-950">
+        <div className="w-full md:w-[400px] md:min-w-[400px] h-full">
+          <ChatPanel
+            onFirstPrompt={handleFirstPrompt}
+            onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
+          />
+        </div>
+        <div className="hidden md:flex flex-1 min-w-0">
+          <ArtifactPanel
             onOpenBrandEditor={handleOpenBrandEditor}
             onShowToast={showToast}
           />
         </div>
-      )}
+      </main>
 
       {/* Right Edit Panel */}
       <SlideEditPanel

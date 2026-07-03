@@ -27,14 +27,19 @@ export const generateSignatureCard = (
   const escapedImageUrl = escapeXml(data.imageUrl);
 
   // Position coordinates - format-specific
-  const defaultX = templateId === 'template-3' ? 80 : 150;
+  const defaultX = templateId === 'template-3' ? 80 : templateId === 'template-4' ? 100 : 150;
+
+  // T4 has a tighter 100px margin, so the card sits lower to balance the layout
+  const bottomLeftY = format === 'square'
+    ? (templateId === 'template-4' ? 930 : 860)
+    : (templateId === 'template-4' ? 1240 : 1120);
 
   const positions = format === 'square' ? {
-    'bottom-left': { x: defaultX, y: 860 },
+    'bottom-left': { x: defaultX, y: bottomLeftY },
     'top-left': { x: defaultX, y: 85 },
     'top-right': { x: 550, y: 85 }
   } : {
-    'bottom-left': { x: defaultX, y: 1120 },
+    'bottom-left': { x: defaultX, y: bottomLeftY },
     'top-left': { x: defaultX, y: 120 },
     'top-right': { x: 540, y: 120 }
   };

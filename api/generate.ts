@@ -60,7 +60,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             if (apiProvider === 'openrouter') {
                 // OpenRouter - supports all models
                 const model =
-                    selectedModel === 'deepseek-r1t' ? 'tngtech/deepseek-r1t-chimera:free' :
+                    selectedModel === 'gpt-oss-120b' ? 'openai/gpt-oss-120b:free' :
+                    selectedModel === 'deepseek-r1t' ? 'openai/gpt-oss-120b:free' :
                         selectedModel === 'claude-haiku-openrouter' ? 'anthropic/claude-3.5-haiku' :
                             selectedModel === 'claude-sonnet-openrouter' ? 'anthropic/claude-3.5-sonnet' :
                                 selectedModel === 'gemini-2.5-flash' ? 'google/gemini-2.5-flash' :
@@ -70,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                                                 selectedModel === 'gpt-4-turbo' ? 'openai/gpt-4-turbo' :
                                                     selectedModel === 'claude-sonnet' ? 'anthropic/claude-3.5-sonnet' :
                                                         selectedModel === 'claude-haiku' ? 'anthropic/claude-3.5-haiku' :
-                                                            'tngtech/deepseek-r1t-chimera:free';
+                                                            'openai/gpt-oss-120b:free';
 
                 const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
@@ -276,43 +277,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 }
 
             } else {
-                // Use system OpenRouter API for DeepSeek (Default)
+                // Use system OpenRouter API for free tier (Default)
                 const openrouterKey = process.env.OPENROUTER_API_KEY || '';
                 if (!openrouterKey) {
                     console.error('[Vercel API] Missing OPENROUTER_API_KEY for free tier');
                     return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY for free tier' });
                 }
 
-                const freeModel = selectedModel === 'deepseek-r1t' ? 'tngtech/deepseek-r1t-chimera:free' : 'tngtech/deepseek-r1t-chimera:free';
+                // Free OpenRouter endpoints are frequently rate-limited upstream,
+                // so try each model in order until one responds
+                const freeModels = [
+                    'openai/gpt-oss-120b:free',
+                    'openai/gpt-oss-20b:free',
+                    'meta-llama/llama-3.3-70b-instruct:free',
+                    'qwen/qwen3-next-80b-a3b-instruct:free',
+                ];
 
-                console.log(`[Vercel API] Using system OpenRouter API for ${selectedModel || 'default'} (model: ${freeModel})`);
+                let lastError = '';
+                for (const freeModel of freeModels) {
+                    console.log(`[Vercel API] Using system OpenRouter API for ${selectedModel || 'default'} (model: ${freeModel})`);
 
-                const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${openrouterKey}`,
-                        'HTTP-Referer': 'https://agentic-carousel.vercel.app',
-                        'X-Title': 'Agentic Carousel Generator',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: freeModel,
-                        messages: [
-                            { role: 'system', content: systemPrompt },
-                            { role: 'user', content: prompt }
-                        ],
-                        temperature: 0.2,
-                    })
-                });
+                    const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${openrouterKey}`,
+                            'HTTP-Referer': 'https://agentic-carousel.vercel.app',
+                            'X-Title': 'Agentic Carousel Generator',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model: freeModel,
+                            messages: [
+                                { role: 'system', content: systemPrompt },
+                                { role: 'user', content: prompt }
+                            ],
+                            temperature: 0.2,
+                        })
+                    });
 
-                if (!openrouterResponse.ok) {
-                    const errorText = await openrouterResponse.text();
-                    console.error('[Vercel API] OpenRouter API error:', errorText);
-                    throw new Error(`OpenRouter API error: ${errorText}`);
+                    if (openrouterResponse.ok) {
+                        const openrouterData = await openrouterResponse.json();
+                        const content = openrouterData.choices[0]?.message?.content;
+                        if (content) {
+                            result = cleanJsonResponse(content);
+                            break;
+                        }
+                        lastError = `Empty response from ${freeModel}`;
+                        console.error('[Vercel API]', lastError);
+                    } else {
+                        lastError = await openrouterResponse.text();
+                        console.error(`[Vercel API] OpenRouter error for ${freeModel}, trying next:`, lastError);
+                    }
                 }
 
-                const openrouterData = await openrouterResponse.json();
-                result = cleanJsonResponse(openrouterData.choices[0]?.message?.content || '{"slides":[]}');
+                if (!result) {
+                    throw new Error(`OpenRouter API error: ${lastError}`);
+                }
             }
 
             // Note: Usage count increment happens on client side after successful response

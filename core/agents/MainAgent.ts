@@ -1,6 +1,7 @@
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { TemplateAgent } from './TemplateAgent';
 import { StrategistAgent } from './StrategistAgent';
+import { ArtDirectorAgent } from './ArtDirectorAgent';
 import { ResearchAgent } from './ResearchAgent';
 import { SlideContent, CarouselTheme } from '../../types';
 import { generateImage } from '../../services/aiService';
@@ -8,6 +9,32 @@ import { storage, config, ID } from '../../lib/appwriteClient';
 import { resolveTheme } from '../../utils/brandUtils';
 import { getPresetById } from '../../config/colorPresets';
 import { findMatchingImage } from '../../utils/imageMatcher';
+
+/**
+ * Replicate throttles low-credit accounts hard (as low as 1 request burst),
+ * so retry 429s honoring the retry_after it reports. There is no rush —
+ * doodles arrive in the background after the content is already visible.
+ */
+const generateImageWithRetry = async (
+  prompt: string,
+  aspectRatio: string,
+  maxAttempts: number = 5
+): Promise<{ imageUrl: string; imageBase64?: string | null }> => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await generateImage(prompt, aspectRatio);
+    } catch (err: any) {
+      const msg = String(err?.message || err);
+      const throttled = msg.includes('429') || msg.includes('throttled');
+      if (!throttled || attempt >= maxAttempts) throw err;
+
+      const retryMatch = msg.match(/retry_after\\?":\s*(\d+)/);
+      const waitSeconds = (retryMatch ? parseInt(retryMatch[1], 10) : 10) + 2;
+      console.warn(`[MainAgent] Replicate throttled (attempt ${attempt}/${maxAttempts}), retrying in ${waitSeconds}s...`);
+      await new Promise(r => setTimeout(r, waitSeconds * 1000));
+    }
+  }
+};
 
 // Context object for AI agents
 export interface AgentContext {
@@ -147,72 +174,96 @@ export const runAgentWorkflow = async (topic: string) => {
     store.setTheme(result.theme);
 
     // ========================================================================
-    // VISUAL ASSETS: Orchestrate AI Doodle Generation & Persistence
+    // VISUAL ASSETS: Agentic Doodle Pipeline (Template-3 only)
+    // Content is already in the store; this runs in the background:
+    // library placeholder → Art Director prompts → Replicate flux →
+    // Appwrite Storage persistence → slide update (display)
     // ========================================================================
-    if (result.slides.length > 0) {
+    if (result.slides.length > 0 && store.selectedTemplate === 'template-3') {
       console.log('[MainAgent] 🎨 Starting visual asset processing...');
 
-      // Parallel generation with promise tracking
       const generateDoodles = async () => {
-        // Only trigger if at least one slide needs a doodleUrl
-        const needsDoodles = result.slides.some(s => s.doodlePrompt && !s.doodleUrl);
-        if (!needsDoodles) return;
+        const slides = result.slides;
 
-        for (let i = 0; i < result.slides.length; i++) {
-          const slide = result.slides[i];
+        // Mark all slides as awaiting their AI doodle so the UI can show an indicator
+        store.setPendingDoodleSlides(slides.map((_, i) => i));
+
+        // STEP 1: Instant placeholders from the pre-rendered library while flux works
+        slides.forEach((slide, i) => {
           if (slide.doodlePrompt && !slide.doodleUrl) {
-            try {
-              store.setGenerationStatus(`Sketching doodle for slide ${i + 1}...`);
-
-              let imageUrl: string | null = null;
-
-              // 1. Try to find in local library first
-              imageUrl = findMatchingImage(slide.doodlePrompt);
-
-              if (imageUrl) {
-                console.log(`[MainAgent] 📚 Found matching image in library for: "${slide.doodlePrompt}"`);
-                store.updateSlide(i, { doodleUrl: imageUrl });
-              } else {
-                console.warn(`[MainAgent] ⚠️ No match in library for Template-3 prompt: "${slide.doodlePrompt}". Skipping.`);
-                // We no longer fallback to Replicate for Template-3
-              }
-              continue; // Skip the rest of the loop (upload logic)
-
-              const response = await fetch(imageUrl!);
-              const blob = await response.blob();
-
-              // 3. Persist to Appwrite Storage
-              if (config.storageBucketId) {
-                const file = new File([blob], `doodle-${ID.unique()}.webp`, { type: 'image/webp' });
-                const appwriteResponse = await storage.createFile(
-                  config.storageBucketId,
-                  ID.unique(),
-                  file
-                );
-
-                // 4. Get permanent view URL
-                const permanentUrl = storage.getFileView(
-                  config.storageBucketId,
-                  appwriteResponse.$id
-                ).toString();
-
-                // 5. Update slide in store
-                store.updateSlide(i, { doodleUrl: permanentUrl });
-                console.log(`[MainAgent] ✅ Doodle ${i + 1} finalized and saved to Appwrite:`, permanentUrl);
-              } else {
-                // Fallback: Use Replicate URL directly if Storage is not configured
-                store.updateSlide(i, { doodleUrl: imageUrl });
-                console.log(`[MainAgent] ⚠️ Doodle ${i + 1} finished but used ephemeral URL (Appwrite Storage not configured):`, imageUrl);
-              }
-            } catch (err) {
-              console.error(`[MainAgent] Failed to generate doodle for slide ${i + 1}:`, err);
+            const placeholder = findMatchingImage(slide.doodlePrompt);
+            if (placeholder) {
+              store.updateSlide(i, { doodleUrl: placeholder });
+              console.log(`[MainAgent] 📚 Placeholder from library for slide ${i + 1}`);
             }
           }
+        });
+
+        // STEP 2: Art Director writes one tailored flux prompt per slide
+        let fluxPrompts: string[];
+        try {
+          store.setGenerationStatus('🎨 Art Director: designing sketches...');
+          fluxPrompts = await ArtDirectorAgent.generatePrompts(slides, context.viralAngle || context.sourceContent);
+        } catch (err) {
+          console.error('[MainAgent] Art Director failed, falling back to topic prompts:', err);
+          fluxPrompts = slides.map(s => s.doodlePrompt || '');
         }
+
+        // STEPS 3-5: Generate → persist → display, one slide at a time
+        for (let i = 0; i < slides.length; i++) {
+          const fluxPrompt = fluxPrompts[i];
+          if (!fluxPrompt) {
+            store.removePendingDoodleSlide(i);
+            continue;
+          }
+
+          try {
+            store.setGenerationStatus(`✏️ Sketching doodle ${i + 1}/${slides.length}...`);
+
+            // 3. Generate via Replicate flux (2:3 matches the 600x1000 slot in the template)
+            // imageBase64 carries the bytes because replicate.delivery blocks browser CORS fetches
+            const { imageUrl, imageBase64 } = await generateImageWithRetry(fluxPrompt, '2:3');
+
+            // 4. Persist to Appwrite Storage (Replicate URLs expire after ~1 hour).
+            // If persistence fails we still display the ephemeral URL below.
+            let finalUrl = imageUrl;
+            if (config.storageBucketId && imageBase64) {
+              try {
+                // Decode manually — fetch(data:...) is blocked by the app's CSP connect-src
+                const binary = atob(imageBase64.split(',')[1]);
+                const bytes = new Uint8Array(binary.length);
+                for (let b = 0; b < binary.length; b++) bytes[b] = binary.charCodeAt(b);
+                const blob = new Blob([bytes], { type: 'image/webp' });
+                const file = new File([blob], `doodle-${ID.unique()}.webp`, { type: 'image/webp' });
+                const uploaded = await storage.createFile(config.storageBucketId, ID.unique(), file);
+                finalUrl = storage.getFileView(config.storageBucketId, uploaded.$id).toString();
+                console.log(`[MainAgent] ✅ Doodle ${i + 1} saved to Appwrite:`, finalUrl);
+              } catch (persistErr) {
+                console.error(`[MainAgent] ⚠️ Doodle ${i + 1} upload failed, using ephemeral URL:`, persistErr);
+              }
+            } else {
+              console.warn(`[MainAgent] ⚠️ Doodle ${i + 1} using ephemeral URL (missing bucket config or image bytes)`);
+            }
+
+            // 5. Display: updating the slide re-renders it with the new image
+            store.updateSlide(i, { doodleUrl: finalUrl, doodlePrompt: fluxPrompt });
+          } catch (err) {
+            // Keep the library placeholder (or built-in fallback) — never break the carousel
+            console.error(`[MainAgent] Failed to generate doodle for slide ${i + 1}, keeping placeholder:`, err);
+          } finally {
+            store.removePendingDoodleSlide(i);
+          }
+        }
+
+        store.setPendingDoodleSlides([]);
+        store.setGenerationStatus('Done!');
       };
 
       // Run in background but don't block the "Done!" status
-      generateDoodles();
+      generateDoodles().catch(err => {
+        console.error('[MainAgent] Doodle pipeline failed:', err);
+        store.setPendingDoodleSlides([]);
+      });
     }
 
     // Complete

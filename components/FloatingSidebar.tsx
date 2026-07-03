@@ -47,8 +47,8 @@ interface FloatingSidebarProps {
 
 const MODEL_OPTIONS = [
     {
-        id: 'deepseek-r1t',
-        name: 'DeepSeek R1T Chimera',
+        id: 'gpt-oss-120b',
+        name: 'GPT-OSS 120B',
         description: '⚡ Fast reasoning (Free)',
         freeTier: true,
         freeTierOnly: false,
@@ -736,6 +736,7 @@ export const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                                             <option value="template-1" className="bg-neutral-900">The Truth (Industrial/Bold)</option>
                                             <option value="template-2" className="bg-neutral-900">The Clarity (Clean/Modern)</option>
                                             <option value="template-3" className="bg-neutral-900">The Sketch (Hand-drawn/Startup)</option>
+                                            <option value="template-4" className="bg-neutral-900">The Statement (Bold/Typographic)</option>
                                         </select>
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
                                             <ChevronDown size={14} />

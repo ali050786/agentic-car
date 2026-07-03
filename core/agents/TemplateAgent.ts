@@ -98,18 +98,21 @@ export const TemplateAgent = {
         }
 
         // Post-processing
+        // Template-4 uses sentence-case headlines (statement style); others are uppercased
+        const keepCase = templateId === 'template-4';
         const slides = data.slides.map((s: any, i: number) => {
             const slideVariant = s.variant || s.type;
 
             return {
                 id: `${templateId}-slide-${i}`,
                 variant: slideVariant,
-                headline: (s.headline || '').toUpperCase(),
+                headline: keepCase ? (s.headline || '') : (s.headline || '').toUpperCase(),
                 preHeader: (s.preHeader || '').toUpperCase(),
                 body: s.body || '',
                 listItems: s.listItems || [],
                 footer: s.footer || '',
                 icon: s.icon || config.defaultIcon,
+                accentPhrase: s.accentPhrase || undefined,
                 doodlePrompt: s.doodleTopic ? `A black pencil sketch doodle of a ${s.doodleTopic.replace(/_/g, ' ')} isolated on a pure white background (#ffffff) with cross-hatch texture.` : undefined
             };
         });

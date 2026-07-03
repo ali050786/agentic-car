@@ -128,12 +128,12 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
 /**
  * Image generation proxy
  */
-export const generateImage = async (prompt: string): Promise<{ imageUrl: string }> => {
+export const generateImage = async (prompt: string, aspectRatio: string = '1:1'): Promise<{ imageUrl: string; imageBase64?: string | null }> => {
     try {
         const res = await fetch('/api/generate-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt })
+            body: JSON.stringify({ prompt, aspectRatio })
         });
 
         if (!res.ok) {

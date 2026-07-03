@@ -5,6 +5,8 @@ import { T1_HERO_SVG_SQUARE, T1_BODY_SVG_SQUARE, T1_LIST_SVG_SQUARE, T1_CTA_SVG_
 import { T2_HERO_SVG_SQUARE, T2_BODY_SVG_SQUARE, T2_LIST_SVG_SQUARE, T2_CTA_SVG_SQUARE } from '../assets/templates/template2_square';
 import { T3_HERO_SVG, T3_BODY_SVG, T3_LIST_SVG, T3_CTA_SVG } from '../assets/templates/template3';
 import { T3_HERO_SVG_SQUARE, T3_BODY_SVG_SQUARE, T3_LIST_SVG_SQUARE, T3_CTA_SVG_SQUARE } from '../assets/templates/template3_square';
+import { T4_HERO_SVG, T4_BODY_SVG, T4_LIST_SVG, T4_CTA_SVG } from '../assets/templates/template4';
+import { T4_HERO_SVG_SQUARE, T4_BODY_SVG_SQUARE, T4_LIST_SVG_SQUARE, T4_CTA_SVG_SQUARE } from '../assets/templates/template4_square';
 import { generateSignatureCard } from './signatureCardGenerator';
 import { generatePatternSVG } from './patternGenerator';
 import { generateIconSVG } from './iconGenerator';
@@ -282,6 +284,90 @@ export const injectContentIntoSvg = (
     const fallbackDoodle = `https://image.pollinations.ai/prompt/A%20simple%20blackpencil%20doodle%20sketch%20of%20a%20rocket%20ship%20launching%20upwards%20representing%20startup%20growth%20isolated%20on%20strict%20pure%20white%20background%20%23FFFFFF?width=600&height=1000&nologo=true`;
     const doodleUrl = content.doodleUrl || fallbackDoodle;
     baseSvg = baseSvg.replace('{{DOODLE_IMAGE_URL}}', doodleUrl);
+  } else if (templateId === 'template-4') {
+    if (isSquare) {
+      switch (content.variant) {
+        case 'hero': baseSvg = T4_HERO_SVG_SQUARE; break;
+        case 'body': baseSvg = T4_BODY_SVG_SQUARE; break;
+        case 'list': baseSvg = T4_LIST_SVG_SQUARE; break;
+        case 'cta':
+        case 'closing':
+          baseSvg = T4_CTA_SVG_SQUARE;
+          break;
+        default: baseSvg = T4_HERO_SVG_SQUARE;
+      }
+    } else {
+      switch (content.variant) {
+        case 'hero': baseSvg = T4_HERO_SVG; break;
+        case 'body': baseSvg = T4_BODY_SVG; break;
+        case 'list': baseSvg = T4_LIST_SVG; break;
+        case 'cta':
+        case 'closing':
+          baseSvg = T4_CTA_SVG;
+          break;
+        default: baseSvg = T4_HERO_SVG;
+      }
+    }
+
+    // T4: Inject CSS Variables for Theme (Statement Style)
+    themeCss = `
+      :root {
+        --text-default: ${theme?.textDefault || '#A9A6C9'};
+        --text-highlight: ${theme?.textHighlight || '#F5F4FF'};
+        --background: ${theme?.background || '#1D1A45'};
+        --background-2: ${theme?.background2 || '#F0997B'};
+      }
+    `;
+
+    // T4: Slide number from the slide id (e.g. "template-4-slide-2" -> "03")
+    const idxMatch = (content.id || '').match(/slide-(\d+)/);
+    const slideNum = String((idxMatch ? parseInt(idxMatch[1], 10) : 0) + 1).padStart(2, '0');
+    baseSvg = baseSvg.replace(/\{\{SLIDE_NUM\}\}/g, slideNum);
+
+    // T4: Headline with accent-colored phrase chosen by the agent
+    const headline = content.headline || '';
+    let headlineHtml = headline;
+    if (content.accentPhrase && headline.toLowerCase().includes(content.accentPhrase.toLowerCase())) {
+      const start = headline.toLowerCase().indexOf(content.accentPhrase.toLowerCase());
+      const end = start + content.accentPhrase.length;
+      headlineHtml =
+        headline.slice(0, start) +
+        `<span style="color: var(--background-2);">${headline.slice(start, end)}</span>` +
+        headline.slice(end);
+    }
+    baseSvg = baseSvg.replace('{{HEADLINE_HTML}}', headlineHtml);
+
+    // T4: Default pill text on the closing slide
+    baseSvg = baseSvg.replace('{{FOOTER}}', content.footer || 'Follow for more →');
+
+    // T4 List Style (numbered rows with hairline dividers)
+    const listFontSize = isSquare ? '28px' : '32px';
+    const listNumSize = isSquare ? '26px' : '30px';
+    listHtml = content.listItems && content.listItems.length > 0
+      ? content.listItems.map((item, itemIndex) => {
+        let title = '';
+        let desc = '';
+
+        if (typeof item === 'string') {
+          const parts = item.split(':');
+          title = parts.length > 1 ? parts[0] : '';
+          desc = parts.length > 1 ? parts.slice(1).join(':').trim() : item;
+        } else if (typeof item === 'object' && item !== null) {
+          title = (item.bullet || '').replace(/:$/, '');
+          desc = item.description || '';
+        }
+
+        return `
+          <div style="height: 1px; background: var(--text-default); opacity: 0.3;"></div>
+          <div style="display: flex; align-items: flex-start; gap: 32px; padding: ${isSquare ? '24px' : '30px'} 0;">
+            <div style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: ${listNumSize}; color: var(--background-2); min-width: 56px;">${String(itemIndex + 1).padStart(2, '0')}</div>
+            <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: ${listFontSize}; color: var(--text-default); line-height: 1.45;">
+              ${title ? `<span style="color: var(--text-highlight); font-weight: 500;">${title}.</span> ` : ''}${desc}
+            </div>
+          </div>
+          `;
+      }).join('')
+      : '';
   }
 
   // Inject Theme CSS

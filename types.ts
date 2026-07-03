@@ -1,4 +1,4 @@
-export type TemplateId = 'template-1' | 'template-2' | 'template-3';
+export type TemplateId = 'template-1' | 'template-2' | 'template-3' | 'template-4';
 export type SlideVariant = 'hero' | 'body' | 'list' | 'cta' | 'closing';  // 'closing' is what LLM generates, 'cta' is template name
 export type AIModel = 'groq-llama' | 'claude-haiku';
 export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';
@@ -74,6 +74,7 @@ export interface SlideContent {
   icon?: string;  // Lucide icon name (e.g., "Lightbulb", "Target", "TrendingUp")
   doodlePrompt?: string; // AI image prompt for Template-3 doodles
   doodleUrl?: string;    // Resulting Replicate/Appwrite image URL
+  accentPhrase?: string; // Template-4: exact substring of headline rendered in the accent color
 }
 
 export interface CarouselTheme {
@@ -94,6 +95,28 @@ export interface CarouselTheme {
   customized?: boolean;
 }
 
+/**
+ * One agent activity line inside a chat run (e.g. "Researched 4 sources")
+ */
+export interface ChatRunEvent {
+  label: string;
+  done: boolean;
+}
+
+/**
+ * A message in the chat-driven editor
+ */
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  /** Agent activity timeline shown while/after this assistant turn runs */
+  events?: ChatRunEvent[];
+  /** True while this assistant turn is still producing output */
+  running?: boolean;
+  error?: boolean;
+}
+
 export interface CarouselState {
   topic: string;
   selectedTemplate: TemplateId;
@@ -110,6 +133,17 @@ export interface CarouselState {
 
   generationStatus: string;
   generationProgress: number;  // 0-100
+
+  /**
+   * Slide indices whose Template-3 doodle is still being generated in the
+   * background (placeholder currently shown). Not persisted.
+   */
+  pendingDoodleSlides: number[];
+
+  /**
+   * Chat-driven editor conversation. Not persisted with the carousel.
+   */
+  chatMessages: ChatMessage[];
 
   // Multi-modal Input State
   inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf';
@@ -170,6 +204,11 @@ export interface CarouselState {
   setSlides: (slides: SlideContent[]) => void;
   setTheme: (theme: CarouselTheme) => void;
   updateSlide: (index: number, content: Partial<SlideContent>) => void;
+  setPendingDoodleSlides: (indices: number[]) => void;
+  removePendingDoodleSlide: (index: number) => void;
+  addChatMessage: (message: ChatMessage) => void;
+  updateChatMessage: (id: string, patch: Partial<ChatMessage>) => void;
+  clearChat: () => void;
 
   // Multi-modal Input Actions
   setInputMode: (inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf') => void;

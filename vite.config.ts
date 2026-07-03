@@ -75,7 +75,8 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
           if (apiProvider === 'openrouter') {
             // OpenRouter - supports all models
             const model =
-              selectedModel === 'deepseek-r1t' ? 'tngtech/deepseek-r1t-chimera:free' :
+              selectedModel === 'gpt-oss-120b' ? 'openai/gpt-oss-120b:free' :
+              selectedModel === 'deepseek-r1t' ? 'openai/gpt-oss-120b:free' :
                 selectedModel === 'claude-haiku-openrouter' ? 'anthropic/claude-3.5-haiku' :
                   selectedModel === 'gemini-2.5-flash' ? 'google/gemini-2.5-flash' :
                     selectedModel === 'gemini-2.0-flash-exp' ? 'google/gemini-2.0-flash-exp:free' :
@@ -84,7 +85,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
                           selectedModel === 'gpt-4-turbo' ? 'openai/gpt-4-turbo' :
                             selectedModel === 'claude-sonnet' ? 'anthropic/claude-3.5-sonnet' :
                               selectedModel === 'claude-haiku' ? 'anthropic/claude-3.5-haiku' :
-                                'tngtech/deepseek-r1t-chimera:free';
+                                'openai/gpt-oss-120b:free';
 
             const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
               method: 'POST',
@@ -296,7 +297,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
             }
 
           } else {
-            // Use system OpenRouter API for DeepSeek (Default)
+            // Use system OpenRouter API for free tier (Default)
             const openrouterKey = process.env.OPENROUTER_API_KEY || env.OPENROUTER_API_KEY || '';
             if (!openrouterKey) {
               console.error('[Vite Proxy] Missing OPENROUTER_API_KEY for free tier');
@@ -305,36 +306,55 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
               return res.end(JSON.stringify({ error: 'Missing OPENROUTER_API_KEY for free tier' }));
             }
 
-            const freeModel = 'tngtech/deepseek-r1t-chimera:free';
+            // Free OpenRouter endpoints are frequently rate-limited upstream,
+            // so try each model in order until one responds
+            const freeModels = [
+              'openai/gpt-oss-120b:free',
+              'openai/gpt-oss-20b:free',
+              'meta-llama/llama-3.3-70b-instruct:free',
+              'qwen/qwen3-next-80b-a3b-instruct:free',
+            ];
 
-            console.log(`[Vite Proxy] Using system OpenRouter API for ${selectedModel || 'default'} (model: ${freeModel})`);
+            let lastError = '';
+            for (const freeModel of freeModels) {
+              console.log(`[Vite Proxy] Using system OpenRouter API for ${selectedModel || 'default'} (model: ${freeModel})`);
 
-            const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${openrouterKey}`,
-                'HTTP-Referer': 'http://localhost:3000',
-                'X-Title': 'Agentic Carousel Generator',
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                model: freeModel,
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  { role: 'user', content: prompt }
-                ],
-                temperature: 0.2,
-              })
-            });
+              const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${openrouterKey}`,
+                  'HTTP-Referer': 'http://localhost:3000',
+                  'X-Title': 'Agentic Carousel Generator',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model: freeModel,
+                  messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: prompt }
+                  ],
+                  temperature: 0.2,
+                })
+              });
 
-            if (!openrouterResponse.ok) {
-              const errorText = await openrouterResponse.text();
-              console.error('[Vite Proxy] OpenRouter API error:', errorText);
-              throw new Error(`OpenRouter API error: ${errorText}`);
+              if (openrouterResponse.ok) {
+                const openrouterData = await openrouterResponse.json();
+                const content = openrouterData.choices[0]?.message?.content;
+                if (content) {
+                  result = cleanJsonResponse(content);
+                  break;
+                }
+                lastError = `Empty response from ${freeModel}`;
+                console.error('[Vite Proxy]', lastError);
+              } else {
+                lastError = await openrouterResponse.text();
+                console.error(`[Vite Proxy] OpenRouter error for ${freeModel}, trying next:`, lastError);
+              }
             }
 
-            const openrouterData = await openrouterResponse.json();
-            result = cleanJsonResponse(openrouterData.choices[0]?.message?.content || '{"slides":[]}');
+            if (!result) {
+              throw new Error(`OpenRouter API error: ${lastError}`);
+            }
           }
 
           // Note: Usage count increment happens on client side after successful response
@@ -361,12 +381,15 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
         const chunks: Buffer[] = [];
         for await (const chunk of req) chunks.push(chunk as Buffer);
         const bodyStr = Buffer.concat(chunks).toString('utf-8');
-        const { prompt } = JSON.parse(bodyStr || '{}');
+        const { prompt, aspectRatio } = JSON.parse(bodyStr || '{}');
 
         if (!prompt) {
           res.statusCode = 400;
           return res.end(JSON.stringify({ error: 'Prompt is required' }));
         }
+
+        const allowedRatios = ['1:1', '16:9', '9:16', '3:2', '2:3', '4:5', '5:4', '21:9', '9:21', '4:3', '3:4'];
+        const ratio = allowedRatios.includes(aspectRatio) ? aspectRatio : '1:1';
 
         const replicateToken = process.env.REPLICATE_API_TOKEN || env.REPLICATE_API_TOKEN;
         if (!replicateToken) {
@@ -390,7 +413,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
               go_fast: true,
               megapixels: "1",
               num_outputs: 1,
-              aspect_ratio: "1:1",
+              aspect_ratio: ratio,
               output_format: "webp",
               output_quality: 80,
               num_inference_steps: 4
@@ -415,15 +438,69 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
         }
 
         console.log(`[Vite Proxy] 🚀 Image generated: ${imageUrl}`);
+
+        // Download server-side: replicate.delivery sends no CORS headers, so the
+        // browser cannot fetch the bytes itself for the Appwrite Storage upload
+        let imageBase64: string | null = null;
+        try {
+          const imgResp = await fetch(imageUrl);
+          if (imgResp.ok) {
+            const buf = Buffer.from(await imgResp.arrayBuffer());
+            imageBase64 = `data:image/webp;base64,${buf.toString('base64')}`;
+          }
+        } catch (imgErr) {
+          console.warn('[Vite Proxy] Could not download image bytes, returning URL only:', imgErr);
+        }
+
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        return res.end(JSON.stringify({ imageUrl }));
+        return res.end(JSON.stringify({ imageUrl, imageBase64 }));
 
       } catch (e: any) {
         console.error('[Vite Proxy] Error:', e);
         res.statusCode = 500;
         res.setHeader('Content-Type', 'application/json');
         return res.end(JSON.stringify({ error: 'Image proxy error', message: e?.message || String(e) }));
+      }
+    });
+
+    // Image CORS proxy for exports (avatar/doodle -> base64 for html2canvas).
+    // Registered here so it works without the separate Express server on :3001.
+    server.middlewares.use('/api/proxy-image', async (req: any, res: any) => {
+      try {
+        const urlObj = new URL(req.url || '', 'http://localhost');
+        const target = urlObj.searchParams.get('url') || '';
+
+        let parsed: URL;
+        try {
+          parsed = new URL(target);
+        } catch {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ error: 'Invalid url parameter' }));
+        }
+
+        const hostname = parsed.hostname;
+        const isPrivate = hostname === 'localhost' || /^(\d+\.){3}\d+$/.test(hostname) || hostname.endsWith('.local');
+        if (!/^https?:$/.test(parsed.protocol) || isPrivate) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ error: 'URL not allowed' }));
+        }
+
+        const upstream = await fetch(parsed.toString());
+        if (!upstream.ok) {
+          res.statusCode = upstream.status;
+          return res.end(JSON.stringify({ error: `Upstream returned ${upstream.status}` }));
+        }
+
+        const buf = Buffer.from(await upstream.arrayBuffer());
+        res.statusCode = 200;
+        res.setHeader('Content-Type', upstream.headers.get('content-type') || 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.end(buf);
+      } catch (e: any) {
+        console.error('[Vite Proxy] proxy-image error:', e);
+        res.statusCode = 500;
+        return res.end(JSON.stringify({ error: 'proxy-image error', message: e?.message || String(e) }));
       }
     });
   }

@@ -11,11 +11,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { prompt } = req.body;
+        const { prompt, aspectRatio } = req.body;
 
         if (!prompt) {
             return res.status(400).json({ error: 'Prompt is required' });
         }
+
+        const allowedRatios = ['1:1', '16:9', '9:16', '3:2', '2:3', '4:5', '5:4', '21:9', '9:21', '4:3', '3:4'];
+        const ratio = allowedRatios.includes(aspectRatio) ? aspectRatio : '1:1';
 
         const replicateToken = process.env.REPLICATE_API_TOKEN;
         if (!replicateToken) {
@@ -40,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     go_fast: true,
                     megapixels: "1",
                     num_outputs: 1,
-                    aspect_ratio: "1:1",
+                    aspect_ratio: ratio,
                     output_format: "webp",
                     output_quality: 80,
                     num_inference_steps: 4
@@ -63,7 +66,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             throw new Error('No image output from Replicate');
         }
 
-        return res.status(200).json({ imageUrl });
+        // Download server-side: replicate.delivery sends no CORS headers, so the
+        // browser cannot fetch the bytes itself for the Appwrite Storage upload
+        let imageBase64: string | null = null;
+        try {
+            const imgResp = await fetch(imageUrl);
+            if (imgResp.ok) {
+                const buf = Buffer.from(await imgResp.arrayBuffer());
+                imageBase64 = `data:image/webp;base64,${buf.toString('base64')}`;
+            }
+        } catch (imgErr) {
+            console.warn('[Vercel API] Could not download image bytes, returning URL only:', imgErr);
+        }
+
+        return res.status(200).json({ imageUrl, imageBase64 });
 
     } catch (e: any) {
         console.error('[Vercel API] Error:', e);

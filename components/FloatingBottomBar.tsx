@@ -112,6 +112,22 @@ export const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
                                 </div>
                                 <div className="text-xs text-neutral-400">Visionary, hand-drawn, rocket doodles</div>
                             </button>
+
+                            <button
+                                onClick={() => setTemplate('template-4')}
+                                className={`p-3 rounded-lg border text-left transition-all ${selectedTemplate === 'template-4'
+                                    ? 'border-blue-500 bg-blue-500/10'
+                                    : 'border-white/10 bg-black/20 hover:border-white/30'
+                                    }`}
+                            >
+                                <div className="font-bold text-white text-sm mb-1 flex justify-between">
+                                    The Statement
+                                    {selectedTemplate === 'template-4' && (
+                                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                                    )}
+                                </div>
+                                <div className="text-xs text-neutral-400">Bold typographic, geometric accents</div>
+                            </button>
                         </div>
                     </div>
                 </BottomToolItem>

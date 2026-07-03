@@ -101,7 +101,7 @@ export const resolveTheme = (
     const patternColor = calculatePatternColor(finalBackground);
     const patternOpacity = calculatePatternOpacity(finalBackground);
 
-    if (template === 'template-1' || template === 'template-3') {
+    if (template === 'template-1' || template === 'template-3' || template === 'template-4') {
         // Calculate background2 based on secondary color
         // For dark themes: lighten secondary by 25%
         // For light themes: darken secondary by 15%

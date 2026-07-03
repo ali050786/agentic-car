@@ -10,7 +10,7 @@ import { SlideContent } from '../types';
 import { ViewModeToggle } from './ViewModeToggle';
 
 export const CarouselPreview: React.FC = () => {
-  const { slides, selectedTemplate, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, isGenerating, theme, brandMode, brandKit, signaturePosition, selectedSlideIndex, setSelectedSlideIndex, setRightPanelOpen, viewMode } = useCarouselStore();
+  const { slides, selectedTemplate, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, isGenerating, theme, brandMode, brandKit, signaturePosition, selectedSlideIndex, setSelectedSlideIndex, setRightPanelOpen, viewMode, pendingDoodleSlides } = useCarouselStore();
   const { globalBrandKit } = useAuthStore();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isCopying, setIsCopying] = useState(false);
@@ -23,6 +23,17 @@ export const CarouselPreview: React.FC = () => {
     enabled: true,
     ...brandKit.identity,
     position: signaturePosition
+  };
+
+  // Badge shown on a slide whose AI doodle is still generating (placeholder visible)
+  const renderDoodlePendingBadge = (index: number) => {
+    if (!pendingDoodleSlides.includes(index)) return null;
+    return (
+      <div className="absolute bottom-3 right-3 z-20 flex items-center gap-2 px-3 py-1.5 bg-black/70 border border-white/20 rounded-full backdrop-blur-sm pointer-events-none">
+        <div className="w-3 h-3 border-2 border-blue-400/40 border-t-blue-400 rounded-full animate-spin" />
+        <span className="text-[11px] font-medium text-white/90">Sketching image…</span>
+      </div>
+    );
   };
 
   const handleCopy = async (slide: SlideContent, index: number) => {
@@ -302,6 +313,7 @@ export const CarouselPreview: React.FC = () => {
                         dangerouslySetInnerHTML={{ __html: svgString }}
                       />
                     </div>
+                    {renderDoodlePendingBadge(index)}
                   </div>
                 </div>
               );
@@ -453,6 +465,7 @@ export const CarouselPreview: React.FC = () => {
                       dangerouslySetInnerHTML={{ __html: svgString }}
                     />
                   </div>
+                  {renderDoodlePendingBadge(index)}
                 </div>
               </div>
             );

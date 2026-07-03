@@ -9,8 +9,8 @@
 // App uses: 'template-1' and 'template-2' (with hyphens)
 // Database uses: 'template1' and 'template2' (without hyphens)
 
-export type AppTemplateType = 'template-1' | 'template-2' | 'template-3';
-export type DbTemplateType = 'template1' | 'template2' | 'template3';
+export type AppTemplateType = 'template-1' | 'template-2' | 'template-3' | 'template-4';
+export type DbTemplateType = 'template1' | 'template2' | 'template3' | 'template4';
 
 /**
  * Convert app template name to database template name

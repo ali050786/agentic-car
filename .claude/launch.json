@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vite-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--port", "4000", "--strictPort"],
+      "port": 4000,
+      "autoPort": false
+    }
+  ]
+}

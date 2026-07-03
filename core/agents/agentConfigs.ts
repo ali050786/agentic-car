@@ -186,5 +186,65 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
             },
             required: ['slides']
         }
+    },
+    'template-4': {
+        id: 'template-4',
+        name: 'The Statement',
+        persona: 'Brand strategist who writes bold, declarative carousels in a premium minimalist style',
+        styleName: 'The Statement',
+
+        designConstraints: `
+      - Tone: Confident, declarative, no hedging. Every headline reads like a thesis.
+      - **Writing style**: Sentence case headlines (NOT all caps). Short, punchy, quotable.
+      - **accentPhrase**: For EVERY slide pick the 2-4 most important consecutive words from
+        that slide's headline and return them as "accentPhrase". It MUST be an exact substring
+        of the headline (same casing). It gets rendered in the accent color.
+      - **COLOR THEME**:
+        - background: A deep, rich, near-dark color with personality (e.g. #1D1A45, #14251F, #2A1233).
+        - textHighlight: Near-white with a hint of the background hue (e.g. #F5F4FF).
+        - background2: One vibrant pop accent that contrasts the background (e.g. #F0997B, #5DCAA5).
+        - textDefault: A muted mid-tone of the background family (e.g. #A9A6C9).
+    `,
+        variantRequirements: {
+            hero: "preHeader (topic tag, Max 40 chars), headline (declarative statement, Max 60 chars, sentence case), body (hook, Max 140 chars), accentPhrase (2-4 word exact substring of headline).",
+            body: "preHeader (section tag, Max 30 chars), headline (Max 70 chars, sentence case), body (explanation, Max 220 chars), accentPhrase (exact substring of headline).",
+            list: "headline (SHORT title, Max 40 chars, sentence case), listItems (3-4 items, format \"Key: Value\", Max 80 chars each), accentPhrase (exact substring of headline).",
+            closing: "preHeader (Max 30 chars), headline (call to action, Max 50 chars, sentence case), body (final statement, Max 140 chars), footer (pill button text, Max 25 chars e.g. \"Follow for more →\"), accentPhrase (exact substring of headline)."
+        },
+        defaultIcon: 'Zap',
+        schema: {
+            type: 'object',
+            properties: {
+                theme: {
+                    type: 'object',
+                    properties: {
+                        background: { type: 'string' },
+                        textHighlight: { type: 'string' },
+                        background2: { type: 'string' },
+                        textDefault: { type: 'string' }
+                    },
+                    required: ['background', 'textHighlight', 'background2', 'textDefault']
+                },
+                slides: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            variant: { type: 'string', enum: ['hero', 'body', 'list', 'closing'] },
+                            preHeader: { type: 'string' },
+                            headline: { type: 'string' },
+                            body: { type: 'string' },
+                            listItems: { type: 'array', items: { type: 'string' } },
+                            footer: { type: 'string' },
+                            accentPhrase: { type: 'string' },
+                            icon: { type: 'string', enum: SHARED_ICONS },
+                            doodleTopic: { type: 'string', enum: ALLOWED_DOODLE_TOPICS }
+                        },
+                        required: ['variant', 'headline', 'accentPhrase', 'icon']
+                    }
+                }
+            },
+            required: ['slides']
+        }
     }
 };

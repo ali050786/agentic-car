@@ -41,7 +41,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     // Core carousel data
     topic: '',
     selectedTemplate: 'template-1',
-    selectedModel: 'deepseek-r1t',
+    selectedModel: 'gpt-oss-120b',
     selectedFormat: 'portrait',
     selectedPattern: 1,
     patternOpacity: 0.1,
@@ -50,6 +50,8 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     slides: [],
     theme: null,
     isGenerating: false,
+    pendingDoodleSlides: [],
+    chatMessages: [],
     error: null,
 
     // Multi-modal input state
@@ -124,6 +126,17 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     setGenerationStatus: (status: string) => set({ generationStatus: status }),
     setGenerationProgress: (progress: number) => set({ generationProgress: progress }),
 
+    addChatMessage: (message) => set(state => ({ chatMessages: [...state.chatMessages, message] })),
+    updateChatMessage: (id, patch) => set(state => ({
+        chatMessages: state.chatMessages.map(m => m.id === id ? { ...m, ...patch } : m)
+    })),
+    clearChat: () => set({ chatMessages: [] }),
+
+    setPendingDoodleSlides: (indices: number[]) => set({ pendingDoodleSlides: indices }),
+    removePendingDoodleSlide: (index: number) => set(state => ({
+        pendingDoodleSlides: state.pendingDoodleSlides.filter(i => i !== index)
+    })),
+
     setError: (error: string | null) => set({ error }),
 
     setSlides: (slides: SlideContent[]) => set({ slides }),
@@ -192,7 +205,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
         set({
             topic: '',
             selectedTemplate: 'template-1',
-            selectedModel: 'deepseek-r1t',
+            selectedModel: 'gpt-oss-120b',
             selectedFormat: 'portrait',
             selectedPattern: 1,
             patternOpacity: 0.1,
@@ -201,6 +214,9 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
             slides: [],
             theme: null,
             isGenerating: false,
+    pendingDoodleSlides: [],
+            chatMessages: [],
+            
             error: null,
             inputMode: 'topic',
             slideCount: 10,
