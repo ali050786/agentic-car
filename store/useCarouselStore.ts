@@ -52,6 +52,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     isGenerating: false,
     pendingDoodleSlides: [],
     chatMessages: [],
+    chatSummary: '',
     error: null,
 
     // Multi-modal input state
@@ -130,7 +131,9 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     updateChatMessage: (id, patch) => set(state => ({
         chatMessages: state.chatMessages.map(m => m.id === id ? { ...m, ...patch } : m)
     })),
-    clearChat: () => set({ chatMessages: [] }),
+    clearChat: () => set({ chatMessages: [], chatSummary: '' }),
+    setChatMessages: (chatMessages) => set({ chatMessages }),
+    setChatSummary: (chatSummary) => set({ chatSummary }),
 
     setPendingDoodleSlides: (indices: number[]) => set({ pendingDoodleSlides: indices }),
     removePendingDoodleSlide: (index: number) => set(state => ({
@@ -216,6 +219,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
             isGenerating: false,
     pendingDoodleSlides: [],
             chatMessages: [],
+            chatSummary: '',
             
             error: null,
             inputMode: 'topic',

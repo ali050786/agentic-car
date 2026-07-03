@@ -8,7 +8,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useCarouselStore } from '../../store/useCarouselStore';
-import { ChatRefineAgent } from '../../core/agents/ChatRefineAgent';
+import { OrchestratorAgent } from '../../core/agents/OrchestratorAgent';
+import { generateDoodleWithRetry } from '../../utils/doodleGenerator';
+import { getUserMemory, rememberUserPreference } from '../../services/memoryService';
 import { FreeLimitError } from '../../services/aiService';
 import { ArrowUp, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 
@@ -128,28 +130,70 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
             return;
         }
 
-        // Refinement turn (read scope from the store at send time — never stale)
+        // Conversational turn: the orchestrator classifies intent and routes
         setIsRefining(true);
         const runId = nextId();
-        const scope = useCarouselStore.getState().selectedSlideIndex;
+        const state = useCarouselStore.getState();
+        const scope = state.selectedSlideIndex;
         addChatMessage({
             id: runId, role: 'assistant', text: '', running: true,
-            events: [{ label: scope !== null ? `Editing slide ${scope + 1}...` : 'Editing the carousel...', done: false }]
+            events: [{ label: 'Thinking...', done: false }]
         });
         try {
-            const result = await ChatRefineAgent.refine(slides, text, selectedTemplate, scope);
-            setSlides(result.slides);
-            updateChatMessage(runId, {
-                running: false,
-                events: [{ label: scope !== null ? `Edited slide ${scope + 1}` : `Edited slide${result.changedIndices.length > 1 ? 's' : ''} ${result.changedIndices.map(i => i + 1).join(', ')}`, done: true }],
-                text: result.summary
+            const result = await OrchestratorAgent.handle({
+                message: text,
+                slides: state.slides,
+                templateId: state.selectedTemplate,
+                selectedSlideIndex: scope,
+                recentMessages: state.chatMessages.filter(m => !m.running),
+                conversationSummary: state.chatSummary,
+                userMemory: getUserMemory(),
             });
+
+            const events: { label: string; done: boolean }[] = [];
+
+            if (result.intent === 'copy' && result.slides) {
+                setSlides(result.slides);
+                events.push({ label: `Edited slide${result.changedIndices.length > 1 ? 's' : ''} ${result.changedIndices.map(i => i + 1).join(', ')}`, done: true });
+            } else if (result.intent === 'design' && result.designActions.length > 0) {
+                const s = useCarouselStore.getState();
+                for (const act of result.designActions) {
+                    switch (act.action) {
+                        case 'set_template': s.setTemplate(act.value as any); break;
+                        case 'set_format': s.setFormat(act.value as any); break;
+                        case 'set_preset': s.setPresetId(act.value); s.setBrandMode('preset'); break;
+                        case 'set_pattern': s.setPattern(parseInt(act.value, 10) || 1); break;
+                        case 'set_signature_position': s.setSignaturePosition(act.value as any); break;
+                    }
+                    events.push({ label: `${act.action.replace(/_/g, ' ')} → ${act.value}`, done: true });
+                }
+            } else if (result.intent === 'image' && result.imageBrief !== null && result.imageSlideIndex !== null) {
+                const idx = result.imageSlideIndex;
+                updateChatMessage(runId, {
+                    running: true,
+                    events: [{ label: `Sketching a new image for slide ${idx + 1}...`, done: false }]
+                });
+                const { url, prompt } = await generateDoodleWithRetry(result.imageBrief);
+                useCarouselStore.getState().updateSlide(idx, { doodleUrl: url, doodlePrompt: prompt });
+                events.push({ label: `New sketch on slide ${idx + 1}`, done: true });
+            }
+
+            updateChatMessage(runId, { running: false, events, text: result.reply });
+
+            // Long-term memory: extracted in the same call, persisted quietly
+            if (result.memoryNote) {
+                const summary = useCarouselStore.getState().chatSummary;
+                useCarouselStore.getState().setChatSummary(
+                    summary ? `${summary}\n- ${result.memoryNote}` : `- ${result.memoryNote}`
+                );
+                rememberUserPreference(result.memoryNote);
+            }
         } catch (e: any) {
             if (e instanceof FreeLimitError) {
                 updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free generations used up. Add your own API key to continue.' });
                 onOpenApiKeyModal();
             } else {
-                updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'Edit failed — try rephrasing.' });
+                updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
             }
         } finally {
             setIsRefining(false);

@@ -42,6 +42,7 @@ import { FloatingSidebar } from './components/FloatingSidebar';
 import { FloatingBottomBar } from './components/FloatingBottomBar';
 import { ChatPanel } from './components/chat/ChatPanel';
 import { ArtifactPanel } from './components/artifact/ArtifactPanel';
+import { loadChat, saveChat } from './services/chatService';
 import { SlideEditPanel } from './components/SlideEditPanel';
 import { Toast } from './components/Toast';
 import { useToast } from './hooks/useToast';
@@ -214,6 +215,16 @@ const CarouselGenerator: React.FC = () => {
         setPatternOpacity(carousel.patternOpacity);
       }
 
+      // Rehydrate the conversation that belongs to this carousel
+      if (user?.$id) {
+        loadChat(carousel.$id, user.$id).then(({ messages, summary }) => {
+          const store = useCarouselStore.getState();
+          store.setChatMessages(messages);
+          store.setChatSummary(summary);
+          console.log(`[App] Restored ${messages.length} chat messages for carousel ${carousel.$id}`);
+        });
+      }
+
       // Clear the state so refresh doesn't reload
       window.history.replaceState({}, document.title);
     } else if (state?.createNew) {
@@ -223,6 +234,7 @@ const CarouselGenerator: React.FC = () => {
       setLocalTopic('');
       setTopic('');
       setSlides([]);
+      useCarouselStore.getState().clearChat();
       setIsSidebarOpen(true);
 
       // Reset history so refresh doesn't trigger this again
@@ -363,6 +375,20 @@ const CarouselGenerator: React.FC = () => {
       setCurrentCarouselId(autoSavedId);
     }
   }, [autoSavedId]);
+
+  // Persist the conversation alongside the carousel (debounced, fire-and-forget)
+  const chatMessages = useCarouselStore(s => s.chatMessages);
+  const chatSummary = useCarouselStore(s => s.chatSummary);
+  useEffect(() => {
+    const carouselId = editingCarousel?.$id || currentCarouselId;
+    if (!carouselId || !user?.$id || chatMessages.length === 0) return;
+    if (chatMessages.some(m => m.running)) return; // wait for turns to finish
+
+    const t = setTimeout(() => {
+      saveChat(carouselId, user.$id, chatMessages, chatSummary);
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [chatMessages, chatSummary, editingCarousel?.$id, currentCarouselId, user?.$id]);
 
   const handleDownload = async () => {
     // Export current/selected slide as JPG

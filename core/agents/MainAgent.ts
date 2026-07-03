@@ -9,6 +9,7 @@ import { storage, config, ID } from '../../lib/appwriteClient';
 import { resolveTheme } from '../../utils/brandUtils';
 import { getPresetById } from '../../config/colorPresets';
 import { findMatchingImage } from '../../utils/imageMatcher';
+import { getUserMemory } from '../../services/memoryService';
 
 /**
  * Replicate throttles low-credit accounts hard (as low as 1 request burst),
@@ -44,6 +45,7 @@ export interface AgentContext {
   outputLanguage: string;
   slideCount: number;
   viralAngle?: string; // New field for the Strategist's output
+  userMemory?: string[]; // Durable cross-carousel preferences (memoryService)
 }
 
 export const runAgentWorkflow = async (topic: string) => {
@@ -135,6 +137,7 @@ export const runAgentWorkflow = async (topic: string) => {
       outputLanguage: store.outputLanguage,
       slideCount: store.slideCount,
       viralAngle: viralAngle,
+      userMemory: getUserMemory(),
     };
 
     console.log('[MainAgent] Context prepared:', { ...context, sourceContent: '[Truncated]' });

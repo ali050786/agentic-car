@@ -141,9 +141,15 @@ export interface CarouselState {
   pendingDoodleSlides: number[];
 
   /**
-   * Chat-driven editor conversation. Not persisted with the carousel.
+   * Chat-driven editor conversation (persisted per carousel via chatService).
    */
   chatMessages: ChatMessage[];
+
+  /**
+   * Rolling conversation memory for this carousel — durable notes the
+   * orchestrator extracted from earlier turns.
+   */
+  chatSummary: string;
 
   // Multi-modal Input State
   inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf';
@@ -209,6 +215,8 @@ export interface CarouselState {
   addChatMessage: (message: ChatMessage) => void;
   updateChatMessage: (id: string, patch: Partial<ChatMessage>) => void;
   clearChat: () => void;
+  setChatMessages: (messages: ChatMessage[]) => void;
+  setChatSummary: (summary: string) => void;
 
   // Multi-modal Input Actions
   setInputMode: (inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf') => void;

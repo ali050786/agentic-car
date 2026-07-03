@@ -7,18 +7,19 @@ import { TEMPLATE_CONFIGS } from './agentConfigs';
 export const TemplateAgent = {
     generate: async (context: AgentContext, templateId: string): Promise<{ slides: SlideContent[], theme: CarouselTheme }> => {
         const config = TEMPLATE_CONFIGS[templateId] || TEMPLATE_CONFIGS['template-1'];
-        const { sourceContent, customInstructions, outputLanguage, slideCount, viralAngle } = context;
+        const { sourceContent, customInstructions, outputLanguage, slideCount, viralAngle, userMemory } = context;
 
         const prompt = `
-      You are a ${config.persona}. 
-      
-      
-      The Strategy/Angle: 
+      You are a ${config.persona}.
+
+
+      The Strategy/Angle:
       """
       ${viralAngle || sourceContent}
       """
-      
+
       User Constraints: ${customInstructions || 'None'}
+      ${userMemory && userMemory.length ? `\n      Known preferences of this user (respect them unless the constraints above contradict):\n${userMemory.map(n => `      - ${n}`).join('\n')}\n` : ''}
       
       Task: Write a ${slideCount}-slide carousel.
       
