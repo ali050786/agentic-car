@@ -113,6 +113,122 @@ export const parseDesignActionsFallback = (message: string): DesignAction[] => {
     return actions;
 };
 
+const COPY_COMMAND_RE = /\b(rewrite|re-write|rephrase|reword|punch(y|ier)|catchier|snappier|shorter|longer|simplify|spicier|bolder|tone|hook|conversational|make (it|this|them|the)|change the (text|copy|wording|content|headline)|improve)\b/i;
+
+/**
+ * Merges text-field patches from the model into the slide array, preserving
+ * ids, variants and visual assets.
+ */
+const applySlidePatches = (
+    slides: SlideContent[],
+    entries: any[],
+    templateId: string
+): { slides: SlideContent[] | null; changedIndices: number[] } => {
+    const updated = [...slides];
+    const changedIndices: number[] = [];
+    const keepCase = templateId === 'template-4';
+
+    for (const entry of entries) {
+        const i = entry?.slideIndex;
+        if (typeof i !== 'number' || i < 0 || i >= slides.length) continue;
+        const original = slides[i];
+        updated[i] = {
+            ...original,
+            preHeader: entry.preHeader !== undefined ? String(entry.preHeader).toUpperCase() : original.preHeader,
+            headline: entry.headline !== undefined
+                ? (keepCase ? String(entry.headline) : String(entry.headline).toUpperCase())
+                : original.headline,
+            body: entry.body !== undefined ? String(entry.body) : original.body,
+            listItems: Array.isArray(entry.listItems) ? entry.listItems : original.listItems,
+            footer: entry.footer !== undefined ? String(entry.footer) : original.footer,
+            accentPhrase: entry.accentPhrase !== undefined ? String(entry.accentPhrase) : original.accentPhrase,
+        };
+        changedIndices.push(i);
+    }
+    return { slides: changedIndices.length > 0 ? updated : null, changedIndices };
+};
+
+const FORCED_COPY_SCHEMA = {
+    type: 'object',
+    properties: {
+        slides: {
+            type: 'array',
+            items: {
+                type: 'object',
+                properties: {
+                    slideIndex: { type: 'number' },
+                    preHeader: { type: 'string' },
+                    headline: { type: 'string' },
+                    body: { type: 'string' },
+                    listItems: { type: 'array', items: { type: 'string' } },
+                    footer: { type: 'string' },
+                    accentPhrase: { type: 'string' }
+                },
+                required: ['slideIndex', 'headline']
+            }
+        },
+        summary: { type: 'string' }
+    },
+    required: ['slides', 'summary']
+};
+
+/**
+ * Focused single-purpose rewrite call. Small models handle this far more
+ * reliably than the multi-intent schema, so it's the fallback when a clear
+ * rewrite command produced no slides.
+ */
+const forcedCopyEdit = async (
+    slides: SlideContent[],
+    instruction: string,
+    templateId: string,
+    targetIndex: number | null
+): Promise<{ slides: any[]; summary: string }> => {
+    const config = TEMPLATE_CONFIGS[templateId] || TEMPLATE_CONFIGS['template-1'];
+
+    const slideDump = slides.map((s, i) => {
+        return [
+            `slideIndex: ${i} [${s.variant}]`,
+            s.preHeader ? `preHeader: ${s.preHeader}` : '',
+            `headline: ${s.headline}`,
+            s.body ? `body: ${s.body}` : '',
+            s.listItems && s.listItems.length ? `listItems: ${JSON.stringify(s.listItems)}` : '',
+            s.footer ? `footer: ${s.footer}` : '',
+        ].filter(Boolean).join(' | ');
+    }).join('\n');
+
+    const scope = targetIndex !== null
+        ? `Rewrite ONLY slide ${targetIndex} and return only that slide.`
+        : `Rewrite EVERY slide and return ALL ${slides.length} slides in "slides".`;
+
+    const prompt = `
+      You are ${config.persona} rewriting an existing "${config.styleName}" LinkedIn carousel.
+
+      CURRENT SLIDES:
+      ${slideDump}
+
+      REWRITE INSTRUCTION:
+      """
+      ${instruction}
+      """
+
+      ${scope}
+      Rules:
+      - Keep each slide's variant and role in the narrative; rewrite the text fields.
+      - Copy limits — hero: ${config.variantRequirements.hero} | body: ${config.variantRequirements.body} | list: ${config.variantRequirements.list} | closing: ${config.variantRequirements.closing}
+      ${templateId === 'template-4' ? '- Headlines stay sentence case. Include an accentPhrase that is an exact substring of each new headline.' : ''}
+      - "summary": one short sentence describing the rewrite.
+
+      Return JSON: { "slides": [...], "summary": "..." }
+    `;
+
+    console.log('✍️ [Orchestrator] Forced copy edit (fallback)...');
+    const result = await generateContentFromAgent(prompt, FORCED_COPY_SCHEMA);
+    return {
+        slides: Array.isArray(result?.slides) ? result.slides : [],
+        summary: typeof result?.summary === 'string' ? result.summary : 'Rewrote the slides.'
+    };
+};
+
 export const OrchestratorAgent = {
     handle: async (params: {
         message: string;
@@ -186,6 +302,9 @@ export const OrchestratorAgent = {
       - "reply": one or two short, friendly sentences for the chat (what you did or your answer).
       - "memoryNote": if this message reveals a DURABLE preference worth remembering across future
         carousels (tone, style, brand voice, pet peeves), state it in one short sentence. Otherwise omit.
+      - NEVER claim in "reply" that you changed something unless the change is in "slides" or
+        "designActions". If the user asks to rewrite the whole carousel, you MUST return EVERY
+        rewritten slide in "slides" — a reply without slides means nothing happens.
 
       Return JSON matching the schema exactly.
     `;
@@ -206,26 +325,9 @@ export const OrchestratorAgent = {
         };
 
         if (intent === 'copy' && Array.isArray(result.slides)) {
-            const updated = [...slides];
-            for (const entry of result.slides) {
-                const i = entry.slideIndex;
-                if (typeof i !== 'number' || i < 0 || i >= slides.length) continue;
-                const original = slides[i];
-                const keepCase = templateId === 'template-4';
-                updated[i] = {
-                    ...original,
-                    preHeader: entry.preHeader !== undefined ? String(entry.preHeader).toUpperCase() : original.preHeader,
-                    headline: entry.headline !== undefined
-                        ? (keepCase ? String(entry.headline) : String(entry.headline).toUpperCase())
-                        : original.headline,
-                    body: entry.body !== undefined ? String(entry.body) : original.body,
-                    listItems: Array.isArray(entry.listItems) ? entry.listItems : original.listItems,
-                    footer: entry.footer !== undefined ? String(entry.footer) : original.footer,
-                    accentPhrase: entry.accentPhrase !== undefined ? String(entry.accentPhrase) : original.accentPhrase,
-                };
-                out.changedIndices.push(i);
-            }
-            if (out.changedIndices.length > 0) out.slides = updated;
+            const patched = applySlidePatches(slides, result.slides, templateId);
+            out.slides = patched.slides;
+            out.changedIndices = patched.changedIndices;
         }
 
         if (intent === 'design') {
@@ -245,18 +347,48 @@ export const OrchestratorAgent = {
             out.imageSlideIndex = typeof result.imageSlideIndex === 'number' ? result.imageSlideIndex : (selectedSlideIndex ?? 0);
         }
 
-        // Safety net: small models sometimes agree to a design change in prose but
-        // return intent "answer" with no payload. If the user's message is clearly
-        // an imperative design command, execute it deterministically.
-        const nothingExecuted = !out.slides && out.designActions.length === 0 && !out.imageBrief;
-        if (nothingExecuted && !/\?\s*$/.test(message.trim())
-            && /\b(switch|change|set|apply|convert|make (it|this)|use)\b/i.test(message)) {
+        // ------------------------------------------------------------------
+        // Safety nets: small models often agree to a change in prose but
+        // return no executable payload. Never let a fabricated "done!" through.
+        // ------------------------------------------------------------------
+        const isQuestion = /\?\s*$/.test(message.trim());
+        const isDesignCommand = !isQuestion && /\b(switch|change|set|apply|convert|make (it|this)|use)\b/i.test(message);
+        const isCopyCommand = !isQuestion && COPY_COMMAND_RE.test(message);
+
+        const executed = () => !!out.slides || out.designActions.length > 0 || !!out.imageBrief;
+
+        // 1. Deterministic design recovery from the user's own words
+        if (!executed() && isDesignCommand) {
             const fallback = parseDesignActionsFallback(message);
             if (fallback.length > 0) {
                 out.intent = 'design';
                 out.designActions = fallback;
                 console.log('[Orchestrator] Recovered design actions from imperative message:', fallback);
             }
+        }
+
+        // 2. Forced focused rewrite when a copy command produced no slides
+        if (!executed() && isCopyCommand) {
+            try {
+                const retry = await forcedCopyEdit(slides, message, templateId, selectedSlideIndex);
+                const patched = applySlidePatches(slides, retry.slides, templateId);
+                if (patched.slides) {
+                    out.intent = 'copy';
+                    out.slides = patched.slides;
+                    out.changedIndices = patched.changedIndices;
+                    out.reply = retry.summary;
+                    console.log('[Orchestrator] Forced copy edit applied to slides:', patched.changedIndices);
+                }
+            } catch (e) {
+                console.warn('[Orchestrator] Forced copy edit failed:', e);
+            }
+        }
+
+        // 3. Honesty guard: if the user commanded a change and nothing executed,
+        // say so — never surface the model's claim of success
+        if (!executed() && (isCopyCommand || isDesignCommand)) {
+            out.intent = 'answer';
+            out.reply = "I couldn't apply that change — nothing was modified. Try rephrasing, or select a specific slide and ask again.";
         }
 
         console.log(`[Orchestrator] intent=${out.intent}, actions=${out.designActions.length}, slides=${out.changedIndices.length}`);
