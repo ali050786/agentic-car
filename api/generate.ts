@@ -23,6 +23,25 @@ const cleanJsonResponse = (text: string): string => {
 };
 
 /**
+ * Cleans a model response and logs a diagnostic (finish_reason / JSON validity
+ * / truncation) so failures are visible in Vercel logs.
+ */
+const cleanAndDiagnose = (choice: any, model: string, label: string): string => {
+    const content = choice?.message?.content ?? choice?.content ?? '';
+    const finishReason = choice?.finish_reason ?? choice?.native_finish_reason ?? 'unknown';
+    const cleaned = cleanJsonResponse(content || '{"slides":[]}');
+    let parseError = '';
+    try { JSON.parse(cleaned); } catch (e: any) { parseError = e?.message || 'parse failed'; }
+    const truncated = finishReason === 'length';
+    if (truncated || parseError) {
+        console.error(`[Vercel API] ⚠️ MODEL RESPONSE PROBLEM (${label}, ${model}): finishReason=${finishReason}, truncated=${truncated}, validJson=${!parseError}, rawLen=${(content || '').length}`);
+        if (truncated) console.error('[Vercel API]    → hit token limit; raise max_tokens or shrink the request');
+        if (parseError) console.error('[Vercel API]    → invalid JSON, first 300 chars:', cleaned.slice(0, 300));
+    }
+    return cleaned;
+};
+
+/**
  * Vercel Serverless Function: AI Model Proxy
  * 
  * This endpoint handles AI model generation requests with hybrid authentication:
@@ -312,6 +331,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                                 { role: 'user', content: prompt }
                             ],
                             temperature: 0.2,
+                            max_tokens: 8000,
                         })
                     });
 
@@ -319,7 +339,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         const openrouterData = await openrouterResponse.json();
                         const content = openrouterData.choices[0]?.message?.content;
                         if (content) {
-                            result = cleanJsonResponse(content);
+                            result = cleanAndDiagnose(openrouterData.choices[0], freeModel, 'free-tier default');
                             break;
                         }
                         lastError = `Empty response from ${freeModel}`;

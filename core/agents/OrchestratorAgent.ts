@@ -122,15 +122,22 @@ const COPY_COMMAND_RE = /\b(rewrite|re-write|rephrase|reword|punch(y|ier)|catchi
 const applySlidePatches = (
     slides: SlideContent[],
     entries: any[],
-    templateId: string
+    templateId: string,
+    targetIndex: number | null = null
 ): { slides: SlideContent[] | null; changedIndices: number[] } => {
     const updated = [...slides];
     const changedIndices: number[] = [];
     const keepCase = templateId === 'template-4';
 
-    for (const entry of entries) {
-        const i = entry?.slideIndex;
-        if (typeof i !== 'number' || i < 0 || i >= slides.length) continue;
+    entries.forEach((entry, pos) => {
+        // Resolve the target slide: explicit slideIndex, else the scoped slide
+        // (single-entry scoped edit), else array position (whole-carousel order).
+        let i = entry?.slideIndex;
+        if (typeof i !== 'number' || i < 0 || i >= slides.length) {
+            if (targetIndex !== null && entries.length === 1) i = targetIndex;
+            else if (pos < slides.length) i = pos;
+            else return;
+        }
         const original = slides[i];
         updated[i] = {
             ...original,
@@ -144,7 +151,7 @@ const applySlidePatches = (
             accentPhrase: entry.accentPhrase !== undefined ? String(entry.accentPhrase) : original.accentPhrase,
         };
         changedIndices.push(i);
-    }
+    });
     return { slides: changedIndices.length > 0 ? updated : null, changedIndices };
 };
 
@@ -309,8 +316,20 @@ export const OrchestratorAgent = {
       Return JSON matching the schema exactly.
     `;
 
-        console.log('🧭 [Orchestrator] Routing message...');
+        console.log('🧭 [Orchestrator] Routing message:', JSON.stringify(message.slice(0, 120)));
         const result = await generateContentFromAgent(prompt, ORCHESTRATOR_SCHEMA);
+
+        // Full visibility into what the model actually returned before any recovery
+        console.log('🧭 [Orchestrator] Raw model output:', JSON.stringify({
+            intent: result?.intent,
+            hasSlidesArray: Array.isArray(result?.slides),
+            slideCount: Array.isArray(result?.slides) ? result.slides.length : 'n/a',
+            hasDesignActions: Array.isArray(result?.designActions),
+            designActionCount: Array.isArray(result?.designActions) ? result.designActions.length : 'n/a',
+            hasImageBrief: !!result?.imageBrief,
+            replyPreview: (result?.reply || '').slice(0, 80),
+            allKeys: result && typeof result === 'object' ? Object.keys(result) : typeof result,
+        }));
 
         const intent = ['copy', 'design', 'image', 'answer'].includes(result?.intent) ? result.intent : 'answer';
         const out: OrchestratorResult = {
@@ -324,10 +343,17 @@ export const OrchestratorAgent = {
             memoryNote: typeof result?.memoryNote === 'string' && result.memoryNote.trim() ? result.memoryNote.trim() : null,
         };
 
-        if (intent === 'copy' && Array.isArray(result.slides)) {
-            const patched = applySlidePatches(slides, result.slides, templateId);
-            out.slides = patched.slides;
-            out.changedIndices = patched.changedIndices;
+        // Apply slide patches whenever the model returned a non-empty slides array —
+        // even if it mis-set or omitted the "intent" field. Small models frequently
+        // return the correct payload but flub the classifier, and throwing away
+        // real edits over a missing label is the #1 cause of silent no-ops.
+        if (Array.isArray(result.slides) && result.slides.length > 0) {
+            const patched = applySlidePatches(slides, result.slides, templateId, selectedSlideIndex);
+            if (patched.slides) {
+                out.intent = 'copy';
+                out.slides = patched.slides;
+                out.changedIndices = patched.changedIndices;
+            }
         }
 
         if (intent === 'design') {
@@ -367,10 +393,15 @@ export const OrchestratorAgent = {
             }
         }
 
-        // 2. Forced focused rewrite when a copy command produced no slides
-        if (!executed() && isCopyCommand) {
+        // 2. Forced focused rewrite. Fires for explicit copy commands AND for any
+        // non-question imperative the model punted to "answer" with no payload —
+        // in a slide editor, an imperative that isn't a design/image action is
+        // almost always a copy edit. This is the main recovery path.
+        const looksImperative = !isQuestion && /\b(rewrite|edit|change|update|fix|improve|redo|revise|adjust|tweak|add|remove|replace|shorten|expand|make|turn|give)\b/i.test(message);
+        if (!executed() && (isCopyCommand || (looksImperative && !isDesignCommand))) {
             try {
                 const retry = await forcedCopyEdit(slides, message, templateId, selectedSlideIndex);
+                console.log('[Orchestrator] Forced copy edit returned', retry.slides.length, 'slide patches');
                 const patched = applySlidePatches(slides, retry.slides, templateId);
                 if (patched.slides) {
                     out.intent = 'copy';
@@ -378,20 +409,23 @@ export const OrchestratorAgent = {
                     out.changedIndices = patched.changedIndices;
                     out.reply = retry.summary;
                     console.log('[Orchestrator] Forced copy edit applied to slides:', patched.changedIndices);
+                } else {
+                    console.warn('[Orchestrator] Forced copy edit produced no usable slide patches');
                 }
             } catch (e) {
-                console.warn('[Orchestrator] Forced copy edit failed:', e);
+                console.warn('[Orchestrator] Forced copy edit threw:', e);
             }
         }
 
         // 3. Honesty guard: if the user commanded a change and nothing executed,
         // say so — never surface the model's claim of success
-        if (!executed() && (isCopyCommand || isDesignCommand)) {
+        if (!executed() && (isCopyCommand || isDesignCommand || looksImperative)) {
             out.intent = 'answer';
-            out.reply = "I couldn't apply that change — nothing was modified. Try rephrasing, or select a specific slide and ask again.";
+            out.reply = "I couldn't apply that change — nothing was modified. This usually means the model was rate-limited or returned an incomplete response. Try again in a moment, or select a specific slide to make the request smaller.";
+            console.warn('[Orchestrator] ⚠️ Honesty guard fired — command produced no executable change. Check the [Vite Proxy] logs above for truncation/JSON errors.');
         }
 
-        console.log(`[Orchestrator] intent=${out.intent}, actions=${out.designActions.length}, slides=${out.changedIndices.length}`);
+        console.log(`🧭 [Orchestrator] FINAL: intent=${out.intent}, designActions=${out.designActions.length}, slidesChanged=${out.changedIndices.length}, memoryNote=${!!out.memoryNote}`);
         return out;
     }
 };

@@ -29,6 +29,46 @@ const cleanJsonResponse = (text: string): string => {
 };
 
 /**
+ * Cleans a model response AND logs a full diagnostic so developers can see
+ * why an edit produced no slides: was it truncation (finish_reason=length),
+ * invalid JSON, or a genuinely empty/refused answer? Returns the cleaned
+ * string (unchanged behavior) — logging is the only side effect.
+ */
+const cleanAndDiagnose = (choice: any, model: string, label: string): string => {
+  const content = choice?.message?.content ?? choice?.content ?? '';
+  const finishReason = choice?.finish_reason ?? choice?.native_finish_reason ?? 'unknown';
+  const cleaned = cleanJsonResponse(content || '{"slides":[]}');
+
+  let parsed: any = null;
+  let parseError = '';
+  try { parsed = JSON.parse(cleaned); } catch (e: any) { parseError = e?.message || 'parse failed'; }
+
+  const truncated = finishReason === 'length';
+  const diag = {
+    label,
+    model,
+    finishReason,
+    truncated,
+    rawLen: (content || '').length,
+    validJson: !parseError,
+    parseError: parseError || undefined,
+    keys: parsed && typeof parsed === 'object' ? Object.keys(parsed) : undefined,
+    slideCount: Array.isArray(parsed?.slides) ? parsed.slides.length : undefined,
+    intent: parsed?.intent,
+  };
+
+  if (truncated || parseError) {
+    console.error(`[Vite Proxy] ⚠️ MODEL RESPONSE PROBLEM (${label}):`, JSON.stringify(diag));
+    if (truncated) console.error(`[Vite Proxy]    → Response hit the token limit and was cut off. Raise max_tokens or reduce the request size.`);
+    if (parseError) console.error(`[Vite Proxy]    → Cleaned output is not valid JSON. First 300 chars:`, cleaned.slice(0, 300));
+  } else {
+    console.log(`[Vite Proxy] ✓ Model response OK (${label}):`, JSON.stringify(diag));
+  }
+
+  return cleaned;
+};
+
+/**
  * AI Model Proxy Plugin for Vite Development Server
  * 
  * ⚠️ IMPORTANT: This plugin ONLY works during local development (npm run dev)
@@ -102,6 +142,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
                   { role: 'user', content: prompt }
                 ],
                 temperature: 0.2,
+                max_tokens: 8000,
               })
             });
 
@@ -112,7 +153,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
             }
 
             const data = await response.json();
-            result = cleanJsonResponse(data.choices[0]?.message?.content || '{"slides":[]}');
+            result = cleanAndDiagnose(data.choices[0], model, 'BYOK openrouter');
 
           } else if (apiProvider === 'openai') {
             // OpenAI API - only GPT models
@@ -334,6 +375,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
                     { role: 'user', content: prompt }
                   ],
                   temperature: 0.2,
+                  max_tokens: 8000,
                 })
               });
 
@@ -341,7 +383,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
                 const openrouterData = await openrouterResponse.json();
                 const content = openrouterData.choices[0]?.message?.content;
                 if (content) {
-                  result = cleanJsonResponse(content);
+                  result = cleanAndDiagnose(openrouterData.choices[0], freeModel, 'free-tier default');
                   break;
                 }
                 lastError = `Empty response from ${freeModel}`;
