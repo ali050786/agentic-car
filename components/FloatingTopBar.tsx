@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Layout, Save, Download, Library as LibraryIcon, CheckCircle, Loader, AlertCircle, FileText, ChevronDown, Zap } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Layout, Download, CheckCircle, Loader, AlertCircle, FileText, ChevronDown, Zap } from 'lucide-react';
 import { UserMenu } from './UserMenu';
 import { useAuthStore } from '../store/useAuthStore';
 import { FREE_TIER_LIMIT } from '../config/constants';
@@ -16,6 +16,7 @@ interface FloatingTopBarProps {
     isExportingPdf: boolean;
     onOpenApiKeyModal: () => void;
     onOpenAuthModal: () => void;
+    onOpenHistory: () => void;
 }
 
 export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
@@ -26,9 +27,9 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
     onDownloadPdf,
     isExportingPdf,
     onOpenApiKeyModal,
-    onOpenAuthModal
+    onOpenAuthModal,
+    onOpenHistory
 }) => {
-    const navigate = useNavigate();
     const { userApiKey, freeUsageCount } = useAuthStore();
     const [showLimitTooltip, setShowLimitTooltip] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
@@ -96,16 +97,16 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                                     You have reached the free limit of {FREE_TIER_LIMIT} carousels.
                                 </p>
                                 <p className="text-xs text-neutral-400 mb-3">
-                                    Please delete old carousels from your library to save new work.
+                                    Delete old carousels to save new work.
                                 </p>
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate('/library');
+                                        onOpenHistory();
                                     }}
                                     className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm text-white transition-colors"
                                 >
-                                    Go to Library
+                                    View your carousels
                                 </button>
                             </div>
                         )}
@@ -164,17 +165,6 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
 
                 {/* Auto-Save Status Badge (Generator Mode) */}
                 {renderAutoSaveStatus()}
-
-                {/* Library Button */}
-                <Link
-                    to="/library"
-                    title="My Carousels"
-                    aria-label="My Carousels"
-                    className="flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-lg text-sm font-medium text-white transition-colors"
-                >
-                    <LibraryIcon size={16} />
-                    <span className="hidden sm:inline">My Carousels</span>
-                </Link>
 
                 {/* Download Dropdown Button */}
                 {slidesCount > 0 && (

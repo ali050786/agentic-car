@@ -6,7 +6,9 @@ import { StateGraph, MessagesAnnotation } from '@langchain/langgraph';
 import { ChatGroq } from '@langchain/groq';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { FREE_TIER_LIMIT } from './config/constants';
+import { YoutubeTranscript } from 'youtube-transcript';
+import { FREE_TIER_LIMIT, MAX_SOURCE_CONTENT_CHARS } from './config/constants';
+import { htmlToReadableText, extractTitle } from './utils/htmlToText';
 dotenv.config();
 
 // Helper to extract JSON from markdown code blocks
@@ -545,6 +547,96 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
         return res.end(JSON.stringify({ error: 'proxy-image error', message: e?.message || String(e) }));
       }
     });
+
+    // YouTube transcript fetch for the "paste a video link" composer flow.
+    // Registered here so it works without the separate Express server on :3001.
+    server.middlewares.use('/api/youtube-transcript', async (req: any, res: any) => {
+      try {
+        let body = '';
+        for await (const chunk of req) body += chunk;
+        const { videoId } = body ? JSON.parse(body) : {};
+
+        if (!videoId) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ error: 'Video ID is required' }));
+        }
+
+        const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
+        if (!transcriptItems || transcriptItems.length === 0) {
+          res.statusCode = 404;
+          return res.end(JSON.stringify({ error: 'No transcript available for this video. The video may not have captions.' }));
+        }
+
+        const fullTranscript = transcriptItems.map((item: any) => item.text).join(' ').replace(/\s+/g, ' ').trim();
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({ transcript: fullTranscript }));
+      } catch (e: any) {
+        console.error('[Vite Proxy] youtube-transcript error:', e);
+        res.statusCode = 500;
+        return res.end(JSON.stringify({ error: e?.message || String(e) }));
+      }
+    });
+
+    // Article scraper for the "paste a link" composer flow. Same private-host
+    // SSRF guard as proxy-image; strips scripts/styles/tags to plain text.
+    server.middlewares.use('/api/scrape', async (req: any, res: any) => {
+      try {
+        const urlObj = new URL(req.url || '', 'http://localhost');
+        const target = urlObj.searchParams.get('url') || '';
+
+        let parsed: URL;
+        try {
+          parsed = new URL(target);
+        } catch {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ error: 'Invalid url parameter' }));
+        }
+
+        const hostname = parsed.hostname;
+        const isPrivate = hostname === 'localhost' || /^(\d+\.){3}\d+$/.test(hostname) || hostname.endsWith('.local');
+        if (!/^https?:$/.test(parsed.protocol) || isPrivate) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ error: 'URL not allowed' }));
+        }
+
+        const upstream = await fetch(parsed.toString(), {
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AgenticCarouselBot/1.0)' },
+        });
+        if (!upstream.ok) {
+          res.statusCode = upstream.status;
+          return res.end(JSON.stringify({ error: `Upstream returned ${upstream.status}` }));
+        }
+
+        const contentType = upstream.headers.get('content-type') || '';
+        if (!contentType.includes('html') && !contentType.includes('text')) {
+          res.statusCode = 415;
+          return res.end(JSON.stringify({ error: 'That URL did not return a readable page' }));
+        }
+
+        const html = await upstream.text();
+        const fullText = htmlToReadableText(html);
+        const content = fullText.slice(0, MAX_SOURCE_CONTENT_CHARS);
+
+        if (content.length < 100) {
+          res.statusCode = 422;
+          return res.end(JSON.stringify({ error: 'Could not extract readable content from this page' }));
+        }
+
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({
+          content,
+          title: extractTitle(html),
+          truncated: fullText.length > MAX_SOURCE_CONTENT_CHARS,
+          originalLength: fullText.length,
+        }));
+      } catch (e: any) {
+        console.error('[Vite Proxy] scrape error:', e);
+        res.statusCode = 500;
+        return res.end(JSON.stringify({ error: e?.message || String(e) }));
+      }
+    });
   }
 });
 
@@ -563,7 +655,6 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: '0.0.0.0',
       proxy: {
-        '/api/youtube-transcript': 'http://localhost:3001',
         '/api/doodles-input': 'http://localhost:3001',
         '/api/image-output': 'http://localhost:3001',
         '/api/generate-doodle': 'http://localhost:3001',

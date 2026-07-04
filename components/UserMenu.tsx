@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Library as LibraryIcon, Key, Zap, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import { User, LogOut, Key, Zap, ChevronDown, Image as ImageIcon } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { FREE_TIER_LIMIT } from '../config/constants';
@@ -109,17 +109,6 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenApiKeyModal }) => {
             >
               <Key size={16} className="text-neutral-400" />
               <span>API Key Settings</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                navigate('/library');
-              }}
-              className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-3"
-            >
-              <LibraryIcon size={16} className="text-neutral-400" />
-              <span>My Library</span>
             </button>
 
             <button

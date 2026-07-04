@@ -62,10 +62,46 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
     } = params;
 
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
-    const [currentCarouselId, setCurrentCarouselId] = useState<string | null>(carouselId);
+    const [exposedCarouselId, setExposedCarouselId] = useState<string | null>(carouselId);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastSavedRef = useRef<string>('');
+    // Hard mutex: guarantees only one create/update request is ever in flight
+    // for this hook instance, no matter how many overlapping timers or renders
+    // try to fire a save at once.
+    const isSavingRef = useRef(false);
+
+    // The id the next debounced save should target. A ref (not state) so the
+    // setTimeout callback below always reads the freshest value at fire time
+    // instead of a value captured in a stale closure.
+    const targetIdRef = useRef<string | null>(carouselId);
+    const prevCarouselIdRef = useRef<string | null>(carouselId);
+
+    // Detect the parent switching us to a different carousel (e.g. picking one
+    // from the history sidebar) — this happens without unmounting the hook, so
+    // without this, a debounce cycle already in flight for the OLD carousel could
+    // race the id change and create a duplicate instead of updating. Adjusting
+    // refs during render (not in an effect) means there is no lag: by the time any
+    // effect below runs, targetIdRef already reflects the new carousel.
+    if (carouselId !== prevCarouselIdRef.current) {
+        prevCarouselIdRef.current = carouselId;
+        targetIdRef.current = carouselId;
+        lastSavedRef.current = JSON.stringify({
+            slides,
+            theme,
+            templateType,
+            brandMode,
+            presetId,
+            brandKit,
+            signaturePosition,
+            format,
+            selectedPattern,
+            patternOpacity
+        });
+        if (exposedCarouselId !== carouselId) {
+            setExposedCarouselId(carouselId);
+        }
+    }
 
     useEffect(() => {
         // Clear any existing timeout
@@ -103,13 +139,20 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
 
         // Set up debounced save
         timeoutRef.current = setTimeout(async () => {
+            if (isSavingRef.current) {
+                console.warn('[useAutoSave] A save is already in flight — skipping this overlapping trigger');
+                return;
+            }
+            isSavingRef.current = true;
+
             try {
                 setSaveStatus('saving');
                 setErrorMessage(null);
 
                 const dbTemplateType = appToDbTemplate(templateType);
+                const idToSave = targetIdRef.current;
 
-                if (!currentCarouselId) {
+                if (!idToSave) {
                     // NEW CAROUSEL: Create in database
                     console.log('[useAutoSave] Creating new carousel...');
 
@@ -141,7 +184,13 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                         }
                     } else if (data) {
                         console.log('[useAutoSave] Successfully created carousel:', data.$id);
-                        setCurrentCarouselId(data.$id);
+                        // Only targetIdRef is updated here — prevCarouselIdRef must stay
+                        // untouched until the carouselId PROP itself catches up (one render
+                        // later, once the parent's own effect propagates the new id). Bumping
+                        // prevCarouselIdRef early made the render-phase switch-detection above
+                        // see the still-stale prop as a "switch back to null" and wipe targetIdRef.
+                        targetIdRef.current = data.$id;
+                        setExposedCarouselId(data.$id);
                         setSaveStatus('saved');
                         lastSavedRef.current = currentSignature;
 
@@ -155,7 +204,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                     const dbTemplateType = appToDbTemplate(templateType);
 
                     const { data, error } = await updateCarouselContent(
-                        currentCarouselId,
+                        idToSave,
                         theme,
                         slides,
                         brandMode,
@@ -190,6 +239,8 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                     setSaveStatus('error');
                     setErrorMessage('An unexpected error occurred');
                 }
+            } finally {
+                isSavingRef.current = false;
             }
         }, DEBOUNCE_DELAY);
 
@@ -200,7 +251,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
             }
         };
     }, [
-        currentCarouselId,
+        carouselId,
         slides,
         theme,
         userId,
@@ -215,16 +266,9 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
         patternOpacity
     ]);
 
-    // Update local carousel ID when prop changes
-    useEffect(() => {
-        if (carouselId !== currentCarouselId) {
-            setCurrentCarouselId(carouselId);
-        }
-    }, [carouselId]);
-
     return {
         saveStatus,
-        currentCarouselId,
+        currentCarouselId: exposedCarouselId,
         errorMessage
     };
 };

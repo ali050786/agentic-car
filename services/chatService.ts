@@ -3,14 +3,15 @@
  *
  * A conversation belongs to a carousel (the library IS the thread list).
  * Primary store: Appwrite collection `chat_history` (one document per
- * carousel: { userId, messages, summary }). If the collection does not
- * exist yet, everything transparently falls back to localStorage so the
- * feature works before any console setup — create the collection later
+ * carousel: { userId, messages, summary, summarizedUpTo }). If the collection
+ * does not exist yet, everything transparently falls back to localStorage so
+ * the feature works before any console setup — create the collection later
  * and syncing goes cross-device with zero code changes.
  *
  * Appwrite setup (optional, for cross-device sync):
  *   Collection id: chat_history
- *   Attributes: userId (string 64), messages (string 1000000), summary (string 5000)
+ *   Attributes: userId (string 64), messages (string 1000000), summary (string 5000),
+ *               summarizedUpTo (integer, default 0)
  *   Permissions: document-level, users can create/read/update their own
  */
 
@@ -26,6 +27,8 @@ let appwriteAvailable: boolean | null = null;
 export interface PersistedChat {
     messages: ChatMessage[];
     summary: string;
+    /** How many of the oldest messages are already folded into `summary` (see MemoryAgent). */
+    summarizedUpTo: number;
 }
 
 /**
@@ -43,10 +46,11 @@ export const loadChat = async (carouselId: string, userId: string): Promise<Pers
                 const doc: any = res.documents[0];
                 return {
                     messages: JSON.parse(doc.messages || '[]'),
-                    summary: doc.summary || ''
+                    summary: doc.summary || '',
+                    summarizedUpTo: doc.summarizedUpTo || 0,
                 };
             }
-            return { messages: [], summary: '' };
+            return { messages: [], summary: '', summarizedUpTo: 0 };
         } catch (e: any) {
             if (e?.code === 404) {
                 appwriteAvailable = false;
@@ -59,9 +63,12 @@ export const loadChat = async (carouselId: string, userId: string): Promise<Pers
 
     try {
         const raw = localStorage.getItem(localKey(carouselId));
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            return { messages: parsed.messages || [], summary: parsed.summary || '', summarizedUpTo: parsed.summarizedUpTo || 0 };
+        }
     } catch { /* corrupted entry — start fresh */ }
-    return { messages: [], summary: '' };
+    return { messages: [], summary: '', summarizedUpTo: 0 };
 };
 
 /**
@@ -71,11 +78,12 @@ export const saveChat = async (
     carouselId: string,
     userId: string,
     messages: ChatMessage[],
-    summary: string
+    summary: string,
+    summarizedUpTo: number = 0
 ): Promise<void> => {
     // Strip transient flags before persisting
     const clean = messages.map(m => ({ ...m, running: false }));
-    const payload: PersistedChat = { messages: clean, summary };
+    const payload: PersistedChat = { messages: clean, summary, summarizedUpTo };
 
     try {
         localStorage.setItem(localKey(carouselId), JSON.stringify(payload));
@@ -84,7 +92,7 @@ export const saveChat = async (
     if (appwriteAvailable === false) return;
 
     try {
-        const body = { userId, messages: JSON.stringify(clean), summary };
+        const body = { userId, messages: JSON.stringify(clean), summary, summarizedUpTo };
         try {
             await databases.updateDocument(config.databaseId, COLLECTION_ID, carouselId, body);
         } catch (e: any) {

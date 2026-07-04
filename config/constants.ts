@@ -5,6 +5,13 @@
 // Free tier generation limit
 export const FREE_TIER_LIMIT = 10;
 
+// Source-material limits for the composer's file/URL/video/text intake.
+// Content flows through several sequential LLM calls (Research -> Strategist
+// -> Template -> Proofreader), so its size drives cost across the whole
+// pipeline, not just once — kept well past what a 5-10 slide carousel needs.
+export const MAX_UPLOAD_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+export const MAX_SOURCE_CONTENT_CHARS = 20000; // ~7-10 dense pages
+
 export const ALLOWED_DOODLE_TOPICS = [
     "ab_testing_split", "accessibility_focus", "ai_ethics", "analytics_chart", "analytics_dashboard",
     "api_connector", "api_handshake", "autonomous_vehicle", "battery_power", "binary_rain",

@@ -3,6 +3,7 @@ import { TemplateAgent } from './TemplateAgent';
 import { StrategistAgent } from './StrategistAgent';
 import { ArtDirectorAgent } from './ArtDirectorAgent';
 import { ResearchAgent } from './ResearchAgent';
+import { ProofreaderAgent } from './ProofreaderAgent';
 import { SlideContent, CarouselTheme } from '../../types';
 import { generateImage } from '../../services/aiService';
 import { storage, config, ID } from '../../lib/appwriteClient';
@@ -10,6 +11,7 @@ import { resolveTheme } from '../../utils/brandUtils';
 import { getPresetById } from '../../config/colorPresets';
 import { findMatchingImage } from '../../utils/imageMatcher';
 import { getUserMemory } from '../../services/memoryService';
+import { polishSlides } from '../../utils/contentPolish';
 
 /**
  * Replicate throttles low-credit accounts hard (as low as 1 request burst),
@@ -53,6 +55,14 @@ export const runAgentWorkflow = async (topic: string) => {
 
   if (!topic && !store.sourceContent) return;
 
+  // Re-entrancy guard: a second overlapping call (double-click, double-submit
+  // race) would otherwise run the whole pipeline twice and autosave would
+  // dutifully persist each result as its own carousel.
+  if (store.isGenerating) {
+    console.warn('[MainAgent] runAgentWorkflow called while already generating — ignoring duplicate trigger');
+    return;
+  }
+
   store.setGenerating(true);
   store.setError(null);
   store.setSlides([]); // Clear previous slides
@@ -69,6 +79,8 @@ export const runAgentWorkflow = async (topic: string) => {
       store.setGenerationStatus("Reading article & extracting key points...");
     } else if (store.inputMode === 'pdf') {
       store.setGenerationStatus("Analyzing document structure...");
+    } else if (store.inputMode === 'video') {
+      store.setGenerationStatus("Analyzing video transcript...");
     } else {
       store.setGenerationStatus("Analyzing topic & context...");
     }
@@ -149,6 +161,16 @@ export const runAgentWorkflow = async (topic: string) => {
 
     // Routing Logic: Use the unified TemplateAgent for all templates
     result = await TemplateAgent.generate(context, store.selectedTemplate || 'template-1');
+
+    // ========================================================================
+    // QUALITY PASS: deterministic cleanup, then an LLM proofread, then cleanup
+    // again (idempotent — normalizes whatever the proofreader produced). The
+    // proofreader never throws; a failed pass just leaves the polished copy.
+    // ========================================================================
+    result.slides = polishSlides(result.slides);
+    store.setGenerationStatus("Proofreading copy...");
+    result.slides = await ProofreaderAgent.proofread(result.slides);
+    result.slides = polishSlides(result.slides);
 
     // ========================================================================
     // THEME OVERRIDE: Use preset-based theme instead of AI-generated theme

@@ -43,17 +43,12 @@ const LandingPage = () => {
 
                     <div className="flex items-center gap-6">
                         {user ? (
-                            <>
-                                <Link to="/library" className="text-slate-300 hover:text-white font-medium transition-colors text-sm">
-                                    Dashboard
-                                </Link>
-                                <Link
-                                    to="/app"
-                                    className="px-5 py-2 rounded-full bg-white text-slate-950 font-semibold hover:bg-slate-200 transition-colors text-sm"
-                                >
-                                    Go to App
-                                </Link>
-                            </>
+                            <Link
+                                to="/app"
+                                className="px-5 py-2 rounded-full bg-white text-slate-950 font-semibold hover:bg-slate-200 transition-colors text-sm"
+                            >
+                                Go to App
+                            </Link>
                         ) : (
                             <>
                                 <Link to="/login" className="text-slate-300 hover:text-white font-medium transition-colors text-sm">

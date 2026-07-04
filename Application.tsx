@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useCarouselStore } from './store/useCarouselStore';
 import { useAuthStore } from './store/useAuthStore';
 import { runAgentWorkflow, repairVisualAssets } from './core/agents/MainAgent';
-import { CarouselPreview } from './components/CarouselPreview';
-import { downloadAllSvgs } from './utils/downloadUtils';
 import { exportAllSlidesToPdf } from './utils/pdfExportAll';
 import { exportSlideToJpg } from './utils/jpgExporter';
 import { UserMenu } from './components/UserMenu';
-import { ProtectedRoute } from './components/ProtectedRoute';
 import { updateCarouselContent, Carousel } from './services/carouselService';
 import { dbToAppTemplate } from './utils/templateConverter';
 import { ThemeSelector } from './components/ThemeSelector';
@@ -28,7 +25,6 @@ import { ResetPassword } from './pages/ResetPassword';
 import { AuthCallback } from './pages/AuthCallback';
 
 // Carousel Pages
-import CarouselLibrary from './pages/CarouselLibrary';
 import { PublicCarouselViewer } from './pages/PublicCarouselViewer';
 import LandingPage from './pages/LandingPage';
 import GenerateDoodles from './pages/GenerateDoodles';
@@ -38,10 +34,10 @@ import ImageRefinement from './pages/ImageRefinement';
 // Components
 import { CollapsibleSection } from './components/CollapsibleSection';
 import { FloatingTopBar } from './components/FloatingTopBar';
-import { FloatingSidebar } from './components/FloatingSidebar';
-import { FloatingBottomBar } from './components/FloatingBottomBar';
 import { ChatPanel } from './components/chat/ChatPanel';
 import { ArtifactPanel } from './components/artifact/ArtifactPanel';
+import { CarouselHistorySidebar } from './components/sidebar/CarouselHistorySidebar';
+import { ShareModal } from './components/ShareModal';
 import { loadChat, saveChat } from './services/chatService';
 import { SlideEditPanel } from './components/SlideEditPanel';
 import { Toast } from './components/Toast';
@@ -65,17 +61,8 @@ import {
   Menu,
 } from 'lucide-react';
 
-const SUGGESTED_TOPICS = [
-  "Mental Models for Junior Devs",
-  "How to Scale a SaaS to $10k MRR",
-  "Why TypeScript is Winning",
-  "The Art of Salary Negotiation"
-];
-
 // Main carousel generator (protected)
 const CarouselGenerator: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const { user, globalBrandKit } = useAuthStore();
   const {
     topic,
@@ -134,18 +121,28 @@ const CarouselGenerator: React.FC = () => {
   const [authModalMessage, setAuthModalMessage] = useState('Create an account to save your work');
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
 
-  // 1. Add Sidebar State
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-  // 2. Determine "Studio Mode" (Has slides)
+  // Determine "Studio Mode" (Has slides)
   const hasSlides = slides.length > 0;
 
-  // 3. Auto-collapse sidebar when generation finishes (slides appear)
+  // Carousel history rail — hidden by default, remembers the user's last choice
+  const [historyOpen, setHistoryOpen] = useState(() => localStorage.getItem('carouselHistoryOpen') === 'true');
   useEffect(() => {
-    if (hasSlides && !isGenerating) {
-      setIsSidebarOpen(false);
-    }
-  }, [hasSlides, isGenerating]);
+    localStorage.setItem('carouselHistoryOpen', String(historyOpen));
+  }, [historyOpen]);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        setHistoryOpen(o => !o);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Share Modal state (moved here from the retired My Carousels dashboard)
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [carouselToShare, setCarouselToShare] = useState<Carousel | null>(null);
 
   // Check guest usage
   const checkGuestLimit = (): boolean => {
@@ -176,71 +173,60 @@ const CarouselGenerator: React.FC = () => {
     return false;
   };
 
-  // Load carousel if navigating from library with edit mode
-  useEffect(() => {
-    const state = location.state as any;
-    if (state?.editMode && state?.carousel) {
-      const carousel = state.carousel;
-      setEditingCarousel(carousel);
-      setCurrentCarouselId(carousel.$id);
-      setLocalTopic(carousel.title || '');
-      setTopic(carousel.title || '');
-      setTemplate(dbToAppTemplate(carousel.templateType));
-      setSlides(carousel.slides as any);
+  // Load a carousel into the editor in place (from the history sidebar) — no
+  // navigation, no route change, just swaps the working state like switching
+  // a chat thread.
+  const handleLoadCarousel = (carousel: Carousel) => {
+    // Clear the previous carousel's chat synchronously — otherwise there's a
+    // window where these new slides are on screen next to the OLD carousel's
+    // conversation, until the async loadChat() below resolves.
+    useCarouselStore.getState().clearChat();
 
-      // Restore brand mode and preset if saved
-      if (carousel.brandMode) {
-        setBrandMode(carousel.brandMode);
-      }
-      if (carousel.presetId) {
-        setPresetId(carousel.presetId);
-      }
-      if (carousel.brandKit) {
-        setBrandKit(carousel.brandKit);
-      }
-      if (carousel.signaturePosition) {
-        setSignaturePosition(carousel.signaturePosition);
-      }
+    setEditingCarousel(carousel);
+    setCurrentCarouselId(carousel.$id);
+    setLocalTopic(carousel.title || '');
+    setTopic(carousel.title || '');
+    setTemplate(dbToAppTemplate(carousel.templateType));
+    setSlides(carousel.slides as any);
 
-      // Restore the format if it was saved
-      if (carousel.format) {
-        setFormat(carousel.format);
-      }
-
-      // Restore pattern and opacity if saved
-      if (carousel.selectedPattern !== undefined) {
-        setPattern(carousel.selectedPattern);
-      }
-      if (carousel.patternOpacity !== undefined) {
-        setPatternOpacity(carousel.patternOpacity);
-      }
-
-      // Rehydrate the conversation that belongs to this carousel
-      if (user?.$id) {
-        loadChat(carousel.$id, user.$id).then(({ messages, summary }) => {
-          const store = useCarouselStore.getState();
-          store.setChatMessages(messages);
-          store.setChatSummary(summary);
-          console.log(`[App] Restored ${messages.length} chat messages for carousel ${carousel.$id}`);
-        });
-      }
-
-      // Clear the state so refresh doesn't reload
-      window.history.replaceState({}, document.title);
-    } else if (state?.createNew) {
-      // Handle "New Carousel" action from library
-      setEditingCarousel(null);
-      setCurrentCarouselId(null);
-      setLocalTopic('');
-      setTopic('');
-      setSlides([]);
-      useCarouselStore.getState().clearChat();
-      setIsSidebarOpen(true);
-
-      // Reset history so refresh doesn't trigger this again
-      window.history.replaceState({}, document.title);
+    // Restore brand mode and preset if saved
+    if (carousel.brandMode) {
+      setBrandMode(carousel.brandMode);
     }
-  }, [location.state]);
+    if (carousel.presetId) {
+      setPresetId(carousel.presetId);
+    }
+    if (carousel.brandKit) {
+      setBrandKit(carousel.brandKit);
+    }
+    if (carousel.signaturePosition) {
+      setSignaturePosition(carousel.signaturePosition);
+    }
+
+    // Restore the format if it was saved
+    if (carousel.format) {
+      setFormat(carousel.format);
+    }
+
+    // Restore pattern and opacity if saved
+    if (carousel.selectedPattern !== undefined) {
+      setPattern(carousel.selectedPattern);
+    }
+    if (carousel.patternOpacity !== undefined) {
+      setPatternOpacity(carousel.patternOpacity);
+    }
+
+    // Rehydrate the conversation that belongs to this carousel
+    if (user?.$id) {
+      loadChat(carousel.$id, user.$id).then(({ messages, summary, summarizedUpTo }) => {
+        const store = useCarouselStore.getState();
+        store.setChatMessages(messages);
+        store.setChatSummary(summary);
+        store.setChatSummarizedUpTo(summarizedUpTo);
+        console.log(`[App] Restored ${messages.length} chat messages for carousel ${carousel.$id}`);
+      });
+    }
+  };
 
   // T3: Auto-switch to light variant if dark preset is active
   useEffect(() => {
@@ -297,42 +283,6 @@ const CarouselGenerator: React.FC = () => {
     }
   }, [selectedTemplate, hasSlides, isGenerating]);
 
-  const handleGenerate = async () => {
-    // Get sourceContent from store to support multi-modal inputs
-    const { sourceContent, inputMode } = useCarouselStore.getState();
-
-    // For topic mode, use localTopic. For other modes, sourceContent should already be set by FloatingSidebar
-    if (inputMode === 'topic' && !localTopic) return;
-    if (inputMode !== 'topic' && !sourceContent) return;
-
-    // Check guest limit
-    if (!checkGuestLimit()) return;
-
-    // Set topic for display purposes (will show in UI/save modal)
-    setTopic(localTopic || 'AI Generated Carousel');
-
-    // Trigger the workflow with error handling for free tier limit
-    try {
-      await runAgentWorkflow(localTopic);
-      // Increment guest usage after successful generation trigger
-      incrementGuestUsage();
-    } catch (error) {
-      // Check if it's a free tier limit error
-      if (error instanceof FreeLimitError) {
-        console.warn('[App] Free tier limit reached, opening API key modal');
-        setApiKeyModalOpen(true);
-      } else {
-        // Re-throw other errors to be handled by the agent
-        throw error;
-      }
-    }
-  };
-
-  const handleRandomTopic = () => {
-    const random = SUGGESTED_TOPICS[Math.floor(Math.random() * SUGGESTED_TOPICS.length)];
-    setLocalTopic(random);
-  };
-
   // Chat-driven creation: the first chat message is the generation prompt
   const handleFirstPrompt = async (text: string) => {
     if (!checkGuestLimit()) return;
@@ -379,16 +329,17 @@ const CarouselGenerator: React.FC = () => {
   // Persist the conversation alongside the carousel (debounced, fire-and-forget)
   const chatMessages = useCarouselStore(s => s.chatMessages);
   const chatSummary = useCarouselStore(s => s.chatSummary);
+  const chatSummarizedUpTo = useCarouselStore(s => s.chatSummarizedUpTo);
   useEffect(() => {
     const carouselId = editingCarousel?.$id || currentCarouselId;
     if (!carouselId || !user?.$id || chatMessages.length === 0) return;
     if (chatMessages.some(m => m.running)) return; // wait for turns to finish
 
     const t = setTimeout(() => {
-      saveChat(carouselId, user.$id, chatMessages, chatSummary);
+      saveChat(carouselId, user.$id, chatMessages, chatSummary, chatSummarizedUpTo);
     }, 1200);
     return () => clearTimeout(t);
-  }, [chatMessages, chatSummary, editingCarousel?.$id, currentCarouselId, user?.$id]);
+  }, [chatMessages, chatSummary, chatSummarizedUpTo, editingCarousel?.$id, currentCarouselId, user?.$id]);
 
   const handleDownload = async () => {
     // Export current/selected slide as JPG
@@ -498,9 +449,6 @@ const CarouselGenerator: React.FC = () => {
   };
 
   const handleNewCarousel = () => {
-    // Expand sidebar so user can enter new topic
-    setIsSidebarOpen(true);
-
     // Clear edit mode and start fresh
     setEditingCarousel(null);
     setCurrentCarouselId(null);
@@ -541,10 +489,24 @@ const CarouselGenerator: React.FC = () => {
           setAuthMode('login');
           setAuthModalOpen(true);
         }}
+        onOpenHistory={() => setHistoryOpen(true)}
       />
 
-      {/* Chat + Artifact split (chat is the control plane, the carousel is the hero) */}
+      {/* History + Chat + Artifact split (chat is the control plane, the carousel is the hero) */}
       <main className="pt-16 h-screen flex bg-neutral-950">
+        <CarouselHistorySidebar
+          isOpen={historyOpen}
+          onToggle={() => setHistoryOpen(o => !o)}
+          userId={user?.$id ?? null}
+          currentCarouselId={editingCarousel?.$id || currentCarouselId}
+          saveStatus={saveStatus}
+          onSelectCarousel={handleLoadCarousel}
+          onNewCarousel={handleNewCarousel}
+          onShare={(carousel) => {
+            setCarouselToShare(carousel);
+            setShareModalOpen(true);
+          }}
+        />
         <div className="w-full md:w-[400px] md:min-w-[400px] h-full">
           <ChatPanel
             onFirstPrompt={handleFirstPrompt}
@@ -558,6 +520,18 @@ const CarouselGenerator: React.FC = () => {
           />
         </div>
       </main>
+
+      {/* Share Modal */}
+      {carouselToShare && (
+        <ShareModal
+          isOpen={shareModalOpen}
+          onClose={() => {
+            setShareModalOpen(false);
+            setCarouselToShare(null);
+          }}
+          carousel={carouselToShare}
+        />
+      )}
 
       {/* Right Edit Panel */}
       <SlideEditPanel
@@ -634,16 +608,6 @@ const App: React.FC = () => {
           path="/app"
           element={
             <CarouselGenerator />
-          }
-        />
-
-
-        <Route
-          path="/library"
-          element={
-            <ProtectedRoute>
-              <CarouselLibrary />
-            </ProtectedRoute>
           }
         />
 

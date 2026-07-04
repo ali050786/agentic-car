@@ -19,6 +19,8 @@ import { generateContentFromAgent } from '../../services/aiService';
 import { ChatMessage, SlideContent } from '../../types';
 import { TEMPLATE_CONFIGS } from './agentConfigs';
 import { getPresetIds } from '../../config/colorPresets';
+import { ProofreaderAgent } from './ProofreaderAgent';
+import { polishSlides } from '../../utils/contentPolish';
 
 const ORCHESTRATOR_SCHEMA = {
     type: 'object',
@@ -423,6 +425,15 @@ export const OrchestratorAgent = {
             out.intent = 'answer';
             out.reply = "I couldn't apply that change — nothing was modified. This usually means the model was rate-limited or returned an incomplete response. Try again in a moment, or select a specific slide to make the request smaller.";
             console.warn('[Orchestrator] ⚠️ Honesty guard fired — command produced no executable change. Check the [Vite Proxy] logs above for truncation/JSON errors.');
+        }
+
+        // Quality pass on any new copy: deterministic cleanup, then an LLM
+        // proofread, then cleanup again. Never throws — a failed proofread
+        // just leaves the polished copy in place.
+        if (out.slides) {
+            out.slides = polishSlides(out.slides);
+            out.slides = await ProofreaderAgent.proofread(out.slides);
+            out.slides = polishSlides(out.slides);
         }
 
         console.log(`🧭 [Orchestrator] FINAL: intent=${out.intent}, designActions=${out.designActions.length}, slidesChanged=${out.changedIndices.length}, memoryNote=${!!out.memoryNote}`);

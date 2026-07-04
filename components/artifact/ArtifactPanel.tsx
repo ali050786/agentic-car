@@ -136,7 +136,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
                 <div className="relative h-full flex items-center justify-center" style={{ aspectRatio: selectedFormat === 'square' ? '1 / 1' : '4 / 5', maxHeight: '100%' }}>
                     <div
                         ref={stageRef}
-                        className="artifact-svg-fit svg-preview-container w-full h-full flex items-center justify-center rounded-xl overflow-hidden border border-white/10 shadow-2xl"
+                        className="artifact-svg-fit w-full h-full flex items-center justify-center rounded-xl overflow-hidden border border-white/10 shadow-2xl"
                         dangerouslySetInnerHTML={{ __html: stageSvg }}
                     />
                     {pendingDoodleSlides.includes(currentIndex) && (

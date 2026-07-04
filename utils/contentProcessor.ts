@@ -75,49 +75,47 @@ export function isYouTubeUrl(url: string): boolean {
     return youtubePatterns.some(pattern => pattern.test(url.trim()));
 }
 
+export interface ScrapedContent {
+    content: string;
+    truncated: boolean;
+    originalLength: number;
+}
+
 /**
- * Fetches content from a URL via backend scraping API
- * 
- * PLACEHOLDER IMPLEMENTATION:
- * Currently returns mock data. In production, this should call
- * a backend endpoint like /api/scrape to handle CORS issues.
- * 
- * Future implementation:
- * ```typescript
- * const response = await fetch('/api/scrape', {
- *   method: 'POST',
- *   headers: { 'Content-Type': 'application/json' },
- *   body: JSON.stringify({ url })
- * });
- * const data = await response.json();
- * return data.content;
- * ```
- * 
+ * Fetches and extracts readable article text from a URL via the server-side
+ * /api/scrape endpoint (avoids CORS — the browser can't fetch arbitrary
+ * third-party pages directly). Truncation happens server-side (no point
+ * shipping the full HTML just to cut it client-side) — originalLength/truncated
+ * let the caller show the user what was cut.
+ *
  * @param url - URL to fetch content from
- * @returns Promise resolving to the page content
  */
-export async function fetchUrlContent(url: string): Promise<string> {
-    try {
-        // Validate URL
-        if (!url || typeof url !== 'string') {
-            throw new Error('Invalid URL provided');
-        }
-
-        // Basic URL validation
-        const urlPattern = /^https?:\/\/.+/;
-        if (!urlPattern.test(url.trim())) {
-            throw new Error('URL must start with http:// or https://');
-        }
-
-        // PLACEHOLDER: Return mock data
-        // TODO: Replace with actual backend API call
-        console.log('[PLACEHOLDER] Would fetch content from URL:', url);
-
-        return `Scraped content placeholder for URL: ${url}\n\nThis is mock content. In production, this function will call a backend API endpoint (/api/scrape) to fetch the actual page content and avoid CORS issues.\n\nThe backend should:\n1. Fetch the URL content\n2. Extract main text content\n3. Remove ads, navigation, and boilerplate\n4. Return clean article text`;
-
-    } catch (error: any) {
-        throw new Error(`Failed to fetch URL content: ${error.message || 'Unknown error'}`);
+export async function fetchUrlContent(url: string): Promise<ScrapedContent> {
+    if (!url || typeof url !== 'string') {
+        throw new Error('Invalid URL provided');
     }
+
+    const urlPattern = /^https?:\/\/.+/;
+    if (!urlPattern.test(url.trim())) {
+        throw new Error('URL must start with http:// or https://');
+    }
+
+    const response = await fetch(`/api/scrape?url=${encodeURIComponent(url.trim())}`);
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(data?.error || `Failed to read the page (${response.status})`);
+    }
+
+    if (!data.content || data.content.length < 100) {
+        throw new Error('Could not extract readable content from this page.');
+    }
+
+    return {
+        content: data.content,
+        truncated: !!data.truncated,
+        originalLength: typeof data.originalLength === 'number' ? data.originalLength : data.content.length,
+    };
 }
 
 /**

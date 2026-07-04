@@ -9,10 +9,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { OrchestratorAgent } from '../../core/agents/OrchestratorAgent';
+import { MemoryAgent } from '../../core/agents/MemoryAgent';
 import { generateDoodleWithRetry } from '../../utils/doodleGenerator';
 import { getUserMemory, rememberUserPreference } from '../../services/memoryService';
 import { FreeLimitError } from '../../services/aiService';
-import { ArrowUp, SlidersHorizontal, Sparkles, X } from 'lucide-react';
+import { detectInputMode } from '../../utils/inputDetector';
+import { fetchYouTubeContent, fetchUrlContent, extractDomain } from '../../utils/contentProcessor';
+import { extractTextFromFile } from '../../utils/fileProcessor';
+import { capSourceContent, assertUploadSizeOk, truncationNote } from '../../utils/contentLimits';
+import { ArrowUp, SlidersHorizontal, Sparkles, X, Plus, Paperclip } from 'lucide-react';
+
+// Must match the recentMessages window OrchestratorAgent sends as raw history —
+// anything older than this is folded into chatSummary instead of just dropped.
+const HISTORY_WINDOW = 10;
 
 const TONE_OPTIONS = [
     { id: 'contrarian', label: '🌶️ Contrarian', value: "Angle: Controversial/Debate. Challenge the status quo." },
@@ -60,8 +69,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
     const [draft, setDraft] = useState('');
     const [showTuning, setShowTuning] = useState(false);
     const [isRefining, setIsRefining] = useState(false);
+    const [attachedFile, setAttachedFile] = useState<{ name: string; content: string; truncated: boolean; originalLength: number } | null>(null);
+    const [isAttaching, setIsAttaching] = useState(false);
+    const [attachError, setAttachError] = useState<string | null>(null);
     const runMessageId = useRef<string | null>(null);
     const scrollRef = useRef<HTMLDivElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const hasSlides = slides.length > 0;
     const busy = isGenerating || isRefining;
@@ -108,16 +121,71 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
 
     const send = async () => {
         const text = draft.trim();
-        if (!text || busy) return;
+        if ((!text && !attachedFile) || busy) return;
         setDraft('');
-        addChatMessage({ id: nextId(), role: 'user', text });
+        const pendingAttachment = attachedFile;
+        setAttachedFile(null);
+        addChatMessage({
+            id: nextId(), role: 'user',
+            text: text || `📎 Attached: ${pendingAttachment?.name}`,
+        });
 
         if (!hasSlides) {
             const runId = nextId();
             runMessageId.current = runId;
             addChatMessage({ id: runId, role: 'assistant', text: '', running: true, events: [] });
+
+            const store = useCarouselStore.getState();
+            let topicForRun = text;
+
             try {
-                await onFirstPrompt(text);
+                if (pendingAttachment) {
+                    const preEvents = [{ label: `Attached: ${pendingAttachment.name}`, done: true }];
+                    if (pendingAttachment.truncated) {
+                        preEvents.push({ label: truncationNote(pendingAttachment.originalLength), done: true });
+                    }
+                    updateChatMessage(runId, { events: preEvents });
+                    store.setInputMode('pdf');
+                    store.setSourceContent(pendingAttachment.content);
+                    topicForRun = text || pendingAttachment.name.replace(/\.[^.]+$/, '');
+                } else {
+                    const detected = detectInputMode(text);
+
+                    if (detected.mode === 'video' && detected.videoId) {
+                        updateChatMessage(runId, { events: [{ label: 'Detected YouTube link — fetching transcript...', done: false }] });
+                        const transcript = await fetchYouTubeContent(detected.videoId);
+                        const capped = capSourceContent(transcript);
+                        store.setInputMode('video');
+                        store.setSourceContent(capped.content);
+                        topicForRun = detected.instruction || 'Carousel from YouTube video';
+                        const preEvents = [{ label: 'Transcript fetched', done: true }];
+                        if (capped.truncated) preEvents.push({ label: truncationNote(capped.originalLength), done: true });
+                        updateChatMessage(runId, { events: preEvents });
+                    } else if (detected.mode === 'url' && detected.url) {
+                        const domain = extractDomain(detected.url);
+                        updateChatMessage(runId, { events: [{ label: `Reading article from ${domain}...`, done: false }] });
+                        const article = await fetchUrlContent(detected.url);
+                        store.setInputMode('url');
+                        store.setSourceContent(article.content);
+                        topicForRun = detected.instruction || `Carousel from ${domain}`;
+                        const preEvents = [{ label: 'Article fetched', done: true }];
+                        if (article.truncated) preEvents.push({ label: truncationNote(article.originalLength), done: true });
+                        updateChatMessage(runId, { events: preEvents });
+                    } else if (detected.mode === 'text') {
+                        const capped = capSourceContent(detected.instruction);
+                        store.setInputMode('text');
+                        store.setSourceContent(capped.content);
+                        topicForRun = detected.instruction;
+                        if (capped.truncated) {
+                            updateChatMessage(runId, { events: [{ label: truncationNote(capped.originalLength), done: true }] });
+                        }
+                    } else {
+                        store.setInputMode('topic');
+                        store.setSourceContent('');
+                    }
+                }
+
+                await onFirstPrompt(topicForRun);
             } catch (e: any) {
                 runMessageId.current = null;
                 if (e instanceof FreeLimitError) {
@@ -188,6 +256,25 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
                 );
                 rememberUserPreference(result.memoryNote);
             }
+
+            // Fold older messages into the rolling summary once the raw-history
+            // window the orchestrator sees would otherwise start losing them.
+            // Fire-and-forget — never blocks the composer, never throws.
+            const allMessages = useCarouselStore.getState().chatMessages;
+            const summarizedUpTo = useCarouselStore.getState().chatSummarizedUpTo;
+            const unsummarizedCount = allMessages.length - summarizedUpTo;
+            if (unsummarizedCount > HISTORY_WINDOW) {
+                const toFold = allMessages.slice(summarizedUpTo, allMessages.length - HISTORY_WINDOW);
+                if (toFold.length > 0) {
+                    const foldTarget = allMessages.length - HISTORY_WINDOW;
+                    MemoryAgent.compactHistory(useCarouselStore.getState().chatSummary, toFold)
+                        .then(updatedSummary => {
+                            useCarouselStore.getState().setChatSummary(updatedSummary);
+                            useCarouselStore.getState().setChatSummarizedUpTo(foldTarget);
+                        })
+                        .catch(err => console.warn('[ChatPanel] Compaction fire-and-forget failed unexpectedly:', err));
+                }
+            }
         } catch (e: any) {
             if (e instanceof FreeLimitError) {
                 updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free generations used up. Add your own API key to continue.' });
@@ -204,6 +291,31 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             send();
+        }
+    };
+
+    const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = ''; // allow re-selecting the same file later
+        if (!file) return;
+
+        setAttachError(null);
+        try {
+            assertUploadSizeOk(file);
+        } catch (err: any) {
+            setAttachError(err.message);
+            return;
+        }
+
+        setIsAttaching(true);
+        try {
+            const extracted = await extractTextFromFile(file);
+            const capped = capSourceContent(extracted);
+            setAttachedFile({ name: file.name, ...capped });
+        } catch (err: any) {
+            setAttachError(err?.message || 'Could not read that file.');
+        } finally {
+            setIsAttaching(false);
         }
     };
 
@@ -324,20 +436,64 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
                     </div>
                 )}
 
+                {!hasSlides && attachedFile && (
+                    <div className="flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 rounded-md px-2 py-1 text-[11px] text-blue-200 w-fit max-w-full">
+                        <Paperclip size={11} className="flex-shrink-0" />
+                        <span className="truncate">{attachedFile.name}</span>
+                        {attachedFile.truncated && (
+                            <span className="text-blue-400/70 flex-shrink-0" title={truncationNote(attachedFile.originalLength)}>
+                                (truncated)
+                            </span>
+                        )}
+                        <button
+                            onClick={() => setAttachedFile(null)}
+                            className="text-blue-300 hover:text-white flex-shrink-0"
+                            aria-label="Remove attachment"
+                        >
+                            <X size={11} />
+                        </button>
+                    </div>
+                )}
+                {!hasSlides && attachError && (
+                    <div className="text-[11px] text-red-400 px-1">{attachError}</div>
+                )}
+
                 <div className="flex items-end gap-2 bg-black/40 border border-white/10 rounded-xl px-3 py-2 focus-within:border-blue-500 transition-colors">
+                    {!hasSlides && (
+                        <>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".pdf,.docx,.doc,.md,.txt"
+                                onChange={onFileSelected}
+                                className="hidden"
+                            />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={busy || isAttaching}
+                                title="Attach a PDF, Word doc, or text file"
+                                aria-label="Attach a file"
+                                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40 flex-shrink-0"
+                            >
+                                {isAttaching
+                                    ? <span className="w-3.5 h-3.5 border border-neutral-400/50 border-t-neutral-200 rounded-full animate-spin inline-block" />
+                                    : <Plus size={14} />}
+                            </button>
+                        </>
+                    )}
                     <textarea
                         value={draft}
                         onChange={e => setDraft(e.target.value)}
                         onKeyDown={onKeyDown}
                         rows={draft.includes('\n') || draft.length > 80 ? 3 : 1}
-                        placeholder={hasSlides ? 'Refine anything...' : 'A carousel about...'}
+                        placeholder={hasSlides ? 'Refine anything...' : attachedFile ? 'Optional: add instructions...' : 'A carousel about... or paste a link'}
                         className="flex-1 bg-transparent text-[13px] text-white placeholder-neutral-500 resize-none focus:outline-none leading-relaxed"
                         disabled={busy}
                     />
                     <button
                         onClick={send}
-                        disabled={busy || !draft.trim()}
-                        className={`p-1.5 rounded-lg transition-all ${busy || !draft.trim()
+                        disabled={busy || (!draft.trim() && !attachedFile)}
+                        className={`p-1.5 rounded-lg transition-all ${busy || (!draft.trim() && !attachedFile)
                             ? 'bg-white/5 text-neutral-600'
                             : 'bg-blue-600 hover:bg-blue-500 text-white'
                             }`}

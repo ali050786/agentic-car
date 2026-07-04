@@ -147,9 +147,17 @@ export interface CarouselState {
 
   /**
    * Rolling conversation memory for this carousel — durable notes the
-   * orchestrator extracted from earlier turns.
+   * orchestrator extracted from earlier turns, plus a compacted account of
+   * older messages once they scroll out of the raw history window.
    */
   chatSummary: string;
+
+  /**
+   * How many of the oldest chatMessages have already been folded into
+   * chatSummary — lets the compaction pass fold only the new backlog
+   * instead of re-summarizing messages it already covered.
+   */
+  chatSummarizedUpTo: number;
 
   // Multi-modal Input State
   inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf';
@@ -217,6 +225,7 @@ export interface CarouselState {
   clearChat: () => void;
   setChatMessages: (messages: ChatMessage[]) => void;
   setChatSummary: (summary: string) => void;
+  setChatSummarizedUpTo: (index: number) => void;
 
   // Multi-modal Input Actions
   setInputMode: (inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf') => void;

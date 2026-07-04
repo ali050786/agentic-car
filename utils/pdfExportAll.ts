@@ -104,17 +104,37 @@ const captureSlideToCanvas = async (
     wrapper.style.height = `${height}px`;
     wrapper.style.overflow = 'hidden';
 
-    svgElement.setAttribute('width', width.toString());
-    svgElement.setAttribute('height', height.toString());
+    // The SVG viewBox and the export canvas can differ (e.g. 1080x1380 vs 1080x1350).
+    // Rendering the SVG at canvas size scales the SVG layer but NOT the extracted divs,
+    // so their coordinates drift apart. Instead, build a stage at viewBox size where
+    // both layers share the same pixel space, then scale the whole stage uniformly.
+    const viewBoxParts = (svgElement.getAttribute('viewBox') || `0 0 ${width} ${height}`)
+        .split(/[\s,]+/).map(Number);
+    const vbW = viewBoxParts[2] || width;
+    const vbH = viewBoxParts[3] || height;
+    const stageScale = Math.min(width / vbW, height / vbH);
+
+    const stage = document.createElement('div');
+    stage.style.position = 'absolute';
+    stage.style.left = `${(width - vbW * stageScale) / 2}px`;
+    stage.style.top = `${(height - vbH * stageScale) / 2}px`;
+    stage.style.width = `${vbW}px`;
+    stage.style.height = `${vbH}px`;
+    stage.style.transform = `scale(${stageScale})`;
+    stage.style.transformOrigin = '0 0';
+
+    svgElement.setAttribute('width', vbW.toString());
+    svgElement.setAttribute('height', vbH.toString());
     svgElement.style.position = 'absolute';
     svgElement.style.left = '0';
     svgElement.style.top = '0';
     svgElement.style.zIndex = '0';
-    svgElement.style.width = `${width}px`;
-    svgElement.style.height = `${height}px`;
+    svgElement.style.width = `${vbW}px`;
+    svgElement.style.height = `${vbH}px`;
 
-    wrapper.appendChild(svgElement);
-    extractedDivs.forEach(div => wrapper.appendChild(div));
+    stage.appendChild(svgElement);
+    extractedDivs.forEach(div => stage.appendChild(div));
+    wrapper.appendChild(stage);
 
     // Create temp container
     const tempContainer = document.createElement('div');
