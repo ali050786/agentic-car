@@ -3,13 +3,16 @@
 
 <head>
   <meta charset="UTF-8" />
-  <!-- Content Security Policy: Prevent XSS attacks -->
+  <!-- Content Security Policy: Prevent XSS attacks.
+       connect-src includes http(s)/ws(s) for localhost:4000 (the background
+       worker in local dev) — add your deployed Coolify worker's domain here
+       too once VITE_WORKER_URL points at it in production. -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
     script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://aistudiocdn.com https://esm.sh;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
-    connect-src 'self' https://cloud.appwrite.io https://sgp.cloud.appwrite.io https://openrouter.ai https://api.openai.com https://api.anthropic.com https://api.tavily.com;
+    connect-src 'self' https://cloud.appwrite.io https://sgp.cloud.appwrite.io wss://cloud.appwrite.io wss://sgp.cloud.appwrite.io https://openrouter.ai https://api.openai.com https://api.anthropic.com https://api.tavily.com http://localhost:4000 ws://localhost:4000;
     img-src 'self' data: blob: https://cloud.appwrite.io https://sgp.cloud.appwrite.io https://*.appwrite.io https://image.pollinations.ai https://replicate.delivery https://*.replicate.delivery;
     frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;
   ">

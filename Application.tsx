@@ -2,19 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useCarouselStore } from './store/useCarouselStore';
 import { useAuthStore } from './store/useAuthStore';
-import { runAgentWorkflow, repairVisualAssets } from './core/agents/MainAgent';
+import { repairVisualAssets } from './core/agents/MainAgent';
 import { exportAllSlidesToPdf } from './utils/pdfExportAll';
 import { exportSlideToJpg } from './utils/jpgExporter';
 import { UserMenu } from './components/UserMenu';
 import { updateCarouselContent, Carousel } from './services/carouselService';
 import { dbToAppTemplate } from './utils/templateConverter';
-import { ThemeSelector } from './components/ThemeSelector';
-import { BrandingSelector } from './components/BrandingSelector';
-import { FormatSelector } from './components/FormatSelector';
-import { PatternSelector } from './components/PatternSelector';
 import { resolveTheme } from './utils/brandUtils';
 import { getPresetById } from './config/colorPresets';
 import { useAutoSave } from './hooks/useAutoSave';
+import { useJobWatcher } from './hooks/useJobWatcher';
+import { createJob } from './services/jobService';
 import BrandEditorPanel from './components/BrandEditorPanel';
 
 // Auth Pages
@@ -32,34 +30,18 @@ import ImageRefinement from './pages/ImageRefinement';
 
 
 // Components
-import { CollapsibleSection } from './components/CollapsibleSection';
 import { FloatingTopBar } from './components/FloatingTopBar';
 import { ChatPanel } from './components/chat/ChatPanel';
 import { ArtifactPanel } from './components/artifact/ArtifactPanel';
 import { CarouselHistorySidebar } from './components/sidebar/CarouselHistorySidebar';
 import { ShareModal } from './components/ShareModal';
-import { loadChat, saveChat } from './services/chatService';
+import { loadChat } from './services/chatService';
 import { SlideEditPanel } from './components/SlideEditPanel';
 import { Toast } from './components/Toast';
 import { useToast } from './hooks/useToast';
 import { ApiKeyModal } from './components/ApiKeyModal';
 import { AuthModal } from './components/AuthModal';
 import { FreeLimitError } from './services/aiService';
-
-import {
-  Layout,
-  Sparkles,
-  AlertCircle,
-  Download,
-  Save,
-  Library as LibraryIcon,
-  Plus,
-  CheckCircle,
-  Settings,
-  Palette,
-  Wand2,
-  Menu,
-} from 'lucide-react';
 
 // Main carousel generator (protected)
 const CarouselGenerator: React.FC = () => {
@@ -89,24 +71,19 @@ const CarouselGenerator: React.FC = () => {
     updateSlide,
     selectedSlideIndex,
     setSelectedSlideIndex,
-    bottomToolExpanded,
-    setBottomToolExpanded,
     rightPanelOpen,
     setRightPanelOpen,
     selectedPattern,
     setPattern,
     patternOpacity,
     setPatternOpacity,
-    viewMode,
-    setViewMode,
-    toggleMobileMenu
+    activeCarouselId,
+    setActiveCarouselId,
   } = useCarouselStore();
 
   // Toast notifications
   const { toasts, showToast, removeToast } = useToast();
 
-  const [localTopic, setLocalTopic] = useState('');
-  const [currentCarouselId, setCurrentCarouselId] = useState<string | null>(null);
   const [editingCarousel, setEditingCarousel] = useState<Carousel | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
@@ -181,10 +158,15 @@ const CarouselGenerator: React.FC = () => {
     // window where these new slides are on screen next to the OLD carousel's
     // conversation, until the async loadChat() below resolves.
     useCarouselStore.getState().clearChat();
+    // Stop watching whatever job belonged to the carousel we're leaving —
+    // it keeps running server-side regardless; the sidebar's own job
+    // subscription (not this view) is what surfaces its completion.
+    useCarouselStore.getState().setActiveJobId(null);
+    useCarouselStore.getState().setGenerating(false);
+    useCarouselStore.getState().setError(null);
 
     setEditingCarousel(carousel);
-    setCurrentCarouselId(carousel.$id);
-    setLocalTopic(carousel.title || '');
+    setActiveCarouselId(carousel.$id);
     setTopic(carousel.title || '');
     setTemplate(dbToAppTemplate(carousel.templateType));
     setSlides(carousel.slides as any);
@@ -283,14 +265,47 @@ const CarouselGenerator: React.FC = () => {
     }
   }, [selectedTemplate, hasSlides, isGenerating]);
 
-  // Chat-driven creation: the first chat message is the generation prompt
+  // Chat-driven creation: the first chat message dispatches a background job
+  // (hooks/useJobWatcher.ts, mounted below, applies the result once it's done)
+  // instead of running the agent pipeline in this tab.
   const handleFirstPrompt = async (text: string) => {
     if (!checkGuestLimit()) return;
-    setLocalTopic(text);
     setTopic(text.length > 80 ? text.slice(0, 77) + '…' : text);
-    await runAgentWorkflow(text);
+
+    const state = useCarouselStore.getState();
+    const { userApiKey, apiKeyProvider } = useAuthStore.getState();
+
+    const { jobId } = await createJob({
+      type: 'create',
+      payload: {
+        topic: text,
+        inputMode: state.inputMode,
+        sourceContent: state.sourceContent,
+        customInstructions: state.customInstructions,
+        outputLanguage: state.outputLanguage,
+        slideCount: state.slideCount,
+        selectedModel: state.selectedModel,
+        selectedTemplate: state.selectedTemplate,
+        presetId: state.presetId,
+        brandMode: state.brandMode,
+        brandKit: state.brandKit,
+        signaturePosition: state.signaturePosition,
+        format: state.selectedFormat,
+        selectedPattern: state.selectedPattern,
+        patternOpacity: state.patternOpacity,
+        byok: userApiKey ? { apiKey: userApiKey, provider: apiKeyProvider || 'openrouter' } : null,
+      },
+    });
+
+    useCarouselStore.getState().setActiveJobId(jobId);
+    useCarouselStore.getState().setGenerating(true);
     incrementGuestUsage();
   };
+
+  // Applies background job updates (create + edit) to the live UI — keeps
+  // watching whatever job was last dispatched even as the user switches
+  // carousels or navigates elsewhere in the app.
+  useJobWatcher();
 
   // Helper to get theme for auto-save
   const getTheme = () => {
@@ -301,12 +316,12 @@ const CarouselGenerator: React.FC = () => {
     return { background: '#000000', textColor: '#ffffff', accentColor: '#3b82f6' };
   };
 
-  // Auto-save hook integration
-  const { saveStatus, currentCarouselId: autoSavedId, errorMessage } = useAutoSave({
-    carouselId: editingCarousel?.$id || currentCarouselId,
+  // Auto-save hook integration — reads/writes activeCarouselId in the store
+  // directly, so there's a single source of truth for carousel identity.
+  const { saveStatus, errorMessage } = useAutoSave({
     slides,
     theme: getTheme(),
-    topic: topic || localTopic,
+    topic,
     userId: user?.$id || '',
     templateType: selectedTemplate,
     brandMode,
@@ -318,28 +333,9 @@ const CarouselGenerator: React.FC = () => {
     patternOpacity,
   });
 
-  // Watch auto-saved ID and update local state
-  useEffect(() => {
-    if (autoSavedId && autoSavedId !== currentCarouselId) {
-      console.log('[App] Carousel auto-saved with ID:', autoSavedId);
-      setCurrentCarouselId(autoSavedId);
-    }
-  }, [autoSavedId]);
-
-  // Persist the conversation alongside the carousel (debounced, fire-and-forget)
-  const chatMessages = useCarouselStore(s => s.chatMessages);
-  const chatSummary = useCarouselStore(s => s.chatSummary);
-  const chatSummarizedUpTo = useCarouselStore(s => s.chatSummarizedUpTo);
-  useEffect(() => {
-    const carouselId = editingCarousel?.$id || currentCarouselId;
-    if (!carouselId || !user?.$id || chatMessages.length === 0) return;
-    if (chatMessages.some(m => m.running)) return; // wait for turns to finish
-
-    const t = setTimeout(() => {
-      saveChat(carouselId, user.$id, chatMessages, chatSummary, chatSummarizedUpTo);
-    }, 1200);
-    return () => clearTimeout(t);
-  }, [chatMessages, chatSummary, chatSummarizedUpTo, editingCarousel?.$id, currentCarouselId, user?.$id]);
+  // Conversation persistence is owned by the worker now — it saves chat_history
+  // as part of every create/edit job (see worker/chatStoreServer.ts), so there's
+  // a single writer instead of racing with a separate client-side autosave.
 
   const handleDownload = async () => {
     // Export current/selected slide as JPG
@@ -374,25 +370,12 @@ const CarouselGenerator: React.FC = () => {
   };
 
   const handleDownloadAllPdf = async () => {
-    // Track if we need to switch back to focus view
-    const wasInFocusMode = viewMode === 'focus';
     let currentToastId: string | null = null;
 
     // Require auth for downloading PDF
     if (!requireAuth('Sign up to download PDF')) return;
 
     try {
-      // If in focus mode, switch to grid view first
-      if (wasInFocusMode) {
-        currentToastId = showToast('Switching to grid view for export...', 'info', 0); // Persistent toast
-        setViewMode('grid');
-        // Wait for DOM to update and render all slides
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        // Remove view switch toast
-        if (currentToastId) removeToast(currentToastId);
-      }
-
       // Directly query all slide preview containers
       const slideContainers = document.querySelectorAll('.svg-preview-container');
 
@@ -437,25 +420,21 @@ const CarouselGenerator: React.FC = () => {
       showToast('Failed to export PDF. Please try again.', 'error', 5000);
     } finally {
       setIsExportingPdf(false);
-
-      // Switch back to focus mode if we auto-switched
-      if (wasInFocusMode) {
-        const switchBackToastId = showToast('Switching back to focus view...', 'info', 0);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        setViewMode('focus');
-        removeToast(switchBackToastId);
-      }
     }
   };
 
   const handleNewCarousel = () => {
     // Clear edit mode and start fresh
     setEditingCarousel(null);
-    setCurrentCarouselId(null);
-    setLocalTopic('');
+    setActiveCarouselId(null);
     setTopic('');
     setSlides([]);
     useCarouselStore.getState().clearChat();
+    // Detach from whatever job the carousel we're leaving was watching —
+    // it keeps generating in the background regardless (see handleLoadCarousel).
+    useCarouselStore.getState().setActiveJobId(null);
+    useCarouselStore.getState().setGenerating(false);
+    useCarouselStore.getState().setError(null);
   };
 
   // Brand Editor Panel handlers
@@ -493,12 +472,11 @@ const CarouselGenerator: React.FC = () => {
       />
 
       {/* History + Chat + Artifact split (chat is the control plane, the carousel is the hero) */}
-      <main className="pt-16 h-screen flex bg-neutral-950">
+      <main className="pt-12 h-screen flex bg-neutral-950">
         <CarouselHistorySidebar
           isOpen={historyOpen}
           onToggle={() => setHistoryOpen(o => !o)}
           userId={user?.$id ?? null}
-          currentCarouselId={editingCarousel?.$id || currentCarouselId}
           saveStatus={saveStatus}
           onSelectCarousel={handleLoadCarousel}
           onNewCarousel={handleNewCarousel}

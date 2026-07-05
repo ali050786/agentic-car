@@ -8,10 +8,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useCarouselStore } from '../../store/useCarouselStore';
-import { OrchestratorAgent } from '../../core/agents/OrchestratorAgent';
+import { useAuthStore } from '../../store/useAuthStore';
 import { MemoryAgent } from '../../core/agents/MemoryAgent';
-import { generateDoodleWithRetry } from '../../utils/doodleGenerator';
-import { getUserMemory, rememberUserPreference } from '../../services/memoryService';
+import { createJob } from '../../services/jobService';
 import { FreeLimitError } from '../../services/aiService';
 import { detectInputMode } from '../../utils/inputDetector';
 import { fetchYouTubeContent, fetchUrlContent, extractDomain } from '../../utils/contentProcessor';
@@ -56,19 +55,19 @@ const nextId = () => `msg-${Date.now()}-${msgSeq++}`;
 export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKeyModal }) => {
     const {
         chatMessages, addChatMessage, updateChatMessage,
-        slides, isGenerating, generationStatus, error,
+        slides, isGenerating, generationStatus, error, theme,
         selectedSlideIndex, setSelectedSlideIndex,
         selectedTemplate, setTemplate,
         slideCount, setSlideCount,
         customInstructions, setCustomInstructions,
         outputLanguage, setOutputLanguage,
         selectedModel, setModel,
-        setSlides, topic,
+        topic, activeCarouselId,
+        setActiveJobId, setGenerating,
     } = useCarouselStore();
 
     const [draft, setDraft] = useState('');
     const [showTuning, setShowTuning] = useState(false);
-    const [isRefining, setIsRefining] = useState(false);
     const [attachedFile, setAttachedFile] = useState<{ name: string; content: string; truncated: boolean; originalLength: number } | null>(null);
     const [isAttaching, setIsAttaching] = useState(false);
     const [attachError, setAttachError] = useState<string | null>(null);
@@ -77,7 +76,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const hasSlides = slides.length > 0;
-    const busy = isGenerating || isRefining;
+    const busy = isGenerating;
     const activeTone = TONE_OPTIONS.find(t => t.value === customInstructions)?.id || null;
 
     // Stream agent statuses into the active run's event timeline
@@ -93,25 +92,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
         updateChatMessage(id, { events: done });
     }, [generationStatus, isGenerating]);
 
-    // Finalize the run message when generation ends
+    // Clear the local run ref once the tracked job resolves — hooks/useJobWatcher.ts
+    // (mounted at the app root) is what actually finalizes the chat message, since
+    // it's the one that knows the job's result; this just stops this effect's
+    // status-tick streaming above from running past the end of the run.
     useEffect(() => {
-        if (isGenerating || !runMessageId.current) return;
-        const id = runMessageId.current;
-        runMessageId.current = null;
-        const state = useCarouselStore.getState();
-        const msg = state.chatMessages.find(m => m.id === id);
-        if (!msg) return;
-        const events = (msg.events || []).map(e => ({ ...e, done: true }));
-        if (state.error) {
-            updateChatMessage(id, { running: false, error: true, events, text: state.error });
-        } else if (state.slides.length > 0) {
-            updateChatMessage(id, {
-                running: false, events,
-                text: `Done — ${state.slides.length} slides. Tell me what to refine: a slide, the tone, or the whole angle.`
-            });
-        } else {
-            updateChatMessage(id, { running: false, error: true, events, text: 'Something went wrong — try sending your prompt again.' });
-        }
+        if (!isGenerating) runMessageId.current = null;
     }, [isGenerating]);
 
     // Keep the newest message in view
@@ -198,9 +184,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
             return;
         }
 
-        // Conversational turn: the orchestrator classifies intent and routes
-        setIsRefining(true);
+        // Conversational turn: dispatch an edit job to the background worker.
+        // hooks/useJobWatcher.ts (mounted at the app root) applies the result —
+        // slide patches, design actions, or a new sketch — once it resolves,
+        // which is what lets this keep running if the user navigates away.
         const runId = nextId();
+        runMessageId.current = runId;
         const state = useCarouselStore.getState();
         const scope = state.selectedSlideIndex;
         addChatMessage({
@@ -208,54 +197,22 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
             events: [{ label: 'Thinking...', done: false }]
         });
         try {
-            const result = await OrchestratorAgent.handle({
-                message: text,
-                slides: state.slides,
-                templateId: state.selectedTemplate,
-                selectedSlideIndex: scope,
-                recentMessages: state.chatMessages.filter(m => !m.running),
-                conversationSummary: state.chatSummary,
-                userMemory: getUserMemory(),
+            const { userApiKey, apiKeyProvider } = useAuthStore.getState();
+            const { jobId } = await createJob({
+                type: 'edit',
+                carouselId: activeCarouselId,
+                payload: {
+                    message: text,
+                    slides: state.slides,
+                    theme: state.theme,
+                    templateId: state.selectedTemplate,
+                    selectedSlideIndex: scope,
+                    selectedModel: state.selectedModel,
+                    byok: userApiKey ? { apiKey: userApiKey, provider: apiKeyProvider || 'openrouter' } : null,
+                },
             });
-
-            const events: { label: string; done: boolean }[] = [];
-
-            if (result.intent === 'copy' && result.slides) {
-                setSlides(result.slides);
-                events.push({ label: `Edited slide${result.changedIndices.length > 1 ? 's' : ''} ${result.changedIndices.map(i => i + 1).join(', ')}`, done: true });
-            } else if (result.intent === 'design' && result.designActions.length > 0) {
-                const s = useCarouselStore.getState();
-                for (const act of result.designActions) {
-                    switch (act.action) {
-                        case 'set_template': s.setTemplate(act.value as any); break;
-                        case 'set_format': s.setFormat(act.value as any); break;
-                        case 'set_preset': s.setPresetId(act.value); s.setBrandMode('preset'); break;
-                        case 'set_pattern': s.setPattern(parseInt(act.value, 10) || 1); break;
-                        case 'set_signature_position': s.setSignaturePosition(act.value as any); break;
-                    }
-                    events.push({ label: `${act.action.replace(/_/g, ' ')} → ${act.value}`, done: true });
-                }
-            } else if (result.intent === 'image' && result.imageBrief !== null && result.imageSlideIndex !== null) {
-                const idx = result.imageSlideIndex;
-                updateChatMessage(runId, {
-                    running: true,
-                    events: [{ label: `Sketching a new image for slide ${idx + 1}...`, done: false }]
-                });
-                const { url, prompt } = await generateDoodleWithRetry(result.imageBrief);
-                useCarouselStore.getState().updateSlide(idx, { doodleUrl: url, doodlePrompt: prompt });
-                events.push({ label: `New sketch on slide ${idx + 1}`, done: true });
-            }
-
-            updateChatMessage(runId, { running: false, events, text: result.reply });
-
-            // Long-term memory: extracted in the same call, persisted quietly
-            if (result.memoryNote) {
-                const summary = useCarouselStore.getState().chatSummary;
-                useCarouselStore.getState().setChatSummary(
-                    summary ? `${summary}\n- ${result.memoryNote}` : `- ${result.memoryNote}`
-                );
-                rememberUserPreference(result.memoryNote);
-            }
+            setActiveJobId(jobId);
+            setGenerating(true);
 
             // Fold older messages into the rolling summary once the raw-history
             // window the orchestrator sees would otherwise start losing them.
@@ -276,14 +233,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
                 }
             }
         } catch (e: any) {
+            runMessageId.current = null;
             if (e instanceof FreeLimitError) {
                 updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free generations used up. Add your own API key to continue.' });
                 onOpenApiKeyModal();
             } else {
                 updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
             }
-        } finally {
-            setIsRefining(false);
         }
     };
 

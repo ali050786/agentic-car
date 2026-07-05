@@ -8,7 +8,7 @@
  */
 
 import { create } from 'zustand';
-import { CarouselState, SlideContent, CarouselTheme, TemplateId, CarouselFormat, BrandKit, BrandMode, SignaturePosition, ViewMode } from '../types';
+import { CarouselState, SlideContent, CarouselTheme, TemplateId, CarouselFormat, BrandKit, BrandMode, SignaturePosition } from '../types';
 
 // ============================================================================
 // DEFAULT VALUES
@@ -54,6 +54,8 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     chatMessages: [],
     chatSummary: '',
     chatSummarizedUpTo: 0,
+    activeCarouselId: null,
+    activeJobId: null,
     error: null,
 
     // Multi-modal input state
@@ -75,10 +77,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
 
     // UI state
     selectedSlideIndex: null,
-    bottomToolExpanded: null,
     rightPanelOpen: false,
-    viewMode: 'focus',
-    isMobileMenuOpen: false,
 
     // Getter for activePresetId (for backward compatibility)
     get activePresetId() {
@@ -99,15 +98,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
 
     setSelectedSlideIndex: (selectedSlideIndex: number | null) => set({ selectedSlideIndex }),
 
-    setBottomToolExpanded: (bottomToolExpanded: string | null) => set({ bottomToolExpanded }),
-
     setRightPanelOpen: (rightPanelOpen: boolean) => set({ rightPanelOpen }),
-
-    setViewMode: (viewMode: ViewMode) => set({ viewMode }),
-
-    toggleMobileMenu: () => set(state => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
-
-    setMobileMenuOpen: (isOpen: boolean) => set({ isMobileMenuOpen: isOpen }),
 
     setTemplate: (selectedTemplate: TemplateId) => set({ selectedTemplate }),
 
@@ -136,6 +127,8 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     setChatMessages: (chatMessages) => set({ chatMessages }),
     setChatSummary: (chatSummary) => set({ chatSummary }),
     setChatSummarizedUpTo: (chatSummarizedUpTo) => set({ chatSummarizedUpTo }),
+    setActiveCarouselId: (activeCarouselId) => set({ activeCarouselId }),
+    setActiveJobId: (activeJobId) => set({ activeJobId }),
 
     setPendingDoodleSlides: (indices: number[]) => set({ pendingDoodleSlides: indices }),
     removePendingDoodleSlide: (index: number) => set(state => ({
@@ -223,6 +216,8 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
             chatMessages: [],
             chatSummary: '',
             chatSummarizedUpTo: 0,
+            activeCarouselId: null,
+            activeJobId: null,
             error: null,
             inputMode: 'topic',
             slideCount: 10,
@@ -236,10 +231,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
             generationStatus: 'Initializing...',
             generationProgress: 0,
             selectedSlideIndex: null,
-            bottomToolExpanded: null,
             rightPanelOpen: false,
-            viewMode: 'focus',
-            isMobileMenuOpen: false,
         });
     },
 

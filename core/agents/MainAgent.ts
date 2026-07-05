@@ -12,6 +12,8 @@ import { getPresetById } from '../../config/colorPresets';
 import { findMatchingImage } from '../../utils/imageMatcher';
 import { getUserMemory } from '../../services/memoryService';
 import { polishSlides } from '../../utils/contentPolish';
+import type { AgentContext } from './agentContext';
+export type { AgentContext } from './agentContext';
 
 /**
  * Replicate throttles low-credit accounts hard (as low as 1 request burst),
@@ -38,17 +40,6 @@ const generateImageWithRetry = async (
     }
   }
 };
-
-// Context object for AI agents
-export interface AgentContext {
-  inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf';
-  sourceContent: string;
-  customInstructions?: string;
-  outputLanguage: string;
-  slideCount: number;
-  viralAngle?: string; // New field for the Strategist's output
-  userMemory?: string[]; // Durable cross-carousel preferences (memoryService)
-}
 
 export const runAgentWorkflow = async (topic: string) => {
   const store = useCarouselStore.getState();

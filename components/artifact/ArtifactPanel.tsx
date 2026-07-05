@@ -6,7 +6,8 @@
  * scopes the chat ("editing slide N") and enables slide-level actions.
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { injectContentIntoSvg } from '../../utils/svgInjector';
@@ -29,12 +30,35 @@ interface ArtifactPanelProps {
 }
 
 export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor, onShowToast }) => {
+    // Shallow-compared selector: re-renders only when one of these fields
+    // actually changes, not on every unrelated store update (e.g. chat
+    // messages/generation status ticking during a turn) — those used to
+    // trigger a full SVG re-templating of the stage + every thumbnail below.
     const {
         slides, theme, topic, selectedTemplate, selectedFormat, selectedPattern,
         patternOpacity, patternScale, patternSpacing, brandKit, signaturePosition,
         selectedSlideIndex, setSelectedSlideIndex, setRightPanelOpen,
         isGenerating, generationStatus, generationProgress, pendingDoodleSlides,
-    } = useCarouselStore();
+    } = useCarouselStore(useShallow(s => ({
+        slides: s.slides,
+        theme: s.theme,
+        topic: s.topic,
+        selectedTemplate: s.selectedTemplate,
+        selectedFormat: s.selectedFormat,
+        selectedPattern: s.selectedPattern,
+        patternOpacity: s.patternOpacity,
+        patternScale: s.patternScale,
+        patternSpacing: s.patternSpacing,
+        brandKit: s.brandKit,
+        signaturePosition: s.signaturePosition,
+        selectedSlideIndex: s.selectedSlideIndex,
+        setSelectedSlideIndex: s.setSelectedSlideIndex,
+        setRightPanelOpen: s.setRightPanelOpen,
+        isGenerating: s.isGenerating,
+        generationStatus: s.generationStatus,
+        generationProgress: s.generationProgress,
+        pendingDoodleSlides: s.pendingDoodleSlides,
+    })));
     const { globalBrandKit } = useAuthStore();
 
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -44,7 +68,24 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     const currentIndex = selectedSlideIndex !== null && selectedSlideIndex < slides.length ? selectedSlideIndex : 0;
     const currentSlide = slides[currentIndex];
 
-    const effectiveBranding = { enabled: true, ...brandKit.identity, position: signaturePosition };
+    // Object literal — memoized so it's a stable dependency for the SVG
+    // useMemo calls below instead of invalidating them on every render.
+    const effectiveBranding = useMemo(
+        () => ({ enabled: true, ...brandKit.identity, position: signaturePosition }),
+        [brandKit, signaturePosition]
+    );
+
+    // injectContentIntoSvg builds a full SVG markup string — real work, not
+    // worth redoing on renders where none of these inputs changed.
+    const stageSvg = useMemo(() => {
+        if (!currentSlide) return '';
+        return injectContentIntoSvg(selectedTemplate, currentSlide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `stage-${currentIndex}`);
+    }, [selectedTemplate, currentSlide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, currentIndex]);
+
+    const thumbSvgs = useMemo(
+        () => slides.map((slide, i) => injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `thumb-${i}`)),
+        [slides, selectedTemplate, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing]
+    );
 
     const withBusy = async (name: string, fn: () => Promise<void>) => {
         setBusyAction(name);
@@ -96,8 +137,6 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         );
     }
 
-    const stageSvg = injectContentIntoSvg(selectedTemplate, currentSlide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `stage-${currentIndex}`);
-
     return (
         <div className="flex-1 h-full flex flex-col bg-neutral-950 relative min-w-0">
             <style>{`
@@ -109,8 +148,8 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/10">
                 <span className="text-sm font-medium text-white truncate flex-1">{topic || 'Untitled carousel'}</span>
                 <button
-                    onClick={() => setSettingsOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/15 text-xs text-neutral-300 hover:border-white/30 hover:text-white transition-colors"
+                    onClick={() => setSettingsOpen(!settingsOpen)}
+                    className="settings-trigger-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/15 text-xs text-neutral-300 hover:border-white/30 hover:text-white transition-colors"
                 >
                     <Settings2 size={12} />
                     {TEMPLATE_NAMES[selectedTemplate] || selectedTemplate} · {selectedFormat === 'square' ? '1:1' : '4:5'}
@@ -163,7 +202,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
             {/* Thumbnail strip */}
             <div className="flex items-center gap-2 px-4 py-3 border-t border-white/10 overflow-x-auto">
                 {slides.map((slide, i) => {
-                    const thumbSvg = injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `thumb-${i}`);
+                    const thumbSvg = thumbSvgs[i];
                     const isActive = i === currentIndex && selectedSlideIndex !== null;
                     const isShown = i === currentIndex;
                     return (

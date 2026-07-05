@@ -1,0 +1,18 @@
+# Background worker (worker/) — a persistent Node process, unlike the
+# stateless Vercel functions under api/. Deployed separately on Coolify.
+# See docs/coolify-deployment.md.
+FROM node:20-slim
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+# Full install (not --omit=dev): tsx (which runs worker/index.ts directly,
+# no build step) lives in devDependencies.
+RUN npm ci || npm install
+
+COPY . .
+
+ENV NODE_ENV=production
+EXPOSE 4000
+
+CMD ["npx", "tsx", "worker/index.ts"]

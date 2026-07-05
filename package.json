@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "server": "tsx watch server.ts",
+    "worker": "tsx watch worker/index.ts",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -30,6 +31,7 @@
     "lucide-react": "^0.555.0",
     "lucide-static": "^0.561.0",
     "mammoth": "^1.11.0",
+    "node-appwrite": "^14.2.0",
     "pdfjs-dist": "^5.4.449",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

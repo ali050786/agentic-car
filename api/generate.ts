@@ -1,45 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { generateContent } from '../core/llm/generateContent';
 
 // Free tier limit - inlined to avoid module resolution issues in Vercel
 const FREE_TIER_LIMIT = 10;
-
-// Helper to extract JSON from markdown code blocks
-const cleanJsonResponse = (text: string): string => {
-    // 1. Try to match markdown code blocks first
-    const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
-    if (jsonMatch) {
-        return jsonMatch[1];
-    }
-
-    // 2. Try to find the first '{' and last '}'
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if (start !== -1 && end !== -1 && end > start) {
-        return text.substring(start, end + 1);
-    }
-
-    // 3. Return as-is if no structure found (fallback)
-    return text.trim();
-};
-
-/**
- * Cleans a model response and logs a diagnostic (finish_reason / JSON validity
- * / truncation) so failures are visible in Vercel logs.
- */
-const cleanAndDiagnose = (choice: any, model: string, label: string): string => {
-    const content = choice?.message?.content ?? choice?.content ?? '';
-    const finishReason = choice?.finish_reason ?? choice?.native_finish_reason ?? 'unknown';
-    const cleaned = cleanJsonResponse(content || '{"slides":[]}');
-    let parseError = '';
-    try { JSON.parse(cleaned); } catch (e: any) { parseError = e?.message || 'parse failed'; }
-    const truncated = finishReason === 'length';
-    if (truncated || parseError) {
-        console.error(`[Vercel API] ⚠️ MODEL RESPONSE PROBLEM (${label}, ${model}): finishReason=${finishReason}, truncated=${truncated}, validJson=${!parseError}, rawLen=${(content || '').length}`);
-        if (truncated) console.error('[Vercel API]    → hit token limit; raise max_tokens or shrink the request');
-        if (parseError) console.error('[Vercel API]    → invalid JSON, first 300 chars:', cleaned.slice(0, 300));
-    }
-    return cleaned;
-};
 
 /**
  * Vercel Serverless Function: AI Model Proxy
@@ -57,308 +20,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { prompt, responseSchema, selectedModel } = req.body;
+        const { prompt, selectedModel } = req.body;
 
         // Parse headers for hybrid auth
         const userApiKey = req.headers['x-api-key'] as string | undefined;
         const userId = req.headers['x-user-id'] as string | undefined;
         const apiProvider = (req.headers['x-api-provider'] as string) || 'openrouter';
 
-        let result: any;
-        let usingSystemKey = false;
-
         // BRANCH A: BYOK - User provided their own API key
         if (userApiKey) {
-            console.log('[Vercel API] Using user-provided API key (BYOK)');
-            console.log('[Vercel API] Provider:', apiProvider);
-            console.log('[Vercel API] Selected model:', selectedModel);
-
-            const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. ERROR HANDLING: You MUST respond with ONLY valid JSON. Do NOT include any conversational filler like "Alright" or "Here is the JSON". Do NOT wrap the output in markdown code blocks if possible, but pure JSON string is best. START YOUR RESPONSE WITH { AND END WITH }.';
-
-            // Route to correct API based on provider
-            if (apiProvider === 'openrouter') {
-                // OpenRouter - supports all models
-                const model =
-                    selectedModel === 'gpt-oss-120b' ? 'openai/gpt-oss-120b:free' :
-                    selectedModel === 'deepseek-r1t' ? 'openai/gpt-oss-120b:free' :
-                        selectedModel === 'claude-haiku-openrouter' ? 'anthropic/claude-3.5-haiku' :
-                            selectedModel === 'claude-sonnet-openrouter' ? 'anthropic/claude-3.5-sonnet' :
-                                selectedModel === 'gemini-2.5-flash' ? 'google/gemini-2.5-flash' :
-                                    selectedModel === 'gemini-2.0-flash-exp' ? 'google/gemini-2.0-flash-exp:free' :
-                                        selectedModel === 'grok-4.1-fast' ? 'x-ai/grok-4.1-fast' :
-                                            selectedModel === 'gpt-4o' ? 'openai/gpt-4o' :
-                                                selectedModel === 'gpt-4-turbo' ? 'openai/gpt-4-turbo' :
-                                                    selectedModel === 'claude-sonnet' ? 'anthropic/claude-3.5-sonnet' :
-                                                        selectedModel === 'claude-haiku' ? 'anthropic/claude-3.5-haiku' :
-                                                            'openai/gpt-oss-120b:free';
-
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${userApiKey}`,
-                        'HTTP-Referer': 'https://agentic-carousel.vercel.app',
-                        'X-Title': 'Agentic Carousel Generator',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model,
-                        messages: [
-                            { role: 'system', content: systemPrompt },
-                            { role: 'user', content: prompt }
-                        ],
-                        temperature: 0.2,
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('[Vercel API] OpenRouter error:', errorText);
-                    throw new Error(`OpenRouter API error: ${errorText}`);
-                }
-
-                const data = await response.json();
-                result = cleanJsonResponse(data.choices[0]?.message?.content || '{"slides":[]}');
-
-            } else if (apiProvider === 'openai') {
-                // OpenAI API - only GPT models
-                const model =
-                    selectedModel === 'gpt-4o' ? 'gpt-4o' :
-                        selectedModel === 'gpt-4-turbo' ? 'gpt-4-turbo-preview' :
-                            'gpt-4o'; // Default
-
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${userApiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model,
-                        messages: [
-                            { role: 'system', content: systemPrompt },
-                            { role: 'user', content: prompt }
-                        ],
-                        temperature: 0.2,
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('[Vercel API] OpenAI error:', errorText);
-                    throw new Error(`OpenAI API error: ${errorText}`);
-                }
-
-                const data = await response.json();
-                result = cleanJsonResponse(data.choices[0]?.message?.content || '{"slides":[]}');
-
-            } else if (apiProvider === 'anthropic') {
-                // Anthropic API - only Claude models
-                const model =
-                    selectedModel === 'claude-sonnet' ? 'claude-sonnet-4-5-20250929' :
-                        selectedModel === 'claude-haiku' ? 'claude-3-5-haiku-20241022' :
-                            'claude-3-5-haiku-20241022'; // Default
-
-                const response = await fetch('https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: {
-                        'x-api-key': userApiKey,
-                        'anthropic-version': '2023-06-01',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model,
-                        max_tokens: 4096,
-                        messages: [
-                            { role: 'user', content: `${systemPrompt}\n\n${prompt}` }
-                        ],
-                        temperature: 0.2,
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('[Vercel API] Anthropic error:', errorText);
-                    throw new Error(`Anthropic API error: ${errorText}`);
-                }
-
-                const data = await response.json();
-                result = cleanJsonResponse(data.content[0]?.text || '{"slides":[]}');
-
-            } else {
-                throw new Error(`Unsupported API provider: ${apiProvider}`);
-            }
-        } else {
-            // BRANCH B: FREE TIER - No user key provided
-            console.log('[Vercel API] No user API key, using free tier');
-
-            if (!userId) {
-                return res.status(403).json({
-                    error: 'MISSING_USER_ID',
-                    message: 'User ID is required for free tier usage'
-                });
-            }
-
-            // Get usage count from client (sent via header to avoid server-side Appwrite auth)
-            const usageCountHeader = req.headers['x-usage-count'] as string | undefined;
-            const usageCount = usageCountHeader ? parseInt(usageCountHeader, 10) : 0;
-
-            if (usageCount >= FREE_TIER_LIMIT) {
-                console.log(`[Vercel API] User ${userId} has exhausted free tier (${usageCount}/${FREE_TIER_LIMIT})`);
-                return res.status(403).json({
-                    error: 'FREE_LIMIT_REACHED',
-                    message: 'Free trial exhausted. Please add your API key to continue.',
-                    usageCount: usageCount
-                });
-            }
-
-            // Use system keys for free tier
-            console.log(`[Vercel API] Using free tier for user ${userId} (${usageCount}/${FREE_TIER_LIMIT})`);
-            usingSystemKey = true;
-
-            const systemPrompt = 'You are a specialized content agent for LinkedIn carousels. ERROR HANDLING: You MUST respond with ONLY valid JSON. Do NOT include any conversational filler like "Alright" or "Here is the JSON". Do NOT wrap the output in markdown code blocks if possible, but pure JSON string is best. START YOUR RESPONSE WITH { AND END WITH }.';
-
-            // Free tier: Route based on selected model
-            if (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet' || selectedModel === 'claude-haiku-openrouter' || selectedModel === 'claude-sonnet-openrouter') {
-                // Try direct Anthropic first if key available
-                const anthropicKey = process.env.CLAUDE_API_KEY;
-
-                if (anthropicKey && (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet')) {
-                    console.log(`[Vercel API] Using system Anthropic API for ${selectedModel}`);
-                    const model = selectedModel === 'claude-sonnet' ? 'claude-sonnet-4-5-20250929' : 'claude-haiku-4-5-20251001';
-
-                    const response = await fetch('https://api.anthropic.com/v1/messages', {
-                        method: 'POST',
-                        headers: {
-                            'x-api-key': anthropicKey,
-                            'anthropic-version': '2023-06-01',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            model,
-                            max_tokens: 4096,
-                            messages: [
-                                { role: 'user', content: `${systemPrompt}\n\n${prompt}` }
-                            ],
-                            temperature: 0.2,
-                        })
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        result = cleanJsonResponse(data.content[0]?.text || '{"slides":[]}');
-                    } else {
-                        const errorText = await response.text();
-                        console.error('[Vercel API] Anthropic error fallback:', errorText);
-                        // Fall back to OpenRouter below
-                    }
-                }
-
-                if (!result) {
-                    // Use system OpenRouter API for Claude models
-                    const openrouterKey = process.env.OPENROUTER_API_KEY || '';
-                    if (!openrouterKey) {
-                        console.error('[Vercel API] Missing OPENROUTER_API_KEY for free tier');
-                        return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY for free tier' });
-                    }
-
-                    const freeModel = (selectedModel === 'claude-haiku-openrouter' || selectedModel === 'claude-haiku')
-                        ? 'anthropic/claude-3.5-haiku'
-                        : 'anthropic/claude-3.5-sonnet';
-
-                    console.log(`[Vercel API] Using system OpenRouter API for ${selectedModel} (model: ${freeModel})`);
-
-                    const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${openrouterKey}`,
-                            'HTTP-Referer': 'https://agentic-carousel.vercel.app',
-                            'X-Title': 'Agentic Carousel Generator',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            model: freeModel,
-                            messages: [
-                                { role: 'system', content: systemPrompt },
-                                { role: 'user', content: prompt }
-                            ],
-                            temperature: 0.2,
-                        })
-                    });
-
-                    if (!openrouterResponse.ok) {
-                        const errorText = await openrouterResponse.text();
-                        console.error('[Vercel API] OpenRouter API error:', errorText);
-                        throw new Error(`OpenRouter API error: ${errorText}`);
-                    }
-
-                    const openrouterData = await openrouterResponse.json();
-                    result = cleanJsonResponse(openrouterData.choices[0]?.message?.content || '{"slides":[]}');
-                }
-
-            } else {
-                // Use system OpenRouter API for free tier (Default)
-                const openrouterKey = process.env.OPENROUTER_API_KEY || '';
-                if (!openrouterKey) {
-                    console.error('[Vercel API] Missing OPENROUTER_API_KEY for free tier');
-                    return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY for free tier' });
-                }
-
-                // Free OpenRouter endpoints are frequently rate-limited upstream,
-                // so try each model in order until one responds
-                const freeModels = [
-                    'openai/gpt-oss-120b:free',
-                    'openai/gpt-oss-20b:free',
-                    'meta-llama/llama-3.3-70b-instruct:free',
-                    'qwen/qwen3-next-80b-a3b-instruct:free',
-                ];
-
-                let lastError = '';
-                for (const freeModel of freeModels) {
-                    console.log(`[Vercel API] Using system OpenRouter API for ${selectedModel || 'default'} (model: ${freeModel})`);
-
-                    const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${openrouterKey}`,
-                            'HTTP-Referer': 'https://agentic-carousel.vercel.app',
-                            'X-Title': 'Agentic Carousel Generator',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            model: freeModel,
-                            messages: [
-                                { role: 'system', content: systemPrompt },
-                                { role: 'user', content: prompt }
-                            ],
-                            temperature: 0.2,
-                            max_tokens: 8000,
-                        })
-                    });
-
-                    if (openrouterResponse.ok) {
-                        const openrouterData = await openrouterResponse.json();
-                        const content = openrouterData.choices[0]?.message?.content;
-                        if (content) {
-                            result = cleanAndDiagnose(openrouterData.choices[0], freeModel, 'free-tier default');
-                            break;
-                        }
-                        lastError = `Empty response from ${freeModel}`;
-                        console.error('[Vercel API]', lastError);
-                    } else {
-                        lastError = await openrouterResponse.text();
-                        console.error(`[Vercel API] OpenRouter error for ${freeModel}, trying next:`, lastError);
-                    }
-                }
-
-                if (!result) {
-                    throw new Error(`OpenRouter API error: ${lastError}`);
-                }
-            }
-
-            // Note: Usage count increment happens on client side after successful response
+            const result = await generateContent({
+                prompt,
+                selectedModel,
+                byok: { apiKey: userApiKey, provider: apiProvider },
+            });
+            return res.status(200).json(result);
         }
 
-        return res.status(200).json(JSON.parse(result));
+        // BRANCH B: FREE TIER - No user key provided
+        console.log('[Vercel API] No user API key, using free tier');
+
+        if (!userId) {
+            return res.status(403).json({
+                error: 'MISSING_USER_ID',
+                message: 'User ID is required for free tier usage'
+            });
+        }
+
+        // Get usage count from client (sent via header to avoid server-side Appwrite auth)
+        const usageCountHeader = req.headers['x-usage-count'] as string | undefined;
+        const usageCount = usageCountHeader ? parseInt(usageCountHeader, 10) : 0;
+
+        if (usageCount >= FREE_TIER_LIMIT) {
+            console.log(`[Vercel API] User ${userId} has exhausted free tier (${usageCount}/${FREE_TIER_LIMIT})`);
+            return res.status(403).json({
+                error: 'FREE_LIMIT_REACHED',
+                message: 'Free trial exhausted. Please add your API key to continue.',
+                usageCount: usageCount
+            });
+        }
+
+        console.log(`[Vercel API] Using free tier for user ${userId} (${usageCount}/${FREE_TIER_LIMIT})`);
+        const result = await generateContent({
+            prompt,
+            selectedModel,
+            byok: null,
+            systemKeys: {
+                anthropic: process.env.CLAUDE_API_KEY,
+                openrouter: process.env.OPENROUTER_API_KEY,
+            },
+        });
+
+        // Note: Usage count increment happens on client side after successful response
+        return res.status(200).json(result);
     } catch (e: any) {
         console.error('[Vercel API] Error:', e);
         return res.status(500).json({

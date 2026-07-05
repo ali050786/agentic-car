@@ -3,7 +3,6 @@ export type SlideVariant = 'hero' | 'body' | 'list' | 'cta' | 'closing';  // 'cl
 export type AIModel = 'groq-llama' | 'claude-haiku';
 export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';
 export type CarouselFormat = 'portrait' | 'square';
-export type ViewMode = 'focus' | 'grid';
 
 // ============================================================================
 // BRAND KIT SYSTEM - Unified Branding with Global/Local Inheritance
@@ -159,6 +158,24 @@ export interface CarouselState {
    */
   chatSummarizedUpTo: number;
 
+  /**
+   * The single source of truth for "which carousel document am I pointed at" —
+   * null for an unsaved/new carousel. Read directly by useAutoSave, the
+   * history sidebar, and anything else that needs carousel identity, instead
+   * of being threaded through component props (that split was the root cause
+   * of a duplicate-carousel-creation bug and a carousel-switch race).
+   */
+  activeCarouselId: string | null;
+
+  /**
+   * The background job (generation_jobs doc id) the currently-open carousel
+   * view is watching, or null if nothing is in flight. Set the moment a
+   * create/edit job is dispatched; cleared when it resolves or a different
+   * carousel is loaded. The App-level job watcher uses this to know which
+   * job's updates should be applied to the live UI — see hooks/useJobWatcher.ts.
+   */
+  activeJobId: string | null;
+
   // Multi-modal Input State
   inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf';
   slideCount: number;
@@ -197,10 +214,7 @@ export interface CarouselState {
 
   // UI State for Floating Toolbars
   selectedSlideIndex: number | null;
-  bottomToolExpanded: string | null;
   rightPanelOpen: boolean;
-  viewMode: ViewMode;
-  isMobileMenuOpen: boolean;
 
   // Actions
   setTopic: (topic: string) => void;
@@ -226,6 +240,8 @@ export interface CarouselState {
   setChatMessages: (messages: ChatMessage[]) => void;
   setChatSummary: (summary: string) => void;
   setChatSummarizedUpTo: (index: number) => void;
+  setActiveCarouselId: (id: string | null) => void;
+  setActiveJobId: (id: string | null) => void;
 
   // Multi-modal Input Actions
   setInputMode: (inputMode: 'topic' | 'text' | 'url' | 'video' | 'pdf') => void;
@@ -266,11 +282,7 @@ export interface CarouselState {
 
   // UI Actions
   setSelectedSlideIndex: (index: number | null) => void;
-  setBottomToolExpanded: (tool: string | null) => void;
   setRightPanelOpen: (open: boolean) => void;
-  setViewMode: (mode: ViewMode) => void;
-  toggleMobileMenu: () => void;
-  setMobileMenuOpen: (isOpen: boolean) => void;
   reset: () => void;
 }
 

@@ -13,14 +13,15 @@ import {
 } from '../../services/carouselService';
 import { injectContentIntoSvg } from '../../utils/svgInjector';
 import { dbToAppTemplate } from '../../utils/templateConverter';
+import { useCarouselStore } from '../../store/useCarouselStore';
 import type { SaveStatus } from '../../hooks/useAutoSave';
-import { Search, Plus, MoreHorizontal, Pencil, Copy, Share2, Trash2, Layers, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { subscribeToUserJobs, markJobSeen, GenerationJob } from '../../services/jobService';
+import { Search, Plus, MoreHorizontal, Pencil, Copy, Share2, Trash2, Layers, PanelLeftClose, PanelLeftOpen, Loader2 } from 'lucide-react';
 
 interface CarouselHistorySidebarProps {
     isOpen: boolean;
     onToggle: () => void;
     userId: string | null;
-    currentCarouselId: string | null;
     saveStatus: SaveStatus;
     onSelectCarousel: (carousel: Carousel) => void;
     onNewCarousel: () => void;
@@ -57,8 +58,11 @@ const relativeTime = (dateStr: string): string => {
 };
 
 export const CarouselHistorySidebar: React.FC<CarouselHistorySidebarProps> = ({
-    isOpen, onToggle, userId, currentCarouselId, saveStatus, onSelectCarousel, onNewCarousel, onShare,
+    isOpen, onToggle, userId, saveStatus, onSelectCarousel, onNewCarousel, onShare,
 }) => {
+    // Single source of truth for carousel identity (see types.ts) — read
+    // directly from the store instead of threading it through as a prop.
+    const currentCarouselId = useCarouselStore(s => s.activeCarouselId);
     const [carousels, setCarousels] = useState<Carousel[]>([]);
     const [loading, setLoading] = useState(false);
     const [query, setQuery] = useState('');
@@ -66,6 +70,11 @@ export const CarouselHistorySidebar: React.FC<CarouselHistorySidebarProps> = ({
     const [renamingId, setRenamingId] = useState<string | null>(null);
     const [renameValue, setRenameValue] = useState('');
     const menuRef = useRef<HTMLDivElement | null>(null);
+
+    // Background job awareness: which carousels have a running/finished-unseen
+    // job, plus brand-new carousels still being generated (no carousel doc yet).
+    const [jobsByCarousel, setJobsByCarousel] = useState<Record<string, GenerationJob>>({});
+    const [pendingJobs, setPendingJobs] = useState<Record<string, GenerationJob>>({});
 
     const load = async () => {
         if (!userId) return;
@@ -86,6 +95,53 @@ export const CarouselHistorySidebar: React.FC<CarouselHistorySidebarProps> = ({
         if (isOpen && saveStatus === 'saved') load();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [saveStatus]);
+
+    // Background job dots — independent of isOpen so the badges are already
+    // correct the moment the rail is expanded, and independent of whichever
+    // carousel is currently open in the editor (see hooks/useJobWatcher.ts).
+    useEffect(() => {
+        if (!userId) return;
+        const unsubscribe = subscribeToUserJobs(userId, (job) => {
+            if (job.type === 'create' && !job.carouselId) {
+                setPendingJobs(prev => {
+                    if (job.status === 'done' || job.status === 'error') {
+                        const { [job.$id]: _drop, ...rest } = prev;
+                        return rest;
+                    }
+                    return { ...prev, [job.$id]: job };
+                });
+                return;
+            }
+
+            const carouselId = job.carouselId;
+            if (!carouselId) return;
+
+            setPendingJobs(prev => {
+                if (!(job.$id in prev)) return prev;
+                const { [job.$id]: _drop, ...rest } = prev;
+                return rest;
+            });
+            setJobsByCarousel(prev => ({ ...prev, [carouselId]: job }));
+
+            // A new carousel just landed, or an edit finished — refresh the list
+            // so it shows up (or so a freshly-generated thumbnail updates).
+            if (job.status === 'done') load();
+        });
+        return unsubscribe;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
+
+    const handleSelectCarousel = (carousel: Carousel) => {
+        const job = jobsByCarousel[carousel.$id];
+        if (job && job.status === 'done' && !job.seen) {
+            markJobSeen(job.$id).catch(() => {});
+            setJobsByCarousel(prev => {
+                const { [carousel.$id]: _drop, ...rest } = prev;
+                return rest;
+            });
+        }
+        onSelectCarousel(carousel);
+    };
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -190,10 +246,30 @@ export const CarouselHistorySidebar: React.FC<CarouselHistorySidebarProps> = ({
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-2 py-3">
+                    {Object.values(pendingJobs).length > 0 && (
+                        <div className="mb-2">
+                            <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-neutral-500">Generating</div>
+                            {Object.values(pendingJobs).map(job => {
+                                let label = 'New carousel';
+                                try { label = JSON.parse(job.payload)?.topic || label; } catch { /* ignore */ }
+                                return (
+                                    <div key={job.$id} className="flex items-center gap-2 px-2 py-1.5 rounded-md text-neutral-400">
+                                        <div className="w-6 h-6 rounded bg-neutral-800 border border-white/10 flex-shrink-0 flex items-center justify-center">
+                                            <Loader2 size={11} className="animate-spin text-blue-400" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-xs truncate">{label}</div>
+                                            <div className="text-[10px] text-neutral-500 truncate">{job.statusMessage || 'Queued...'}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                     {loading && carousels.length === 0 && (
                         <div className="px-2 py-6 text-center text-xs text-neutral-500">Loading…</div>
                     )}
-                    {!loading && filtered.length === 0 && (
+                    {!loading && filtered.length === 0 && Object.values(pendingJobs).length === 0 && (
                         <div className="px-2 py-6 text-center text-xs text-neutral-500">
                             {query ? 'No carousels match your search.' : 'No carousels yet. Start one above.'}
                         </div>
@@ -206,13 +282,16 @@ export const CarouselHistorySidebar: React.FC<CarouselHistorySidebarProps> = ({
                                 const thumb = carousel.slides?.[0]
                                     ? injectContentIntoSvg(dbToAppTemplate(carousel.templateType), carousel.slides[0] as any, carousel.theme)
                                     : '';
+                                const job = jobsByCarousel[carousel.$id];
+                                const jobRunning = job && (job.status === 'queued' || job.status === 'running');
+                                const jobUnseenDone = job && job.status === 'done' && !job.seen;
                                 return (
                                     <div
                                         key={carousel.$id}
                                         className={`group relative flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer ${isActive ? 'bg-blue-500/15' : 'hover:bg-white/5'}`}
-                                        onClick={() => renamingId !== carousel.$id && onSelectCarousel(carousel)}
+                                        onClick={() => renamingId !== carousel.$id && handleSelectCarousel(carousel)}
                                     >
-                                        <div className="w-6 h-6 rounded overflow-hidden bg-neutral-800 border border-white/10 flex-shrink-0 flex items-center justify-center">
+                                        <div className="relative w-6 h-6 rounded overflow-hidden bg-neutral-800 border border-white/10 flex-shrink-0 flex items-center justify-center">
                                             {thumb ? (
                                                 <div
                                                     className="w-full h-full pointer-events-none"
@@ -221,6 +300,17 @@ export const CarouselHistorySidebar: React.FC<CarouselHistorySidebarProps> = ({
                                                 />
                                             ) : (
                                                 <Layers size={11} className="text-neutral-600" />
+                                            )}
+                                            {jobRunning && (
+                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center" title={job.statusMessage}>
+                                                    <Loader2 size={11} className="animate-spin text-blue-300" />
+                                                </div>
+                                            )}
+                                            {jobUnseenDone && (
+                                                <span
+                                                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 border border-neutral-950"
+                                                    title="New changes ready"
+                                                />
                                             )}
                                         </div>
                                         <div className="min-w-0 flex-1">

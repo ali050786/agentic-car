@@ -1,22 +1,18 @@
 /**
- * Chat Service - persistence for the chat-driven editor.
+ * Chat Service - reads the chat-driven editor's conversation history.
  *
- * A conversation belongs to a carousel (the library IS the thread list).
- * Primary store: Appwrite collection `chat_history` (one document per
- * carousel: { userId, messages, summary, summarizedUpTo }). If the collection
- * does not exist yet, everything transparently falls back to localStorage so
- * the feature works before any console setup — create the collection later
- * and syncing goes cross-device with zero code changes.
- *
- * Appwrite setup (optional, for cross-device sync):
- *   Collection id: chat_history
- *   Attributes: userId (string 64), messages (string 1000000), summary (string 5000),
- *               summarizedUpTo (integer, default 0)
- *   Permissions: document-level, users can create/read/update their own
+ * A conversation belongs to a carousel (the library IS the thread list),
+ * stored in Appwrite collection `chat_history` (one document per carousel:
+ * { userId, messages, summary, summarizedUpTo }). The worker is the only
+ * writer (see worker/chatStoreServer.ts) — it saves the conversation as part
+ * of every create/edit job, so there's a single source of truth instead of
+ * the client racing its own save against the worker's. This module only
+ * reads, with a localStorage fallback for carousels that predate the
+ * chat_history collection existing (see scripts/setupGenerationJobsCollection.ts).
  */
 
-import { databases, config, ID } from '../lib/appwriteClient';
-import { Permission, Role, Query } from 'appwrite';
+import { databases, config } from '../lib/appwriteClient';
+import { Query } from 'appwrite';
 import { ChatMessage } from '../types';
 
 const COLLECTION_ID = 'chat_history';
@@ -69,50 +65,4 @@ export const loadChat = async (carouselId: string, userId: string): Promise<Pers
         }
     } catch { /* corrupted entry — start fresh */ }
     return { messages: [], summary: '', summarizedUpTo: 0 };
-};
-
-/**
- * Save the conversation. Fire-and-forget; never blocks the UI.
- */
-export const saveChat = async (
-    carouselId: string,
-    userId: string,
-    messages: ChatMessage[],
-    summary: string,
-    summarizedUpTo: number = 0
-): Promise<void> => {
-    // Strip transient flags before persisting
-    const clean = messages.map(m => ({ ...m, running: false }));
-    const payload: PersistedChat = { messages: clean, summary, summarizedUpTo };
-
-    try {
-        localStorage.setItem(localKey(carouselId), JSON.stringify(payload));
-    } catch { /* storage full — Appwrite may still work */ }
-
-    if (appwriteAvailable === false) return;
-
-    try {
-        const body = { userId, messages: JSON.stringify(clean), summary, summarizedUpTo };
-        try {
-            await databases.updateDocument(config.databaseId, COLLECTION_ID, carouselId, body);
-        } catch (e: any) {
-            if (e?.code === 404 && e?.type !== 'collection_not_found') {
-                // Document missing — create it with the carousel's id so lookups are O(1)
-                await databases.createDocument(config.databaseId, COLLECTION_ID, carouselId, body, [
-                    Permission.read(Role.user(userId)),
-                    Permission.update(Role.user(userId)),
-                    Permission.delete(Role.user(userId)),
-                ]);
-            } else {
-                throw e;
-            }
-        }
-        appwriteAvailable = true;
-    } catch (e: any) {
-        if (e?.code === 404) {
-            appwriteAvailable = false;
-        } else {
-            console.warn('[chatService] Appwrite save failed (localStorage copy kept):', e?.message);
-        }
-    }
 };

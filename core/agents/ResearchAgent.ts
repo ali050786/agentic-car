@@ -44,9 +44,13 @@ export const ResearchAgent = {
     performResearch: async (queries: string[]): Promise<string> => {
         if (!queries || queries.length === 0) return '';
 
-        const apiKey = import.meta.env.VITE_TAVILY_API_KEY;
+        // Runs both in the browser (Vite injects import.meta.env) and in the
+        // background worker (plain Node — import.meta.env is undefined there,
+        // so fall back to process.env; dotenv loads the same .env file worker-side,
+        // VITE_ prefix and all, so TAVILY_API_KEY doesn't need to be duplicated).
+        const apiKey = (import.meta as any).env?.VITE_TAVILY_API_KEY || process.env.TAVILY_API_KEY || process.env.VITE_TAVILY_API_KEY;
         if (!apiKey) {
-            console.error('[ResearchAgent] ❌ Tavily API key missing. Please ensure VITE_TAVILY_API_KEY is set in your .env file with the VITE_ prefix for client-side access.');
+            console.error('[ResearchAgent] ❌ Tavily API key missing. Set VITE_TAVILY_API_KEY (browser) or TAVILY_API_KEY (worker).');
             return 'Research skipped due to missing API key.';
         }
 

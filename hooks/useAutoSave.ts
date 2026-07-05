@@ -1,15 +1,15 @@
 /**
  * Auto-Save Hook
- * 
+ *
  * Centralized auto-save logic for carousel generator.
  * Handles both new carousel creation and existing carousel updates.
- * 
+ *
  * Features:
  * - 2-second debounce on changes
  * - Automatic limit checking
  * - Status tracking (idle, saving, saved, error, limit-reached)
  * - Promotes drafts to saved carousels
- * 
+ *
  * Location: src/hooks/useAutoSave.ts
  */
 
@@ -17,11 +17,11 @@ import { useState, useEffect, useRef } from 'react';
 import { createCarousel, updateCarouselContent, StorageLimitError } from '../services/carouselService';
 import { appToDbTemplate } from '../utils/templateConverter';
 import { BrandKit, BrandMode, SignaturePosition } from '../types';
+import { useCarouselStore } from '../store/useCarouselStore';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'limit-reached';
 
 interface UseAutoSaveParams {
-    carouselId: string | null;
     slides: any[];
     theme: any | null;
     topic: string;
@@ -38,7 +38,6 @@ interface UseAutoSaveParams {
 
 interface UseAutoSaveReturn {
     saveStatus: SaveStatus;
-    currentCarouselId: string | null;
     errorMessage: string | null;
 }
 
@@ -46,7 +45,6 @@ const DEBOUNCE_DELAY = 2000; // 2 seconds
 
 export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
     const {
-        carouselId,
         slides,
         theme,
         topic,
@@ -61,8 +59,12 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
         patternOpacity
     } = params;
 
+    // Single source of truth for carousel identity (see types.ts) — subscribing
+    // here means this effect re-runs the moment anything else (loading a
+    // carousel from the sidebar, starting a new one) changes it.
+    const activeCarouselId = useCarouselStore(s => s.activeCarouselId);
+
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
-    const [exposedCarouselId, setExposedCarouselId] = useState<string | null>(carouselId);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastSavedRef = useRef<string>('');
@@ -70,22 +72,15 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
     // for this hook instance, no matter how many overlapping timers or renders
     // try to fire a save at once.
     const isSavingRef = useRef(false);
+    const prevCarouselIdRef = useRef<string | null>(activeCarouselId);
 
-    // The id the next debounced save should target. A ref (not state) so the
-    // setTimeout callback below always reads the freshest value at fire time
-    // instead of a value captured in a stale closure.
-    const targetIdRef = useRef<string | null>(carouselId);
-    const prevCarouselIdRef = useRef<string | null>(carouselId);
-
-    // Detect the parent switching us to a different carousel (e.g. picking one
-    // from the history sidebar) — this happens without unmounting the hook, so
-    // without this, a debounce cycle already in flight for the OLD carousel could
-    // race the id change and create a duplicate instead of updating. Adjusting
-    // refs during render (not in an effect) means there is no lag: by the time any
-    // effect below runs, targetIdRef already reflects the new carousel.
-    if (carouselId !== prevCarouselIdRef.current) {
-        prevCarouselIdRef.current = carouselId;
-        targetIdRef.current = carouselId;
+    // Detect something else switching the active carousel (e.g. picking one
+    // from the history sidebar) — reset the "already saved" baseline to the
+    // newly-active carousel's own content, so we don't immediately re-save it
+    // as if it were a fresh edit. Adjusting refs during render (not in an
+    // effect) means there's no lag before the debounce effect below sees it.
+    if (activeCarouselId !== prevCarouselIdRef.current) {
+        prevCarouselIdRef.current = activeCarouselId;
         lastSavedRef.current = JSON.stringify({
             slides,
             theme,
@@ -98,9 +93,6 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
             selectedPattern,
             patternOpacity
         });
-        if (exposedCarouselId !== carouselId) {
-            setExposedCarouselId(carouselId);
-        }
     }
 
     useEffect(() => {
@@ -150,7 +142,9 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                 setErrorMessage(null);
 
                 const dbTemplateType = appToDbTemplate(templateType);
-                const idToSave = targetIdRef.current;
+                // Read fresh at fire time (not the closed-over reactive value
+                // above) — guarantees this never acts on a stale id.
+                const idToSave = useCarouselStore.getState().activeCarouselId;
 
                 if (!idToSave) {
                     // NEW CAROUSEL: Create in database
@@ -184,13 +178,8 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                         }
                     } else if (data) {
                         console.log('[useAutoSave] Successfully created carousel:', data.$id);
-                        // Only targetIdRef is updated here — prevCarouselIdRef must stay
-                        // untouched until the carouselId PROP itself catches up (one render
-                        // later, once the parent's own effect propagates the new id). Bumping
-                        // prevCarouselIdRef early made the render-phase switch-detection above
-                        // see the still-stale prop as a "switch back to null" and wipe targetIdRef.
-                        targetIdRef.current = data.$id;
-                        setExposedCarouselId(data.$id);
+                        prevCarouselIdRef.current = data.$id;
+                        useCarouselStore.getState().setActiveCarouselId(data.$id);
                         setSaveStatus('saved');
                         lastSavedRef.current = currentSignature;
 
@@ -200,8 +189,6 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                 } else {
                     // EXISTING CAROUSEL: Update in database
                     console.log('[useAutoSave] Updating existing carousel...');
-
-                    const dbTemplateType = appToDbTemplate(templateType);
 
                     const { data, error } = await updateCarouselContent(
                         idToSave,
@@ -251,7 +238,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
             }
         };
     }, [
-        carouselId,
+        activeCarouselId,
         slides,
         theme,
         userId,
@@ -268,7 +255,6 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
 
     return {
         saveStatus,
-        currentCarouselId: exposedCarouselId,
         errorMessage
     };
 };

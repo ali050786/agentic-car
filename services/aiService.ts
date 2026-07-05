@@ -1,7 +1,5 @@
 /// <reference types="vite/client" />
 
-import { useCarouselStore } from '../store/useCarouselStore';
-import { useAuthStore } from '../store/useAuthStore';
 import { FREE_TIER_LIMIT } from '../config/constants';
 
 /**
@@ -26,7 +24,20 @@ export class FreeLimitError extends Error {
  * - Throws FreeLimitError when free tier exhausted
  */
 export const generateContentFromAgent = async (prompt: string, responseSchema: any) => {
+    // core/agents/*.ts run unmodified in the background worker (Node), where
+    // there is no browser and no Zustand store to read model/BYOK state from.
+    // Delegate to the Node-side gateway, which gets that context via
+    // AsyncLocalStorage instead. Guarded behind a dynamic import so the
+    // browser-only store modules below are never loaded under Node.
+    if (typeof window === 'undefined') {
+        const { generateContentFromAgentServer } = await import('../core/llm/agentGateway');
+        return generateContentFromAgentServer(prompt, responseSchema);
+    }
+
     try {
+        const { useCarouselStore } = await import('../store/useCarouselStore');
+        const { useAuthStore } = await import('../store/useAuthStore');
+
         const { selectedModel } = useCarouselStore.getState();
         const { user, freeUsageCount } = useAuthStore.getState();
 

@@ -1,6 +1,6 @@
 import { generateContentFromAgent } from '../../services/aiService';
 import { SlideContent, CarouselTheme } from '../../types';
-import { AgentContext } from './MainAgent';
+import { AgentContext } from './agentContext';
 import { ALLOWED_DOODLE_TOPICS, SHARED_ICONS } from '../../config/constants';
 import { TEMPLATE_CONFIGS } from './agentConfigs';
 
