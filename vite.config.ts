@@ -367,6 +367,14 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, '.'),
       }
+    },
+    build: {
+      rollupOptions: {
+        external: [
+          'node:async_hooks',
+          '../core/llm/agentGateway'
+        ]
+      }
     }
   };
 });
