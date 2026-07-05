@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Zap, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import { User, LogOut, Zap, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { FREE_TIER_LIMIT } from '../config/constants';
@@ -93,30 +93,6 @@ export const UserMenu: React.FC<UserMenuProps> = () => {
 
           {/* Menu Items list */}
           <div className="py-1">
-
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                navigate('/generate');
-              }}
-              className="w-full px-3.5 py-2 hover:bg-white/5 text-left text-xs text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-2.5 font-medium"
-            >
-              <Zap size={13} className="text-cyan-400" />
-              <span>Generate Doodles</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                navigate('/image-refinement');
-              }}
-              className="w-full px-3.5 py-2 hover:bg-white/5 text-left text-xs text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-2.5 font-medium"
-            >
-              <ImageIcon size={13} className="text-purple-400" />
-              <span>Refine Images</span>
-            </button>
-
-            <div className="border-t border-white/5 my-1" />
 
             <button
               onClick={handleSignOut}

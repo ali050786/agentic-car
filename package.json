@@ -25,6 +25,7 @@
     "dom-to-image-more": "^3.7.2",
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
+    "framer-motion": "^12.42.2",
     "groq-sdk": "^0.11.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.4",

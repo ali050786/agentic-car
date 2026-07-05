@@ -180,10 +180,7 @@ const ImageRefinement: React.FC = () => {
                         ) : images.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-64 bg-neutral-900/50 border border-dashed border-white/10 rounded-3xl">
                                 <ImageIcon size={48} className="text-neutral-700 mb-4" />
-                                <p className="text-neutral-400">No images found. Generate some in the Doodle Generator!</p>
-                                <Link to="/generate" className="mt-4 px-6 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-semibold transition-colors">
-                                    Go to Generator
-                                </Link>
+                                <p className="text-neutral-400">No images found in your gallery.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">

@@ -25,8 +25,6 @@ import { AuthCallback } from './pages/AuthCallback';
 // Carousel Pages
 import { PublicCarouselViewer } from './pages/PublicCarouselViewer';
 import LandingPage from './pages/LandingPage';
-import GenerateDoodles from './pages/GenerateDoodles';
-import ImageRefinement from './pages/ImageRefinement';
 
 
 // Components
@@ -587,11 +585,8 @@ const App: React.FC = () => {
           }
         />
 
-        {/* Auth Routes */}
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/generate" element={<GenerateDoodles />} />
-        <Route path="/image-refinement" element={<ImageRefinement />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
