@@ -53,13 +53,6 @@ interface AuthState {
   brandKitLoading: boolean;
 
   /**
-   * User's API key for BYOK (Bring Your Own Key)
-   * Stored in localStorage for persistence
-   */
-  userApiKey: string | null;
-  apiKeyProvider: 'openrouter' | 'openai' | 'anthropic' | null;
-
-  /**
    * Free tier usage tracking
    */
   freeUsageCount: number;
@@ -85,12 +78,6 @@ interface AuthState {
   updateGlobalBrandKit: (brandKit: BrandKit) => Promise<void>;
 
   /**
-   * API Key Management (BYOK)
-   */
-  setUserApiKey: (key: string, provider: 'openrouter' | 'openai' | 'anthropic') => void;
-  clearUserApiKey: () => void;
-
-  /**
    * Free usage tracking
    */
   fetchFreeUsageCount: () => Promise<void>;
@@ -111,11 +98,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialized: false,
   globalBrandKit: null,
   brandKitLoading: false,
-  // TEMPORARY: Disable BYOK system
-  // userApiKey: typeof window !== 'undefined' ? localStorage.getItem('user_api_key') : null,
-  // apiKeyProvider: typeof window !== 'undefined' ? localStorage.getItem('api_key_provider') as any : null,
-  userApiKey: null,
-  apiKeyProvider: null,
   freeUsageCount: 0,
   freeUsageLoading: false,
 
@@ -382,33 +364,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  // ============================================================================
-  // API KEY MANAGEMENT (BYOK)
-  // ============================================================================
 
-  /**
-   * Save user's API key to localStorage and state
-   */
-  setUserApiKey: (key: string, provider: 'openrouter' | 'openai' | 'anthropic') => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('user_api_key', key);
-      localStorage.setItem('api_key_provider', provider);
-    }
-    set({ userApiKey: key, apiKeyProvider: provider });
-    console.log(`[AuthStore] User API key saved (${provider})`);
-  },
-
-  /**
-   * Clear user's API key from localStorage and state
-   */
-  clearUserApiKey: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('user_api_key');
-      localStorage.removeItem('api_key_provider');
-    }
-    set({ userApiKey: null, apiKeyProvider: null });
-    console.log('[AuthStore] User API key cleared');
-  },
 
   // ============================================================================
   // FREE USAGE TRACKING

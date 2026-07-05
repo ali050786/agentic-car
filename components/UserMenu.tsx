@@ -8,18 +8,16 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Key, Zap, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import { User, LogOut, Zap, ChevronDown, Image as ImageIcon } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { FREE_TIER_LIMIT } from '../config/constants';
 
-interface UserMenuProps {
-  onOpenApiKeyModal: () => void;
-}
+interface UserMenuProps {}
 
-export const UserMenu: React.FC<UserMenuProps> = ({ onOpenApiKeyModal }) => {
+export const UserMenu: React.FC<UserMenuProps> = () => {
   const navigate = useNavigate();
-  const { user, signOut, userApiKey, freeUsageCount } = useAuthStore();
+  const { user, signOut, freeUsageCount } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -74,47 +72,27 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenApiKeyModal }) => {
             </p>
           </div>
 
-          {/* API Key Status Bar */}
+          {/* Usage Status Bar */}
           <div className="p-3 bg-white/[0.02] border-b border-white/5">
-            {userApiKey ? (
-              <div className="flex items-center gap-2">
-                <Key className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold text-green-400 leading-tight">Premium Access</p>
-                  <p className="text-[9px] text-neutral-400 mt-0.5 leading-none">Using your API key</p>
+            <div className="flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center text-[10px] font-bold text-blue-300">
+                  <span>Usage Limit</span>
+                  <span>{freeUsageCount}/{FREE_TIER_LIMIT}</span>
+                </div>
+                <div className="w-full bg-neutral-800 rounded-full h-1 mt-1 overflow-hidden">
+                  <div
+                    className="bg-blue-400 h-full rounded-full transition-all"
+                    style={{ width: `${(freeUsageCount / FREE_TIER_LIMIT) * 100}%` }}
+                  />
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center text-[10px] font-bold text-blue-300">
-                    <span>Free Tier</span>
-                    <span>{freeUsageCount}/{FREE_TIER_LIMIT}</span>
-                  </div>
-                  <div className="w-full bg-neutral-800 rounded-full h-1 mt-1 overflow-hidden">
-                    <div
-                      className="bg-blue-400 h-full rounded-full transition-all"
-                      style={{ width: `${(freeUsageCount / FREE_TIER_LIMIT) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
 
           {/* Menu Items list */}
           <div className="py-1">
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                onOpenApiKeyModal();
-              }}
-              className="w-full px-3.5 py-2 hover:bg-white/5 text-left text-xs text-white transition-colors flex items-center gap-2.5 font-medium"
-            >
-              <Key size={13} className="text-neutral-400" />
-              <span>API Key Settings</span>
-            </button>
 
             <button
               onClick={() => {

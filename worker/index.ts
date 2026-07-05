@@ -5,7 +5,7 @@
  * for how this gets deployed.
  */
 
-import 'dotenv/config';
+import './loadEnv';
 import express from 'express';
 import cors from 'cors';
 import { requireUser, UnauthorizedError } from './auth';

@@ -40,7 +40,6 @@ export interface CreateJobPayload {
     format: CarouselFormat;
     selectedPattern: number;
     patternOpacity: number;
-    byok: { apiKey: string; provider: string } | null;
 }
 
 const progress = (jobId: string, statusMessage: string, progressPct: number) =>
@@ -51,7 +50,7 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
     const { userId } = job;
 
     await runWithAgentContext(
-        { userId, selectedModel: payload.selectedModel, byok: payload.byok },
+        { userId, selectedModel: payload.selectedModel },
         async () => {
             await progress(job.$id, 'Initializing AI agents...', 10);
 

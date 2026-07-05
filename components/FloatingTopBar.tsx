@@ -14,7 +14,6 @@ interface FloatingTopBarProps {
     onDownload: () => void;
     onDownloadPdf: () => void;
     isExportingPdf: boolean;
-    onOpenApiKeyModal: () => void;
     onOpenAuthModal: () => void;
     onOpenHistory: () => void;
 }
@@ -26,11 +25,10 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
     onDownload,
     onDownloadPdf,
     isExportingPdf,
-    onOpenApiKeyModal,
     onOpenAuthModal,
     onOpenHistory
 }) => {
-    const { userApiKey, freeUsageCount } = useAuthStore();
+    const { freeUsageCount } = useAuthStore();
     const [showLimitTooltip, setShowLimitTooltip] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
     const downloadDropdownRef = useRef<HTMLDivElement>(null);
@@ -143,7 +141,7 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
             {/* Right: Action Buttons */}
             <div className="flex items-center gap-2.5">
                 {/* Free Tier Usage Slider (Header Version) */}
-                {hasUser && !userApiKey && (
+                {hasUser && (
                     <div className="hidden md:flex items-center gap-2 px-2.5 py-1 bg-white/[0.02] border border-white/5 rounded-full">
                         <Zap size={11} className="text-blue-400" />
                         <div className="flex flex-col w-16">
@@ -228,9 +226,8 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                     </div>
                 )}
 
-                {/* User Menu or Sign Up Button */}
                 {hasUser ? (
-                    <UserMenu onOpenApiKeyModal={onOpenApiKeyModal} />
+                    <UserMenu />
                 ) : (
                     <button
                         onClick={onOpenAuthModal}

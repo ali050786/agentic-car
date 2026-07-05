@@ -90,6 +90,32 @@ export const markJobSeen = async (jobId: string): Promise<void> => {
     await databases.updateDocument(config.databaseId, JOBS_COLLECTION_ID, jobId, { seen: true });
 };
 
+import { Query } from 'appwrite';
+
+export const getActiveJobForCarousel = async (carouselId: string): Promise<GenerationJob | null> => {
+    try {
+        const response = await databases.listDocuments(
+            config.databaseId,
+            JOBS_COLLECTION_ID,
+            [
+                Query.equal('carouselId', carouselId),
+                Query.orderDesc('$updatedAt'),
+                Query.limit(1)
+            ]
+        );
+        if (response.documents.length > 0) {
+            const job = response.documents[0] as unknown as GenerationJob;
+            if (job.status === 'queued' || job.status === 'running') {
+                return job;
+            }
+        }
+        return null;
+    } catch (err) {
+        console.error('[jobService] getActiveJobForCarousel error:', err);
+        return null;
+    }
+};
+
 /** Fires immediately with the current state, then on every subsequent update. Returns an unsubscribe function. */
 export const subscribeToJob = (jobId: string, onUpdate: (job: GenerationJob) => void): (() => void) => {
     getJob(jobId).then(onUpdate).catch(() => {});

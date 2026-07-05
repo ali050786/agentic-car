@@ -12,7 +12,7 @@ import { resolveTheme } from './utils/brandUtils';
 import { getPresetById } from './config/colorPresets';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useJobWatcher } from './hooks/useJobWatcher';
-import { createJob } from './services/jobService';
+import { createJob, getActiveJobForCarousel } from './services/jobService';
 import BrandEditorPanel from './components/BrandEditorPanel';
 
 // Auth Pages
@@ -39,7 +39,6 @@ import { loadChat } from './services/chatService';
 import { SlideEditPanel } from './components/SlideEditPanel';
 import { Toast } from './components/Toast';
 import { useToast } from './hooks/useToast';
-import { ApiKeyModal } from './components/ApiKeyModal';
 import { AuthModal } from './components/AuthModal';
 import { FreeLimitError } from './services/aiService';
 
@@ -89,9 +88,6 @@ const CarouselGenerator: React.FC = () => {
 
   // Brand Editor Panel state
   const [brandEditorOpen, setBrandEditorOpen] = useState(false);
-
-  // API Key Modal state
-  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
 
   // Auth Modal state
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -158,11 +154,6 @@ const CarouselGenerator: React.FC = () => {
     // window where these new slides are on screen next to the OLD carousel's
     // conversation, until the async loadChat() below resolves.
     useCarouselStore.getState().clearChat();
-    // Stop watching whatever job belonged to the carousel we're leaving —
-    // it keeps running server-side regardless; the sidebar's own job
-    // subscription (not this view) is what surfaces its completion.
-    useCarouselStore.getState().setActiveJobId(null);
-    useCarouselStore.getState().setGenerating(false);
     useCarouselStore.getState().setError(null);
 
     setEditingCarousel(carousel);
@@ -208,6 +199,21 @@ const CarouselGenerator: React.FC = () => {
         console.log(`[App] Restored ${messages.length} chat messages for carousel ${carousel.$id}`);
       });
     }
+
+    // Check if there is an active background job running for this carousel, and subscribe to it
+    getActiveJobForCarousel(carousel.$id).then((job) => {
+      const store = useCarouselStore.getState();
+      if (job) {
+        console.log(`[App] Found active running job for loaded carousel: ${job.$id}`);
+        store.setActiveJobId(job.$id);
+        store.setGenerating(true);
+        store.setGenerationStatus(job.statusMessage);
+        store.setGenerationProgress(job.progress);
+      } else {
+        store.setActiveJobId(null);
+        store.setGenerating(false);
+      }
+    });
   };
 
   // T3: Auto-switch to light variant if dark preset is active
@@ -273,7 +279,6 @@ const CarouselGenerator: React.FC = () => {
     setTopic(text.length > 80 ? text.slice(0, 77) + '…' : text);
 
     const state = useCarouselStore.getState();
-    const { userApiKey, apiKeyProvider } = useAuthStore.getState();
 
     const { jobId } = await createJob({
       type: 'create',
@@ -293,7 +298,6 @@ const CarouselGenerator: React.FC = () => {
         format: state.selectedFormat,
         selectedPattern: state.selectedPattern,
         patternOpacity: state.patternOpacity,
-        byok: userApiKey ? { apiKey: userApiKey, provider: apiKeyProvider || 'openrouter' } : null,
       },
     });
 
@@ -462,7 +466,6 @@ const CarouselGenerator: React.FC = () => {
         onDownload={handleDownload}
         onDownloadPdf={handleDownloadAllPdf}
         isExportingPdf={isExportingPdf}
-        onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
         onOpenAuthModal={() => {
           setAuthModalMessage('Sign in to access all features');
           setAuthMode('login');
@@ -488,7 +491,6 @@ const CarouselGenerator: React.FC = () => {
         <div className="w-full md:w-[400px] md:min-w-[400px] h-full">
           <ChatPanel
             onFirstPrompt={handleFirstPrompt}
-            onOpenApiKeyModal={() => setApiKeyModalOpen(true)}
           />
         </div>
         <div className="hidden md:flex flex-1 min-w-0">
@@ -536,11 +538,7 @@ const CarouselGenerator: React.FC = () => {
       {/* Toast Notifications */}
       <Toast toasts={toasts} onRemove={removeToast} />
 
-      {/* API Key Modal */}
-      <ApiKeyModal
-        isOpen={apiKeyModalOpen}
-        onClose={() => setApiKeyModalOpen(false)}
-      />
+
 
       {/* Auth Modal */}
       <AuthModal

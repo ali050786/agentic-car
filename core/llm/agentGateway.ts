@@ -17,7 +17,6 @@ import { assertAndConsumeFreeTier } from '../../lib/freeTierServer';
 export interface AgentJobContext {
     userId: string;
     selectedModel: string;
-    byok: { apiKey: string; provider: string } | null;
 }
 
 const storage = new AsyncLocalStorage<AgentJobContext>();
@@ -33,14 +32,11 @@ export const generateContentFromAgentServer = async (prompt: string, _responseSc
         throw new Error('generateContentFromAgentServer called outside of runWithAgentContext — no job context available');
     }
 
-    if (!ctx.byok) {
-        await assertAndConsumeFreeTier(ctx.userId);
-    }
+    await assertAndConsumeFreeTier(ctx.userId);
 
     return generateContent({
         prompt,
         selectedModel: ctx.selectedModel,
-        byok: ctx.byok,
         systemKeys: {
             anthropic: process.env.CLAUDE_API_KEY,
             openrouter: process.env.OPENROUTER_API_KEY,

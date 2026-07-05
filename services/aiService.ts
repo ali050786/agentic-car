@@ -41,18 +41,14 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
         const { selectedModel } = useCarouselStore.getState();
         const { user, freeUsageCount } = useAuthStore.getState();
 
-        // Use user's API key if available
-        const userApiKey = useAuthStore.getState().userApiKey;
-
-
-        // Check free tier limit BEFORE making request (if no API key)
-        if (!userApiKey && user?.$id) {
+        // Check free tier limit BEFORE making request
+        if (user?.$id) {
             console.log(`[aiService] Free tier check: ${freeUsageCount}/${FREE_TIER_LIMIT} used`);
 
             if (freeUsageCount >= FREE_TIER_LIMIT) {
                 console.warn('[aiService] Free tier limit reached before request');
                 throw new FreeLimitError(
-                    'Free trial exhausted. Please add your API key to continue.',
+                    'Free trial exhausted. Please contact support.',
                     freeUsageCount
                 );
             }
@@ -80,20 +76,10 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
         if (user?.$id) {
             headers['x-user-id'] = user.$id;
             // Send updated count (after increment) to backend
-            headers['x-usage-count'] = String(userApiKey ? freeUsageCount : freeUsageCount + 1);
+            headers['x-usage-count'] = String(freeUsageCount + 1);
         }
 
-        // Add user's API key if they have one (BYOK)
-        if (userApiKey) {
-            headers['x-api-key'] = userApiKey;
-            // Send provider info so backend knows which API to use
-            const { apiKeyProvider } = useAuthStore.getState();
-            headers['x-api-provider'] = apiKeyProvider || 'openrouter';
-            console.log('[aiService] Using user-provided API key (BYOK)');
-            console.log('[aiService] Provider:', apiKeyProvider);
-        } else {
-            console.log('[aiService] Using free tier');
-        }
+        console.log('[aiService] Using free tier');
 
         const res = await fetch('/api/generate', {
             method: 'POST',

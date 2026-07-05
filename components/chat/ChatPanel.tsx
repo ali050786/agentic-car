@@ -37,7 +37,7 @@ const TEMPLATE_OPTIONS = [
 ];
 
 const MODEL_OPTIONS = [
-    { id: 'gpt-oss-120b', label: 'GPT-OSS 120B (Free)' },
+    { id: 'gpt-oss-120b', label: 'Free Models Router (Auto)' },
     { id: 'claude-sonnet', label: 'Claude Sonnet' },
     { id: 'claude-haiku', label: 'Claude Haiku' },
 ];
@@ -46,13 +46,12 @@ const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Portuguese', 'Hind
 
 interface ChatPanelProps {
     onFirstPrompt: (text: string) => Promise<void>;
-    onOpenApiKeyModal: () => void;
 }
 
 let msgSeq = 0;
 const nextId = () => `msg-${Date.now()}-${msgSeq++}`;
 
-export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKeyModal }) => {
+export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
     const {
         chatMessages, addChatMessage, updateChatMessage,
         slides, isGenerating, generationStatus, error, theme,
@@ -62,7 +61,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
         customInstructions, setCustomInstructions,
         outputLanguage, setOutputLanguage,
         selectedModel, setModel,
-        topic, activeCarouselId,
+        topic, activeCarouselId, activeJobId,
         setActiveJobId, setGenerating,
     } = useCarouselStore();
 
@@ -99,6 +98,28 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
     useEffect(() => {
         if (!isGenerating) runMessageId.current = null;
     }, [isGenerating]);
+
+    // Ensure chat messages are initialized and runMessageId is set if a background job is running
+    useEffect(() => {
+        const store = useCarouselStore.getState();
+        const currentActiveJobId = store.activeJobId;
+        if (currentActiveJobId && isGenerating) {
+            const runningMsg = store.chatMessages.find(m => m.role === 'assistant' && m.running);
+            if (!runningMsg) {
+                const userMsgId = `user-init-${currentActiveJobId}`;
+                const assistMsgId = `assist-init-${currentActiveJobId}`;
+                runMessageId.current = assistMsgId;
+                
+                // Set the default layout for the generating message
+                store.setChatMessages([
+                    { id: userMsgId, role: 'user', text: `Generate a carousel about: ${store.topic || 'Topic'}` },
+                    { id: assistMsgId, role: 'assistant', text: '', running: true, events: [{ label: generationStatus || 'Running...', done: false }] }
+                ]);
+            } else {
+                runMessageId.current = runningMsg.id;
+            }
+        }
+    }, [activeJobId, isGenerating]);
 
     // Keep the newest message in view
     useEffect(() => {
@@ -175,8 +196,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
             } catch (e: any) {
                 runMessageId.current = null;
                 if (e instanceof FreeLimitError) {
-                    updateChatMessage(runId, { running: false, error: true, text: 'Free generations used up. Add your own API key to continue.' });
-                    onOpenApiKeyModal();
+                    updateChatMessage(runId, { running: false, error: true, text: 'Free usage limit reached. Please contact support to upgrade.' });
                 } else {
                     updateChatMessage(runId, { running: false, error: true, text: e?.message || 'Generation failed.' });
                 }
@@ -197,7 +217,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
             events: [{ label: 'Thinking...', done: false }]
         });
         try {
-            const { userApiKey, apiKeyProvider } = useAuthStore.getState();
             const { jobId } = await createJob({
                 type: 'edit',
                 carouselId: activeCarouselId,
@@ -208,7 +227,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
                     templateId: state.selectedTemplate,
                     selectedSlideIndex: scope,
                     selectedModel: state.selectedModel,
-                    byok: userApiKey ? { apiKey: userApiKey, provider: apiKeyProvider || 'openrouter' } : null,
                 },
             });
             setActiveJobId(jobId);
@@ -235,8 +253,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt, onOpenApiKe
         } catch (e: any) {
             runMessageId.current = null;
             if (e instanceof FreeLimitError) {
-                updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free generations used up. Add your own API key to continue.' });
-                onOpenApiKeyModal();
+                updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free usage limit reached. Please contact support to upgrade.' });
             } else {
                 updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
             }

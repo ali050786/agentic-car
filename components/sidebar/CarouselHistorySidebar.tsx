@@ -63,6 +63,7 @@ export const CarouselHistorySidebar: React.FC<CarouselHistorySidebarProps> = ({
     // Single source of truth for carousel identity (see types.ts) — read
     // directly from the store instead of threading it through as a prop.
     const currentCarouselId = useCarouselStore(s => s.activeCarouselId);
+    const activeJobId = useCarouselStore(s => s.activeJobId);
     const [carousels, setCarousels] = useState<Carousel[]>([]);
     const [loading, setLoading] = useState(false);
     const [query, setQuery] = useState('');
@@ -141,6 +142,21 @@ export const CarouselHistorySidebar: React.FC<CarouselHistorySidebarProps> = ({
             });
         }
         onSelectCarousel(carousel);
+    };
+
+    const handleSelectPendingJob = (job: GenerationJob) => {
+        const store = useCarouselStore.getState();
+        store.clearChat();
+        store.setActiveCarouselId(null);
+        store.setActiveJobId(job.$id);
+        store.setGenerating(true);
+        store.setGenerationStatus(job.statusMessage);
+        store.setGenerationProgress(job.progress);
+        
+        let label = 'New carousel';
+        try { label = JSON.parse(job.payload)?.topic || label; } catch { /* ignore */ }
+        store.setTopic(label);
+        store.setSlides([]); // Clear slides so it shows the blank loading stage
     };
 
     useEffect(() => {
@@ -252,8 +268,13 @@ export const CarouselHistorySidebar: React.FC<CarouselHistorySidebarProps> = ({
                             {Object.values(pendingJobs).map(job => {
                                 let label = 'New carousel';
                                 try { label = JSON.parse(job.payload)?.topic || label; } catch { /* ignore */ }
+                                const isActive = job.$id === activeJobId;
                                 return (
-                                    <div key={job.$id} className="flex items-center gap-2 px-2 py-1.5 rounded-md text-neutral-400">
+                                    <div
+                                        key={job.$id}
+                                        className={`group relative flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer ${isActive ? 'bg-blue-500/15 text-white' : 'hover:bg-white/5 text-neutral-400'}`}
+                                        onClick={() => handleSelectPendingJob(job)}
+                                    >
                                         <div className="w-6 h-6 rounded bg-neutral-800 border border-white/10 flex-shrink-0 flex items-center justify-center">
                                             <Loader2 size={11} className="animate-spin text-blue-400" />
                                         </div>

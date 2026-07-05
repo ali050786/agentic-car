@@ -21,7 +21,6 @@ export interface EditJobPayload {
     templateId: string;
     selectedSlideIndex: number | null;
     selectedModel: string;
-    byok: { apiKey: string; provider: string } | null;
 }
 
 export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
@@ -32,7 +31,7 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
     await assertOwnsCarousel(carouselId, userId);
 
     await runWithAgentContext(
-        { userId, selectedModel: payload.selectedModel, byok: payload.byok },
+        { userId, selectedModel: payload.selectedModel },
         async () => {
             await updateJob(job.$id, { status: 'running', statusMessage: 'Thinking...', progress: 20 });
 

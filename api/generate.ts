@@ -22,23 +22,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const { prompt, selectedModel } = req.body;
 
-        // Parse headers for hybrid auth
-        const userApiKey = req.headers['x-api-key'] as string | undefined;
+        // Parse headers for tracking
         const userId = req.headers['x-user-id'] as string | undefined;
-        const apiProvider = (req.headers['x-api-provider'] as string) || 'openrouter';
 
-        // BRANCH A: BYOK - User provided their own API key
-        if (userApiKey) {
-            const result = await generateContent({
-                prompt,
-                selectedModel,
-                byok: { apiKey: userApiKey, provider: apiProvider },
-            });
-            return res.status(200).json(result);
-        }
-
-        // BRANCH B: FREE TIER - No user key provided
-        console.log('[Vercel API] No user API key, using free tier');
+        // FREE TIER - Using system keys
+        console.log('[Vercel API] Using system keys');
 
         if (!userId) {
             return res.status(403).json({
@@ -55,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.log(`[Vercel API] User ${userId} has exhausted free tier (${usageCount}/${FREE_TIER_LIMIT})`);
             return res.status(403).json({
                 error: 'FREE_LIMIT_REACHED',
-                message: 'Free trial exhausted. Please add your API key to continue.',
+                message: 'Free trial exhausted. Please contact support.',
                 usageCount: usageCount
             });
         }
@@ -64,7 +52,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const result = await generateContent({
             prompt,
             selectedModel,
-            byok: null,
             systemKeys: {
                 anthropic: process.env.CLAUDE_API_KEY,
                 openrouter: process.env.OPENROUTER_API_KEY,
