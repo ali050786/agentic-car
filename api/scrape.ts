@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { htmlToReadableText, extractTitle } from '../utils/htmlToText';
-import { MAX_SOURCE_CONTENT_CHARS } from '../config/constants';
+import { htmlToReadableText, extractTitle } from '../utils/htmlToText.js';
+import { MAX_SOURCE_CONTENT_CHARS } from '../config/constants.js';
 import https from 'https';
 
 /**

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { generateContent } from '../core/llm/generateContent';
+import { generateContent } from '../core/llm/generateContent.js';
 
 // Free tier limit - inlined to avoid module resolution issues in Vercel
 const FREE_TIER_LIMIT = 10;
