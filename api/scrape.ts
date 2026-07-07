@@ -1,13 +1,90 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { htmlToReadableText, extractTitle } from '../utils/htmlToText';
 import { MAX_SOURCE_CONTENT_CHARS } from '../config/constants';
+import https from 'https';
 
+/**
+ * A highly resilient fetch helper that:
+ * 1. Enforces a timeout (6 seconds) to prevent Vercel platform-level timeouts
+ * 2. Uses native global fetch if available
+ * 3. Safely falls back to the native HTTPS Node module if fetch throws or is missing
+ */
+const robustFetch = async (
+    url: string,
+    headers: Record<string, string>,
+    timeoutMs = 6000
+): Promise<{ ok: boolean; status: number; text: () => Promise<string>; headers: { get: (name: string) => string | null } }> => {
+    if (typeof fetch === 'function') {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const response = await fetch(url, {
+                signal: controller.signal,
+                headers
+            });
+            clearTimeout(timeoutId);
+            return {
+                ok: response.ok,
+                status: response.status,
+                text: () => response.text(),
+                headers: {
+                    get: (name: string) => response.headers.get(name)
+                }
+            };
+        } catch (err: any) {
+            clearTimeout(timeoutId);
+            if (!(err instanceof ReferenceError)) {
+                throw err;
+            }
+        }
+    }
+
+    return new Promise((resolve, reject) => {
+        const parsedUrl = new URL(url);
+        const options = {
+            hostname: parsedUrl.hostname,
+            path: parsedUrl.pathname + parsedUrl.search,
+            method: 'GET',
+            headers
+        };
+
+        const timer = setTimeout(() => {
+            req.destroy();
+            reject(new Error('Request timed out'));
+        }, timeoutMs);
+
+        const req = https.request(options, (res) => {
+            clearTimeout(timer);
+            let data = '';
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+            res.on('end', () => {
+                resolve({
+                    ok: (res.statusCode ?? 0) >= 200 && (res.statusCode ?? 0) < 300,
+                    status: res.statusCode ?? 0,
+                    text: async () => data,
+                    headers: {
+                        get: (name: string) => {
+                            const val = res.headers[name.toLowerCase()];
+                            return Array.isArray(val) ? val.join(', ') : (val || null);
+                        }
+                    }
+                });
+            });
+        });
+
+        req.on('error', (err) => {
+            clearTimeout(timer);
+            reject(err);
+        });
+
+        req.end();
+    });
+};
 
 /**
  * Vercel Serverless Function: Article Scraper
- *
- * Mirrors the /api/scrape Vite middleware in vite.config.ts. Same private-host
- * SSRF guard as proxy-image; strips scripts/styles/tags to plain text.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'GET') {
@@ -30,13 +107,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'URL not allowed' });
         }
 
-        const upstream = await fetch(parsed.toString(), {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-            },
-        });
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+        };
+
+        const upstream = await robustFetch(parsed.toString(), headers);
         if (!upstream.ok) {
             return res.status(upstream.status).json({ error: `Upstream returned ${upstream.status}` });
         }
