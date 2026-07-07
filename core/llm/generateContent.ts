@@ -11,16 +11,6 @@
 
 const SYSTEM_PROMPT = 'You are a specialized content agent for LinkedIn carousels. ERROR HANDLING: You MUST respond with ONLY valid JSON. Do NOT include any conversational filler like "Alright" or "Here is the JSON". Do NOT wrap the output in markdown code blocks if possible, but pure JSON string is best. START YOUR RESPONSE WITH { AND END WITH }.';
 
-// Free OpenRouter endpoints are frequently rate-limited upstream, so the
-// system-key default path tries each of these in order until one responds.
-const FREE_MODEL_FALLBACK_CHAIN = [
-    'openrouter/free',
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'qwen/qwen3-next-80b-a3b-instruct:free',
-    'openai/gpt-oss-120b:free',
-    'openai/gpt-oss-20b:free',
-];
-
 const cleanJsonResponse = (text: string): string => {
     const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
     if (jsonMatch) return jsonMatch[1];
@@ -58,6 +48,7 @@ const cleanAndDiagnose = (choice: any, model: string, label: string): string => 
 export interface SystemKeys {
     anthropic?: string;
     openrouter?: string;
+    groq?: string;
 }
 
 export interface GenerateContentParams {
@@ -79,95 +70,51 @@ export const generateContent = async ({
     let result: string | undefined;
 
     // System keys (free tier)
-    if (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet' || selectedModel === 'claude-haiku-openrouter' || selectedModel === 'claude-sonnet-openrouter') {
+    if (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet') {
         const anthropicKey = systemKeys.anthropic;
-
-        if (anthropicKey && (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet')) {
-            console.log(`[LLM] Using system Anthropic API for ${selectedModel}`);
-            const model = selectedModel === 'claude-sonnet' ? 'claude-sonnet-4-5-20250929' : 'claude-haiku-4-5-20251001';
-
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                    'x-api-key': anthropicKey,
-                    'anthropic-version': '2023-06-01',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model,
-                    max_tokens: 4096,
-                    messages: [
-                        { role: 'user', content: `${SYSTEM_PROMPT}\n\n${prompt}` }
-                    ],
-                    temperature: 0.2,
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                result = cleanJsonResponse(data.content[0]?.text || '{"slides":[]}');
-            } else {
-                const errorText = await response.text();
-                console.error('[LLM] Anthropic error fallback:', errorText);
-                // Fall through to OpenRouter below
-            }
+        if (!anthropicKey) {
+            throw new Error('Missing CLAUDE_API_KEY for Anthropic API');
         }
 
-        if (!result) {
-            const openrouterKey = systemKeys.openrouter;
-            if (!openrouterKey) {
-                throw new Error('Missing OPENROUTER_API_KEY for free tier');
-            }
+        console.log(`[LLM] Using system Anthropic API for ${selectedModel}`);
+        const model = selectedModel === 'claude-sonnet' ? 'claude-sonnet-4-5-20250929' : 'claude-haiku-4-5-20251001';
 
-            const freeModel = (selectedModel === 'claude-haiku-openrouter' || selectedModel === 'claude-haiku')
-                ? 'anthropic/claude-3.5-haiku'
-                : 'anthropic/claude-3.5-sonnet';
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'x-api-key': anthropicKey,
+                'anthropic-version': '2023-06-01',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model,
+                max_tokens: 4096,
+                messages: [
+                    { role: 'user', content: `${SYSTEM_PROMPT}\n\n${prompt}` }
+                ],
+                temperature: 0.2,
+            })
+        });
 
-            console.log(`[LLM] Using system OpenRouter API for ${selectedModel} (model: ${freeModel})`);
-
-            const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${openrouterKey}`,
-                    'HTTP-Referer': 'https://agentic-carousel.vercel.app',
-                    'X-Title': 'Agentic Carousel Generator',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: freeModel,
-                    messages: [
-                        { role: 'system', content: SYSTEM_PROMPT },
-                        { role: 'user', content: prompt }
-                    ],
-                    temperature: 0.2,
-                })
-            });
-
-            if (!openrouterResponse.ok) {
-                const errorText = await openrouterResponse.text();
-                console.error('[LLM] OpenRouter API error:', errorText);
-                throw new Error(`OpenRouter API error: ${errorText}`);
-            }
-
-            const openrouterData = await openrouterResponse.json();
-            result = cleanJsonResponse(openrouterData.choices[0]?.message?.content || '{"slides":[]}');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[LLM] Anthropic API error:', errorText);
+            throw new Error(`Anthropic API error: ${errorText}`);
         }
+
+        const data = await response.json();
+        result = cleanJsonResponse(data.content[0]?.text || '{"slides":[]}');
 
     } else {
+        // Free Models Router (Auto) -> Use OpenRouter with "openrouter/free"
         const openrouterKey = systemKeys.openrouter;
-        if (!openrouterKey) {
-            throw new Error('Missing OPENROUTER_API_KEY for free tier');
-        }
+        
+        let openrouterResponse: Response | null = null;
+        let openrouterError = '';
 
-        let lastError = '';
-        for (const freeModel of FREE_MODEL_FALLBACK_CHAIN) {
-            console.log(`[LLM] Using system OpenRouter API for ${selectedModel || 'default'} (model: ${freeModel})`);
-
-            let openrouterResponse: Response | null = null;
-            let attempts = 0;
-            const maxAttempts = 3;
-
-            while (attempts < maxAttempts) {
+        if (openrouterKey) {
+            console.log(`[LLM] Using OpenRouter API for ${selectedModel || 'default'} (model: openrouter/free)`);
+            try {
                 openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
                     headers: {
@@ -177,56 +124,70 @@ export const generateContent = async ({
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: freeModel,
+                        model: 'openrouter/free',
                         messages: [
                             { role: 'system', content: SYSTEM_PROMPT },
                             { role: 'user', content: prompt }
                         ],
                         temperature: 0.2,
-                        max_tokens: 8000,
                     })
                 });
 
-                if (openrouterResponse.status === 429) {
-                    attempts++;
-                    if (attempts < maxAttempts) {
-                        console.warn(`[LLM] Model ${freeModel} rate limited (429). Retrying in 3 seconds (Attempt ${attempts}/${maxAttempts})...`);
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-                        continue;
-                    }
-                }
-                break;
-            }
-
-            if (openrouterResponse && openrouterResponse.ok) {
-                const openrouterData = await openrouterResponse.json();
-                const content = openrouterData.choices[0]?.message?.content;
-                if (content) {
-                    const cleaned = cleanAndDiagnose(openrouterData.choices[0], freeModel, 'free-tier default');
-                    try {
-                        JSON.parse(cleaned); // Test if it's valid JSON
-                        result = cleaned;
-                        break; // Success! Break the fallback loop
-                    } catch (parseErr: any) {
-                        lastError = `Invalid JSON response from ${freeModel}: ${(content || '').slice(0, 100)} (${parseErr?.message})`;
-                        console.error('[LLM] ⚠️', lastError);
-                        // Do NOT break, let it fall through to the next model in the chain!
-                    }
+                if (openrouterResponse.ok) {
+                    const openrouterData = await openrouterResponse.json();
+                    result = cleanAndDiagnose(openrouterData.choices?.[0], 'openrouter/free', 'free-tier router');
                 } else {
-                    lastError = `Empty response content from ${freeModel}`;
-                    console.error('[LLM]', lastError);
+                    openrouterError = await openrouterResponse.text();
+                    console.error('[LLM] OpenRouter API returned error status:', openrouterResponse.status, openrouterError);
                 }
-            } else if (openrouterResponse) {
-                lastError = await openrouterResponse.text();
-                console.error(`[LLM] OpenRouter error for ${freeModel}, trying next:`, lastError);
+            } catch (err: any) {
+                openrouterError = err?.message || String(err);
+                console.error('[LLM] OpenRouter fetch failed:', openrouterError);
+            }
+        } else {
+            console.warn('[LLM] Missing OPENROUTER_API_KEY, skipping OpenRouter');
+        }
+
+        // Fallback to Groq API if OpenRouter failed
+        if (!result) {
+            const groqKey = systemKeys.groq;
+            if (groqKey) {
+                console.log(`[LLM] OpenRouter failed, attempting fallback to Groq API (model: llama-3.3-70b-versatile)`);
+                try {
+                    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${groqKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model: 'llama-3.3-70b-versatile',
+                            messages: [
+                                { role: 'system', content: SYSTEM_PROMPT },
+                                { role: 'user', content: prompt }
+                            ],
+                            temperature: 0.2,
+                        })
+                    });
+
+                    if (groqResponse.ok) {
+                        const groqData = await groqResponse.json();
+                        result = cleanAndDiagnose(groqData.choices?.[0], 'llama-3.3-70b-versatile', 'groq-fallback');
+                    } else {
+                        const groqError = await groqResponse.text();
+                        console.error('[LLM] Groq API returned error status:', groqResponse.status, groqError);
+                    }
+                } catch (err: any) {
+                    console.error('[LLM] Groq fetch failed:', err?.message || String(err));
+                }
             } else {
-                lastError = 'No response from OpenRouter';
-                console.error(`[LLM] ${lastError} for ${freeModel}, trying next`);
+                console.warn('[LLM] Missing GROQ_API_KEY, cannot fall back to Groq');
             }
         }
 
+        // If both failed, throw a specific user friendly error
         if (!result) {
-            throw new Error(`OpenRouter API error: ${lastError}`);
+            throw new Error('Free API servers are busy or unavailable, please try again after some time.');
         }
     }
 

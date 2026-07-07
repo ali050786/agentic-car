@@ -48,7 +48,7 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
             if (freeUsageCount >= FREE_TIER_LIMIT) {
                 console.warn('[aiService] Free tier limit reached before request');
                 throw new FreeLimitError(
-                    'Free trial exhausted. Please contact support.',
+                    'Free trial exhausted. Please contact admin for more credits.',
                     freeUsageCount
                 );
             }
@@ -94,7 +94,7 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
             if (errorData.error === 'FREE_LIMIT_REACHED') {
                 console.warn('[aiService] Free tier limit reached:', errorData);
                 throw new FreeLimitError(
-                    errorData.message || 'Free trial exhausted. Please add your API key to continue.',
+                    errorData.message || 'Free trial exhausted. Please contact admin for more credits.',
                     errorData.usageCount || FREE_TIER_LIMIT
                 );
             }
@@ -107,7 +107,7 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
 
             // If request failed and we incremented count, we should ideally decrement
             // But since we're using optimistic increment, we'll just refresh the count
-            if (!userApiKey && user?.$id) {
+            if (user?.$id) {
                 useAuthStore.getState().fetchFreeUsageCount();
             }
 

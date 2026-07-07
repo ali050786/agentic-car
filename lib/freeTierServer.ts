@@ -51,7 +51,7 @@ export class FreeLimitError extends Error {
 export const assertAndConsumeFreeTier = async (userId: string): Promise<number> => {
     const current = await getFreeUsageCount(userId);
     if (current >= FREE_TIER_LIMIT) {
-        throw new FreeLimitError('Free trial exhausted. Please add your API key to continue.', current);
+        throw new FreeLimitError('Free trial exhausted. Please contact admin for more credits.', current);
     }
     return incrementUsageCount(userId);
 };

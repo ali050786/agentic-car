@@ -76,7 +76,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
             res.setHeader('Content-Type', 'application/json');
             return res.end(JSON.stringify({
               error: 'FREE_LIMIT_REACHED',
-              message: 'Free trial exhausted. Please add your API key to continue.',
+              message: 'Free trial exhausted. Please contact admin for more credits.',
               usageCount: usageCount
             }));
           }
@@ -89,6 +89,7 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
             systemKeys: {
               anthropic: process.env.CLAUDE_API_KEY || env.CLAUDE_API_KEY,
               openrouter: process.env.OPENROUTER_API_KEY || env.OPENROUTER_API_KEY,
+              groq: process.env.GROQ_API_KEY || env.GROQ_API_KEY,
             },
           });
 
@@ -292,7 +293,11 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
         }
 
         const upstream = await fetch(parsed.toString(), {
-          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AgenticCarouselBot/1.0)' },
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
         });
         if (!upstream.ok) {
           res.statusCode = upstream.status;

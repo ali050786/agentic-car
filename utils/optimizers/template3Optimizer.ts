@@ -81,7 +81,7 @@ export const generateTemplate3Native = async (
     currentY += preHeaderLines.length * 50;
 
     headlineLines.forEach((line, i) => {
-        contentSvg += `<text x="95" y="${currentY + (i * (isSquare ? 70 : 80))}" font-family="Fredericka the Great, cursive" font-weight="200" font-size="66" fill="${textHighlight}">${line.toUpperCase()}</text>`;
+        contentSvg += `<text x="95" y="${currentY + (i * (isSquare ? 62 : 70))}" font-family="Oswald, sans-serif" font-weight="700" font-size="${isSquare ? 52 : 60}" fill="${textHighlight}">${line.toUpperCase()}</text>`;
     });
     currentY += headlineLines.length * (isSquare ? 80 : 90);
 
@@ -105,11 +105,11 @@ export const generateTemplate3Native = async (
     }
 
     // Swipe component logic
-    const swipeY = HEIGHT - 140;
-    const swipeX = WIDTH - 140;
+    const swipeY = HEIGHT - 100;
+    const swipeX = WIDTH - 106;
     const swipeSvg = `
     <g transform="translate(${swipeX}, ${swipeY})">
-       <circle r="50" fill="${background2}"/>
+       <circle r="50" fill="${textHighlight}"/>
        <g fill="none" stroke="${bg}" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
           <path d="M-20 0 H 20"/>
           <path d="M 8 -12 L 20 0 L 8 12"/>
@@ -117,14 +117,15 @@ export const generateTemplate3Native = async (
     </g>
   `;
 
-    // CTA specific logic
+    // CTA specific logic (button overlaps the diagonal slice, matching the live template)
     let ctaSvg = '';
     if (slide.variant === 'cta' || slide.variant === 'closing') {
-        const buttonY = isSquare ? 750 : 960;
+        const buttonX = isSquare ? 560 : 600;
+        const buttonY = isSquare ? 770 : 1010;
         ctaSvg = `
-        <g transform="translate(100, ${buttonY})">
-            <rect width="292" height="125" fill="${textHighlight}"/>
-            <text x="146" y="75" font-family="Lato, sans-serif" font-weight="700" font-size="32" fill="${bg}" text-anchor="middle">FOLLOW US</text>
+        <g transform="translate(${buttonX}, ${buttonY}) rotate(-3)">
+            <rect width="300" height="120" rx="14" fill="${textHighlight}"/>
+            <text x="150" y="72" font-family="Lato, sans-serif" font-weight="700" font-size="30" fill="${bg}" text-anchor="middle">FOLLOW US</text>
         </g>
       `;
     }
@@ -153,14 +154,23 @@ export const generateTemplate3Native = async (
             console.error('Failed to generate signature for Template 3 Figma:', e);
         }
     }
-    const bottomRectY = isSquare ? 860 : 1104.56;
-    const bottomRectSvg = `<rect x="0" y="${bottomRectY}" width="${WIDTH}" height="${isSquare ? 220 : 275}" fill="${background2}" opacity="0.2"/>`;
+    // Diagonal ground slice (Figma-safe polygon, matches the live template's poster accent)
+    const sliceTopY = isSquare ? 900 : 1190;
+    const sliceBottomStartY = isSquare ? 980 : 1300;
+    const diagonalSliceSvg = `<polygon points="0,${HEIGHT} ${WIDTH},${HEIGHT} ${WIDTH},${sliceTopY} 0,${sliceBottomStartY}" fill="${background2}" opacity="0.14"/>`;
+
+    // Depth blob behind the doodle (plain circle — Figma-safe, approximates the live template's organic blob)
+    const blobCx = WIDTH - 100;
+    const blobCy = isSquare ? 60 : 20;
+    const blobR = isSquare ? 340 : 400;
+    const blobSvg = `<circle cx="${blobCx}" cy="${blobCy}" r="${blobR}" fill="${background2}" opacity="0.85"/>`;
 
     return `
     <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
       <rect width="${WIDTH}" height="${HEIGHT}" fill="${bg}"/>
-      ${doodleBase64 ? `<image href="${doodleBase64}" xlink:href="${doodleBase64}" x="${WIDTH - 550}" y="${HEIGHT - 950}" width="600" height="1000" opacity="0.6" />` : ''}
-      ${bottomRectSvg}
+      ${blobSvg}
+      ${doodleBase64 ? `<image href="${doodleBase64}" xlink:href="${doodleBase64}" x="${WIDTH - 620}" y="${isSquare ? 60 : 100}" width="600" height="${isSquare ? 480 : 620}" opacity="0.85" preserveAspectRatio="xMidYMid meet"/>` : ''}
+      ${diagonalSliceSvg}
       ${contentSvg}
       ${slide.variant !== 'cta' && slide.variant !== 'closing' ? swipeSvg : ''}
       ${ctaSvg}

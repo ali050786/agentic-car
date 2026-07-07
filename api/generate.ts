@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.log(`[Vercel API] User ${userId} has exhausted free tier (${usageCount}/${FREE_TIER_LIMIT})`);
             return res.status(403).json({
                 error: 'FREE_LIMIT_REACHED',
-                message: 'Free trial exhausted. Please contact support.',
+                message: 'Free trial exhausted. Please contact admin for more credits.',
                 usageCount: usageCount
             });
         }
@@ -55,6 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             systemKeys: {
                 anthropic: process.env.CLAUDE_API_KEY,
                 openrouter: process.env.OPENROUTER_API_KEY,
+                groq: process.env.GROQ_API_KEY,
             },
         });
 

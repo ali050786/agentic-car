@@ -40,6 +40,7 @@ export const generateContentFromAgentServer = async (prompt: string, _responseSc
         systemKeys: {
             anthropic: process.env.CLAUDE_API_KEY,
             openrouter: process.env.OPENROUTER_API_KEY,
+            groq: process.env.GROQ_API_KEY,
         },
     });
 };

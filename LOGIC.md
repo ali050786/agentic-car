@@ -1,86 +1,108 @@
 # Logic & Reasoning: Agentic Carousel
 
-This document details the internal logic, prompt engineering, and fallback mechanisms that drive the AI agents in the Agentic Carousel project.
+This document details the internal agent logic, classification prompts, fallback pathways, and validation rules that govern the Agentic Carousel platform.
 
-## 1. Prompt Engineering
+---
 
-The system uses a hierarchical prompting strategy where specialized agents handle different stages of the content lifecycle.
+## 1. Conversational Agent Logic
 
-### 1.1 Strategist Agent (`StrategistAgent.ts`)
-**Goal**: Transform raw input into a high-stakes "Viral Angle".
-- **System Prompt**: Focuses on avoiding generic advice and applying specific "user vibes" (Contrarian, Analytical, Storyteller, Actionable).
-- **Core Logic**:
-  - **Topic Mode**: Brainstorms a new specific angle.
-  - **Context Mode**: Extract single most interesting insight from source material.
-- **Constraints**: Ignores generic titles like "How to be a leader" in favor of specific premises like "Stop celebrating 5% growth".
+The editing workspace is governed by two key interactive agents: `OrchestratorAgent` and `MemoryAgent`.
 
-### 1.2 Template Agent (`TemplateAgent.ts`)
-**Goal**: Convert a "Viral Angle" into structured slide JSON.
-- **Rules**:
-  - STRICT adherence to source material (no hallucinations).
-  - Explicit slide counts and variant requirements (Hero start, Closing end).
-  - Specific headline character limits (45-50 chars) and body lengths.
-- **Visual Logic**: Agents are instructed to generate a "Bespoke Color Palette" matching the topic's emotion (e.g., Green for Money, Blue for Tech).
+### 1.1 Intent Classification (`OrchestratorAgent.ts`)
+The orchestrator reads the user's message, the rolling chat summary, and the active slides. It classifies the message into one of four intent buckets:
+*   **`copy`**: The user wants to rewrite text (e.g., *"Make slide 3 shorter"*).
+*   **`design`**: The user wants to adjust formatting, templates, or color presets (e.g., *"Change layout to portrait"*).
+*   **`image`**: The user wants to update or regenerate a doodle (e.g., *"Draw a rocket instead of a key"*).
+*   **`answer`**: General advice, greeting, or explanation (e.g., *"Why did you use blue?"*).
 
-### 1.3 Editor Agent (`EditorAgent.ts`)
-**Goal**: Contextual micro-refinements.
-- **Sub-tasks**:
-  - `refineText`: Targets Clarity, Punchiness, or Grammar based on user toggle.
-  - `headlineAlts`: Generates 3 distinct variations (Utility-based, Curiosity-based, Contrarian-based).
+#### Intent Classification Fallbacks:
+*   **Command Parsing**: If a user issues a clear command (like *"rewrite"* or *"make it punchier"*), the system uses `COPY_COMMAND_RE` regex checks to force a copy edit.
+*   **Design Action Fallback**: If the LLM generates a design modification in its conversational reply but fails to populate the structured `designActions` array, the system triggers `parseDesignActionsFallback()`. This deterministic helper parses keywords from the user's message (e.g., *"square"*, *"portrait"*, *"doodle"*, *"signature bottom right"*) and executes them client-side.
+*   **`forcedCopyEdit`**: If a copy request fails to return valid slides due to LLM formatting errors, the system triggers a focused single-purpose rewrite fallback call with a simpler, restricted schema.
 
-## 2. Decision Logic & Routing
+### 1.2 Rolling Compaction Logic (`MemoryAgent.ts`)
+To prevent token bloat and context degradation, the system limits the chat history sent to the LLM to the last 10 messages. 
+*   **Compaction Trigger**: When messages scroll out of the 10-message window, `MemoryAgent` is executed.
+*   **Prompt Constraints**: The agent is prompted to merge and condense the old history into the existing summary, focusing on decisions made, style preferences, and finalized edits. It must stay under ~150 words and drop obsolete details.
+*   **Compaction Fallback**: If the LLM call fails, the agent executes `deterministicFallback()`, compiling a simple, line-by-line summary (`User: [text] / Agent: [text]`) up to a hard-capped limit of 4,000 characters.
 
-### 2.1 Input Type Detection
-The system automatically classifies input in `MainAgent.ts`:
-- **TOPIC**: Input < 500 characters.
-- **CONTEXT**: Input > 500 characters (triggers summarization logic).
+---
 
-### 2.2 Template Selection
-Routing happens based on user selection in the UI:
-- **Template 1 (The Truth)**: Focuses on aggressive, direct, and high-contrast designs.
-- **Template 2 (The Clarity)**: Focuses on educational, professional, and clean designs with architectural elements (arches).
+## 2. Layout & Metaphor Rules
 
-### 2.3 Theme Override Logic
-While AI suggests a theme, a secondary logic layer in `MainAgent.ts` overrides it if a User Preset is active:
-1. AI generates a "Bespoke" theme.
-2. System checks `store.presetId`.
-3. If active, `resolveTheme()` calculates a new palette based on brand seeds and applies it, ensuring brand consistency over AI creativity.
+Different visual templates enforce distinct logical guidelines on content generation:
 
-## 3. Fallback Mechanisms
+### 2.1 Template 4 (The Statement) Rules
+*   **Sentence-Case Headlines**: Unlike Templates 1–3 which uppercase all headlines, Template 4 uses standard sentence case.
+*   **Accent Phrase Highlighter**: The agent must identify and output an `accentPhrase` which is an *exact substring* of the slide's headline. The SVG injector matches this string and applies the brand's primary accent color.
 
-The system is designed for high reliability even when AI or External APIs fail.
+### 2.2 Template 3 (The Sketch) Metaphor Rules
+The `ArtDirectorAgent` generates image prompts based on these core guidelines:
+*   **Narrative Tension**: Avoid static objects (e.g., *"a key"*). Prefer narrative visual metaphors (e.g., *"a stick figure unlocking a massive gate"*).
+*   **Labeled Elements**: Prompt Flux to draw annotations in all-caps inside single quotes (e.g., *"a computer labeled 'DATABASE'"*).
+*   **High Contrast**: Show the "pain point" vs the "solution" in the scene layout.
+*   **Flux Envelope**: Every scene is automatically wrapped in a style envelope: `A simple hand-drawn doodle sketch of [scene], thick black marker lines, rough outlines, grey scribble shading...`.
 
-### 3.1 Agent Failure Fallbacks
-- **Strategist Failure**: If the `StrategistAgent` fails, the `MainAgent` catches the error and passes the raw user input directly to the Template Agent as the "Angle", ensuring the generation continues.
-- **Template Failure**: Returns a basic "Error Slide" rather than a blank screen.
+---
 
-### 3.2 API & Usage Fallbacks
-- **BYOK vs Free Tier**: `aiService.ts` checks for a user API key. If missing, it falls back to the system's "Free Tier".
-- **Usage Tracking**: Uses optimistic incrementing. The usage count is updated in the database *before* the request completes to prevent race conditions during free-tier usage.
+## 3. Fallback Pathways & Visual Asset Repair
 
-### 3.3 Data Source Fallbacks
-- **YouTube**: If a transcript is not found or disabled, the system provides a specific error message (`404`) instead of a generic generation failure, allowing the user to provide text manually.
+The system uses self-healing loops to guarantee content displays cleanly:
 
-## 4. Workflow Sequence
+```mermaid
+graph TD
+    A[Slides Generated] --> B{Missing Visuals?}
+    
+    B -- Missing Icons T1/T2 --> C[MainAgent: repairVisualAssets]
+    B -- Missing Doodles T3 --> D[MainAgent: repairVisualAssets]
+    
+    C --> E[LLM: Predict relevant Lucide icons]
+    D --> F[Check Offline Database for local WebP matches]
+    
+    F -- Match Found --> G[Attach local image URL]
+    F -- No Match --> H[Queue Replicate Flux Job]
+```
+
+1.  **Icon Repair**: If a Template 1 or 2 slide is missing a Lucide icon, `getVisualAssetsForSlides` queries a lightweight LLM task to select a relevant icon from the allowed list.
+2.  **Doodle Matching Fallback**: For Template 3 doodles, the system first runs `findMatchingImage()`. If a matching vector sketch is already indexed in the local asset directory, it returns the local path instantly, saving Replicate API tokens. If no local match exists, it triggers a Replicate queue job.
+3.  **BYOK Retirement**: All LLM routing is now server-managed. The application no longer supports or checks for client-supplied keys, preventing user configuration errors.
+
+---
+
+## 4. End-to-End Execution Sequence
+
+This diagram maps out how a user generation query moves through the background worker.
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant M as MainAgent
-    participant S as Strategist
-    participant T as TemplateAgent
-    participant L as LLM (Claude/GPT)
+    participant U as React Client
+    participant J as Appwrite Jobs DB
+    participant W as Worker Daemon
+    participant R as ResearchAgent
+    participant L as LLMs (Claude/Groq/Gemini)
+    participant A as ArtDirectorAgent
+    participant S as Appwrite Storage
 
-    U->>M: Submit Topic/URL
-    M->>M: Detect Input Type (Topic/Context)
-    M->>S: Request Viral Angle
-    S->>L: Reasoning Prompt
-    L-->>S: JSON (Premise, Audience, Takeaway)
-    S-->>M: Formatted Angle
-    M->>T: Request Slide JSON
-    T->>L: Writing Prompt + Angle
-    L-->>T: Full Carousel JSON + AI Theme
-    T-->>M: Slides + Theme
-    M->>M: Apply Brand Preset Override
-    M-->>U: Render Slides in Preview
+    U->>J: Create Job (payload, pending)
+    W->>J: Fetch Pending Job & Lock (running)
+    
+    W->>R: Analyze Prompt Needs
+    R->>L: Select Search Queries
+    L-->>R: Query Strings
+    R->>R: Search Tavily API & Format
+    
+    W->>L: Generate Slide Copy + Layout JSON
+    L-->>W: Slide Schema
+    
+    rect rgb(240, 248, 255)
+        Note over W,S: If Template 3 (Sketches)
+        W->>A: Generate visual Metaphors
+        A->>L: Describe scene details
+        L-->>A: Scene prompts
+        W->>W: Call Replicate Flux API
+        W->>S: Store generated WebP Webp Files
+    end
+
+    W->>J: Save Carousel & Set status: done
+    U->>J: Poll done status & Render Slides
 ```

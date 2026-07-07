@@ -1,31 +1,42 @@
 # Generation Workflow: Agentic Carousel
 
-This document provides a technical walkthrough of the end-to-end generation pipeline, from user input to the final rendered carousel.
+This document details the step-by-step pipeline from a raw user prompt or document upload to the final rendered slide deck.
 
-## 1. Pipeline Architecture
+---
 
-The system operates as a **Sequential Agent Chain** orchestrated by the `MainAgent`.
+## 1. Pipeline Architecture (Background Job Loop)
+
+The creation of a carousel runs as a sequential chain of specialized AI agents managed asynchronously in the background queue.
 
 ```mermaid
 graph TD
-    subgraph Input ["Step 1: Input Detection"]
-        UI[User Input] --> ID[Type Detector]
+    subgraph Step_1 [1. Input Analysis]
+        Input[User Prompt / File / URL] --> Mode[Input Type Detector]
+        Mode --> ResearchNeeds[ResearchAgent Analysis]
     end
 
-    subgraph Logic ["Step 2: Strategy Layer"]
-        ID -- "Angle + Vibe" --> SA[Strategist Agent]
+    subgraph Step_2 [2. Research Enrichment]
+        ResearchNeeds -- Needs Info --> Tavily[Tavily Search API]
+        ResearchNeeds -- Topic Clear --> Strategy[StrategistAgent]
+        Tavily -- Search Results --> Strategy
     end
 
-    subgraph Execution ["Step 3: Writing Layer"]
-        SA -- "Structured Angle" --> TA{Template Agent}
-        TA -- "Template 1" --> T1[Truth Agent]
-        TA -- "Template 2" --> T2[Clarity Agent]
+    subgraph Step_3 [3. Copywriting]
+        Strategy -- Viral Angle & Hooks --> Template[TemplateAgent]
+        Template -- Structured Slide JSON --> Proofreader[ProofreaderAgent]
+        Proofreader -- Corrected Copy --> Polish[polishSlides Utility]
     end
 
-    subgraph Finalize ["Step 4: Post-Processing"]
-        T1 & T2 --> PT[Post-Processor]
-        PT --> BR[Brand Override]
-        BR --> Final[Final Carousel Store]
+    subgraph Step_4 [4. Sketch & Metaphors]
+        Polish -- Template 3 Active --> ArtDirector[ArtDirectorAgent]
+        ArtDirector -- Metaphor Prompts --> Replicate[Replicate Flux API]
+        Replicate -- Save WebP --> AppwriteStorage[Appwrite Storage]
+    end
+
+    subgraph Step_5 [5. Finalize]
+        Polish -- Template 1, 2, 4 --> BrandOverride[Brand Theme Override]
+        AppwriteStorage -- Slide Images --> BrandOverride
+        BrandOverride --> Persist[Appwrite Carousel DB]
     end
 ```
 
@@ -33,73 +44,63 @@ graph TD
 
 ## 2. Step-by-Step Breakdown
 
-### Node 1: Input & Type Detection
-**Location**: `MainAgent.ts`
-- **Logic**: 
-  - If `content.length < 500` -> `TOPIC` Mode.
-  - If `content.length >= 500` -> `CONTEXT` Mode (triggers truncation to 24k chars).
-- **Final Output**: An `AgentContext` object containing the source content, input mode, and user-defined vibe.
+### Phase 1: Input Analysis & Research
+*   **Location**: `ResearchAgent.ts`
+*   **Process**:
+    1.  Classifies input: prompts under 500 characters default to `TOPIC` mode; longer documents/files default to `CONTEXT` mode.
+    2.  The `ResearchAgent` evaluates whether the prompt requires external information (e.g., current news, specific statistics, or technical trends).
+    3.  If needed, it constructs up to 3 target queries and searches via the **Tavily API**, appending a `=== AI RESEARCH ENRICHMENT ===` block containing URLs, titles, and summaries to the prompt.
 
-### Node 2: The Strategist (Reasoning Branch)
-**Location**: `StrategistAgent.ts`
-- **Goal**: Define the "Hook" and "Viral Strategy".
-- **System Prompt**: 
-  > You are a Viral Content Strategist. Your task is to analyze the input and generate a specific 'Viral Angle' or 'Premise'. Ignore generic advice. If Vibe is 'Contrarian' -> Find a myth to bust.
-- **Output Schema**:
-  ```json
-  {
-    "premise": "String (Punchy hook)",
-    "audience": "String (Specific target)",
-    "takeaway": "String (Core lesson)"
-  }
-  ```
-- **Final Output**: A formatted Markdown string containing the premise, audience, and takeaway.
+### Phase 2: Strategic Hook Synthesis
+*   **Location**: `StrategistAgent.ts`
+*   **Process**:
+    1.  Ingests the original prompt + any research results.
+    2.  Generates a high-stakes "Viral Angle" and a hook specific to the selected user vibe (e.g., *Contrarian*, *Storyteller*, *Analytical*, or *Actionable*).
+    3.  Outputs a Markdown card detailing the target audience, the core takeaway, and the hook strategy.
 
-### Node 3: The Writer (Execution Branch)
-**Location**: `TemplateAgent.ts`
-- **Goal**: Write the actual slide copy and suggest visual elements.
-- **System Prompt (Generic snippet)**:
-  > You are a LinkedIn Ghostwriter. Stick strictly to the provided Angle. Write a {count}-slide carousel. Generate complete, impactful headlines. Max headline length: 50 chars.
-- **Output Schema**:
-  ```json
-  {
-    "theme": { "background": "Hex", "textDefault": "Hex", "textHighlight": "Hex" },
-    "slides": [
-      {
-        "variant": "hero | body | list | closing",
-        "headline": "...",
-        "body": "...",
-        "icon": "LucideIconName"
-      }
-    ]
-  }
-  ```
-- **Final Output**: A structured object containing a `slides` array and an AI-generated `theme`.
+### Phase 3: Slide Copywriting
+*   **Location**: `TemplateAgent.ts`
+*   **Process**:
+    1.  Fuses the Strategist's angle with the selected visual template style.
+    2.  Generates copy matching strict constraints (word count ceilings, structure, and slide numbers).
+    3.  Outputs structured JSON containing themes and slide fields (`preHeader`, `headline`, `body`, `listItems`, `footer`).
 
-### Node 4: Post-Processing & Brand Override
-**Location**: `MainAgent.ts`
-- **Logic**: 
-  1. Fixes common LLM errors (e.g., `type` vs `variant` in slide objects).
-  2. Checks for `store.presetId`.
-  3. If present, calls `resolveTheme(presetSeeds)` to replace the AI's theme colors with the user's brand identity.
-- **Final Output**: Hydrated Zustand store containing the final slides and finalized theme.
+### Phase 4: Copy Editing & Quality Proofing
+*   **Location**: `ProofreaderAgent.ts` & `contentPolish.ts`
+*   **Process**:
+    1.  The JSON slides pass through `ProofreaderAgent` which runs a lightweight LLM call to catch grammar, spelling, and punctuation errors. It acts as a safety validator and is instructed never to alter the structure or tone.
+    2.  `polishSlides` applies deterministic regex adjustments (removing markdown formatting inside headlines, title casing slide headers, and trimming whitespace).
+
+### Phase 5: Sketching Metaphors (Template 3 Sketch only)
+*   **Location**: `ArtDirectorAgent.ts` & `worker/doodleGen.ts`
+*   **Process**:
+    1.  `ArtDirectorAgent` translates slide contents into witty, contrasting visual metaphor descriptions (e.g., "A robot labeled 'API' walking through a wall while a human struggles with a locked door labeled 'UI'").
+    2.  For each slide, it requests a WebP image from **Replicate** using the Flux Schnell model.
+    3.  The images are uploaded to Appwrite Storage and their URLs are attached to the slide data.
+
+### Phase 6: Brand Injection & Save
+*   **Location**: `MainAgent.ts` & `carouselStoreServer.ts`
+*   **Process**:
+    1.  If the user has a selected brand preset, `resolveTheme()` replaces the AI-generated theme colors with the user's specific brand palette.
+    2.  The final slides, theme, template, and formatting state are saved as a document in the Appwrite carousels database.
 
 ---
 
-## 3. Detailed Prompt Table
+## 3. Data Transformation Example
 
-| Agent | Core System Prompt Focus | output Format |
-| :--- | :--- | :--- |
-| **Strategist** | Identification of "Viral Angles", Myth-busting, Audience segmenting. | Markdown Strategy Card |
-| **Writer (T1)** | Direct, high-contrast, bold headlines, aggressive tone. | Full Slide JSON + AI Palette |
-| **Writer (T2)** | Professional, clean, educational, optimistic tone. | Full Slide JSON + AI Palette |
-| **Editor** | Clarity, Punchiness, Grammar (contextual refinements). | Refined String / Alt Headlines |
-
-## 4. State Transformation (Example)
-
-1. **User Input**: "Leadership" + Vibe: "Contrarian".
-2. **Strategist Node**: "Premise: Your Weekly 1:1s are a waste of time. Do this instead."
-3. **Template Node**: 
-   - Slide 1: "The 1:1 Illusion"
-   - Slide 2: "Why status updates kill creativity..."
-4. **Final Node**: Replaces AI Purple theme with "Ocean Tech" Brand Blue theme.
+1.  **Raw Input**: `"Why APIs are better than UIs"` (Vibe: Contrarian, Template 3)
+2.  **Research Agent**: Adds research queries about API efficiency.
+3.  **Strategist Agent**:
+    ```json
+    {
+      "premise": "Stop building complex buttons. Build endpoints.",
+      "audience": "Software Architects",
+      "takeaway": "UIs slow down systems; APIs scale them."
+    }
+    ```
+4.  **Template Agent**: Generates slide outline.
+5.  **Proofreader Agent**: Fixes minor casing and capitalization in copy.
+6.  **Art Director Agent**: Formulates sketch prompt:
+    > "A simple hand-drawn doodle sketch of a robot walking through a wall labeled 'API' while a human struggles with a locked door labeled 'UI', line art, isolated on a plain white background."
+7.  **Replicate (Flux)**: Returns `https://cloud.appwrite.io/.../doodle-123.webp` URL.
+8.  **Output**: Hydrated carousel database record ready to render in the client browser.

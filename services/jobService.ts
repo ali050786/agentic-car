@@ -71,7 +71,7 @@ export const createJob = async (params: {
 
     if (res.status === 403) {
         const body = await res.json().catch(() => ({}));
-        throw new FreeLimitError(body?.error || 'Free trial exhausted. Please add your API key to continue.', body?.usageCount);
+        throw new FreeLimitError(body?.error || 'Free trial exhausted. Please contact admin for more credits.', body?.usageCount);
     }
 
     if (!res.ok) {

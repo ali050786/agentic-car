@@ -1,355 +1,151 @@
 # 🎨 Agentic Carousel Generator
 
-An intelligent, AI-powered carousel generator that creates stunning, professional-quality carousel posts optimized for Instagram, LinkedIn, and other social media platforms. Built with modern web technologies and powered by multiple AI models.
+An intelligent, AI-powered multi-agent platform that generates high-quality carousel posts optimized for LinkedIn, Instagram, and other social media platforms. Built with modern React, a background worker queue, and custom conversational AI agents.
 
 ## ✨ Features
 
-- **AI-Powered Content Generation**: Leverage Groq (Llama 3.3), Claude Haiku 3.5, or Gemini Flash to generate carousel content
-- **Multiple Templates**: Choose from beautifully designed carousel templates
-- **Smart Theme System**: Dynamic light/dark themes with automatic color generation
-- **Background Patterns**: 12+ customizable SVG patterns with adjustable opacity
-- **Multi-Format Upload**: Support for PDF, DOCX, DOC, and Markdown files
-- **YouTube Transcript Integration**: Generate carousels from YouTube videos (Coming Soon)
-- **Real-time Preview**: See your carousel as you edit
-- **Figma Export**: Optimized SVG output for seamless Figma integration
-- **User Authentication**: Secure Google OAuth authentication via Appwrite
-- **Carousel Library**: Save and manage your carousel history
+*   **Chat-Driven Agentic Workspace**: Rebuilt editor page that acts as an interactive chat canvas. The `OrchestratorAgent` handles requests via a single inference call, routing commands to copy updates (`copy`), layout and palette swaps (`design`), or visual generation (`image`).
+*   **Background Worker Queue**: All generation and complex edit jobs run asynchronously on a dedicated Node/Express background worker. This ensures jobs survive browser tab closure or navigation.
+*   **Three-Layer Memory System**:
+    *   **Durable Memory**: Persistent user-profile design preferences stored in the database.
+    *   **Rolling Compact Summary**: `MemoryAgent` compresses conversation history when it scrolls past the 10-message window, keeping LLM prompts lean yet coherent.
+    *   **Single-Call Extraction**: The orchestrator extracts preference notes in real-time without extra API overhead.
+*   **AI Research Enrichment**: `ResearchAgent` analyzes user prompts and queries the Tavily API to fetch real-world data, citations, and trends to enrich the carousel content automatically.
+*   **Doodle Pipeline (Template 3)**: Automatic prompt generation via the `ArtDirectorAgent` that sends scene metadata to Replicate (Flux model) to render black pencil sketches on white, saved straight to Appwrite Storage. Includes automated visual asset repair loops.
+*   **Visual Styling Suite (Templates 1–4)**:
+    *   **Template 1 (The Truth)**: Direct, high-contrast, bold industrial style.
+    *   **Template 2 (The Clarity)**: Clean, professional, modern design with architectural arches.
+    *   **Template 3 (The Sketch)**: Fun, narrative-driven whiteboard doodle style.
+    *   **Template 4 (The Statement)**: Premium minimalist typographic layout utilizing sentence-case text and highlight `accentPhrase` substrings.
+*   **Automatic Quality Checks**: Incorporates a `ProofreaderAgent` to perform automated grammar, punctuation, and layout-fit passes.
+*   **SVG Figma Export**: Optimized code generator using Satori, allowing seamless copy-pasting directly into Figma.
+*   **User Auth**: Appwrite-based Google OAuth authentication.
 
 ## 🚀 Tech Stack
 
-- **Frontend**: React 19, TypeScript, Vite
-- **State Management**: Zustand
-- **Backend**: Appwrite (BaaS)
-- **AI Models**: 
-  - Groq (Llama 3.3 70B)
-  - Claude Haiku 3.5
-  - Gemini Flash
-- **Styling**: Vanilla CSS with modern design patterns
-- **Icons**: Lucide React
-- **Document Processing**: Mammoth (DOCX), PDF.js (PDF)
+*   **Frontend**: React 19, TypeScript, Vite, Tailwind CSS (layouts), Zustand (state management)
+*   **Background Worker**: Node.js, Express, Job Queue Store
+*   **Backend / BaaS**: Appwrite (Database, Storage, Auth, Jobs collection)
+*   **AI & Image Integrations**:
+    *   Claude 3.5 Haiku / Sonnet (via Anthropic API)
+    *   OpenRouter Free Models (Fallback route)
+    *   Tavily Search API (Research enrichment)
+    *   Replicate (Flux Schnell) (Doodle generation)
 
 ## 📋 Prerequisites
 
-Before you begin, ensure you have the following installed:
+Ensure you have the following installed:
+*   **Node.js** (v18 or higher)
+*   **npm** or **yarn**
+*   **Git**
 
-- **Node.js** (v18 or higher)
-- **npm** or **yarn**
-- **Git**
+You will need API keys for:
+*   Anthropic API and OpenRouter
+*   Tavily Search API (optional, for web research)
+*   Replicate API Token (optional, for Template-3 doodle sketch generation)
+*   Appwrite Cloud or self-hosted project credentials
 
-You'll also need API keys for:
-- At least one AI provider (Groq/Claude/Gemini)
-- Appwrite project
-
-## 🛠️ Installation
+## 🛠️ Installation & Setup
 
 ### 1. Clone the Repository
-
 ```bash
 git clone https://github.com/ali050786/agentic-car.git
 cd agentic-car
 ```
 
 ### 2. Install Dependencies
-
 ```bash
 npm install
 ```
 
 ### 3. Configure Environment Variables
-
-Copy the example environment file:
-
+Copy `.env.example` to create your local `.env`:
 ```bash
 cp .env.example .env
 ```
 
-Edit the `.env` file and add your API keys:
-
+Edit `.env` and provide your credentials. Key parameters include:
 ```env
-# AI Model Keys (at least one required)
-GROQ_API_KEY=your_groq_api_key_here
-CLAUDE_API_KEY=your_claude_api_key_here
-GEMINI_API_KEY=your_gemini_api_key_here
+# AI Model Keys
+CLAUDE_API_KEY=your_claude_key
+OPENROUTER_API_KEY=your_openrouter_key
 
-# Appwrite Configuration
+# Research Agent (Tavily Search)
+VITE_TAVILY_API_KEY=your_tavily_key
+
+# Doodle Generation
+REPLICATE_API_TOKEN=your_replicate_token
+VITE_APPWRITE_STORAGE_BUCKET_ID=your_storage_bucket_id
+
+# Appwrite Core Config
 VITE_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
-VITE_APPWRITE_PROJECT_ID=your_project_id_here
+VITE_APPWRITE_PROJECT_ID=your_project_id
 VITE_APPWRITE_DATABASE_ID=main
 VITE_APPWRITE_CAROUSELS_COLLECTION_ID=carousels
 VITE_APPWRITE_ANALYTICS_COLLECTION_ID=user_analytics
+VITE_APPWRITE_PROFILES_COLLECTION_ID=profiles
+VITE_APPWRITE_API_KEY=your_server_api_key
+
+# Background Worker config
+VITE_WORKER_URL=http://localhost:4000
+APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+APPWRITE_PROJECT_ID=your_project_id
+APPWRITE_API_KEY=your_highly_privileged_server_key
 ```
 
-### 4. Set Up Appwrite
+### 4. Create Appwrite Database & Collections
+Set up the `main` database with the following collections:
+*   `carousels`: Stores user carousels.
+*   `user_analytics`: Tracks creation limits and dates.
+*   `profiles`: Persistent user profile preferences.
+*   `generation_jobs`: Tracks background worker jobs (`status`, `progress`, `payload`).
 
-#### Create Appwrite Project
-
-1. Go to [Appwrite Cloud](https://cloud.appwrite.io/) or your self-hosted instance
-2. Create a new project
-3. Copy your Project ID to the `.env` file
-
-#### Configure Google OAuth
-
-1. In your Appwrite project, go to **Auth** → **Settings**
-2. Enable **Google OAuth2** provider
-3. Follow the [Google OAuth Setup Guide](#google-oauth-setup)
-
-#### Create Database & Collections
-
-1. Create a database named `main`
-2. Create collections:
-   - **carousels**: Store user-generated carousels
-   - **user_analytics**: Track usage analytics
-
-**Carousels Collection Schema:**
-```json
-{
-  "userId": "string",
-  "title": "string",
-  "slides": "string (JSON)",
-  "template": "string",
-  "theme": "string (JSON)",
-  "createdAt": "datetime"
-}
-```
-
-**User Analytics Collection Schema:**
-```json
-{
-  "userId": "string",
-  "carouselsCreated": "integer",
-  "lastActive": "datetime"
-}
-```
-
-3. Set appropriate permissions (read/write for authenticated users)
-
-## 🔑 API Keys Setup
-
-### Groq (Recommended - Free)
-
-1. Visit [Groq Console](https://console.groq.com/keys)
-2. Sign up for a free account
-3. Generate an API key
-4. Add to `.env`: `GROQ_API_KEY=your_key_here`
-
-**Benefits:**
-- Very fast generation
-- Generous free tier rate limits
-- Llama 3.3 70B model
-
-### Claude (Best Quality)
-
-1. Visit [Anthropic Console](https://console.anthropic.com/)
-2. Create an account
-3. Generate an API key
-4. Add to `.env`: `CLAUDE_API_KEY=your_key_here`
-
-**Benefits:**
-- Excellent reasoning
-- Superior JSON adherence
-- Claude Haiku 3.5 model
-
-### Gemini (Google's Free Model)
-
-1. Visit [Google AI Studio](https://aistudio.google.com/apikey)
-2. Create an API key
-3. Add to `.env`: `GEMINI_API_KEY=your_key_here`
-
-**Benefits:**
-- Free tier with generous limits
-- Native JSON mode support
-- Gemini Flash 1.5 model
-
-## 🔐 Google OAuth Setup
-
-### 1. Create Google Cloud Project
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the **Google+ API**
-
-### 2. Configure OAuth Consent Screen
-
-1. Navigate to **APIs & Services** → **OAuth consent screen**
-2. Choose **External** user type
-3. Fill in the application details:
-   - App name
-   - Support email
-   - Developer contact
-4. Add scopes: `email`, `profile`, `openid`
-5. Save and continue
-
-### 3. Create OAuth 2.0 Credentials
-
-1. Navigate to **APIs & Services** → **Credentials**
-2. Click **Create Credentials** → **OAuth client ID**
-3. Choose **Web application**
-4. Add authorized redirect URIs:
-   ```
-   https://cloud.appwrite.io/v1/account/sessions/oauth2/callback/google/[PROJECT_ID]
-   ```
-   Replace `[PROJECT_ID]` with your Appwrite project ID
-5. Copy the **Client ID** and **Client Secret**
-
-### 4. Configure in Appwrite
-
-1. Go to your Appwrite project → **Auth** → **Settings**
-2. Find **Google** provider
-3. Paste your Client ID and Client Secret
-4. Save changes
+---
 
 ## 🏃‍♂️ Running the Application
 
-### Development Mode
+To run the full stack locally, you must run both the frontend dev server and the background queue worker.
 
-Start the development server:
-
+### Run Frontend (Vite)
 ```bash
 npm run dev
 ```
+The client dashboard will be available at `http://localhost:5173`.
 
-The app will be available at `http://localhost:5173`
-
-### Backend Server (Optional)
-
-If you need the backend server for additional processing:
-
+### Run Background Worker (Express queue)
 ```bash
-npm run server
+npm run worker
 ```
-
-Server runs on `http://localhost:3000`
+The worker starts at `http://localhost:4000`, polling and executing Appwrite job lists.
 
 ### Production Build
-
-Build for production:
-
+Build both bundles:
 ```bash
 npm run build
 ```
 
-Preview production build:
+---
 
-```bash
-npm run preview
-```
-
-## 📁 Project Structure
-
+## 📂 Project Structure
 ```
 agentic-car/
-├── assets/           # Static assets and templates
-├── components/       # React components
-│   ├── FloatingBottomBar.tsx
-│   ├── FloatingSidebar.tsx
-│   ├── CarouselPreview.tsx
-│   └── ...
-├── config/           # Configuration files
-├── core/             # Core logic and agents
-│   └── agents/       # AI agent implementations
-├── database/         # Database utilities
-├── lib/              # External libraries
-├── pages/            # Page components
-│   ├── Login.tsx
-│   ├── Signup.tsx
-│   └── Dashboard.tsx
-├── services/         # API services
-├── store/            # Zustand state management
-├── utils/            # Utility functions
-│   ├── optimizers/   # Template optimizers
-│   ├── patternGenerator.ts
-│   ├── brandUtils.ts
-│   └── ...
-├── .env.example      # Environment variables template
-├── package.json      # Dependencies
-└── vite.config.ts    # Vite configuration
+├── assets/           # Static assets, SVG themes, and template shapes
+├── components/       # UI Components
+│   ├── chat/         # Conversational Orchestrator Panel
+│   ├── artifact/     # Carousel slide preview and visual setting controllers
+│   ├── sidebar/      # CarouselHistorySidebar component
+│   └── landing/      # Landing page layouts
+├── core/             # Core Logic
+│   └── agents/       # Multi-agent implementations (Orchestrator, Research, Strategist, Template, Proofreader, ArtDirector, Memory)
+├── database/         # Appwrite DB schema utilities
+├── pages/            # View pages (Login, Dashboard, ImageRefinement)
+├── store/            # Zustand client stores (useCarouselStore, useAuthStore)
+├── worker/           # Background job worker (express app, queue managers, jobs)
+├── tsconfig.json     # TypeScript configuration
+└── vite.config.ts    # Build config
 ```
-
-## 🎯 Usage
-
-### Creating Your First Carousel
-
-1. **Sign In**: Use Google OAuth to authenticate
-2. **Choose Input Method**:
-   - Enter text directly
-   - Upload a file (PDF, DOCX, DOC, MD)
-   - Paste a YouTube URL
-3. **Select AI Model**: Choose from Groq, Claude, or Gemini
-4. **Generate**: Click generate and watch the AI create your carousel
-5. **Customize**:
-   - Choose a template
-   - Adjust colors and themes
-   - Modify background patterns
-   - Edit individual slides
-6. **Export**: Download as SVG or copy to Figma
-
-### Template Features
-
-- **Template 1**: Modern, clean design with split layouts
-- **Template 2**: Bold, centered content with emphasis
-
-Each template supports:
-- Custom color schemes
-- Dynamic theming (light/dark)
-- Pattern overlays
-- Icon integration
-- List formatting
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Issue**: `Module not found` errors
-```bash
-# Clear node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
-```
-
-**Issue**: API key not working
-- Verify the key is correct in `.env`
-- Ensure `.env` is in the root directory
-- Restart the development server
-
-**Issue**: Appwrite authentication errors
-- Check OAuth redirect URIs match exactly
-- Verify Google OAuth credentials are correct
-- Check Appwrite project ID in `.env`
-
-**Issue**: Patterns not showing
-- Clear browser cache
-- Check pattern opacity settings
-- Verify theme configuration
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🙏 Acknowledgments
-
-- [Appwrite](https://appwrite.io/) - Backend as a Service
-- [Groq](https://groq.com/) - Fast AI inference
-- [Anthropic](https://www.anthropic.com/) - Claude AI
-- [Google AI](https://ai.google/) - Gemini models
-- [Lucide](https://lucide.dev/) - Beautiful icons
-- [React](https://react.dev/) - UI framework
-
-## 📧 Support
-
-For issues and questions:
-- Open an issue on GitHub
-- Contact: ali050786@gmail.com
 
 ---
 
-Made with ❤️ by Sikandar Ali Abdul
+## 📄 License
+This project is licensed under the MIT License.

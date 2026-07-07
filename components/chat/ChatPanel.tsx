@@ -196,7 +196,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
             } catch (e: any) {
                 runMessageId.current = null;
                 if (e instanceof FreeLimitError) {
-                    updateChatMessage(runId, { running: false, error: true, text: 'Free usage limit reached. Please contact support to upgrade.' });
+                    updateChatMessage(runId, { running: false, error: true, text: 'Free usage limit reached. Please contact admin for more credits.' });
                 } else {
                     updateChatMessage(runId, { running: false, error: true, text: e?.message || 'Generation failed.' });
                 }
@@ -253,7 +253,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         } catch (e: any) {
             runMessageId.current = null;
             if (e instanceof FreeLimitError) {
-                updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free usage limit reached. Please contact support to upgrade.' });
+                updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free usage limit reached. Please contact admin for more credits.' });
             } else {
                 updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
             }
