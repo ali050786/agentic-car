@@ -8,6 +8,11 @@
 import './loadEnv';
 import express from 'express';
 import cors from 'cors';
+import dns from 'dns';
+
+if (dns && typeof dns.setDefaultResultOrder === 'function') {
+    dns.setDefaultResultOrder('ipv4first');
+}
 import { requireUser, UnauthorizedError } from './auth';
 import { createJob } from './jobStore';
 import { enqueue, setHandler, resumeOnBoot, startStalenessWatcher } from './queue';

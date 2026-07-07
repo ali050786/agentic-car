@@ -2,6 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import { YoutubeTranscript } from 'youtube-transcript';
 import dotenv from 'dotenv';
+import dns from 'dns';
+
+if (dns && typeof dns.setDefaultResultOrder === 'function') {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 dotenv.config();
 

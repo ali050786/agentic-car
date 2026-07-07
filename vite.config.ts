@@ -10,6 +10,10 @@ import { YoutubeTranscript } from 'youtube-transcript';
 import { FREE_TIER_LIMIT, MAX_SOURCE_CONTENT_CHARS } from './config/constants';
 import { htmlToReadableText, extractTitle } from './utils/htmlToText';
 import { generateContent } from './core/llm/generateContent';
+import dns from 'dns';
+if (dns && typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
 dotenv.config();
 
 /**
