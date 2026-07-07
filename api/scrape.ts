@@ -1,11 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { htmlToReadableText, extractTitle } from '../utils/htmlToText';
 import { MAX_SOURCE_CONTENT_CHARS } from '../config/constants';
-import dns from 'dns';
 
-if (dns && typeof dns.setDefaultResultOrder === 'function') {
-    dns.setDefaultResultOrder('ipv4first');
-}
 
 /**
  * Vercel Serverless Function: Article Scraper
