@@ -65,17 +65,20 @@ export const ArtDirectorAgent = {
       core message, described so it can be drawn as a single marker doodle.
 
       Rules for each scene:
-      - A narrative mini-story with characters and tension or humor, not a static object.
-        Use stick figures, robots, business people, machines, physical props.
-      - Label the key elements with short ALL-CAPS words in single quotes so the viewer
-        instantly maps the drawing to the idea (e.g. a robot labeled 'AI AGENT' flying with a
-        jetpack over a tangled maze of screens labeled 'USER FLOW', while a confused designer
-        stands at the entrance holding a useless map).
-      - Show CONTRAST where possible: the old/painful way vs the new/easy way, expectation vs
-        reality, effort vs shortcut (e.g. an elaborate front door covered in locks labeled 'UI'
-        while a robot casually walks through a hole smashed in the wall labeled 'API').
-      - 25 to 60 words. Concrete and spatial — say what is where and what it is doing.
-      - Keep labels to 1-3 short words each, maximum 3 labels per scene.
+      - ONE dominant subject performing ONE clear action — not a multi-part composition. The
+        image model renders a single focal idea reliably; splitting the frame into two staged
+        halves or stacking several props together muddles the composition.
+      - Convey the idea through the choice of subject, pose, and props alone — a robot with a
+        jetpack soaring over a tangled pile of wires while a stick figure looks up bewildered,
+        or an oversized key effortlessly opening a padlock the size of a house.
+      - Do NOT ask for any text, words, letters, or labels inside the image. Diffusion models
+        render in-image text as garbled scribbles, which wrecks the drawing — the metaphor must
+        read entirely from imagery, no captions or signage of any kind.
+      - Show CONTRAST through the objects and actions themselves when relevant (old/painful vs
+        new/easy, effort vs shortcut) — e.g. one figure straining to push a boulder up a hill
+        while another rides past on a rocket, not a split-screen or labeled comparison.
+      - 15 to 35 words. Concrete and spatial — say what the subject is, what it's doing, and
+        at most one supporting prop.
       - Vary the metaphors across slides; never repeat the same scene or main prop twice.
 
       Return JSON: { "prompts": [ { "slideIndex": 0, "subject": "..." }, ... ] } with exactly one entry per slide, where "subject" is the scene description.

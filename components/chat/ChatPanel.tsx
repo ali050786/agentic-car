@@ -260,6 +260,68 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         }
     };
 
+    const handleRetry = async (failedMsgId: string) => {
+        const msgIndex = chatMessages.findIndex(m => m.id === failedMsgId);
+        if (msgIndex === -1) return;
+
+        // The user prompt is the user message immediately before this error message
+        const userMsg = msgIndex > 0 ? chatMessages[msgIndex - 1] : null;
+        const promptText = userMsg ? userMsg.text : (topic || draft);
+
+        // Remove the failed message from the store
+        const filteredMessages = chatMessages.filter(m => m.id !== failedMsgId);
+        useCarouselStore.getState().setChatMessages(filteredMessages);
+
+        if (!hasSlides) {
+            // Creation flow
+            const runId = nextId();
+            runMessageId.current = runId;
+            addChatMessage({ id: runId, role: 'assistant', text: '', running: true, events: [] });
+            try {
+                await onFirstPrompt(promptText);
+            } catch (e: any) {
+                runMessageId.current = null;
+                if (e instanceof FreeLimitError) {
+                    updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free usage limit reached. Please contact admin for more credits.' });
+                } else {
+                    updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
+                }
+            }
+        } else {
+            // Edit flow
+            const runId = nextId();
+            runMessageId.current = runId;
+            const store = useCarouselStore.getState();
+            addChatMessage({
+                id: runId, role: 'assistant', text: '', running: true,
+                events: [{ label: 'Thinking...', done: false }]
+            });
+            try {
+                const { jobId } = await createJob({
+                    type: 'edit',
+                    carouselId: activeCarouselId,
+                    payload: {
+                        message: promptText,
+                        slides: store.slides,
+                        theme: store.theme,
+                        templateId: store.selectedTemplate,
+                        selectedSlideIndex: selectedSlideIndex,
+                        selectedModel: store.selectedModel,
+                    },
+                });
+                setActiveJobId(jobId);
+                setGenerating(true);
+            } catch (e: any) {
+                runMessageId.current = null;
+                if (e instanceof FreeLimitError) {
+                    updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free usage limit reached. Please contact admin for more credits.' });
+                } else {
+                    updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
+                }
+            }
+        }
+    };
+
     const onKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -333,6 +395,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                                 </div>
                             )}
                             {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
+                            {msg.error && (
+                                <button
+                                    onClick={() => handleRetry(msg.id)}
+                                    className="mt-2 px-2.5 py-0.5 rounded bg-red-500/20 hover:bg-red-500/35 text-red-200 text-[10px] font-medium transition-colors border border-red-500/25 flex items-center gap-1 w-fit cursor-pointer"
+                                >
+                                    <Sparkles size={10} /> Retry Generation
+                                </button>
+                            )}
                             {msg.running && !msg.text && (!msg.events || msg.events.length === 0) && (
                                 <span className="text-neutral-400 text-xs">Thinking...</span>
                             )}

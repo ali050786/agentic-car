@@ -123,13 +123,15 @@ export const generateContent = async ({
                         'X-Title': 'Agentic Carousel Generator',
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
+            body: JSON.stringify({
                         model: 'openrouter/free',
                         messages: [
                             { role: 'system', content: SYSTEM_PROMPT },
                             { role: 'user', content: prompt }
                         ],
                         temperature: 0.2,
+                        max_tokens: 4000,
+                        response_format: { type: 'json_object' }
                     })
                 });
 
@@ -167,6 +169,8 @@ export const generateContent = async ({
                                 { role: 'user', content: prompt }
                             ],
                             temperature: 0.2,
+                            max_tokens: 4000,
+                            response_format: { type: 'json_object' }
                         })
                     });
 

@@ -60,12 +60,22 @@ export const createJob = async (params: {
 
     const userId = await getUserId();
 
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'x-user-id': userId,
+    };
+
+    try {
+        const { getClientJwt } = await import('../lib/appwriteClient');
+        const jwt = await getClientJwt();
+        headers['Authorization'] = `Bearer ${jwt}`;
+    } catch (err) {
+        console.error('[jobService] Failed to fetch auth token for job:', err);
+    }
+
     const res = await fetch(`${WORKER_URL}/jobs`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': userId,
-        },
+        headers,
         body: JSON.stringify({ type: params.type, carouselId: params.carouselId, payload: params.payload }),
     });
 

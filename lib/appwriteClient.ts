@@ -103,6 +103,42 @@ export interface UserAnalyticsDocument {
     $updatedAt: string;
 }
 
+/**
+ * Ensures a session exists (anonymous if not logged in) and returns a valid JWT.
+ * Falls back to client-fallback signature if createJWT fails (e.g. 501 not implemented).
+ */
+export const getClientJwt = async (): Promise<string> => {
+    let userId = 'guest-session';
+    try {
+        const user = await account.get();
+        userId = user.$id;
+    } catch {
+        try {
+            const anon = await account.createAnonymousSession();
+            userId = anon.userId;
+        } catch {
+            // Already has anonymous session or failed to create
+            try {
+                // Try to get userId via session list
+                const sessions = await account.listSessions();
+                if (sessions.sessions.length > 0) {
+                    userId = sessions.sessions[0].userId;
+                }
+            } catch {
+                userId = 'guest-session';
+            }
+        }
+    }
+    
+    try {
+        const jwtResponse = await account.createJWT();
+        return jwtResponse.jwt;
+    } catch (e: any) {
+        console.warn('[AppwriteClient] Failed to create JWT, returning fallback token:', e?.message || e);
+        return `client-fallback-${userId}`;
+    }
+};
+
 // ===========================
 // EXPORTS
 // ===========================

@@ -87,6 +87,27 @@ export interface ScrapedContent {
  * third-party pages directly). Truncation happens server-side (no point
  * shipping the full HTML just to cut it client-side) — originalLength/truncated
  * let the caller show the user what was cut.
+/**
+ * Helper to fetch authorization headers with Appwrite JWT.
+ */
+async function getAuthHeaders(): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {};
+    try {
+        const { getClientJwt } = await import('../lib/appwriteClient');
+        const jwt = await getClientJwt();
+        headers['Authorization'] = `Bearer ${jwt}`;
+    } catch (err) {
+        console.error('[contentProcessor] Failed to get client auth token:', err);
+    }
+    return headers;
+}
+
+/**
+ * Fetches and extracts readable article text from a URL via the server-side
+ * /api/scrape endpoint (avoids CORS — the browser can't fetch arbitrary
+ * third-party pages directly). Truncation happens server-side (no point
+ * shipping the full HTML just to cut it client-side) — originalLength/truncated
+ * let the caller show the user what was cut.
  *
  * @param url - URL to fetch content from
  */
@@ -100,7 +121,10 @@ export async function fetchUrlContent(url: string): Promise<ScrapedContent> {
         throw new Error('URL must start with http:// or https://');
     }
 
-    const response = await fetch(`/api/scrape?url=${encodeURIComponent(url.trim())}`);
+    const headers = await getAuthHeaders();
+    const response = await fetch(`/api/scrape?url=${encodeURIComponent(url.trim())}`, {
+        headers
+    });
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
@@ -132,11 +156,13 @@ export async function fetchYouTubeContent(videoId: string): Promise<string> {
 
         console.log('[YouTube] Fetching transcript for video ID:', videoId);
 
+        const authHeaders = await getAuthHeaders();
         // Call backend API endpoint
         const response = await fetch('/api/youtube-transcript', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...authHeaders
             },
             body: JSON.stringify({ videoId }),
         });

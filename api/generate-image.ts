@@ -1,9 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { verifySession } from '../lib/apiAuth.js';
 
 /**
  * Vercel Serverless Function: Replicate Image Generation Proxy
  * 
  * Generates images using Replicate's black-forest-labs/flux-schnell model.
+ * Requires user authentication to prevent unauthorized API credit consumption.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -11,6 +13,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
+        // Authenticate the user
+        let userId: string;
+        try {
+            const authResult = await verifySession(req);
+            userId = authResult.userId;
+        } catch (authErr: any) {
+            console.warn('[Vercel API] Authentication failure in generate-image:', authErr?.message || authErr);
+            return res.status(401).json({
+                error: 'UNAUTHORIZED',
+                message: 'A valid session token is required to access this service.'
+            });
+        }
+
         const { prompt, aspectRatio } = req.body;
 
         if (!prompt) {
@@ -26,16 +41,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Replicate API configuration missing' });
         }
 
-        console.log(`[Vercel API] Generating image with Replicate (flux-schnell)`);
+        console.log(`[Vercel API] User ${userId} generating image with Replicate (flux-schnell)`);
 
         // Use Replicate's predictions API
-        // For flux-schnell, we can use the specific model endpoint or general predictions
         const response = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
             method: 'POST',
             headers: {
                 'Authorization': `Token ${replicateToken}`,
                 'Content-Type': 'application/json',
-                'Prefer': 'wait' // Request synchronous response for smaller models like schnell
+                'Prefer': 'wait'
             },
             body: JSON.stringify({
                 input: {
@@ -58,16 +72,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const prediction = await response.json();
-
-        // The output of flux-schnell is an array of URLs
         const imageUrl = prediction.output && prediction.output.length > 0 ? prediction.output[0] : null;
 
         if (!imageUrl) {
             throw new Error('No image output from Replicate');
         }
 
-        // Download server-side: replicate.delivery sends no CORS headers, so the
-        // browser cannot fetch the bytes itself for the Appwrite Storage upload
+        // Download server-side to avoid CORS limits in client
         let imageBase64: string | null = null;
         try {
             const imgResp = await fetch(imageUrl);
@@ -82,10 +93,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ imageUrl, imageBase64 });
 
     } catch (e: any) {
-        console.error('[Vercel API] Error:', e);
+        console.error('[Vercel API] Error in generate-image:', e);
         return res.status(500).json({
             error: 'Image generation error',
-            message: e?.message || String(e)
+            message: 'An internal error occurred during image generation. Please try again later.'
         });
     }
 }

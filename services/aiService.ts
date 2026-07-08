@@ -72,11 +72,18 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
             'Content-Type': 'application/json',
         };
 
-        // Add user ID for tracking
+        // Add user ID and Authorization JWT for tracking
         if (user?.$id) {
             headers['x-user-id'] = user.$id;
-            // Send updated count (after increment) to backend
             headers['x-usage-count'] = String(freeUsageCount + 1);
+
+            try {
+                const { getClientJwt } = await import('../lib/appwriteClient');
+                const jwt = await getClientJwt();
+                headers['Authorization'] = `Bearer ${jwt}`;
+            } catch (err: any) {
+                console.error('[aiService] Failed to get client auth token:', err);
+            }
         }
 
         console.log('[aiService] Using free tier');
@@ -127,9 +134,21 @@ export const generateContentFromAgent = async (prompt: string, responseSchema: a
  */
 export const generateImage = async (prompt: string, aspectRatio: string = '1:1'): Promise<{ imageUrl: string; imageBase64?: string | null }> => {
     try {
+        const headers: Record<string, string> = { 
+            'Content-Type': 'application/json' 
+        };
+
+        try {
+            const { getClientJwt } = await import('../lib/appwriteClient');
+            const jwt = await getClientJwt();
+            headers['Authorization'] = `Bearer ${jwt}`;
+        } catch (err: any) {
+            console.error('[aiService] Failed to get client auth token for image gen:', err);
+        }
+
         const res = await fetch('/api/generate-image', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ prompt, aspectRatio })
         });
 

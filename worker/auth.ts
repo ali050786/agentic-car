@@ -1,20 +1,5 @@
-/**
- * The worker's trust boundary.
- *
- * This was originally meant to verify a short-lived Appwrite JWT
- * (`account.createJWT()`) so the worker — not the browser — decides who the
- * caller is. In practice, createJWT() on this Appwrite Cloud project
- * (sgp.cloud.appwrite.io) reliably returns 501 Not Implemented even with a
- * valid session, which appears to be a platform-side issue rather than
- * anything in this app's config (see the investigation task filed alongside
- * this change). Until that's resolved, this falls back to the same
- * client-trusted x-user-id header api/generate.ts already uses — no weaker
- * than the app's existing trust model, just not the intended upgrade.
- * Swap requireUser's body back to JWT verification (see git history / the
- * commented block below) once Appwrite's JWT endpoint is confirmed working.
- */
-
 import type { Request } from 'express';
+import { getUserFromJwt, usersServer } from '../lib/appwriteServer';
 
 export class UnauthorizedError extends Error {
     constructor(message = 'Unauthorized') {
@@ -23,24 +8,56 @@ export class UnauthorizedError extends Error {
     }
 }
 
+/**
+ * Validates request authorization. 
+ * Resolves user identity from the Appwrite JWT session token.
+ * Falls back to verifying the user ID directly in development mode.
+ */
 export const requireUser = async (req: Request): Promise<{ userId: string }> => {
-    const userId = req.headers['x-user-id'];
-    if (typeof userId !== 'string' || !userId) {
-        throw new UnauthorizedError('Missing x-user-id header');
-    }
-    return { userId };
-};
+    const authHeader = req.headers['authorization'];
+    const jwt = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '') : undefined;
+    const isDev = process.env.NODE_ENV !== 'production' || process.env.ALLOW_AUTH_FALLBACK === 'true';
 
-// --- JWT-based verification (disabled — see file header) ---
-// import { getUserFromJwt } from '../lib/appwriteServer';
-// export const requireUser = async (req: Request): Promise<{ userId: string }> => {
-//     const authHeader = req.headers['authorization'];
-//     const jwt = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '') : undefined;
-//     if (!jwt) throw new UnauthorizedError('Missing Authorization: Bearer <appwrite-jwt> header');
-//     try {
-//         const user = await getUserFromJwt(jwt);
-//         return { userId: user.$id };
-//     } catch {
-//         throw new UnauthorizedError('Invalid or expired session');
-//     }
-// };
+    if (jwt) {
+        // Handle client fallback token (due to Appwrite Cloud 501 errors)
+        if (jwt.startsWith('client-fallback-')) {
+            const userId = jwt.replace('client-fallback-', '');
+            if (!isDev) {
+                console.error('[Worker Auth] Fallback client token rejected in production');
+                throw new UnauthorizedError('Session verification required in production');
+            }
+            try {
+                // Verify user actually exists to avoid spoofing
+                const user = await usersServer.get(userId);
+                return { userId: user.$id };
+            } catch (err: any) {
+                console.error('[Worker Auth] Fallback token verification failed:', err?.message || err);
+                throw new UnauthorizedError('Invalid user session');
+            }
+        }
+
+        // Standard Appwrite JWT verification
+        try {
+            const user = await getUserFromJwt(jwt);
+            return { userId: user.$id };
+        } catch (err: any) {
+            console.error('[Worker Auth] JWT verification failed:', err?.message || err);
+            throw new UnauthorizedError('Invalid or expired session');
+        }
+    }
+
+    // Fallback to x-user-id (only allowed in development/fallback environments)
+    const userIdHeader = req.headers['x-user-id'];
+    if (isDev && typeof userIdHeader === 'string' && userIdHeader) {
+        console.log(`[Worker Auth] Using legacy x-user-id header validation (Dev fallback): ${userIdHeader}`);
+        try {
+            const user = await usersServer.get(userIdHeader);
+            return { userId: user.$id };
+        } catch (err: any) {
+            console.error('[Worker Auth] Legacy user ID validation failed:', err?.message || err);
+            throw new UnauthorizedError('Invalid user session');
+        }
+    }
+
+    throw new UnauthorizedError('A valid session token is required to access this service.');
+};
