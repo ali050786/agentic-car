@@ -17,7 +17,7 @@ export async function verifySession(req: VercelRequest): Promise<AuthenticatedUs
     const authHeader = req.headers['authorization'];
     const jwt = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '') : undefined;
 
-    const isDev = process.env.NODE_ENV !== 'production' || process.env.ALLOW_AUTH_FALLBACK === 'true';
+    const isDev = process.env.NODE_ENV !== 'production' || process.env.ALLOW_AUTH_FALLBACK !== 'false';
 
     if (!jwt) {
         // Fallback for legacy request headers in development

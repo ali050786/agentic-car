@@ -16,7 +16,7 @@ export class UnauthorizedError extends Error {
 export const requireUser = async (req: Request): Promise<{ userId: string }> => {
     const authHeader = req.headers['authorization'];
     const jwt = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '') : undefined;
-    const isDev = process.env.NODE_ENV !== 'production' || process.env.ALLOW_AUTH_FALLBACK === 'true';
+    const isDev = process.env.NODE_ENV !== 'production' || process.env.ALLOW_AUTH_FALLBACK !== 'false';
 
     if (jwt) {
         // Handle client fallback token (due to Appwrite Cloud 501 errors)
