@@ -6,6 +6,7 @@ const COMMON_DEFS = `
       @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&display=swap');
       {{THEME_CSS}}
     </style>
+    {{PATTERN_DEFINITION}}
   </defs>
 `;
 
@@ -24,10 +25,12 @@ export const T4_HERO_SVG_SQUARE = `
 <svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#bgPattern)"/>
 
   <circle cx="10" cy="10" r="230" fill="none" stroke="var(--background-2)" stroke-width="2" opacity="0.3"/>
   <circle cx="10" cy="10" r="165" fill="none" stroke="var(--background-2)" stroke-width="1.5" opacity="0.2"/>
-  ${dotGrid(820, 90, 5, 5, 32, 4, 0.5)}
+  {{T4_TOP_DOT_GRID}}
+
 
   <text x="1055" y="1050" text-anchor="end" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="280" fill="var(--background-2)" opacity="0.12" letter-spacing="-12">{{SLIDE_NUM}}</text>
 
@@ -54,6 +57,7 @@ export const T4_BODY_SVG_SQUARE = `
 <svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#bgPattern)"/>
 
   <text x="90" y="160" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="46" fill="var(--background-2)">{{SLIDE_NUM}}</text>
   <line x1="90" y1="196" x2="990" y2="196" stroke="var(--text-default)" stroke-width="1" opacity="0.25"/>
@@ -84,6 +88,7 @@ export const T4_LIST_SVG_SQUARE = `
 <svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#bgPattern)"/>
 
   <text x="90" y="160" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="46" fill="var(--background-2)">{{SLIDE_NUM}}</text>
   <line x1="90" y1="196" x2="990" y2="196" stroke="var(--text-default)" stroke-width="1" opacity="0.25"/>
@@ -110,10 +115,12 @@ export const T4_CTA_SVG_SQUARE = `
 <svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#bgPattern)"/>
 
   <circle cx="540" cy="480" r="290" fill="none" stroke="var(--background-2)" stroke-width="2" opacity="0.18"/>
   <circle cx="540" cy="480" r="210" fill="none" stroke="var(--background-2)" stroke-width="1.5" opacity="0.12"/>
-  ${dotGrid(850, 90, 4, 4, 28, 3.5, 0.4)}
+  {{T4_TOP_DOT_GRID}}
+
 
   <foreignObject x="90" y="180" width="900" height="720">
     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 100%; gap: 32px;">

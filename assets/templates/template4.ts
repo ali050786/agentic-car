@@ -8,11 +8,12 @@ const COMMON_DEFS = `
       @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&display=swap');
       {{THEME_CSS}}
     </style>
+    {{PATTERN_DEFINITION}}
   </defs>
 `;
 
 // Generates an evenly spaced dot grid as SVG circles
-const dotGrid = (x: number, y: number, cols: number, rows: number, spacing: number, r: number, opacity: number): string => {
+export const dotGrid = (x: number, y: number, cols: number, rows: number, spacing: number, r: number, opacity: number): string => {
   let dots = '';
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
@@ -22,15 +23,18 @@ const dotGrid = (x: number, y: number, cols: number, rows: number, spacing: numb
   return `<g>${dots}</g>`;
 };
 
+
 // Variant 1: Hero
 export const T4_HERO_SVG = `
 <svg viewBox="0 0 1080 1380" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
 
   <circle cx="10" cy="10" r="270" fill="none" stroke="var(--background-2)" stroke-width="2" opacity="0.3"/>
   <circle cx="10" cy="10" r="195" fill="none" stroke="var(--background-2)" stroke-width="1.5" opacity="0.2"/>
-  ${dotGrid(800, 100, 6, 6, 34, 4, 0.5)}
+  {{T4_TOP_DOT_GRID}}
+
 
   <text x="1055" y="1345" text-anchor="end" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="360" fill="var(--background-2)" opacity="0.12" letter-spacing="-15">{{SLIDE_NUM}}</text>
 
@@ -57,6 +61,7 @@ export const T4_BODY_SVG = `
 <svg viewBox="0 0 1080 1380" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
 
   <text x="100" y="200" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="54" fill="var(--background-2)">{{SLIDE_NUM}}</text>
   <line x1="100" y1="240" x2="980" y2="240" stroke="var(--text-default)" stroke-width="1" opacity="0.25"/>
@@ -87,6 +92,7 @@ export const T4_LIST_SVG = `
 <svg viewBox="0 0 1080 1380" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
 
   <text x="100" y="200" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="54" fill="var(--background-2)">{{SLIDE_NUM}}</text>
   <line x1="100" y1="240" x2="980" y2="240" stroke="var(--text-default)" stroke-width="1" opacity="0.25"/>
@@ -113,10 +119,12 @@ export const T4_CTA_SVG = `
 <svg viewBox="0 0 1080 1380" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
   <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
 
   <circle cx="540" cy="620" r="340" fill="none" stroke="var(--background-2)" stroke-width="2" opacity="0.18"/>
   <circle cx="540" cy="620" r="250" fill="none" stroke="var(--background-2)" stroke-width="1.5" opacity="0.12"/>
-  ${dotGrid(830, 110, 5, 5, 30, 3.5, 0.4)}
+  {{T4_TOP_DOT_GRID}}
+
 
   <foreignObject x="100" y="240" width="880" height="900">
     <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 100%; gap: 42px;">

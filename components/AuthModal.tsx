@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import {
     isValidEmail,
@@ -255,9 +256,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                         {/* Password */}
                         <div>
-                            <label className="block text-xs font-medium text-neutral-300 mb-1.5">
-                                Password
-                            </label>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-xs font-medium text-neutral-300">
+                                    Password
+                                </label>
+                                {mode === 'login' && (
+                                    <Link
+                                        to="/forgot-password"
+                                        onClick={onClose}
+                                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                    >
+                                        Forgot?
+                                    </Link>
+                                )}
+                            </div>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
                                 <input

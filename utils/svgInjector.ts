@@ -3,11 +3,12 @@ import { T1_HERO_SVG, T1_BODY_SVG, T1_LIST_SVG, T1_CTA_SVG } from '../assets/tem
 import { T1_HERO_SVG_SQUARE, T1_BODY_SVG_SQUARE, T1_LIST_SVG_SQUARE, T1_CTA_SVG_SQUARE } from '../assets/templates/template1_square';
 import { T3_HERO_SVG, T3_BODY_SVG, T3_LIST_SVG, T3_CTA_SVG } from '../assets/templates/template3';
 import { T3_HERO_SVG_SQUARE, T3_BODY_SVG_SQUARE, T3_LIST_SVG_SQUARE, T3_CTA_SVG_SQUARE } from '../assets/templates/template3_square';
-import { T4_HERO_SVG, T4_BODY_SVG, T4_LIST_SVG, T4_CTA_SVG } from '../assets/templates/template4';
+import { T4_HERO_SVG, T4_BODY_SVG, T4_LIST_SVG, T4_CTA_SVG, dotGrid } from '../assets/templates/template4';
 import { T4_HERO_SVG_SQUARE, T4_BODY_SVG_SQUARE, T4_LIST_SVG_SQUARE, T4_CTA_SVG_SQUARE } from '../assets/templates/template4_square';
 import { generateSignatureCard } from './signatureCardGenerator';
 import { generatePatternSVG } from './patternGenerator';
 import { generateIconSVG } from './iconGenerator';
+import { sanitizeText } from './svgSanitizer';
 
 /**
  * The Injector Engine.
@@ -25,6 +26,39 @@ export const injectContentIntoSvg = (
   patternSpacing?: number,  // User-controlled pattern spacing
   uniqueId: string = '' // Optional unique identifier for DOM element isolation
 ): string => {
+  // Sanitize parameters to prevent XSS before injection
+  const sanitizedContent = {
+    ...content,
+    preHeader: content.preHeader ? sanitizeText(content.preHeader) : '',
+    headline: content.headline ? sanitizeText(content.headline) : '',
+    body: content.body ? sanitizeText(content.body) : '',
+    footer: content.footer ? sanitizeText(content.footer) : '',
+    listItems: content.listItems
+      ? content.listItems.map((item) => {
+          if (typeof item === 'string') {
+            return sanitizeText(item);
+          } else if (typeof item === 'object' && item !== null) {
+            return {
+              ...item,
+              bullet: item.bullet ? sanitizeText(item.bullet) : '',
+              description: item.description ? sanitizeText(item.description) : '',
+            };
+          }
+          return item;
+        })
+      : undefined,
+  };
+
+  // Re-assign references so the rest of the code works unchanged
+  content = sanitizedContent as any;
+  if (branding) {
+    branding = {
+      ...branding,
+      name: branding.name ? sanitizeText(branding.name) : '',
+      title: branding.title ? sanitizeText(branding.title) : '',
+    };
+  }
+
   let baseSvg = '';
   let listHtml = '';
   let themeCss = '';
@@ -273,6 +307,73 @@ export const injectContentIntoSvg = (
       }
     }
 
+    // T4: Shift content to avoid collisions with the signature card
+    if (branding && branding.enabled) {
+      if (branding.position === 'bottom-left') {
+        // Shift content UP to avoid bottom-left signature (Y=1240 portrait / Y=930 square)
+        if (isSquare) {
+          // Square Hero: y="200" height="660" -> y="110" height="660"
+          baseSvg = baseSvg.replace(/foreignObject x="90" y="200" width="900" height="660"/g, 'foreignObject x="90" y="110" width="900" height="640"');
+          // Square Body: y="250" height="680" -> y="200" height="580"
+          baseSvg = baseSvg.replace(/foreignObject x="90" y="250" width="900" height="680"/g, 'foreignObject x="90" y="200" width="900" height="560"');
+          // Square List: y="250" height="720" -> y="200" height="620"
+          baseSvg = baseSvg.replace(/foreignObject x="90" y="250" width="900" height="720"/g, 'foreignObject x="90" y="200" width="900" height="600"');
+          // Square CTA: y="180" height="720" -> y="110" height="660"
+          baseSvg = baseSvg.replace(/foreignObject x="90" y="180" width="900" height="720"/g, 'foreignObject x="90" y="110" width="900" height="660"');
+        } else {
+          // Portrait Hero: y="260" height="840" -> y="180" height="840"
+          baseSvg = baseSvg.replace(/foreignObject x="100" y="260" width="880" height="840"/g, 'foreignObject x="100" y="180" width="880" height="820"');
+          // Portrait Body: y="320" height="840" -> y="250" height="780"
+          baseSvg = baseSvg.replace(/foreignObject x="100" y="320" width="880" height="840"/g, 'foreignObject x="100" y="250" width="880" height="770"');
+          // Portrait List: y="310" height="920" -> y="250" height="840"
+          baseSvg = baseSvg.replace(/foreignObject x="100" y="310" width="880" height="920"/g, 'foreignObject x="100" y="250" width="880" height="830"');
+          // Portrait CTA: y="240" height="900" -> y="180" height="840"
+          baseSvg = baseSvg.replace(/foreignObject x="100" y="240" width="880" height="900"/g, 'foreignObject x="100" y="170" width="880" height="830"');
+        }
+      } else if (branding.position === 'top-left' || branding.position === 'top-right') {
+        // Shift content DOWN to avoid top signature (Y=120 portrait / Y=85 square)
+        if (isSquare) {
+          // Square Hero: y="200" height="660" -> y="260" height="600"
+          baseSvg = baseSvg.replace(/foreignObject x="90" y="200" width="900" height="660"/g, 'foreignObject x="90" y="260" width="900" height="600"');
+          // Square Body: y="250" height="680" -> y="300" height="620"
+          baseSvg = baseSvg.replace(/foreignObject x="90" y="250" width="900" height="680"/g, 'foreignObject x="90" y="300" width="900" height="620"');
+          // Square List: y="250" height="720" -> y="300" height="660"
+          baseSvg = baseSvg.replace(/foreignObject x="90" y="250" width="900" height="720"/g, 'foreignObject x="90" y="300" width="900" height="660"');
+          // Square CTA: y="180" height="720" -> y="240" height="660"
+          baseSvg = baseSvg.replace(/foreignObject x="90" y="180" width="900" height="720"/g, 'foreignObject x="90" y="240" width="900" height="660"');
+
+          // Shift slide number and header line down to make room for signature
+          baseSvg = baseSvg.replace(/text x="90" y="160"/g, 'text x="90" y="240"');
+          baseSvg = baseSvg.replace(/line x1="90" y1="196" x2="990" y2="196"/g, 'line x1="90" y1="270" x2="990" y2="270"');
+        } else {
+          // Portrait Hero: y="260" height="840" -> y="330" height="770"
+          baseSvg = baseSvg.replace(/foreignObject x="100" y="260" width="880" height="840"/g, 'foreignObject x="100" y="330" width="880" height="770"');
+          // Portrait Body: y="320" height="840" -> y="380" height="780"
+          baseSvg = baseSvg.replace(/foreignObject x="100" y="320" width="880" height="840"/g, 'foreignObject x="100" y="380" width="880" height="780"');
+          // Portrait List: y="310" height="920" -> y="380" height="840"
+          baseSvg = baseSvg.replace(/foreignObject x="100" y="310" width="880" height="920"/g, 'foreignObject x="100" y="380" width="880" height="840"');
+          // Portrait CTA: y="240" height="900" -> y="310" height="830"
+          baseSvg = baseSvg.replace(/foreignObject x="100" y="240" width="880" height="900"/g, 'foreignObject x="100" y="310" width="880" height="830"');
+
+          // Shift slide number and header line down to make room for signature
+          baseSvg = baseSvg.replace(/text x="100" y="200"/g, 'text x="100" y="300"');
+          baseSvg = baseSvg.replace(/line x1="100" y1="240" x2="980" y2="240"/g, 'line x1="100" y1="340" x2="980" y2="340"');
+        }
+      }
+    }
+
+    // T4: Inject top dot grids dynamically with safe coordinates
+    const topDotGridY = branding && branding.enabled && branding.position === 'top-right'
+      ? (isSquare ? 200 : 240)
+      : (isSquare ? 90 : (content.variant === 'hero' ? 100 : 110));
+
+    const topDotGridHtml = isSquare
+      ? (content.variant === 'hero' ? dotGrid(820, topDotGridY, 5, 5, 32, 4, 0.5) : dotGrid(850, topDotGridY, 4, 4, 28, 3.5, 0.4))
+      : (content.variant === 'hero' ? dotGrid(800, topDotGridY, 6, 6, 34, 4, 0.5) : dotGrid(830, topDotGridY, 5, 5, 30, 3.5, 0.4));
+
+    baseSvg = baseSvg.replace('{{T4_TOP_DOT_GRID}}', topDotGridHtml);
+
+
     // T4: Inject CSS Variables for Theme (Statement Style)
     themeCss = `
       :root {
@@ -280,6 +381,8 @@ export const injectContentIntoSvg = (
         --text-highlight: ${theme?.textHighlight || '#F5F4FF'};
         --background: ${theme?.background || '#1D1A45'};
         --background-2: ${theme?.background2 || '#F0997B'};
+        --pattern-color: ${theme?.patternColor || '#A9A6C9'};
+        --pattern-opacity: ${patternOpacity !== undefined ? patternOpacity : (theme?.patternOpacity || '0.15')};
       }
     `;
 
@@ -338,12 +441,16 @@ export const injectContentIntoSvg = (
   baseSvg = baseSvg.replace('{{THEME_CSS}}', themeCss);
 
   // Inject Background Pattern Definition
-  if (templateId !== 'template-3') {
-    const patternSvg = patternId
-      ? generatePatternSVG(patternId, patternScale, patternSpacing)
-      : generatePatternSVG(1, patternScale, patternSpacing); // Default to pattern 1
-    baseSvg = baseSvg.replace('{{PATTERN_DEFINITION}}', patternSvg);
+  let patternSvg = patternId
+    ? generatePatternSVG(patternId, patternScale, patternSpacing)
+    : generatePatternSVG(1, patternScale, patternSpacing); // Default to pattern 1
+
+  if (uniqueId) {
+    patternSvg = patternSvg.replace(/id="bgPattern"/g, `id="bgPattern-${uniqueId}"`);
+    baseSvg = baseSvg.replace(/url\(#bgPattern\)/g, `url(#bgPattern-${uniqueId})`);
   }
+
+  baseSvg = baseSvg.replace('{{PATTERN_DEFINITION}}', patternSvg);
 
   // Also inject individual color variables for square templates
   baseSvg = baseSvg.replace(/\{\{TEXT_COLOR\}\}/g, theme?.textDefault || '#A2A2A2');

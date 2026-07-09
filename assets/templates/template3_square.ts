@@ -12,6 +12,7 @@ const COMMON_DEFS = `
       @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&amp;family=Lato:wght@300;400;700&amp;display=swap');
       {{THEME_CSS}}
     </style>
+    {{PATTERN_DEFINITION}}
     <symbol id="t3Wash" viewBox="0 0 600 600">
       <path d="M310,40 C450,25 570,130 580,270 C590,415 500,545 350,570 C200,595 60,510 35,370 C10,230 95,90 230,55 C255,48 285,43 310,40 Z"/>
     </symbol>
@@ -37,6 +38,7 @@ export const T3_HERO_SVG_SQUARE = `
   ${COMMON_DEFS}
 
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#bgPattern)"/>
 
   <!-- Wash behind the illustration zone (bottom-right), bleeding off-canvas -->
   <path d="M310,40 C450,25 570,130 580,270 C590,415 500,545 350,570 C200,595 60,510 35,370 C10,230 95,90 230,55 C255,48 285,43 310,40 Z" transform="translate(620,560) scale(0.92)" fill="var(--background-2)" opacity="0.3"/>
@@ -76,6 +78,7 @@ export const T3_BODY_SVG_SQUARE = `
   ${COMMON_DEFS}
 
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#bgPattern)"/>
 
   <!-- Wash behind the illustration zone (bottom-left), bleeding off-canvas -->
   <path d="M310,40 C450,25 570,130 580,270 C590,415 500,545 350,570 C200,595 60,510 35,370 C10,230 95,90 230,55 C255,48 285,43 310,40 Z" transform="translate(-120,580) scale(0.92)" fill="var(--background-2)" opacity="0.3"/>
@@ -115,6 +118,7 @@ export const T3_LIST_SVG_SQUARE = `
   ${COMMON_DEFS}
 
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#bgPattern)"/>
 
   <!-- Small wash behind the corner illustration -->
   <path d="M310,40 C450,25 570,130 580,270 C590,415 500,545 350,570 C200,595 60,510 35,370 C10,230 95,90 230,55 C255,48 285,43 310,40 Z" transform="translate(720,180) scale(0.52)" fill="var(--background-2)" opacity="0.3"/>
@@ -154,6 +158,7 @@ export const T3_CTA_SVG_SQUARE = `
   ${COMMON_DEFS}
 
   <rect x="0" y="0" width="1080" height="1080" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#bgPattern)"/>
 
   <!-- Wash behind the illustration zone (bottom-right), bleeding off-canvas -->
   <path d="M310,40 C450,25 570,130 580,270 C590,415 500,545 350,570 C200,595 60,510 35,370 C10,230 95,90 230,55 C255,48 285,43 310,40 Z" transform="translate(650,600) scale(0.85)" fill="var(--background-2)" opacity="0.3"/>

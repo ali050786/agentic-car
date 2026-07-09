@@ -63,7 +63,12 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
                 slides = result.slides;
             } else if (result.intent === 'image' && result.imageBrief !== null && result.imageSlideIndex !== null) {
                 await progress(`Sketching a new image for slide ${result.imageSlideIndex + 1}...`, 60);
-                const doodleUrl = await generateAndPersistDoodle(result.imageBrief, '2:3');
+                // Derive a stable seed from the carousel ID so this newly generated
+                // doodle matches the visual style of the existing slides in the carousel.
+                const carouselSeed = Math.abs(
+                    Array.from(carouselId).reduce((acc, ch) => (Math.imul(31, acc) + ch.charCodeAt(0)) | 0, 0)
+                ) % 2_147_483_647;
+                const doodleUrl = await generateAndPersistDoodle(result.imageBrief, '2:3', carouselSeed);
                 slides = slides.map((s, i) => (i === result.imageSlideIndex ? { ...s, doodleUrl, doodlePrompt: result.imageBrief! } : s));
             }
             // "design" intents (template/preset/format/pattern/signature) are applied
@@ -71,9 +76,10 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
             // changes with no LLM-derived content to persist beyond the reply.
 
             await progress('Saving...', 85);
-            if (result.intent === 'copy' || result.intent === 'image') {
+            if (result.intent === 'copy' || result.intent === 'structure' || result.intent === 'image') {
                 await updateCarouselContentServer(carouselId, { theme: payload.theme, slides });
             }
+
 
             const cleanEvents = events.map(e => ({ ...e, done: true }));
             const newMessages: ChatMessage[] = [
@@ -100,10 +106,11 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
                 resultSummary: JSON.stringify({
                     reply: result.reply,
                     intent: result.intent,
-                    slides: result.intent === 'copy' || result.intent === 'image' ? slides : undefined,
+                    slides: result.intent === 'copy' || result.intent === 'structure' || result.intent === 'image' ? slides : undefined,
                     changedIndices: result.changedIndices,
                     designActions: result.designActions,
                 }),
+
             });
         }
     );

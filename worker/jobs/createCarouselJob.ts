@@ -22,7 +22,8 @@ import { createCarouselServer } from '../carouselStoreServer';
 import { saveChatServer } from '../chatStoreServer';
 import { getUserMemory } from '../../lib/memoryServer';
 import { GenerationJob, updateJob } from '../jobStore';
-import { BrandKit, BrandMode, SignaturePosition, TemplateId, CarouselFormat } from '../../types';
+import { BrandKit, BrandMode, SignaturePosition, TemplateId, CarouselFormat, CreativeBrief } from '../../types';
+
 
 export interface CreateJobPayload {
     topic: string;
@@ -40,6 +41,9 @@ export interface CreateJobPayload {
     format: CarouselFormat;
     selectedPattern: number;
     patternOpacity: number;
+    /** Resolved by the Creative Director Agent in the client before job dispatch */
+    creativeBrief?: CreativeBrief;
+
 }
 
 const progress = (jobId: string, statusMessage: string, progressPct: number) =>
@@ -92,33 +96,49 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
                 finalContent += researchData;
             }
 
-            await progress('Strategist Agent: identifying viral angles...', 40);
+            const strategyLabel = payload.creativeBrief
+                ? `Strategist: building ${payload.creativeBrief.contentStrategy.approachMode.toLowerCase().replace(/_/g, ' ')}...`
+                : 'Strategist Agent: identifying viral angles...';
+            await progress(strategyLabel, 40);
             let viralAngle = '';
             try {
-                viralAngle = await StrategistAgent.generateViralAngle(finalContent, inputType, payload.customInstructions || '');
+                viralAngle = await StrategistAgent.generateViralAngle(
+                    finalContent,
+                    inputType,
+                    payload.customInstructions || '',
+                    payload.creativeBrief
+                );
             } catch (err) {
                 console.error('[createCarouselJob] Strategist Agent failed, falling back to raw input:', err);
                 viralAngle = `Topic/Context: ${effectiveInput}`;
             }
 
             const userMemory = await getUserMemory(userId);
+            // Hard guardrails: slide count must be between 2 and 20 regardless of source
+            const rawSlideCount = payload.creativeBrief?.suggestedSlideCount ?? payload.slideCount;
+            const clampedSlideCount = Math.max(2, Math.min(20, rawSlideCount));
             const context: AgentContext = {
                 inputMode: payload.inputMode,
                 sourceContent: payload.sourceContent || payload.topic,
                 customInstructions: payload.customInstructions,
-                outputLanguage: payload.outputLanguage,
-                slideCount: payload.slideCount,
+                outputLanguage: payload.creativeBrief?.outputLanguage ?? payload.outputLanguage,
+                slideCount: clampedSlideCount,
                 viralAngle,
                 userMemory,
+                creativeBrief: payload.creativeBrief,
             };
+
+
+
 
             await progress('Designing slides & writing copy...', 60);
             const result = await TemplateAgent.generate(context, payload.selectedTemplate || 'template-1');
 
             result.slides = polishSlides(result.slides);
             await progress('Proofreading copy...', 75);
-            result.slides = await ProofreaderAgent.proofread(result.slides);
+            result.slides = await ProofreaderAgent.proofread(result.slides, payload.creativeBrief);
             result.slides = polishSlides(result.slides);
+
 
             const preset = getPresetById(payload.presetId || 'ocean-tech');
             if (preset) {
@@ -135,17 +155,61 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
                     fluxPrompts = result.slides.map(s => s.doodlePrompt || '');
                 }
 
-                for (let i = 0; i < result.slides.length; i++) {
-                    const fluxPrompt = fluxPrompts[i];
-                    if (!fluxPrompt) continue;
-                    await progress(`Sketching doodle ${i + 1}/${result.slides.length}...`, 82 + Math.round((i / result.slides.length) * 10));
-                    try {
-                        const doodleUrl = await generateAndPersistDoodle(fluxPrompt, '2:3');
-                        result.slides[i] = { ...result.slides[i], doodleUrl, doodlePrompt: fluxPrompt };
-                    } catch (err) {
-                        console.error(`[createCarouselJob] Doodle ${i + 1} failed, keeping placeholder:`, err);
+                // Concurrency-limited parallel doodle generator to cut down generation wait times
+                const concurrencyLimit = 3;
+
+                // Derive a stable integer seed from the job ID so every Replicate call in this
+                // batch shares the same style fingerprint (line weight, stroke confidence,
+                // compositional density). A hash of job.$id is deterministic — re-running the
+                // same job always produces the same seed, which also makes regeneration
+                // reproducible for debugging.
+                const jobSeed = Math.abs(
+                    Array.from(job.$id as string).reduce((acc, ch) => (Math.imul(31, acc) + ch.charCodeAt(0)) | 0, 0)
+                ) % 2_147_483_647; // Replicate accepts seeds in the int32 range
+                console.log(`[createCarouselJob] Using visual consistency seed ${jobSeed} for job ${job.$id}`);
+
+                const slidesWithPrompts = result.slides.map((slide, i) => ({
+                    slide,
+                    index: i,
+                    fluxPrompt: fluxPrompts[i]
+                })).filter(item => !!item.fluxPrompt);
+
+                let completedCount = 0;
+                
+                // Define inline concurrency worker function
+                const executionQueue = [...slidesWithPrompts.entries()];
+                const worker = async () => {
+                    while (executionQueue.length > 0) {
+                        const next = executionQueue.shift();
+                        if (!next) break;
+                        const [, item] = next;
+                        
+                        try {
+                            const doodleUrl = await generateAndPersistDoodle(item.fluxPrompt, '2:3', jobSeed);
+
+                            result.slides[item.index] = { 
+                                ...result.slides[item.index], 
+                                doodleUrl, 
+                                doodlePrompt: item.fluxPrompt 
+                            };
+                        } catch (err) {
+                            console.error(`[createCarouselJob] Doodle ${item.index + 1} failed, keeping placeholder:`, err);
+                        } finally {
+                            completedCount++;
+                            const stepPercent = Math.round((completedCount / slidesWithPrompts.length) * 10);
+                            await progress(
+                                `Sketching doodle ${completedCount}/${slidesWithPrompts.length}...`, 
+                                82 + stepPercent
+                            );
+                        }
                     }
-                }
+                };
+
+                const workers = Array(Math.min(concurrencyLimit, slidesWithPrompts.length))
+                    .fill(null)
+                    .map(() => worker());
+
+                await Promise.all(workers);
             }
 
             await progress('Saving carousel...', 95);

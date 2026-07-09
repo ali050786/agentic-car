@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { MemoryAgent } from '../../core/agents/MemoryAgent';
+import { CreativeDirectorAgent } from '../../core/agents/CreativeDirectorAgent';
 import { createJob } from '../../services/jobService';
 import { FreeLimitError } from '../../services/aiService';
 import { detectInputMode } from '../../utils/inputDetector';
@@ -17,17 +18,11 @@ import { fetchYouTubeContent, fetchUrlContent, extractDomain } from '../../utils
 import { extractTextFromFile } from '../../utils/fileProcessor';
 import { capSourceContent, assertUploadSizeOk, truncationNote } from '../../utils/contentLimits';
 import { ArrowUp, SlidersHorizontal, Sparkles, X, Plus, Paperclip } from 'lucide-react';
+import type { CreativeBrief } from '../../types';
 
-// Must match the recentMessages window OrchestratorAgent sends as raw history —
-// anything older than this is folded into chatSummary instead of just dropped.
+
 const HISTORY_WINDOW = 10;
 
-const TONE_OPTIONS = [
-    { id: 'contrarian', label: '🌶️ Contrarian', value: "Angle: Controversial/Debate. Challenge the status quo." },
-    { id: 'analytical', label: '🧠 Analytical', value: "Angle: Data-driven. Use facts, numbers, and logical reasoning." },
-    { id: 'storyteller', label: '📖 Storyteller', value: "Angle: Personal Narrative. Use 'I' statements and emotional hooks." },
-    { id: 'actionable', label: '⚡ Actionable', value: "Angle: Tutorial. No fluff, step-by-step instructions only." }
-];
 
 const TEMPLATE_OPTIONS = [
     { id: 'template-1', label: 'The Truth' },
@@ -44,8 +39,9 @@ const MODEL_OPTIONS = [
 const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Portuguese', 'Hindi'];
 
 interface ChatPanelProps {
-    onFirstPrompt: (text: string) => Promise<void>;
+    onFirstPrompt: (text: string, brief?: CreativeBrief) => Promise<void>;
 }
+
 
 let msgSeq = 0;
 const nextId = () => `msg-${Date.now()}-${msgSeq++}`;
@@ -65,7 +61,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
     } = useCarouselStore();
 
     const [draft, setDraft] = useState('');
-    const [showTuning, setShowTuning] = useState(false);
+
     const [attachedFile, setAttachedFile] = useState<{ name: string; content: string; truncated: boolean; originalLength: number } | null>(null);
     const [isAttaching, setIsAttaching] = useState(false);
     const [attachError, setAttachError] = useState<string | null>(null);
@@ -75,7 +71,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
 
     const hasSlides = slides.length > 0;
     const busy = isGenerating;
-    const activeTone = TONE_OPTIONS.find(t => t.value === customInstructions)?.id || null;
+
+    // Creative Director state — tracks a pending brief and any quick-reply
+    // questions waiting for the user to answer before generation starts.
+    const [pendingBrief, setPendingBrief] = useState<CreativeBrief | null>(null);
+    const [pendingTopic, setPendingTopic] = useState<string>('');
+    // Map from resumeToken → set of selected chip values
+    const [chipSelections, setChipSelections] = useState<Record<string, string[]>>({});
+
 
     // Stream agent statuses into the active run's event timeline
     useEffect(() => {
@@ -191,7 +194,63 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                     }
                 }
 
-                await onFirstPrompt(topicForRun);
+                // Creative Director: analyse intent before dispatching the job.
+                // If intent is clear → brief is attached directly and generation starts.
+                // If ambiguous → show quick-reply chips and wait for user answer.
+                updateChatMessage(runId, { events: [{ label: 'Understanding your intent...', done: false }] });
+                const intentResult = await CreativeDirectorAgent.analyseIntent(topicForRun);
+
+                if (!intentResult.ready) {
+                    // Creative Director needs more info — show questions and stop.
+                    const notReady = intentResult as { ready: false; questions: import('../../core/agents/CreativeDirectorAgent').ClarifyingQuestions };
+                    const resumeToken = `cd-${Date.now()}`;
+                    setPendingTopic(topicForRun);
+                    updateChatMessage(runId, {
+                        running: false,
+                        text: notReady.questions.message,
+                        quickReplies: {
+                            groups: notReady.questions.groups,
+                            resumeToken,
+                        },
+                    });
+                    return;
+                }
+
+
+                // Brief is ready — store it and proceed to generation.
+                // ── Deterministic slide count override ──────────────────────────────
+                // The Creative Director estimates a natural count, but if the user
+                // explicitly wrote "N slides" we always honour that number.
+                // Regex is far more reliable than the LLM for this extraction.
+                const explicitSlideMatch = text.match(/\b(\d+)\s*slides?\b/i);
+                if (explicitSlideMatch) {
+                    const requested = parseInt(explicitSlideMatch[1], 10);
+                    const SLIDE_MIN = 2, SLIDE_MAX = 20;
+                    const clamped = Math.max(SLIDE_MIN, Math.min(SLIDE_MAX, requested));
+                    intentResult.brief.suggestedSlideCount = clamped;
+                    if (requested < SLIDE_MIN && !intentResult.brief.slideCountNote) {
+                        intentResult.brief.slideCountNote = `Minimum is ${SLIDE_MIN} slides — generating ${SLIDE_MIN} for you.`;
+                    } else if (requested > SLIDE_MAX && !intentResult.brief.slideCountNote) {
+                        intentResult.brief.slideCountNote = `Maximum allowed is ${SLIDE_MAX} slides — I'll generate ${SLIDE_MAX} for you and we can always add more!`;
+                    }
+                }
+                // ────────────────────────────────────────────────────────────────────
+                setPendingBrief(intentResult.brief);
+
+                // If the Creative Director had to adjust the slide count (out of bounds),
+                // show a friendly note in the chat before generation begins.
+                if (intentResult.brief.slideCountNote) {
+                    updateChatMessage(runId, {
+                        running: true,
+                        text: intentResult.brief.slideCountNote,
+                        events: [{ label: 'Preparing your carousel...', done: false }],
+                    });
+                }
+
+                await onFirstPrompt(topicForRun, intentResult.brief);
+
+
+
             } catch (e: any) {
                 runMessageId.current = null;
                 if (e instanceof FreeLimitError) {
@@ -410,6 +469,83 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                                 )
                             )}
                             {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
+
+                            {/* Quick-reply chip UI for Creative Director clarifying questions */}
+                            {msg.quickReplies && !msg.running && (() => {
+                                const { groups, resumeToken } = msg.quickReplies;
+                                const selections = chipSelections[resumeToken] || [];
+                                const toggleChip = (value: string, multiSelect?: boolean) => {
+                                    setChipSelections(prev => {
+                                        const cur = prev[resumeToken] || [];
+                                        if (multiSelect) {
+                                            return { ...prev, [resumeToken]: cur.includes(value) ? cur.filter(v => v !== value) : [...cur, value] };
+                                        }
+                                        return { ...prev, [resumeToken]: cur.includes(value) ? [] : [value] };
+                                    });
+                                };
+                                const handleChipSubmit = async () => {
+                                    if (busy) return;
+                                    const combinedAnswers = selections.join(', ') || 'general audience, factual';
+                                    // Clear the chips from this message
+                                    updateChatMessage(msg.id, { quickReplies: undefined });
+                                    // Show the user's selections as a user bubble
+                                    addChatMessage({ id: nextId(), role: 'user', text: combinedAnswers });
+                                    // Synthesise the brief from the original topic + answers
+                                    const runId2 = nextId();
+                                    runMessageId.current = runId2;
+                                    addChatMessage({ id: runId2, role: 'assistant', text: '', running: true, events: [{ label: 'Got it — preparing your carousel...', done: false }] });
+                                    try {
+                                        const brief = await CreativeDirectorAgent.synthesiseBrief(pendingTopic, combinedAnswers);
+                                        setPendingBrief(brief);
+                                        await onFirstPrompt(pendingTopic, brief);
+                                    } catch (e: any) {
+                                        updateChatMessage(runId2, { running: false, error: true, text: e?.message || 'Generation failed.' });
+                                    }
+                                };
+                                return (
+                                    <div className="mt-2 space-y-3">
+                                        {groups.map((g, gi) => (
+                                            <div key={gi}>
+                                                <p className="text-[11px] text-neutral-400 mb-1.5 font-medium">{g.question}</p>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {g.chips.map(chip => {
+                                                        const selected = selections.includes(chip.value);
+                                                        return (
+                                                            <button
+                                                                key={chip.value}
+                                                                onClick={() => toggleChip(chip.value, g.multiSelect)}
+                                                                className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
+                                                                    selected
+                                                                        ? 'border-blue-500 bg-blue-500/20 text-blue-200'
+                                                                        : 'border-white/15 bg-white/5 text-neutral-300 hover:border-white/30 hover:bg-white/10'
+                                                                }`}
+                                                            >
+                                                                {chip.label}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <div className="flex items-center gap-2 pt-1">
+                                            <input
+                                                type="text"
+                                                placeholder="Or describe in your own words..."
+                                                className="flex-1 bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-[11px] text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500"
+                                                onKeyDown={e => { if (e.key === 'Enter') { const v = (e.target as HTMLInputElement).value.trim(); if (v) { setChipSelections(prev => ({ ...prev, [resumeToken]: [...(prev[resumeToken] || []), v] })); (e.target as HTMLInputElement).value = ''; } } }}
+                                            />
+                                            <button
+                                                onClick={handleChipSubmit}
+                                                disabled={busy}
+                                                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-medium transition-colors disabled:opacity-50 flex-shrink-0"
+                                            >
+                                                {selections.length > 0 ? 'Go →' : 'Skip →'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
                             {msg.error && (
                                 <button
                                     onClick={() => handleRetry(msg.id)}
@@ -428,71 +564,28 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
 
             {/* Composer */}
             <div className="border-t border-white/10 p-3 space-y-2">
-                {/* Creation settings ride with the composer until the carousel exists */}
-                {!hasSlides && (
-                    <div className="flex flex-wrap gap-1.5">
-                        {TONE_OPTIONS.map(t => (
-                            <button
-                                key={t.id}
-                                onClick={() => setCustomInstructions(activeTone === t.id ? '' : t.value)}
-                                className={`px-2 py-1 rounded-md text-[11px] border transition-colors ${activeTone === t.id
-                                    ? 'border-blue-500 bg-blue-500/15 text-blue-200'
-                                    : 'border-white/10 bg-black/30 text-neutral-400 hover:border-white/25'
-                                    }`}
-                            >
-                                {t.label}
-                            </button>
-                        ))}
-                    </div>
-                )}
+                {/* Tone buttons removed — Creative Director handles intent automatically */}
+
 
                 <div className="flex items-center gap-1.5">
                     <select
                         value={selectedTemplate}
                         onChange={e => setTemplate(e.target.value as any)}
                         className="bg-black/30 border border-white/10 rounded-md text-[11px] text-neutral-300 px-1.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
-                        title="Template"
+                        title="Template Style"
                     >
-                        {TEMPLATE_OPTIONS.map(t => <option key={t.id} value={t.id} className="bg-neutral-900">{t.label}</option>)}
+                        {TEMPLATE_OPTIONS.map(t => <option key={t.id} value={t.id} className="bg-neutral-900">Style: {t.label}</option>)}
                     </select>
-                    {!hasSlides && (
-                        <select
-                            value={slideCount}
-                            onChange={e => setSlideCount(parseInt(e.target.value, 10))}
-                            className="bg-black/30 border border-white/10 rounded-md text-[11px] text-neutral-300 px-1.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
-                            title="Slide count"
-                        >
-                            {[5, 6, 7, 8, 9, 10].map(n => <option key={n} value={n} className="bg-neutral-900">{n} slides</option>)}
-                        </select>
-                    )}
-                    <button
-                        onClick={() => setShowTuning(!showTuning)}
-                        className={`p-1.5 rounded-md border transition-colors ${showTuning ? 'border-blue-500 text-blue-300 bg-blue-500/10' : 'border-white/10 text-neutral-500 hover:text-neutral-300'}`}
-                        title="Language and model"
-                        aria-label="Language and model settings"
-                    >
-                        <SlidersHorizontal size={12} />
-                    </button>
-                </div>
 
-                {showTuning && (
-                    <div className="flex gap-1.5">
-                        <select
-                            value={outputLanguage}
-                            onChange={e => setOutputLanguage(e.target.value)}
-                            className="flex-1 bg-black/30 border border-white/10 rounded-md text-[11px] text-neutral-300 px-1.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
-                        >
-                            {LANGUAGES.map(l => <option key={l} value={l} className="bg-neutral-900">{l}</option>)}
-                        </select>
-                        <select
-                            value={selectedModel}
-                            onChange={e => setModel(e.target.value)}
-                            className="flex-1 bg-black/30 border border-white/10 rounded-md text-[11px] text-neutral-300 px-1.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
-                        >
-                            {MODEL_OPTIONS.map(m => <option key={m.id} value={m.id} className="bg-neutral-900">{m.label}</option>)}
-                        </select>
-                    </div>
-                )}
+                    <select
+                        value={selectedModel}
+                        onChange={e => setModel(e.target.value)}
+                        className="bg-black/30 border border-white/10 rounded-md text-[11px] text-neutral-300 px-1.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
+                        title="AI Model"
+                    >
+                        {MODEL_OPTIONS.map(m => <option key={m.id} value={m.id} className="bg-neutral-900">Model: {m.label}</option>)}
+                    </select>
+                </div>
 
                 {!hasSlides && attachedFile && (
                     <div className="flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 rounded-md px-2 py-1 text-[11px] text-blue-200 w-fit max-w-full">
@@ -544,7 +637,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                         onChange={e => setDraft(e.target.value)}
                         onKeyDown={onKeyDown}
                         rows={draft.includes('\n') || draft.length > 80 ? 3 : 1}
-                        placeholder={hasSlides ? 'Refine anything...' : attachedFile ? 'Optional: add instructions...' : 'A carousel about... or paste a link'}
+                        placeholder={hasSlides ? 'Refine anything...' : attachedFile ? 'Optional: add instructions (e.g. "keep it funny")...' : 'What should this carousel be about? (e.g. "dinosaurs for kids" or "burnout in Tanmay Bhat style")'}
+
                         className="flex-1 bg-transparent text-[13px] text-white placeholder-neutral-500 resize-none focus:outline-none leading-relaxed"
                         disabled={busy}
                     />

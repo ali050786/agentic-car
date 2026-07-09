@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Pause, Download, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
-import { storage, ID, config } from '../lib/appwriteClient';
+import { storage, ID, config, getClientJwt } from '../lib/appwriteClient';
 
 interface DoodleItem {
     topic: string;
@@ -70,7 +70,16 @@ const GenerateDoodles: React.FC = () => {
             addLog(`Image generated on Replicate. Downloading...`);
 
             // 2. Fetch image via proxy to avoid CORS
-            const proxyResponse = await fetch(`/api/proxy-image?url=${encodeURIComponent(replicateUrl)}`);
+            const proxyHeaders: Record<string, string> = {};
+            try {
+                const jwt = await getClientJwt();
+                proxyHeaders['Authorization'] = `Bearer ${jwt}`;
+            } catch (err: any) {
+                console.error('[GenerateDoodles] Failed to get client auth token:', err);
+            }
+            const proxyResponse = await fetch(`/api/proxy-image?url=${encodeURIComponent(replicateUrl)}`, {
+                headers: proxyHeaders
+            });
             if (!proxyResponse.ok) throw new Error('Failed to download image via proxy');
             const blob = await proxyResponse.blob();
 

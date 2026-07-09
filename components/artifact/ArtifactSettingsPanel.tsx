@@ -14,15 +14,8 @@ import { useCarouselStore } from '../../store/useCarouselStore';
 import { ThemeSelector } from '../ThemeSelector';
 import { getPatternName } from '../../utils/patternGenerator';
 import { 
-    X, User, Layout, Maximize2, Palette, Grid, 
-    Flame, PenTool, Type
+    X, User, Maximize2, Palette, Grid
 } from 'lucide-react';
-
-const TEMPLATES = [
-    { id: 'template-1', name: 'The Truth', desc: 'Bold & high contrast', icon: Flame },
-    { id: 'template-3', name: 'The Sketch', desc: 'Hand-drawn sketches', icon: PenTool },
-    { id: 'template-4', name: 'The Statement', desc: 'Premium minimalist', icon: Type },
-];
 
 interface ArtifactSettingsPanelProps {
     isOpen: boolean;
@@ -32,8 +25,6 @@ interface ArtifactSettingsPanelProps {
 
 export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ isOpen, onClose, onOpenBrandEditor }) => {
     const {
-        selectedTemplate, setTemplate,
-        selectedFormat, setFormat,
         selectedPattern, setPattern,
         patternOpacity, setPatternOpacity,
         patternScale, setPatternScale,
@@ -41,7 +32,7 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
         signaturePosition, setSignaturePosition,
     } = useCarouselStore();
 
-    const [activeTab, setActiveTab] = useState<'layout' | 'style' | 'pattern'>('layout');
+    const [activeTab, setActiveTab] = useState<'style' | 'pattern'>('style');
     const panelRef = useRef<HTMLDivElement | null>(null);
 
     // Close settings panel when clicking outside
@@ -182,17 +173,6 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
             {/* Tab Swapper */}
             <div className="flex border-b border-white/5 p-1 gap-1 bg-black/25">
                 <button 
-                    onClick={() => setActiveTab('layout')} 
-                    className={`flex-1 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${
-                        activeTab === 'layout' 
-                            ? 'text-white bg-white/5 border border-white/5 shadow-sm' 
-                            : 'text-neutral-500 hover:text-neutral-300'
-                    }`}
-                >
-                    <Layout size={10} />
-                    Layout
-                </button>
-                <button 
                     onClick={() => setActiveTab('style')} 
                     className={`flex-1 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${
                         activeTab === 'style' 
@@ -218,143 +198,74 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
 
             {/* Content Area */}
             <div className="p-4 flex-1">
-                {/* 1. Layout Tab */}
-                {activeTab === 'layout' && (
-                    <div className="space-y-4 animate-in fade-in duration-200">
-                        {/* Templates */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Template</label>
-                            <div className="grid grid-cols-2 gap-1.5">
-                                {TEMPLATES.map(t => {
-                                    const IconComponent = t.icon;
-                                    const isActive = selectedTemplate === t.id;
-                                    return (
-                                        <button
-                                            key={t.id}
-                                            type="button"
-                                            onClick={() => setTemplate(t.id as any)}
-                                            className={`p-2.5 rounded-lg border text-left flex flex-col gap-1.5 transition-all ${
-                                                isActive
-                                                    ? 'border-blue-500/80 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]'
-                                                    : 'border-white/5 bg-black/25 hover:border-white/15 hover:bg-black/45'
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between w-full">
-                                                <div className={`p-1 rounded-md ${isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-neutral-400'}`}>
-                                                    <IconComponent size={13} />
-                                                </div>
-                                                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />}
-                                            </div>
-                                            <div>
-                                                <div className="text-[10px] font-bold text-white leading-tight">{t.name}</div>
-                                                <div className="text-[9px] text-neutral-400 leading-snug mt-0.5">{t.desc}</div>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Format */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Size / Ratio</label>
-                            <div className="bg-black/40 border border-white/5 rounded-xl p-0.5 flex gap-0.5">
-                                {([['portrait', '4:5 Portrait'], ['square', '1:1 Square']] as const).map(([id, label]) => (
-                                    <button
-                                        key={id}
-                                        type="button"
-                                        onClick={() => setFormat(id)}
-                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold text-center transition-all ${
-                                            selectedFormat === id
-                                                ? 'bg-neutral-800 text-white border border-white/5 shadow-sm'
-                                                : 'text-neutral-400 hover:text-white'
-                                        }`}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* 2. Style Tab */}
+                {/* 1. Style Tab */}
                 {activeTab === 'style' && (
-                    <div className="space-y-4 animate-in fade-in duration-200">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Theme Palette</label>
-                            <ThemeSelector onOpenBrandEditor={onOpenBrandEditor} />
-                        </div>
+                    <div className="animate-in fade-in duration-200">
+                        <ThemeSelector onOpenBrandEditor={onOpenBrandEditor} />
                     </div>
                 )}
 
                 {/* 3. Pattern Tab */}
                 {activeTab === 'pattern' && (
-                    <div className="space-y-4 animate-in fade-in duration-200">
+                    <div className="space-y-3.5 animate-in fade-in duration-200">
                         {/* Visual Patterns grid */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Background Pattern</label>
-                            <div className="grid grid-cols-4 gap-1.5">
-                                {Array.from({ length: 12 }, (_, i) => i + 1).map(id => {
-                                    const isActive = selectedPattern === id;
-                                    return (
-                                        <button
-                                            key={id}
-                                            type="button"
-                                            onClick={() => setPattern(id)}
-                                            title={getPatternName(id)}
-                                            className={`h-10 rounded-lg border flex items-center justify-center transition-all group ${
-                                                isActive
-                                                    ? 'border-blue-500/80 bg-blue-500/10 text-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.1)]'
-                                                    : 'border-white/5 bg-black/25 text-neutral-500 hover:border-white/15 hover:bg-black/45'
-                                            }`}
-                                        >
-                                            {renderPatternPreview(id)}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                        <div className="grid grid-cols-6 gap-1">
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map(id => {
+                                const isActive = selectedPattern === id;
+                                return (
+                                    <button
+                                        key={id}
+                                        type="button"
+                                        onClick={() => setPattern(id)}
+                                        className={`h-9 rounded-lg border flex items-center justify-center transition-all group relative ${
+                                            isActive
+                                                ? 'border-blue-500/80 bg-blue-500/10 text-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.15)]'
+                                                : 'border-white/5 bg-black/25 text-neutral-500 hover:border-white/15 hover:bg-black/45'
+                                        }`}
+                                    >
+                                        {renderPatternPreview(id)}
+                                        {/* Custom CSS Hover Tooltip */}
+                                        <div className="absolute bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-neutral-900 border border-white/10 text-white text-[9px] font-medium px-2 py-0.5 rounded shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 scale-95 transition-all duration-150 origin-bottom whitespace-nowrap z-50">
+                                            {getPatternName(id)}
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
 
                         {/* Sliders Container */}
-                        <div className="space-y-3.5 p-2.5 rounded-lg border border-white/5 bg-black/15">
+                        <div className="space-y-2.5 p-2 rounded-lg border border-white/5 bg-black/15">
                             {/* Opacity */}
-                            <div className="space-y-1">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-semibold text-neutral-400">Opacity</span>
-                                    <span className="text-[9px] text-neutral-400 font-mono">{Math.round(patternOpacity * 100)}%</span>
-                                </div>
+                            <div className="flex items-center gap-3">
+                                <span className="w-12 text-[10px] font-semibold text-neutral-400">Opacity</span>
                                 <input
                                     type="range" min="0" max="0.5" step="0.05" value={patternOpacity}
                                     onChange={e => setPatternOpacity(parseFloat(e.target.value))}
-                                    className="w-full h-1 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                    className="flex-1 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
                                 />
+                                <span className="w-9 text-right text-[10px] text-neutral-300 font-mono">{Math.round(patternOpacity * 100)}%</span>
                             </div>
 
                             {/* Scale */}
-                            <div className="space-y-1">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-semibold text-neutral-400">Scale</span>
-                                    <span className="text-[9px] text-neutral-400 font-mono">{patternScale.toFixed(1)}x</span>
-                                </div>
+                            <div className="flex items-center gap-3">
+                                <span className="w-12 text-[10px] font-semibold text-neutral-400">Scale</span>
                                 <input
                                     type="range" min="0.5" max="2" step="0.1" value={patternScale}
                                     onChange={e => setPatternScale(parseFloat(e.target.value))}
-                                    className="w-full h-1 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                    className="flex-1 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
                                 />
+                                <span className="w-9 text-right text-[10px] text-neutral-300 font-mono">{patternScale.toFixed(1)}x</span>
                             </div>
 
                             {/* Spacing */}
-                            <div className="space-y-1">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-semibold text-neutral-400">Spacing</span>
-                                    <span className="text-[9px] text-neutral-400 font-mono">{patternSpacing.toFixed(1)}x</span>
-                                </div>
+                            <div className="flex items-center gap-3">
+                                <span className="w-12 text-[10px] font-semibold text-neutral-400">Spacing</span>
                                 <input
                                     type="range" min="0.5" max="4" step="0.1" value={patternSpacing}
                                     onChange={e => setPatternSpacing(parseFloat(e.target.value))}
-                                    className="w-full h-1 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                    className="flex-1 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
                                 />
+                                <span className="w-9 text-right text-[10px] text-neutral-300 font-mono">{patternSpacing.toFixed(1)}x</span>
                             </div>
                         </div>
 

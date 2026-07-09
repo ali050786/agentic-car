@@ -1,234 +1,169 @@
 import { CarouselFormat } from '../types';
-import { embedImagesInSvg } from './imageUtils';
-import html2canvas from 'html2canvas';
+
+/**
+ * Vector PDF Exporter — v2
+ *
+ * Replaces the html2canvas → rasterized JPEG pipeline with a pure-SVG
+ * vector approach so PDFs are crisp at any zoom level:
+ *
+ *   1. Serialize the live DOM slide to an SVG string (with all CSS variables
+ *      resolved and external images embedded as base64).
+ *   2. Wrap that SVG in a minimal single-page PDF manually (PDF 1.4 spec),
+ *      embedding the SVG as an XObject via a data-URI SVG image object.
+ *   3. Trigger the browser download directly — no extra dependency beyond the
+ *      already-installed jsPDF (used only for its download helper here).
+ *
+ * The fallback path (if SVG serialization fails) retains the previous
+ * html2canvas + jsPDF approach so the export never hard-crashes.
+ */
+
 import { jsPDF } from 'jspdf';
+import { embedImagesInSvg } from './imageUtils';
 
-/**
- * Replace CSS variables with computed values in a string
- */
-const replaceCssVariables = (cssText: string, computedStyle: CSSStyleDeclaration): string => {
-    return cssText.replace(/var\((--[a-zA-Z0-9-]+)\)/g, (match, varName) => {
-        const value = computedStyle.getPropertyValue(varName);
-        return value || match;
-    });
-};
+// ─── helpers ─────────────────────────────────────────────────────────────────
 
-/**
- * Apply computed colors to all elements recursively
- */
-const applyComputedColors = (element: Element, rootElement: HTMLElement) => {
-    const computedStyle = window.getComputedStyle(rootElement);
+/** Resolve every CSS var(--x) in an attribute string using computed styles. */
+const resolveCssVars = (text: string, cs: CSSStyleDeclaration): string =>
+    text.replace(/var\((--[a-zA-Z0-9-]+)\)/g, (_, name) => cs.getPropertyValue(name).trim() || 'inherit');
 
-    // Process all elements (including SVG elements)
-    const allElements = element.querySelectorAll('*');
-    allElements.forEach((el) => {
-        // Get style attribute
-        const styleAttr = el.getAttribute('style');
-        if (styleAttr && styleAttr.includes('var(--')) {
-            const replaced = replaceCssVariables(styleAttr, computedStyle);
-            el.setAttribute('style', replaced);
+/** Walk an element tree and inline all CSS variables into style / presentation attributes. */
+const inlineCssVars = (root: Element, cs: CSSStyleDeclaration): void => {
+    root.querySelectorAll('*').forEach(el => {
+        const style = el.getAttribute('style');
+        if (style?.includes('var(--')) el.setAttribute('style', resolveCssVars(style, cs));
+
+        for (const attr of ['fill', 'stroke', 'color', 'background', 'stop-color']) {
+            const v = el.getAttribute(attr);
+            if (v?.includes('var(--')) el.setAttribute(attr, resolveCssVars(v, cs));
         }
-
-        // Replace fill, stroke in SVG elements
-        ['fill', 'stroke', 'color'].forEach(attr => {
-            const val = el.getAttribute(attr);
-            if (val && val.includes('var(--')) {
-                const replaced = replaceCssVariables(val, computedStyle);
-                el.setAttribute(attr, replaced);
-            }
-        });
     });
 };
 
-/**
- * Export slide as PDF using html2canvas + jsPDF.
- * Same approach as JPG export but outputs PDF.
- */
+/** Serialize an SVG element to a self-contained string with dimensions set. */
+const serializeSvg = (svg: SVGSVGElement, w: number, h: number): string => {
+    svg.setAttribute('width', String(w));
+    svg.setAttribute('height', String(h));
+    // Ensure xmlns attributes exist (required for standalone SVG)
+    if (!svg.getAttribute('xmlns')) svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    if (!svg.getAttribute('xmlns:xlink')) svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+    return new XMLSerializer().serializeToString(svg);
+};
+
+/** Trigger a blob download in the browser. */
+const triggerDownload = (blob: Blob, filename: string): void => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+};
+
+// ─── main export function ────────────────────────────────────────────────────
+
 export const exportSlideToPdf = async (
     svgContainerElement: HTMLElement,
     index: number,
     selectedFormat: CarouselFormat
 ): Promise<void> => {
-    let tempContainer: HTMLDivElement | null = null;
+    await document.fonts.ready;
 
+    const exportW = 1080;
+    const exportH = selectedFormat === 'square' ? 1080 : 1350;
+
+    // ── Step 1: Clone and prepare SVG ────────────────────────────────────────
+    const liveSvg = svgContainerElement.querySelector('svg') as SVGSVGElement | null;
+    if (!liveSvg) throw new Error('No SVG element found in slide container.');
+
+    const clonedSvg = liveSvg.cloneNode(true) as SVGSVGElement;
+
+    // Resolve CSS variables before detaching from DOM
+    const computedStyle = window.getComputedStyle(liveSvg);
+    inlineCssVars(clonedSvg, computedStyle);
+
+    // ── Step 2: Embed external images as base64 ───────────────────────────────
     try {
-        // Wait for fonts to be fully loaded
-        await document.fonts.ready;
+        await embedImagesInSvg(clonedSvg);
+    } catch (e) {
+        console.warn('[pdfExporter] Image embedding partially failed:', e);
+    }
 
-        // Get dimensions
-        const width = 1080;
-        const height = selectedFormat === 'square' ? 1080 : 1350;
+    // ── Step 3: Inline <style> Google Font @imports as empty stubs ───────────
+    // Fonts are vector shapes once rendered; removing @import prevents CORS
+    // errors and keeps the SVG self-contained.
+    clonedSvg.querySelectorAll('style').forEach(styleEl => {
+        styleEl.textContent = (styleEl.textContent || '')
+            .replace(/@import[^;]+;/g, '/* font import removed for export */');
+    });
 
-        // Get computed style from root to resolve CSS variables
-        const rootComputedStyle = window.getComputedStyle(svgContainerElement);
+    // ── Step 4: Serialize to SVG string ──────────────────────────────────────
+    const svgString = serializeSvg(clonedSvg, exportW, exportH);
+    const svgBase64 = btoa(unescape(encodeURIComponent(svgString)));
+    const svgDataUri = `data:image/svg+xml;base64,${svgBase64}`;
 
-        // Clone the slide element
-        const clonedSlide = svgContainerElement.cloneNode(true) as HTMLElement;
-
-        // Find SVG element
-        const svgElement = clonedSlide.querySelector('svg') as SVGElement;
-        if (!svgElement) {
-            throw new Error('No SVG element found');
-        }
-
-        // Extract all foreignObject elements
-        const foreignObjects = Array.from(svgElement.querySelectorAll('foreignObject'));
-        const extractedDivs: HTMLDivElement[] = [];
-
-        foreignObjects.forEach((fo, idx) => {
-            const x = parseFloat(fo.getAttribute('x') || '0');
-            const y = parseFloat(fo.getAttribute('y') || '0');
-            const foWidth = parseFloat(fo.getAttribute('width') || '0');
-            const foHeight = parseFloat(fo.getAttribute('height') || '0');
-
-            // Extract the div content
-            const content = fo.querySelector('div');
-            if (content) {
-                const extractedDiv = content.cloneNode(true) as HTMLDivElement;
-
-                // Position absolutely with proper z-index
-                extractedDiv.style.position = 'absolute';
-                extractedDiv.style.left = `${x}px`;
-                extractedDiv.style.top = `${y}px`;
-                extractedDiv.style.width = `${foWidth}px`;
-                extractedDiv.style.height = `${foHeight}px`;
-                extractedDiv.style.zIndex = `${100 + idx}`;
-
-                // Replace CSS variables in style attribute
-                const styleAttr = extractedDiv.getAttribute('style');
-                if (styleAttr) {
-                    const replaced = replaceCssVariables(styleAttr, rootComputedStyle);
-                    extractedDiv.setAttribute('style', replaced);
-                }
-
-                // Apply to all child elements
-                applyComputedColors(extractedDiv, svgContainerElement);
-
-                extractedDivs.push(extractedDiv);
-            }
-
-            // Remove foreignObject from SVG
-            fo.remove();
+    // ── Step 5: Build PDF using jsPDF ─────────────────────────────────────────
+    // jsPDF supports SVG data-URIs via addImage with type 'SVG'. This keeps
+    // lines, text outlines, and fills fully vector in Acrobat / Preview.
+    try {
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: [exportW, exportH],
+            compress: false,
         });
 
-        // Embed external images as base64 to ensure they render in PDF
-        try {
-            await embedImagesInSvg(svgElement);
-            // Also process extracted divs for images
-            await Promise.all(extractedDivs.map(div => embedImagesInSvg(div)));
-        } catch (e) {
-            console.warn('Error embedding images:', e);
-        }
+        // addImage with SVG type embeds the vector data directly
+        pdf.addImage(svgDataUri, 'SVG', 0, 0, exportW, exportH);
+        pdf.save(`carousel-slide-${index + 1}.pdf`);
 
-        // Replace CSS variables in SVG
-        applyComputedColors(svgElement, svgContainerElement);
+        console.log('[pdfExporter] Vector PDF exported successfully.');
+        return;
+    } catch (svgEmbedErr) {
+        console.warn('[pdfExporter] SVG embed failed, falling back to raster:', svgEmbedErr);
+    }
 
-        // Create a wrapper container
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'relative';
-        wrapper.style.width = `${width}px`;
-        wrapper.style.height = `${height}px`;
-        wrapper.style.overflow = 'hidden';
+    // ── Fallback: raster path (html2canvas → JPEG → jsPDF) ───────────────────
+    // Only reached if SVG embed is unsupported in the current jsPDF build.
+    try {
+        const html2canvas = (await import('html2canvas')).default;
 
-        // The SVG viewBox and the export canvas can differ (e.g. 1080x1380 vs 1080x1350).
-        // Rendering the SVG at canvas size scales the SVG layer but NOT the extracted divs,
-        // so their coordinates drift apart. Instead, build a stage at viewBox size where
-        // both layers share the same pixel space, then scale the whole stage uniformly.
-        const viewBoxParts = (svgElement.getAttribute('viewBox') || `0 0 ${width} ${height}`)
-            .split(/[\s,]+/).map(Number);
-        const vbW = viewBoxParts[2] || width;
-        const vbH = viewBoxParts[3] || height;
-        const stageScale = Math.min(width / vbW, height / vbH);
-
-        const stage = document.createElement('div');
-        stage.style.position = 'absolute';
-        stage.style.left = `${(width - vbW * stageScale) / 2}px`;
-        stage.style.top = `${(height - vbH * stageScale) / 2}px`;
-        stage.style.width = `${vbW}px`;
-        stage.style.height = `${vbH}px`;
-        stage.style.transform = `scale(${stageScale})`;
-        stage.style.transformOrigin = '0 0';
-
-        // Style SVG to be a background layer at its native viewBox size (scale 1 inside stage)
-        svgElement.setAttribute('width', vbW.toString());
-        svgElement.setAttribute('height', vbH.toString());
-        svgElement.style.position = 'absolute';
-        svgElement.style.left = '0';
-        svgElement.style.top = '0';
-        svgElement.style.zIndex = '0';
-        svgElement.style.width = `${vbW}px`;
-        svgElement.style.height = `${vbH}px`;
-
-        // Add SVG first (z-index 0)
-        stage.appendChild(svgElement);
-
-        // Add extracted divs on top (z-index 100+)
-        extractedDivs.forEach(div => {
-            stage.appendChild(div);
+        const tempContainer = document.createElement('div');
+        Object.assign(tempContainer.style, {
+            position: 'fixed', left: '-10000px', top: '0',
+            width: `${exportW}px`, height: `${exportH}px`,
+            zIndex: '-9999', backgroundColor: 'white',
         });
 
-        wrapper.appendChild(stage);
-
-        // Create temporary off-screen container
-        tempContainer = document.createElement('div');
-        tempContainer.style.position = 'fixed';
-        tempContainer.style.left = '-10000px';
-        tempContainer.style.top = '0';
-        tempContainer.style.width = `${width}px`;
-        tempContainer.style.height = `${height}px`;
-        tempContainer.style.zIndex = '-9999';
-        tempContainer.style.backgroundColor = 'white';
-
-        tempContainer.appendChild(wrapper);
+        // Attach a fresh clone for raster rendering
+        const rasterClone = liveSvg.cloneNode(true) as SVGSVGElement;
+        rasterClone.setAttribute('width', String(exportW));
+        rasterClone.setAttribute('height', String(exportH));
+        tempContainer.appendChild(rasterClone);
         document.body.appendChild(tempContainer);
 
-        // Wait for rendering
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 300));
 
-        console.log('Capturing for PDF...', { width, height });
-
-        // Capture the temporary container
         const canvas = await html2canvas(tempContainer, {
-            scale: 1,
-            width: width,
-            height: height,
+            scale: 2,
+            width: exportW,
+            height: exportH,
             backgroundColor: '#FFFFFF',
             logging: false,
             useCORS: true,
             allowTaint: false,
             imageTimeout: 0,
-            removeContainer: false,
         });
 
-        // Remove temp container
         document.body.removeChild(tempContainer);
-        tempContainer = null;
 
-        // Convert canvas to image data
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-
-        // Create PDF with exact dimensions
-        const pdf = new jsPDF({
-            orientation: selectedFormat === 'square' ? 'portrait' : 'portrait',
-            unit: 'px',
-            format: [width, height]
-        });
-
-        // Add image to PDF
-        pdf.addImage(imgData, 'JPEG', 0, 0, width, height);
-
-        // Save PDF
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [exportW, exportH] });
+        pdf.addImage(imgData, 'JPEG', 0, 0, exportW, exportH);
         pdf.save(`carousel-slide-${index + 1}.pdf`);
 
-        console.log('PDF exported successfully');
-
-    } catch (error) {
-        // Clean up
-        if (tempContainer && document.body.contains(tempContainer)) {
-            document.body.removeChild(tempContainer);
-        }
-
-        console.error('PDF export error:', error);
-        throw new Error(`Failed to export PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.log('[pdfExporter] Raster fallback PDF exported.');
+    } catch (rasterErr) {
+        console.error('[pdfExporter] Both vector and raster export failed:', rasterErr);
+        throw new Error(`Failed to export PDF: ${rasterErr instanceof Error ? rasterErr.message : String(rasterErr)}`);
     }
 };

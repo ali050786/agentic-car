@@ -103,6 +103,16 @@ export interface ChatRunEvent {
 }
 
 /**
+ * A clickable quick-reply chip rendered inside an assistant message.
+ * The user clicks one or more chips to answer a clarifying question
+ * from the Creative Director, then hits Go.
+ */
+export interface QuickReplyChip {
+  label: string;   // e.g. "😂 Funny & casual"
+  value: string;   // e.g. "funny and casual"
+}
+
+/**
  * A message in the chat-driven editor
  */
 export interface ChatMessage {
@@ -114,6 +124,88 @@ export interface ChatMessage {
   /** True while this assistant turn is still producing output */
   running?: boolean;
   error?: boolean;
+  /**
+   * When set, the assistant message includes interactive quick-reply chips.
+   * The user selects chips (and/or types a free-text answer) then submits.
+   * The ChatPanel handles rendering and submission; once submitted this
+   * field is cleared so it becomes a normal read-only message.
+   */
+  quickReplies?: {
+    groups: Array<{
+      question: string;
+      chips: QuickReplyChip[];
+      multiSelect?: boolean;
+    }>;
+    /** Callback identifier the ChatPanel uses to resume generation */
+    resumeToken: string;
+  };
+}
+
+// ============================================================================
+// CREATIVE BRIEF — output of the Creative Director Agent
+// ============================================================================
+
+export type ContentType =
+  | 'EDUCATIONAL'     // Factual explainer — stay on topic, no business metaphors
+  | 'ENTERTAINMENT'   // Comedy / fun — factual accuracy nice but not critical
+  | 'EDUTAINMENT'     // Educational + funny (e.g. Tanmay Bhat style science)
+  | 'PROFESSIONAL'    // LinkedIn thought leadership — viral angle appropriate
+  | 'STORYTELLING'    // Narrative arc — personal or historical story
+  | 'HOW_TO'          // Step-by-step tutorial
+  | 'OPINION';        // Contrarian / debate take
+
+export type ApproachMode =
+  | 'VIRAL_ANGLE'     // Strategist generates a LinkedIn hook (current default)
+  | 'FACTUAL_SPINE'   // Strategist generates ordered key facts (educational)
+  | 'NARRATIVE_ARC'   // Strategist generates a story arc (storytelling)
+  | 'HOW_TO_STEPS';   // Strategist generates a step list (how-to)
+
+export type IllustrationMode =
+  | 'LITERAL'         // Draw actual subject matter (dinosaurs, asteroids)
+  | 'METAPHORICAL'    // Abstract business metaphor scenes (current default)
+  | 'CHARACTER';      // Expressive cartoon characters (comedy/entertainment)
+
+export interface CreativeBrief {
+  topic: string;
+  contentType: ContentType;
+  /**
+   * How many slides this carousel should have.
+   * The Creative Director decides based on content type and complexity.
+   * Hard bounds: min 2, max 20. Falls back to 7 if not provided.
+   */
+  suggestedSlideCount?: number;
+  /**
+   * Detected or requested language for the final carousel.
+   * e.g., "Spanish", "French", "German", "Portuguese", "Hindi", "English".
+   */
+  outputLanguage?: string;
+  /**
+   * Optional message shown to the user when the requested slide count
+   * was out of bounds and had to be adjusted (e.g. capped at 20).
+   */
+  slideCountNote?: string;
+  audience: {
+    type: 'GENERAL' | 'KIDS' | 'STUDENTS' | 'PROFESSIONALS' | 'NICHE';
+    description: string;          // e.g. "curious adults and teenagers"
+  };
+
+  creativeStyle: {
+    styleReference?: string;      // "Tanmay Bhat", "Paul Graham", etc.
+    toneDescription: string;      // Prose description of voice/tone
+    vocabulary: 'SIMPLE' | 'CASUAL' | 'PROFESSIONAL' | 'ACADEMIC';
+    humorAllowed: boolean;
+    popCultureAllowed: boolean;
+  };
+  contentStrategy: {
+    approachMode: ApproachMode;
+    mustStayOnTopic: boolean;         // false only for PROFESSIONAL viral angles
+    businessMetaphorsAllowed: boolean;
+    stayFactuallyAccurate: boolean;
+  };
+  visualStyle: {
+    illustrationMode: IllustrationMode;
+    emotionToConvey: string;          // e.g. "Awe, curiosity, humor"
+  };
 }
 
 export interface CarouselState {

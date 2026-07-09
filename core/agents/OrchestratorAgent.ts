@@ -25,9 +25,10 @@ import { polishSlides } from '../../utils/contentPolish';
 const ORCHESTRATOR_SCHEMA = {
     type: 'object',
     properties: {
-        intent: { type: 'string', enum: ['copy', 'design', 'image', 'answer'] },
+        intent: { type: 'string', enum: ['copy', 'design', 'image', 'structure', 'answer'] },
         reply: { type: 'string' },
         slides: {
+
             type: 'array',
             items: {
                 type: 'object',
@@ -56,7 +57,40 @@ const ORCHESTRATOR_SCHEMA = {
         },
         imageBrief: { type: 'string' },
         imageSlideIndex: { type: 'number' },
-        memoryNote: { type: 'string' }
+        memoryNote: { type: 'string' },
+        structureOps: {
+            type: 'array',
+            description: 'Operations for adding or removing slides. Only for intent=structure.',
+            items: {
+                type: 'object',
+                properties: {
+                    op: { type: 'string', enum: ['insert', 'append', 'remove'] },
+                    afterIndex: {
+                        type: 'number',
+                        description: 'For insert: index of the slide AFTER which the new slide is inserted. 0-based. Use -1 to prepend before slide 0.'
+                    },
+                    slideData: {
+                        type: 'object',
+                        description: 'For insert/append ops: the new slide content.',
+                        properties: {
+                            variant: { type: 'string', enum: ['body', 'list'] },
+                            preHeader: { type: 'string' },
+                            headline: { type: 'string' },
+                            body: { type: 'string' },
+                            listItems: { type: 'array', items: { type: 'string' } },
+                            footer: { type: 'string' },
+                            accentPhrase: { type: 'string' }
+                        },
+                        required: ['variant', 'headline']
+                    },
+                    removeIndex: {
+                        type: 'number',
+                        description: 'For remove: 0-based index of the slide to delete.'
+                    }
+                },
+                required: ['op']
+            }
+        }
     },
     required: ['intent', 'reply']
 };
@@ -66,8 +100,23 @@ export interface DesignAction {
     value: string;
 }
 
+export interface StructureOp {
+    op: 'insert' | 'append' | 'remove';
+    afterIndex?: number;  // For insert: slide appears after this index (-1 = prepend)
+    removeIndex?: number; // For remove: index of slide to delete
+    slideData?: {         // For insert/append: new slide content
+        variant: 'body' | 'list';
+        preHeader?: string;
+        headline: string;
+        body?: string;
+        listItems?: string[];
+        footer?: string;
+        accentPhrase?: string;
+    };
+}
+
 export interface OrchestratorResult {
-    intent: 'copy' | 'design' | 'image' | 'answer';
+    intent: 'copy' | 'design' | 'image' | 'structure' | 'answer';
     reply: string;
     slides: SlideContent[] | null;
     changedIndices: number[];
@@ -75,6 +124,7 @@ export interface OrchestratorResult {
     imageBrief: string | null;
     imageSlideIndex: number | null;
     memoryNote: string | null;
+    structureOps: StructureOp[];
 }
 
 /**
@@ -307,15 +357,30 @@ export const OrchestratorAgent = {
          elements in quotes) and "imageSlideIndex". If the template is not The Sketch, treat as "answer"
          and explain images are part of The Sketch template.
 
-      4. intent "answer" — questions, discussion, advise. Change nothing.
+      4. intent "structure" — the user wants to ADD or REMOVE slides:
+         Examples: "add a slide about X", "remove slide 3", "insert a closing slide", "add an intro",
+         "delete the last slide", "add 2 more slides about Y"
+         HARD LIMITS: minimum 2 slides total, maximum 20 slides total.
+         - If removing would leave fewer than 2 slides: use intent="answer" and explain minimum is 2.
+         - If adding would exceed 20 slides: add as many as fit up to 20, and mention the cap in your reply.
+         Return "structureOps": an array of operations:
+           - insert: adds a new slide. Set afterIndex (-1=prepend, 0=after slide 0, etc.) + slideData.
+           - append: adds a new slide at the end. Set slideData only.
+           - remove: deletes a slide. Set removeIndex (0-based).
+         For inserts/appends, write the full slide content in slideData.
+         Keep variant='body' unless it's a list of items (then 'list').
+         NEVER insert hero or closing variant slides — only body/list slides can be added.
+         ${selectedSlideIndex !== null ? `Slide ${selectedSlideIndex} is currently selected — if the user says "add a slide here" or similar, insert after index ${selectedSlideIndex}.` : ''}
+
+      5. intent "answer" — questions, discussion, advise. Change nothing.
 
       ALWAYS:
       - "reply": one or two short, friendly sentences for the chat (what you did or your answer).
       - "memoryNote": if this message reveals a DURABLE preference worth remembering across future
         carousels (tone, style, brand voice, pet peeves), state it in one short sentence. Otherwise omit.
-      - NEVER claim in "reply" that you changed something unless the change is in "slides" or
-        "designActions". If the user asks to rewrite the whole carousel, you MUST return EVERY
-        rewritten slide in "slides" — a reply without slides means nothing happens.
+      - NEVER claim in "reply" that you changed something unless the change is in "slides",
+        "designActions", "structureOps", or "imageBrief". If the user asks to rewrite the whole carousel,
+        you MUST return EVERY rewritten slide in "slides" — a reply without slides means nothing happens.
 
       Return JSON matching the schema exactly.
     `;
@@ -335,7 +400,7 @@ export const OrchestratorAgent = {
             allKeys: result && typeof result === 'object' ? Object.keys(result) : typeof result,
         }));
 
-        const intent = ['copy', 'design', 'image', 'answer'].includes(result?.intent) ? result.intent : 'answer';
+        const intent = ['copy', 'design', 'image', 'structure', 'answer'].includes(result?.intent) ? result.intent : 'answer';
         const out: OrchestratorResult = {
             intent,
             reply: typeof result?.reply === 'string' && result.reply.trim() ? result.reply.trim() : 'Done.',
@@ -345,7 +410,9 @@ export const OrchestratorAgent = {
             imageBrief: null,
             imageSlideIndex: null,
             memoryNote: typeof result?.memoryNote === 'string' && result.memoryNote.trim() ? result.memoryNote.trim() : null,
+            structureOps: [],
         };
+
 
         // Apply slide patches whenever the model returned a non-empty slides array —
         // even if it mis-set or omitted the "intent" field. Small models frequently
@@ -377,6 +444,21 @@ export const OrchestratorAgent = {
             out.imageSlideIndex = typeof result.imageSlideIndex === 'number' ? result.imageSlideIndex : (selectedSlideIndex ?? 0);
         }
 
+        // Structure: add or remove slides
+        if (intent === 'structure' && Array.isArray(result.structureOps) && result.structureOps.length > 0) {
+            const ops: StructureOp[] = result.structureOps.filter(
+                (o: any) => o && typeof o.op === 'string' && ['insert', 'append', 'remove'].includes(o.op)
+            );
+            if (ops.length > 0) {
+                out.structureOps = ops;
+                const structured = applyStructureOps(slides, ops, templateId);
+                if (structured) {
+                    out.slides = structured;
+                    out.intent = 'structure';
+                }
+            }
+        }
+
         // ------------------------------------------------------------------
         // Safety nets: small models often agree to a change in prose but
         // return no executable payload. Never let a fabricated "done!" through.
@@ -401,8 +483,12 @@ export const OrchestratorAgent = {
         // non-question imperative the model punted to "answer" with no payload —
         // in a slide editor, an imperative that isn't a design/image action is
         // almost always a copy edit. This is the main recovery path.
-        const looksImperative = !isQuestion && /\b(rewrite|edit|change|update|fix|improve|redo|revise|adjust|tweak|add|remove|replace|shorten|expand|make|turn|give)\b/i.test(message);
-        if (!executed() && (isCopyCommand || (looksImperative && !isDesignCommand))) {
+        const looksImperative = !isQuestion && /\b(rewrite|edit|change|update|fix|improve|redo|revise|adjust|tweak|replace|shorten|expand|make|turn|give)\b/i.test(message);
+        // Structure-specific keywords — don't force a copy edit for these
+        const looksStructural = /\b(add|insert|remove|delete|append|prepend|new slide|extra slide)\b/i.test(message);
+
+        if (!executed() && (isCopyCommand || (looksImperative && !isDesignCommand && !looksStructural))) {
+
             try {
                 const retry = await forcedCopyEdit(slides, message, templateId, selectedSlideIndex);
                 console.log('[Orchestrator] Forced copy edit returned', retry.slides.length, 'slide patches');
@@ -432,13 +518,89 @@ export const OrchestratorAgent = {
         // Quality pass on any new copy: deterministic cleanup, then an LLM
         // proofread, then cleanup again. Never throws — a failed proofread
         // just leaves the polished copy in place.
-        if (out.slides) {
+        if (out.slides && (out.intent === 'copy' || out.intent === 'structure')) {
             out.slides = polishSlides(out.slides);
             out.slides = await ProofreaderAgent.proofread(out.slides);
             out.slides = polishSlides(out.slides);
         }
 
-        console.log(`🧭 [Orchestrator] FINAL: intent=${out.intent}, designActions=${out.designActions.length}, slidesChanged=${out.changedIndices.length}, memoryNote=${!!out.memoryNote}`);
+        console.log(`🧭 [Orchestrator] FINAL: intent=${out.intent}, designActions=${out.designActions.length}, slidesChanged=${out.changedIndices.length}, structureOps=${out.structureOps.length}, memoryNote=${!!out.memoryNote}`);
         return out;
     }
 };
+
+// ---------------------------------------------------------------------------
+// Structure operation helpers
+// ---------------------------------------------------------------------------
+
+function applyStructureOps(
+    slides: SlideContent[],
+    ops: StructureOp[],
+    templateId: string
+): SlideContent[] | null {
+    const config = TEMPLATE_CONFIGS[templateId] || TEMPLATE_CONFIGS['template-1'];
+    const keepCase = templateId === 'template-4';
+    let result = [...slides];
+    const MIN_SLIDES = 2;
+    const MAX_SLIDES = 20;
+
+    for (const op of ops) {
+        if (op.op === 'remove') {
+            const idx = op.removeIndex;
+            if (typeof idx !== 'number') continue;
+            // Never remove the hero (first) or closing (last) slide
+            if (idx <= 0 || idx >= result.length - 1) continue;
+            // Hard guard: don't go below minimum
+            if (result.length - 1 < MIN_SLIDES) {
+                console.warn(`[OrchestratorAgent] Remove blocked — would leave ${result.length - 1} slides (min is ${MIN_SLIDES})`);
+                continue;
+            }
+            result = result.filter((_, i) => i !== idx);
+
+        } else if (op.op === 'insert' || op.op === 'append') {
+            if (!op.slideData) continue;
+            // Hard guard: don't exceed maximum
+            if (result.length >= MAX_SLIDES) {
+                console.warn(`[OrchestratorAgent] Insert blocked — already at max ${MAX_SLIDES} slides`);
+                continue;
+            }
+            const s = op.slideData;
+            const newSlide: SlideContent = {
+                id: `slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                variant: s.variant || 'body',
+                preHeader: s.preHeader ? s.preHeader.toUpperCase() : '',
+                headline: keepCase ? (s.headline || '') : (s.headline || '').toUpperCase(),
+                body: s.body || '',
+                listItems: s.listItems || [],
+                footer: s.footer || '',
+                accentPhrase: s.accentPhrase || undefined,
+                icon: config.defaultIcon,
+            };
+
+            if (op.op === 'append') {
+                // Insert before the closing slide (last slide)
+                result = [
+                    ...result.slice(0, result.length - 1),
+                    newSlide,
+                    result[result.length - 1],
+                ];
+            } else {
+                // Insert after afterIndex (-1 means prepend after hero)
+                const after = typeof op.afterIndex === 'number' ? op.afterIndex : result.length - 2;
+                // Clamp: never insert before index 1 (hero must stay first)
+                const insertAt = Math.max(1, after + 1);
+                // Never insert at the very end (closing must stay last)
+                const safeInsertAt = Math.min(insertAt, result.length - 1);
+                result = [
+                    ...result.slice(0, safeInsertAt),
+                    newSlide,
+                    ...result.slice(safeInsertAt),
+                ];
+            }
+        }
+    }
+
+    return result.length !== slides.length || JSON.stringify(result) !== JSON.stringify(slides)
+        ? result
+        : null;
+}

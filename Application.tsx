@@ -34,7 +34,6 @@ import { ArtifactPanel } from './components/artifact/ArtifactPanel';
 import { CarouselHistorySidebar } from './components/sidebar/CarouselHistorySidebar';
 import { ShareModal } from './components/ShareModal';
 import { loadChat } from './services/chatService';
-import { SlideEditPanel } from './components/SlideEditPanel';
 import { Toast } from './components/Toast';
 import { useToast } from './hooks/useToast';
 import { AuthModal } from './components/AuthModal';
@@ -65,11 +64,7 @@ const CarouselGenerator: React.FC = () => {
     signaturePosition,
     setSignaturePosition,
     setTheme,
-    updateSlide,
     selectedSlideIndex,
-    setSelectedSlideIndex,
-    rightPanelOpen,
-    setRightPanelOpen,
     selectedPattern,
     setPattern,
     patternOpacity,
@@ -272,7 +267,8 @@ const CarouselGenerator: React.FC = () => {
   // Chat-driven creation: the first chat message dispatches a background job
   // (hooks/useJobWatcher.ts, mounted below, applies the result once it's done)
   // instead of running the agent pipeline in this tab.
-  const handleFirstPrompt = async (text: string) => {
+  const handleFirstPrompt = async (text: string, creativeBrief?: import('./types').CreativeBrief) => {
+
     if (!checkGuestLimit()) return;
     setTopic(text.length > 80 ? text.slice(0, 77) + '…' : text);
 
@@ -296,7 +292,9 @@ const CarouselGenerator: React.FC = () => {
         format: state.selectedFormat,
         selectedPattern: state.selectedPattern,
         patternOpacity: state.patternOpacity,
+        creativeBrief,
       },
+
     });
 
     useCarouselStore.getState().setActiveJobId(jobId);
@@ -511,19 +509,6 @@ const CarouselGenerator: React.FC = () => {
         />
       )}
 
-      {/* Right Edit Panel */}
-      <SlideEditPanel
-        isOpen={rightPanelOpen && selectedSlideIndex !== null}
-        slide={selectedSlideIndex !== null ? slides[selectedSlideIndex] : null}
-        slideIndex={selectedSlideIndex}
-        onClose={() => {
-          setRightPanelOpen(false);
-          setSelectedSlideIndex(null);
-        }}
-        onSave={(index, content) => {
-          updateSlide(index, content);
-        }}
-      />
 
       {/* Brand Editor Panel */}
       <BrandEditorPanel

@@ -10,7 +10,11 @@ import { storageServer, serverConfig, ID } from '../lib/appwriteServer';
 
 const REPLICATE_ENDPOINT = 'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions';
 
-const generateOnce = async (prompt: string, aspectRatio: string): Promise<{ imageUrl: string; buffer: Buffer }> => {
+const generateOnce = async (
+    prompt: string,
+    aspectRatio: string,
+    seed?: number
+): Promise<{ imageUrl: string; buffer: Buffer }> => {
     const token = process.env.REPLICATE_API_TOKEN;
     if (!token) throw new Error('Missing REPLICATE_API_TOKEN');
 
@@ -31,6 +35,10 @@ const generateOnce = async (prompt: string, aspectRatio: string): Promise<{ imag
                 output_format: 'webp',
                 output_quality: 90,
                 num_inference_steps: 4,
+                // Locking seed enforces visual style consistency: same line weight,
+                // stroke confidence, and compositional density across all slides
+                // in the same carousel job.
+                ...(seed !== undefined ? { seed } : {}),
             },
         }),
     });
@@ -55,14 +63,15 @@ const generateOnce = async (prompt: string, aspectRatio: string): Promise<{ imag
     return { imageUrl, buffer };
 };
 
-/**
- * Replicate throttles low-credit accounts hard, so retry 429s honoring the
- * retry_after it reports (same behavior as MainAgent's generateImageWithRetry).
- */
-const generateWithRetry = async (prompt: string, aspectRatio: string, maxAttempts = 5): Promise<{ imageUrl: string; buffer: Buffer }> => {
+const generateWithRetry = async (
+    prompt: string,
+    aspectRatio: string,
+    seed?: number,
+    maxAttempts = 5
+): Promise<{ imageUrl: string; buffer: Buffer }> => {
     for (let attempt = 1; ; attempt++) {
         try {
-            return await generateOnce(prompt, aspectRatio);
+            return await generateOnce(prompt, aspectRatio, seed);
         } catch (err: any) {
             const msg = String(err?.body || err?.message || err);
             const throttled = err?.status === 429 || msg.includes('429') || msg.includes('throttled');
@@ -77,8 +86,12 @@ const generateWithRetry = async (prompt: string, aspectRatio: string, maxAttempt
 };
 
 /** Generates a doodle and persists it to Appwrite Storage; returns the durable view URL. */
-export const generateAndPersistDoodle = async (prompt: string, aspectRatio: string = '2:3'): Promise<string> => {
-    const { imageUrl, buffer } = await generateWithRetry(prompt, aspectRatio);
+export const generateAndPersistDoodle = async (
+    prompt: string,
+    aspectRatio: string = '2:3',
+    seed?: number
+): Promise<string> => {
+    const { imageUrl, buffer } = await generateWithRetry(prompt, aspectRatio, seed);
 
     if (!serverConfig.storageBucketId) {
         console.warn('[doodleGen] Missing storage bucket config — returning ephemeral Replicate URL');

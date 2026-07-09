@@ -1,3 +1,5 @@
+import { getClientJwt } from '../lib/appwriteClient';
+
 /**
  * Fetches an image URL and converts it to base64 data URI
  */
@@ -5,10 +7,19 @@ export const imageUrlToBase64 = async (url: string): Promise<string> => {
     try {
         // Use backend proxy to avoid CORS issues
         const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+        const headers: Record<string, string> = {};
+        
+        try {
+            const jwt = await getClientJwt();
+            headers['Authorization'] = `Bearer ${jwt}`;
+        } catch (err: any) {
+            console.error('[imageUtils] Failed to get client auth token:', err);
+        }
 
         const response = await fetch(proxyUrl, {
             mode: 'cors',
-            cache: 'no-store'
+            cache: 'no-store',
+            headers
         });
 
         if (!response.ok) {

@@ -65,6 +65,8 @@ interface AuthState {
   signInWithGoogle: () => Promise<AuthResponse>;
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<AuthResponse>;
+  resetPassword: (email: string) => Promise<AuthResponse>;
+  confirmPasswordReset: (userId: string, secret: string, newPassword: string) => Promise<AuthResponse>;
   refreshSession: () => Promise<void>;
 
   /**
@@ -241,9 +243,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         user: null,
         globalBrandKit: null,
-        freeUsageCount: 0,
-        userApiKey: null,
-        apiKeyProvider: null
+        freeUsageCount: 0
       });
 
       // Reset carousel state
@@ -255,9 +255,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         user: null,
         globalBrandKit: null,
-        freeUsageCount: 0,
-        userApiKey: null,
-        apiKeyProvider: null
+        freeUsageCount: 0
       });
 
       // Reset carousel state even on error
@@ -286,6 +284,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error: any) {
       return {
         error: { message: error.message || 'An error occurred updating password' },
+        success: false
+      };
+    }
+  },
+
+  resetPassword: async (email: string) => {
+    try {
+      const currentUrl = window.location.origin;
+      const resetUrl = `${currentUrl}/reset-password`;
+      await account.createRecovery(email, resetUrl);
+      return { error: null, success: true };
+    } catch (error: any) {
+      return {
+        error: { message: error.message || 'An error occurred sending reset link' },
+        success: false
+      };
+    }
+  },
+
+  confirmPasswordReset: async (userId: string, secret: string, newPassword: string) => {
+    try {
+      await account.updateRecovery(userId, secret, newPassword);
+      return { error: null, success: true };
+    } catch (error: any) {
+      return {
+        error: { message: error.message || 'An error occurred resetting password' },
         success: false
       };
     }

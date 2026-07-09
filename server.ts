@@ -3,6 +3,8 @@ import cors from 'cors';
 import { YoutubeTranscript } from 'youtube-transcript';
 import dotenv from 'dotenv';
 import dns from 'dns';
+import { requireUser } from './worker/auth';
+import { isSafeUrl } from './utils/urlSafety';
 
 if (dns && typeof dns.setDefaultResultOrder === 'function') {
     dns.setDefaultResultOrder('ipv4first');
@@ -146,12 +148,29 @@ app.post('/api/generate-doodle', async (req, res) => {
 
 // Proxy endpoint to fetch image as blob without CORS issues
 app.get('/api/proxy-image', async (req, res) => {
+    try {
+        await requireUser(req);
+    } catch (authErr: any) {
+        return res.status(401).send(authErr?.message || 'Unauthorized');
+    }
+
     const { url } = req.query;
     if (!url || typeof url !== 'string') {
         return res.status(400).send('URL is required');
     }
 
     try {
+        const parsed = new URL(url);
+        if (!/^https?:$/.test(parsed.protocol)) {
+            return res.status(400).send('URL not allowed');
+        }
+
+        const safe = await isSafeUrl(parsed);
+        if (!safe) {
+            console.warn(`[Dev SSRF Blocked] Unsafe host blocked: ${url}`);
+            return res.status(400).send('Access to this URL is blocked for security reasons.');
+        }
+
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch image');
 

@@ -11,7 +11,8 @@
  */
 
 import { generateContentFromAgent } from '../../services/aiService';
-import { SlideContent } from '../../types';
+import { SlideContent, CreativeBrief } from '../../types';
+
 
 const PROOFREAD_SCHEMA = {
     type: 'object',
@@ -42,8 +43,24 @@ const pick = (original: string | undefined, corrected: any): string | undefined 
 };
 
 export const ProofreaderAgent = {
-    proofread: async (slides: SlideContent[]): Promise<SlideContent[]> => {
+    proofread: async (slides: SlideContent[], brief?: CreativeBrief): Promise<SlideContent[]> => {
+
         if (slides.length === 0) return slides;
+
+        // Batch into chunks of 4 to avoid JSON truncation on all model tiers.
+        // Even Claude Sonnet occasionally drops the outer wrapper for larger payloads.
+        // Each chunk is proofread independently, then results are stitched back.
+        const CHUNK_SIZE = 4;
+
+        if (slides.length > CHUNK_SIZE) {
+            console.log(`[ProofreaderAgent] Large carousel (${slides.length} slides) — batching into chunks of ${CHUNK_SIZE}`);
+            const chunks: SlideContent[][] = [];
+            for (let i = 0; i < slides.length; i += CHUNK_SIZE) {
+                chunks.push(slides.slice(i, i + CHUNK_SIZE));
+            }
+            const proofread = await Promise.all(chunks.map(chunk => ProofreaderAgent.proofread(chunk, brief)));
+            return proofread.flat();
+        }
 
         try {
             const inputForProofing = slides.map(s => ({
@@ -53,9 +70,13 @@ export const ProofreaderAgent = {
                 footer: s.footer || '',
             }));
 
-            const prompt = `
-        You are a meticulous proofreader for LinkedIn carousel copy.
+            const toneNote = brief
+                ? `\nTONE: "${brief.creativeStyle.toneDescription.slice(0, 120)}"\n`
+                : '';
 
+            const prompt = `
+        You are a meticulous proofreader for carousel copy.
+${toneNote}
         Below is a JSON array of ${slides.length} slides, each with preHeader, headline, body, and footer text.
 
         Fix ONLY grammar, spelling, and punctuation errors. Do NOT:
@@ -95,3 +116,4 @@ export const ProofreaderAgent = {
         }
     },
 };
+

@@ -262,7 +262,7 @@ export const useTheme = () => {
     return useCarouselStore(state => state.theme);
 };
 
-// TEMP DEBUG: expose store for Figma-export verification. Remove after.
+// TEMP DEBUG: expose store for signature-editing verification. Remove after.
 if (typeof window !== 'undefined') {
     (window as any).__carouselStore = useCarouselStore;
 }

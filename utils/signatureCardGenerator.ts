@@ -1,18 +1,23 @@
-import { BrandingConfig, SignaturePosition, CarouselFormat } from '../types';
+import { BrandingConfig, CarouselFormat } from '../types';
 
 /**
- * Generate signature card SVG based on position, font family, and format
+ * Signature card, rendered as HTML inside a <foreignObject> so the name and
+ * title are editable directly on the canvas (data-edit-field, like slide
+ * content) — ArtifactPanel commits edits back to the brand kit. The avatar is a
+ * plain <img> (circular via border-radius); the figma exporter converts the
+ * whole card to native SVG on export.
+ *
+ * data-signature marks the card so the on-canvas position picker can anchor to it.
  */
 export const generateSignatureCard = (
   data: BrandingConfig,
   fontFamily: 'Lato' | 'Roboto',
   format: CarouselFormat = 'portrait',
-  uniqueId: string = '',
+  _uniqueId: string = '',
   templateId?: string
 ): string => {
-  // Helper to escape XML special characters
-  const escapeXml = (unsafe: string) => {
-    return unsafe.replace(/[<>&'"]/g, (c) => {
+  const escapeXml = (unsafe: string) =>
+    (unsafe || '').replace(/[<>&'"]/g, (c) => {
       switch (c) {
         case '<': return '&lt;';
         case '>': return '&gt;';
@@ -22,80 +27,47 @@ export const generateSignatureCard = (
       }
       return c;
     });
-  };
 
-  const escapedImageUrl = escapeXml(data.imageUrl);
+  const CANVAS_WIDTH = 1080;
+  const CARD_WIDTH = 470;
+  const CARD_HEIGHT = 92;
+  const AVATAR = 88;
 
-  // Position coordinates - format-specific. Left-aligned cards line up with
-  // each template's content left edge.
+  // Left-aligned cards line up with each template's content left edge.
   const defaultX = templateId === 'template-3' ? 80
     : templateId === 'template-4' ? 100
     : templateId === 'template-1' ? (format === 'square' ? 80 : 90)
     : 150;
 
-  // T4 has a tighter 100px margin, so the card sits lower to balance the layout
+  // T4 has a tighter 100px margin, so the card sits lower to balance the layout.
   const bottomLeftY = format === 'square'
-    ? (templateId === 'template-4' ? 930 : 860)
-    : (templateId === 'template-4' ? 1240 : 1120);
+    ? (templateId === 'template-4' ? 880 : 860)
+    : (templateId === 'template-4' ? 1160 : 1120);
+  const topY = format === 'square' ? 85 : 120;
 
-  const positions = format === 'square' ? {
-    'bottom-left': { x: defaultX, y: bottomLeftY },
-    'top-left': { x: defaultX, y: 85 },
-    'top-right': { x: 550, y: 85 }
-  } : {
-    'bottom-left': { x: defaultX, y: bottomLeftY },
-    'top-left': { x: defaultX, y: 120 },
-    'top-right': { x: 540, y: 120 }
-  };
+  const positions = {
+    'bottom-left': { x: defaultX, y: bottomLeftY, right: false },
+    'top-left': { x: defaultX, y: topY, right: false },
+    'top-right': { x: CANVAS_WIDTH - defaultX - CARD_WIDTH, y: topY, right: true },
+  } as const;
 
-  const pos = positions[data.position];
-  const isRightAligned = data.position === 'top-right';
+  const pos = positions[data.position] || positions['bottom-left'];
 
-  // For right-aligned, we need different layout
-  if (isRightAligned) {
-    const clipPathId = `clippath-${data.position}-${uniqueId}`;
-    return `
-      <g id="signatureCard-${data.position}-${uniqueId}" transform="translate(${pos.x}, ${pos.y})" xmlns:xlink="http://www.w3.org/1999/xlink">
-        <defs>
-          <clipPath id="${clipPathId}">
-            <circle style="fill: #fff;" cx="390" cy="46" r="40"/>
-          </clipPath>
-        </defs>
-        <circle style="fill: #fff;" cx="390" cy="46" r="44"/>
-        <circle style="fill: #fff;" cx="390" cy="46" r="40"/>
-        <g style="clip-path: url(#${clipPathId});">
-          <image x="345" y="2" width="90" height="90" preserveAspectRatio="xMidYMid slice" href="${escapedImageUrl}" xlink:href="${escapedImageUrl}"/>
-        </g>
-        <text style="fill: var(--text-highlight); font-family: ${fontFamily}, sans-serif; font-size: 28px; font-weight: 500; text-anchor: end;" transform="translate(335 44)">
-          ${escapeXml(data.name)}
-        </text>
-        <text style="fill: var(--text-default); font-family: ${fontFamily}, sans-serif; font-size: 24px; text-anchor: end;" transform="translate(335 74)">
-          ${escapeXml(data.title)}
-        </text>
-      </g>
-    `;
-  }
+  const nameStyle = `font-family: '${fontFamily}', sans-serif; font-weight: 500; font-size: 28px; color: var(--text-highlight); line-height: 1.2; outline: none;`;
+  const titleStyle = `font-family: '${fontFamily}', sans-serif; font-weight: 400; font-size: 24px; color: var(--text-default); line-height: 1.2; outline: none;`;
+  const avatarImg = `<img src="${escapeXml(data.imageUrl)}" style="width: ${AVATAR}px; height: ${AVATAR}px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" />`;
+  const textCol = `
+        <div style="display: flex; flex-direction: column; min-width: 0; ${pos.right ? 'align-items: flex-end; text-align: right;' : ''}">
+          <div data-edit-field="brandName" contenteditable="false" spellcheck="false" style="${nameStyle}">${escapeXml(data.name)}</div>
+          <div data-edit-field="brandTitle" contenteditable="false" spellcheck="false" style="${titleStyle}">${escapeXml(data.title)}</div>
+        </div>`;
 
-  // Left-aligned signature cards (bottom-left and top-left)
-  const clipPathId = `clippath-${data.position}-${uniqueId}`;
   return `
-    <g id="signatureCard-${data.position}-${uniqueId}" transform="translate(${pos.x}, ${pos.y})" xmlns:xlink="http://www.w3.org/1999/xlink">
-      <defs>
-        <clipPath id="${clipPathId}">
-          <circle style="fill: #fff;" cx="46" cy="46" r="40"/>
-        </clipPath>
-      </defs>
-      <circle style="fill: #fff;" cx="46" cy="46" r="44"/>
-      <circle style="fill: #fff;" cx="46" cy="46" r="40"/>
-      <g style="clip-path: url(#${clipPathId});">
-        <image x="-1" y="-1" width="90" height="90" preserveAspectRatio="xMidYMid slice" href="${escapedImageUrl}" xlink:href="${escapedImageUrl}"/>
-      </g>
-      <text style="fill: var(--text-highlight); font-family: ${fontFamily}, sans-serif; font-size: 28px; font-weight: 500;" transform="translate(106 44)">
-        ${escapeXml(data.name)}
-      </text>
-      <text style="fill: var(--text-default); font-family: ${fontFamily}, sans-serif; font-size: 24px;" transform="translate(106 74)">
-        ${escapeXml(data.title)}
-      </text>
-    </g>
+    <foreignObject x="${pos.x}" y="${pos.y}" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" data-signature="true">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: center; gap: 20px; height: 100%; width: 100%; ${pos.right ? 'flex-direction: row-reverse; justify-content: flex-start;' : ''}">
+        ${avatarImg}
+        ${textCol}
+      </div>
+    </foreignObject>
   `;
 };

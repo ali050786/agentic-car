@@ -8,7 +8,7 @@
  */
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { 
   isValidPassword, 
@@ -19,8 +19,12 @@ import { Layout, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 
 export const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
-  const { updatePassword } = useAuthStore();
+  const [searchParams] = useSearchParams();
+  const { confirmPasswordReset } = useAuthStore();
   
+  const userId = searchParams.get('userId') || '';
+  const secret = searchParams.get('secret') || '';
+
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: '',
@@ -55,10 +59,15 @@ export const ResetPassword: React.FC = () => {
     
     if (!validateForm()) return;
 
+    if (!userId || !secret) {
+      setErrors({ submit: 'Invalid or expired password reset link. Please request a new link.' });
+      return;
+    }
+
     setIsLoading(true);
     setErrors({});
 
-    const { error } = await updatePassword(formData.password);
+    const { error } = await confirmPasswordReset(userId, secret, formData.password);
 
     setIsLoading(false);
 

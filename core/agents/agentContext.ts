@@ -1,3 +1,5 @@
+import { CreativeBrief } from '../../types';
+
 /**
  * Shared input context passed to TemplateAgent (and read by MainAgent when
  * building it). Lives in its own file, separate from MainAgent.ts, because
@@ -11,6 +13,8 @@ export interface AgentContext {
     customInstructions?: string;
     outputLanguage: string;
     slideCount: number;
-    viralAngle?: string; // The Strategist's output
-    userMemory?: string[]; // Durable cross-carousel preferences (memoryService)
+    viralAngle?: string;       // The Strategist's output (content spine/arc/angle)
+    userMemory?: string[];     // Durable cross-carousel preferences (memoryService)
+    creativeBrief?: CreativeBrief; // The Creative Director's intent brief
 }
+

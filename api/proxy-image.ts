@@ -1,4 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { verifySession } from '../lib/apiAuth.js';
+import { isSafeUrl } from '../utils/urlSafety.js';
 
 /**
  * Vercel Serverless Function: Image CORS Proxy
@@ -12,6 +14,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
+        // 1. Authenticate user to prevent anonymous resource exhaustion
+        try {
+            await verifySession(req);
+        } catch (authErr: any) {
+            console.warn('[Vercel API] Authentication failure in proxy-image:', authErr?.message || authErr);
+            return res.status(401).json({
+                error: 'UNAUTHORIZED',
+                message: 'A valid session token is required to access this service.'
+            });
+        }
+
         const target = (req.query.url as string) || '';
 
         let parsed: URL;
@@ -21,10 +34,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Invalid url parameter' });
         }
 
-        const hostname = parsed.hostname;
-        const isPrivate = hostname === 'localhost' || /^(\d+\.){3}\d+$/.test(hostname) || hostname.endsWith('.local');
-        if (!/^https?:$/.test(parsed.protocol) || isPrivate) {
+        if (!/^https?:$/.test(parsed.protocol)) {
             return res.status(400).json({ error: 'URL not allowed' });
+        }
+
+        // 2. Perform DNS-resolved host check to block SSRF bypass attempts
+        const safe = await isSafeUrl(parsed);
+        if (!safe) {
+            console.warn(`[SSRF Blocked] User requested unsafe/local URL in proxy-image: ${target}`);
+            return res.status(400).json({ error: 'Access to this URL is blocked for security reasons.' });
         }
 
         const upstream = await fetch(parsed.toString());

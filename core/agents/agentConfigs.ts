@@ -1,4 +1,67 @@
 import { ALLOWED_DOODLE_TOPICS, SHARED_ICONS } from '../../config/constants';
+import { CreativeBrief } from '../../types';
+
+/**
+ * Builds a dynamic writer persona from the Creative Brief.
+ * When no brief is supplied, falls back to the template's static persona string.
+ *
+ * Usage in TemplateAgent:
+ *   const persona = buildPersona(brief, config.persona);
+ */
+export function buildPersona(brief: CreativeBrief | undefined, fallbackPersona: string): string {
+    if (!brief) return fallbackPersona;
+
+    const { creativeStyle, audience, contentType } = brief;
+    const { styleReference, toneDescription, vocabulary, humorAllowed, popCultureAllowed } = creativeStyle;
+
+    const parts: string[] = [];
+
+    // Lead with the style reference if given (e.g. "Tanmay Bhat")
+    if (styleReference) {
+        parts.push(`a writer who adopts the style of ${styleReference}`);
+    } else {
+        // Derive a role label from the content type
+        const roleMap: Record<string, string> = {
+            EDUCATIONAL:   'an educational content writer',
+            ENTERTAINMENT: 'an entertainment writer',
+            EDUTAINMENT:   'an edutainment writer who blends facts with humor',
+            PROFESSIONAL:  'a LinkedIn thought-leadership ghostwriter',
+            STORYTELLING:  'a narrative storyteller',
+            HOW_TO:        'a practical tutorial writer',
+            OPINION:       'a sharp opinion columnist',
+        };
+        parts.push(roleMap[contentType] ?? 'a content writer');
+    }
+
+    // Audience
+    parts.push(`writing for ${audience.description}`);
+
+    // Tone
+    parts.push(`Tone: ${toneDescription}`);
+
+    // Vocabulary level
+    const vocabMap: Record<string, string> = {
+        SIMPLE:       'Use simple, accessible language. No jargon.',
+        CASUAL:       'Use casual, conversational language.',
+        PROFESSIONAL: 'Use professional, clear language.',
+        ACADEMIC:     'Use precise, evidence-based language.',
+    };
+    parts.push(vocabMap[vocabulary] ?? '');
+
+    // Optional flags
+    if (humorAllowed) parts.push('Humor and wit are encouraged — be playful.');
+    if (popCultureAllowed) parts.push('Pop culture references are welcome when they strengthen a point.');
+    if (!brief.contentStrategy.businessMetaphorsAllowed) {
+        parts.push('CRITICAL: Do NOT use business metaphors or LinkedIn-style lessons. Stay on the actual topic.');
+    }
+    if (brief.contentStrategy.stayFactuallyAccurate) {
+        parts.push('CRITICAL: All stated facts must be accurate. Do not hallucinate data or events.');
+    }
+
+    return parts.join('. ');
+}
+
+
 
 export interface TemplateConfig {
     id: string;

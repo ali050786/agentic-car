@@ -193,5 +193,25 @@ export const generateContent = async ({
         }
     }
 
-    return JSON.parse(result!);
+    const cleanedResult = result ? result.trim() : '';
+    
+    // Check if OpenRouter/Groq safety guardrail (Llama Guard) blocked the prompt
+    if (
+        cleanedResult === 'User Safety: safe' || 
+        cleanedResult === 'User Safety: unsafe' || 
+        cleanedResult.startsWith('User Safety:')
+    ) {
+        throw new Error(
+            'The free-tier AI safety filter (Llama Guard) flagged this request. ' +
+            'This usually happens when search queries, inputs, or chat messages contain sensitive terms (such as "password" or "credentials"). ' +
+            'Please try rephrasing your prompt without using those keywords, or switch to another model.'
+        );
+    }
+
+    try {
+        return JSON.parse(cleanedResult);
+    } catch (e: any) {
+        console.error('[LLM] JSON parse failed. Raw response:', cleanedResult);
+        throw new Error(`The model returned invalid JSON structure: ${e.message || String(e)}`);
+    }
 };

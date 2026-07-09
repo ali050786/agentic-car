@@ -15,13 +15,27 @@ import { serializeStageForFigma } from '../../utils/figmaExport';
 import { exportSlideToJpg } from '../../utils/jpgExporter';
 import { exportSlideToPdf } from '../../utils/pdfExporter';
 import { ArtifactSettingsPanel } from './ArtifactSettingsPanel';
-import { Copy, Edit2, FileText, Image, Settings2, CheckCircle, Loader2 } from 'lucide-react';
+import { Copy, FileText, Image, Settings2, CheckCircle, Loader2, Edit3 } from 'lucide-react';
 
 const TEMPLATE_NAMES: Record<string, string> = {
     'template-1': 'The Truth',
     'template-3': 'The Sketch',
     'template-4': 'The Statement',
 };
+
+const SIG_POSITIONS = [
+    { id: 'top-left' as const, label: 'Top left' },
+    { id: 'bottom-left' as const, label: 'Bottom left' },
+    { id: 'top-right' as const, label: 'Top right' },
+];
+
+// Tiny glyph showing where the signature sits (dot in the matching corner).
+const PositionIcon: React.FC<{ corner: 'top-left' | 'bottom-left' | 'top-right' }> = ({ corner }) => (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+        <rect x="1.5" y="1.5" width="13" height="13" rx="2.5" stroke="currentColor" strokeWidth="1.2" opacity="0.55" />
+        <circle cx={corner.includes('right') ? 11 : 5} cy={corner.includes('top') ? 5 : 11} r="2" fill="currentColor" />
+    </svg>
+);
 
 interface ArtifactPanelProps {
     onOpenBrandEditor: () => void;
@@ -34,9 +48,9 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     // messages/generation status ticking during a turn) — those used to
     // trigger a full SVG re-templating of the stage + every thumbnail below.
     const {
-        slides, theme, topic, selectedTemplate, selectedFormat, selectedPattern,
-        patternOpacity, patternScale, patternSpacing, brandKit, signaturePosition,
-        selectedSlideIndex, setSelectedSlideIndex, setRightPanelOpen, updateSlide,
+        slides, theme, topic, selectedTemplate, selectedFormat, setFormat, selectedPattern,
+        patternOpacity, patternScale, patternSpacing, brandKit, signaturePosition, setSignaturePosition,
+        selectedSlideIndex, setSelectedSlideIndex, updateSlide, setBrandKit,
         isGenerating, generationStatus, generationProgress, pendingDoodleSlides,
     } = useCarouselStore(useShallow(s => ({
         slides: s.slides,
@@ -44,16 +58,18 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         topic: s.topic,
         selectedTemplate: s.selectedTemplate,
         selectedFormat: s.selectedFormat,
+        setFormat: s.setFormat,
         selectedPattern: s.selectedPattern,
         patternOpacity: s.patternOpacity,
         patternScale: s.patternScale,
         patternSpacing: s.patternSpacing,
         brandKit: s.brandKit,
         signaturePosition: s.signaturePosition,
+        setSignaturePosition: s.setSignaturePosition,
         selectedSlideIndex: s.selectedSlideIndex,
         setSelectedSlideIndex: s.setSelectedSlideIndex,
-        setRightPanelOpen: s.setRightPanelOpen,
         updateSlide: s.updateSlide,
+        setBrandKit: s.setBrandKit,
         isGenerating: s.isGenerating,
         generationStatus: s.generationStatus,
         generationProgress: s.generationProgress,
@@ -64,6 +80,9 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [busyAction, setBusyAction] = useState<string | null>(null);
     const stageRef = useRef<HTMLDivElement | null>(null);
+    // On-canvas signature position picker, anchored to the signature card on hover.
+    const [sigCtrl, setSigCtrl] = useState({ show: false, left: 0, top: 0, above: true });
+    const sigHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const currentIndex = selectedSlideIndex !== null && selectedSlideIndex < slides.length ? selectedSlideIndex : 0;
     const currentSlide = slides[currentIndex];
@@ -98,18 +117,19 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     // and steal the caret. We flush every changed field in one `updateSlide` only
     // when focus leaves the slide entirely (click-away / slide switch / unmount).
     // Latest slide state is read lazily via a ref so the listeners never rebind.
-    const editCtxRef = useRef({ slides, currentIndex });
-    editCtxRef.current = { slides, currentIndex };
+    const editCtxRef = useRef({ slides, currentIndex, brandKit });
+    editCtxRef.current = { slides, currentIndex, brandKit };
 
     useEffect(() => {
         const root = stageRef.current;
         if (!root) return;
 
         const flushAll = () => {
-            const { slides, currentIndex } = editCtxRef.current;
+            const { slides, currentIndex, brandKit } = editCtxRef.current;
             const slide = slides[currentIndex];
             if (!slide) return;
             const patch: Record<string, any> = {};
+            const identityPatch: Record<string, string> = {};
             let listItems = slide.listItems ? [...slide.listItems] : undefined;
             let listChanged = false;
 
@@ -125,12 +145,19 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
                         listItems[idx] = (typeof cur === 'object' && cur !== null) ? { ...cur, bullet: text } : text;
                         listChanged = true;
                     }
+                } else if (field === 'brandName') {
+                    if ((brandKit.identity.name ?? '') !== text) identityPatch.name = text;
+                } else if (field === 'brandTitle') {
+                    if ((brandKit.identity.title ?? '') !== text) identityPatch.title = text;
                 } else if (((slide as any)[field] ?? '') !== text) {
                     patch[field] = text;
                 }
             });
             if (listChanged) patch.listItems = listItems;
             if (Object.keys(patch).length > 0) updateSlide(currentIndex, patch);
+            // Signature name/title belong to the global brand kit, not the slide.
+            // (setBrandKit merges a partial identity at runtime.)
+            if (Object.keys(identityPatch).length > 0) setBrandKit({ identity: identityPatch as any });
         };
 
         // Delegated on the stable stage container — contenteditable is already in
@@ -162,7 +189,40 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         };
         // Re-bind whenever the stage (re)renders so the listeners are guaranteed
         // to exist once content is present — cheap: just two delegated handlers.
-    }, [stageSvg, updateSlide]);
+    }, [stageSvg, updateSlide, setBrandKit]);
+
+    // Show the signature position picker when the signature card is hovered.
+    useEffect(() => {
+        const root = stageRef.current;
+        const wrapper = root?.parentElement;
+        if (!root || !wrapper) return;
+        const onOver = (e: Event) => {
+            const sig = (e.target as HTMLElement)?.closest?.('[data-signature]');
+            if (!sig) return;
+            if (sigHideTimer.current) clearTimeout(sigHideTimer.current);
+            const sr = sig.getBoundingClientRect();
+            const wr = wrapper.getBoundingClientRect();
+            const inBottomHalf = sr.top - wr.top > wr.height / 2;
+            setSigCtrl({
+                show: true,
+                left: sr.left - wr.left + sr.width / 2,
+                top: inBottomHalf ? sr.top - wr.top : sr.bottom - wr.top,
+                above: inBottomHalf,
+            });
+        };
+        const onOut = (e: Event) => {
+            if ((e.target as HTMLElement)?.closest?.('[data-signature]')) {
+                sigHideTimer.current = setTimeout(() => setSigCtrl((c) => ({ ...c, show: false })), 220);
+            }
+        };
+        root.addEventListener('mouseover', onOver);
+        root.addEventListener('mouseout', onOut);
+        return () => {
+            root.removeEventListener('mouseover', onOver);
+            root.removeEventListener('mouseout', onOut);
+            if (sigHideTimer.current) clearTimeout(sigHideTimer.current);
+        };
+    }, [stageSvg]);
 
     const withBusy = async (name: string, fn: () => Promise<void>) => {
         setBusyAction(name);
@@ -226,12 +286,39 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/10">
                 <span className="text-sm font-medium text-white truncate flex-1">{topic || 'Untitled carousel'}</span>
+                
+                {/* Aspect Ratio Toggle */}
+                <div className="flex bg-neutral-900 border border-white/10 rounded-full p-0.5 mr-1">
+                    <button
+                        onClick={() => setFormat('portrait')}
+                        title="Portrait Mode (4:5)"
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${
+                            selectedFormat === 'portrait'
+                                ? 'bg-white text-black shadow-sm'
+                                : 'text-neutral-400 hover:text-white'
+                        }`}
+                    >
+                        4:5
+                    </button>
+                    <button
+                        onClick={() => setFormat('square')}
+                        title="Square Mode (1:1)"
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${
+                            selectedFormat === 'square'
+                                ? 'bg-white text-black shadow-sm'
+                                : 'text-neutral-400 hover:text-white'
+                        }`}
+                    >
+                        1:1
+                    </button>
+                </div>
+
                 <button
                     onClick={() => setSettingsOpen(!settingsOpen)}
                     className="settings-trigger-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/15 text-xs text-neutral-300 hover:border-white/30 hover:text-white transition-colors"
                 >
                     <Settings2 size={12} />
-                    {TEMPLATE_NAMES[selectedTemplate] || selectedTemplate} · {selectedFormat === 'square' ? '1:1' : '4:5'}
+                    Settings
                 </button>
                 <div className="flex items-center gap-1">
                     <button onClick={handleCopyFigma} disabled={!!busyAction} title="Copy SVG for Figma" aria-label="Copy SVG for Figma"
@@ -263,18 +350,48 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
                             <span className="text-[11px] text-white/90">Sketching image…</span>
                         </div>
                     )}
-                    {/* Slide-level actions */}
-                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm border border-white/15 rounded-lg px-1.5 py-1">
-                        <button
-                            onClick={() => { setSelectedSlideIndex(currentIndex); setRightPanelOpen(true); }}
-                            title="Edit slide content"
-                            aria-label="Edit slide content"
-                            className="p-1.5 rounded-md text-neutral-300 hover:text-white hover:bg-white/10 transition-colors"
-                        >
-                            <Edit2 size={13} />
-                        </button>
-                        <span className="text-[10px] text-neutral-400 pr-1">slide {currentIndex + 1}</span>
+                    {/* Slide indicator (content is edited directly on the canvas) */}
+                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm border border-white/15 rounded-lg px-2.5 py-1">
+                        <span className="text-[10px] text-neutral-400">slide {currentIndex + 1}</span>
                     </div>
+
+                    {/* Signature position picker (appears on signature hover) */}
+                    {sigCtrl.show && (
+                        <div
+                            className="absolute z-20 flex items-center gap-1 bg-neutral-900/95 backdrop-blur-sm border border-white/15 rounded-lg p-1 shadow-xl whitespace-nowrap"
+                            style={{
+                                left: sigCtrl.left,
+                                top: sigCtrl.top,
+                                transform: `translate(-50%, ${sigCtrl.above ? 'calc(-100% - 8px)' : '8px'})`,
+                            }}
+                            onMouseEnter={() => { if (sigHideTimer.current) clearTimeout(sigHideTimer.current); }}
+                            onMouseLeave={() => setSigCtrl((c) => ({ ...c, show: false }))}
+                        >
+                            {SIG_POSITIONS.map((opt) => (
+                                <button
+                                    key={opt.id}
+                                    onClick={() => setSignaturePosition(opt.id)}
+                                    title={opt.label}
+                                    aria-label={opt.label}
+                                    className={`p-1.5 rounded-md transition-colors ${signaturePosition === opt.id
+                                        ? 'bg-blue-500/30 text-blue-300'
+                                        : 'text-neutral-400 hover:text-white hover:bg-white/10'}`}
+                                >
+                                    <PositionIcon corner={opt.id} />
+                                </button>
+                            ))}
+                            <div className="w-[1px] h-4 bg-white/10 mx-1 flex-shrink-0" />
+                            <button
+                                onClick={onOpenBrandEditor}
+                                title="Edit brand signature details"
+                                aria-label="Edit brand signature details"
+                                className="px-2 py-1 rounded-md text-[11px] font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                                <Edit3 size={11} className="text-neutral-400" />
+                                <span>Edit Signature</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
