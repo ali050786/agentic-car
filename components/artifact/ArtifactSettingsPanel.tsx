@@ -15,12 +15,11 @@ import { ThemeSelector } from '../ThemeSelector';
 import { getPatternName } from '../../utils/patternGenerator';
 import { 
     X, User, Layout, Maximize2, Palette, Grid, 
-    Flame, Compass, PenTool, Type 
+    Flame, PenTool, Type
 } from 'lucide-react';
 
 const TEMPLATES = [
     { id: 'template-1', name: 'The Truth', desc: 'Bold & high contrast', icon: Flame },
-    { id: 'template-2', name: 'The Clarity', desc: 'Clean & tech-forward', icon: Compass },
     { id: 'template-3', name: 'The Sketch', desc: 'Hand-drawn sketches', icon: PenTool },
     { id: 'template-4', name: 'The Statement', desc: 'Premium minimalist', icon: Type },
 ];

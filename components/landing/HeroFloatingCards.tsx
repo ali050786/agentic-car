@@ -59,26 +59,28 @@ const SAMPLE_CARDS: { templateId: TemplateId; presetId: string; slide: SlideCont
         },
     },
     {
-        templateId: 'template-2', // Right
-        presetId: 'ocean-tech-light',
+        templateId: 'template-1', // Right
+        presetId: 'ocean-tech',
         slide: {
-            id: 'demo-clarity',
+            id: 'demo-truth',
             variant: 'list',
             preHeader: 'HOW IT WORKS',
-            headline: '3 STEPS TO VIRAL',
-            listItems: ['Describe your topic', 'Agents write & design', 'Refine, then export'],
+            headline: 'Three steps to viral.',
+            accentPhrase: 'viral',
+            listItems: ['Describe: Your topic in a sentence.', 'Generate: Agents write & design.', 'Export: Refine, then ship.'],
             icon: 'ListChecks',
         },
     },
     {
-        templateId: 'template-2', // Far Right
-        presetId: 'forest',
+        templateId: 'template-3', // Far Right
+        presetId: 'forest-light',
         slide: {
             id: 'demo-forest',
             variant: 'list',
             preHeader: 'ORGANIC GROWTH',
-            headline: 'GROW YOUR AUDIENCE',
-            listItems: ['High quality copy', 'Harmonious palettes', 'Consistent templates'],
+            headline: 'Grow your audience.',
+            accentPhrase: 'audience',
+            listItems: ['Quality: High-signal copy.', 'Palette: Harmonious color.', 'System: Consistent templates.'],
             icon: 'Zap',
         },
     },

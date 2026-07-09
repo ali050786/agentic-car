@@ -16,7 +16,7 @@ import { X, Save, Lock, Globe, AlertCircle, CheckCircle } from 'lucide-react';
 interface SaveCarouselModalProps {
   isOpen: boolean;
   onClose: () => void;
-  templateType: AppTemplateType;  // App uses 'template-1' and 'template-2'
+  templateType: AppTemplateType;  // App uses hyphenated names, e.g. 'template-1'
   theme: any;
   slides: any[];
   presetId: string | null;  // Active color preset ID

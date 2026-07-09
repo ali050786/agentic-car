@@ -1,219 +1,169 @@
-// Template 1: "The Truth" - Updated Clean Design (Portrait 1080x1380)
+// Template 1: "The Truth" - Portrait (1080x1380)
+// 2026 cinematic-landing system, fully HTML (foreignObject flex layout — the
+// only SVG left is the canvas, the theme-pattern fill and the signature card):
+// near-black canvas with a soft accent glow, mono kicker + slide counter, a
+// massive tight-tracked grotesk headline in sentence case whose accent phrase
+// ({{HEADLINE_HTML}}) is set in italic serif + accent color, ghost numeral,
+// hairline dividers and a minimal SWIPE affordance (solid accent button on
+// the CTA). Branding-shift anchor: foreignObject x="90" y="190" (portrait).
 
 const COMMON_DEFS = `
   <defs>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;500;700&family=Oswald:wght@700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;800;900&amp;family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,600&amp;family=JetBrains+Mono:wght@500;700&amp;family=Lato:wght@400;700&amp;display=swap');
       {{THEME_CSS}}
     </style>
     {{PATTERN_DEFINITION}}
+    <radialGradient id="t1Glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="var(--background-2)" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="var(--background-2)" stop-opacity="0"/>
+    </radialGradient>
   </defs>
 `;
 
-// Variant 1: Hero (Slide-1)
+// Shared canvas paint: background + user-selected pattern.
+const CANVAS = `
+  <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
+  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
+  <!-- Accent glow, anchored to the carousel's top-right corner -->
+  <circle cx="1080" cy="0" r="720" fill="url(#t1Glow)"/>
+`;
+
+// Mono kicker row: accent tick + preheader, slide counter on the right.
+const KICKER = `
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 26px; line-height: 34px; color: var(--text-default); overflow: visible;">
+    <div style="min-width: 0; overflow: visible; height: 34px;">
+      <span style="display: inline-block; letter-spacing: 0.22em; text-transform: uppercase; white-space: nowrap; overflow: visible; line-height: 34px; height: 34px;">{{PREHEADER}}</span>
+    </div>
+    <div style="opacity: 0.55; flex-shrink: 0; line-height: 34px; height: 34px;">/{{SLIDE_NUM}}</div>
+  </div>
+`;
+
+// Minimal swipe affordance for non-CTA slides.
+const SWIPE_ROW = `
+  <div style="display: flex; align-items: center; gap: 20px; width: 100%;">
+    <div style="flex: 1; height: 1px; background: var(--text-default); opacity: 0.25;"></div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 24px; letter-spacing: 0.22em; color: var(--text-highlight);">SWIPE&#160;&#8594;</div>
+  </div>
+`;
+
+// Variant 1: Hero
 export const T1_HERO_SVG = `
 <svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
-  
-  <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
-  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
-  
-  <!-- Decorative Lines -->
-  <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
-  <line x1="788.35" y1="0" x2="788.35" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
-  
-  <foreignObject x="150" y="220" width="780" height="800">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 50px;">
-      
-      <!-- Icon Circle (Hero - 150px) -->
-      <div style="width: 150px; height: 150px; border-radius: 50%; background: var(--background-2); display: flex; align-items: center; justify-content: center;">
-        {{ICON_SVG}}
+  ${CANVAS}
+
+  <foreignObject x="90" y="190" width="900" height="1010">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;">
+
+      <!-- Ghost numeral -->
+      <div style="position: absolute; top: 40px; right: -20px; font-family: 'Inter Tight', sans-serif; font-weight: 900; font-size: 300px; line-height: 1; color: var(--text-highlight); opacity: 0.05; pointer-events: none;">{{SLIDE_NUM}}</div>
+
+      ${KICKER}
+
+      <!-- Headline + body, pushed toward the vertical center -->
+      <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 46px;">
+        <div style="font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: 104px; line-height: 1.04; letter-spacing: -0.025em; color: var(--text-highlight);">
+          {{HEADLINE_HTML}}
+        </div>
+        <div style="width: 74px; height: 6px; background: var(--background-2);"></div>
+        <div style="font-family: 'Lato', sans-serif; font-weight: 400; font-size: 32px; line-height: 1.5; color: var(--text-default); max-width: 660px;">
+          {{BODY}}
+        </div>
       </div>
-      
-      <!-- PreHeader -->
-      <div style="font-family: 'Lato', sans-serif; font-weight: 700; font-size: 32px; color: var(--text-highlight); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1;">
-        {{PREHEADER}}
-      </div>
-      
-      <!-- Headline -->
-      <div style="font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 80px; color: var(--text-highlight); text-transform: uppercase; line-height: 1.2;">
-        {{HEADLINE}}
-      </div>
-      
-      <!-- Body Copy -->
-      <div style="font-family: 'Lato', sans-serif; font-weight: 300; font-size: 32px; color: var(--text-default); line-height: 1.2;">
-        {{BODY}}
-      </div>
-      
+
+      ${SWIPE_ROW}
     </div>
   </foreignObject>
 
-  <!-- Bottom Section -->
-  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)" opacity="0.2"/>
-  
-  <!-- Swipe Component -->
-  <rect x="788.35" y="1104.56" width="292" height="125" fill="var(--background-2)"/>
-  <text x="864.8" y="1179.43" style="font-family: 'Lato', sans-serif; font-weight:700; font-size:32px; fill:var(--background);" transform="scale(1.01,1)">SWIPE</text>
-  <g fill="none" stroke="var(--background)" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
-    <path d="M1018.01,1158.95 l19.31,9.18 l-19.31,9.18"/>
-    <path d="M980.78,1168.13 h46.54"/>
-  </g>
-  
   {{SIGNATURE_CARD}}
 </svg>
 `;
 
-// Variant 2: Body (Slide-2)
+// Variant 2: Body
 export const T1_BODY_SVG = `
 <svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
-  
-  <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
-  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
-  
-  <!-- Decorative Lines -->
-  <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
-  <line x1="929.69" y1="0" x2="929.69" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
-  
-  <foreignObject x="150" y="220" width="780" height="800">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 60px;">
-      
-      <!-- Icon Circle (Body - 80px) -->
-      <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--background-2); display: flex; align-items: center; justify-content: center;">
-        {{ICON_SVG}}
+  ${CANVAS}
+
+  <foreignObject x="90" y="190" width="900" height="1010">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;">
+
+      ${KICKER}
+
+      <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 44px;">
+        <div style="font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: 84px; line-height: 1.08; letter-spacing: -0.02em; color: var(--text-highlight);">
+          {{HEADLINE_HTML}}
+        </div>
+        <div style="width: 74px; height: 6px; background: var(--background-2);"></div>
+        <div style="font-family: 'Lato', sans-serif; font-weight: 400; font-size: 34px; line-height: 1.55; color: var(--text-default); max-width: 720px;">
+          {{BODY}}
+        </div>
       </div>
-      
-      <!-- PreHeader -->
-      <div style="font-family: 'Lato', sans-serif; font-weight: 700; font-size: 32px; color: var(--text-highlight); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1;">
-        {{PREHEADER}}
-      </div>
-      
-      <!-- Headline -->
-      <div style="font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 80px; color: var(--text-highlight); text-transform: uppercase; line-height: 1.2;">
-        {{HEADLINE}}
-      </div>
-      
-      <!-- Body Copy -->
-      <div style="font-family: 'Lato', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.2;">
-        {{BODY}}
-      </div>
-      
+
+      ${SWIPE_ROW}
     </div>
   </foreignObject>
 
-  <!-- Bottom Section -->
-  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)" opacity="0.2"/>
-  
-  <!-- Swipe Component (Arrow Only) -->
-  <rect x="915.62" y="1104.56" width="164.73" height="125" fill="var(--background-2)"/>
-  <g fill="none" stroke="var(--background)" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
-    <path d="M1018.01,1158.95 l19.31,9.18 l-19.31,9.18"/>
-    <path d="M980.78,1168.13 h46.54"/>
-  </g>
-  
   {{SIGNATURE_CARD}}
 </svg>
 `;
 
-// Variant 3: List (Slide-3)
+// Variant 3: List
 export const T1_LIST_SVG = `
 <svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
-  
-  <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
-  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
-  
-  <!-- Decorative Lines -->
-  <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
-  <line x1="929.69" y1="0" x2="929.69" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
-  
-  <foreignObject x="150" y="220" width="780" height="880">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 50px;">
-      
-      <!-- Icon Circle (List - 80px) -->
-      <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--background-2); display: flex; align-items: center; justify-content: center;">
-        {{ICON_SVG}}
+  ${CANVAS}
+
+  <foreignObject x="90" y="190" width="900" height="1010">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;">
+
+      ${KICKER}
+
+      <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 54px;">
+        <div style="font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: 76px; line-height: 1.08; letter-spacing: -0.02em; color: var(--text-highlight);">
+          {{HEADLINE_HTML}}
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          {{LIST_ITEMS}}
+        </div>
       </div>
-      
-      <!-- PreHeader -->
-      <div style="font-family: 'Lato', sans-serif; font-weight: 700; font-size: 32px; color: var(--text-highlight); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1;">
-        {{PREHEADER}}
-      </div>
-      
-      <!-- Headline -->
-      <div style="font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 80px; color: var(--text-highlight); text-transform: uppercase; line-height: 1.2;">
-        {{HEADLINE}}
-      </div>
-      
-      <!-- List Items -->
-      <div style="display: flex; flex-direction: column; gap: 30px; width: 100%;">
-        {{LIST_ITEMS}}
-      </div>
-      
+
+      ${SWIPE_ROW}
     </div>
   </foreignObject>
 
-  <!-- Bottom Section -->
-  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)" opacity="0.2"/>
-  
-  <!-- Swipe Component (Arrow Only) -->
-  <rect x="915.62" y="1104.56" width="164.73" height="125" fill="var(--background-2)"/>
-  <g fill="none" stroke="var(--background)" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
-    <path d="M1018.01,1158.95 l19.31,9.18 l-19.31,9.18"/>
-    <path d="M980.78,1168.13 h46.54"/>
-  </g>
-  
   {{SIGNATURE_CARD}}
 </svg>
 `;
 
-// Variant 4: CTA/Closing (Slide-6)
+// Variant 4: CTA/Closing
 export const T1_CTA_SVG = `
 <svg viewBox="0 0 1080.35 1383.91" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   ${COMMON_DEFS}
-  
-  <rect x="0" y="0" width="1080" height="1380" fill="var(--background)"/>
-  <rect x="0" y="0" width="1080" height="1380" fill="url(#bgPattern)"/>
-  
-  <!-- Decorative Lines -->
-  <line x1="150" x2="150" y1="0" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
-  <line x1="788.35" y1="0" x2="788.35" y2="1380" stroke="var(--background-2)" stroke-miterlimit="10"/>
-  
-  <foreignObject x="150" y="220" width="780" height="700">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; gap: 50px;">
-      
-      <!-- Icon Circle (Closing - 80px) -->
-      <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--background-2); display: flex; align-items: center; justify-content: center;">
-        {{ICON_SVG}}
+  ${CANVAS}
+
+  <foreignObject x="90" y="190" width="900" height="1010">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;">
+
+      ${KICKER}
+
+      <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 46px;">
+        <div style="font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: 96px; line-height: 1.05; letter-spacing: -0.025em; color: var(--text-highlight);">
+          {{HEADLINE_HTML}}
+        </div>
+        <div style="font-family: 'Lato', sans-serif; font-weight: 400; font-size: 34px; line-height: 1.5; color: var(--text-default); max-width: 680px;">
+          {{BODY}}
+        </div>
+        <div style="margin-top: 16px; display: inline-flex; align-self: flex-start; align-items: center; gap: 16px; background: var(--background-2); color: var(--background); font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: 30px; letter-spacing: 0.02em; padding: 26px 54px; border-radius: 999px;">
+          FOLLOW
+          <span style="font-size: 32px;">&#8594;</span>
+        </div>
       </div>
-      
-      <!-- PreHeader -->
-      <div style="font-family: 'Lato', sans-serif; font-weight: 700; font-size: 32px; color: var(--text-highlight); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1;">
-        {{PREHEADER}}
-      </div>
-      
-      <!-- Headline -->
-      <div style="font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 96px; color: var(--text-highlight); text-transform: uppercase; line-height: 1.2;">
-        {{HEADLINE}}
-      </div>
-      
-      <!-- Body Copy -->
-      <div style="font-family: 'Lato', sans-serif; font-weight: 300; font-size: 32px; color: var(--text-default); line-height: 1.2;">
-        {{BODY}}
-      </div>
-      
+
     </div>
   </foreignObject>
 
-  <!-- Bottom Section -->
-  <rect x="0" y="1104.56" width="1080" height="275" fill="var(--background-2)" opacity="0.2"/>
-  
-  <!-- Follow Us Button (CTA) -->
-  <g transform="translate(700, 1110)">
-    <rect width="292" height="125" fill="var(--background-2)"/>
-    <text x="146" y="75" style="font-family: 'Lato', sans-serif; font-weight:700; font-size:32px; fill:var(--background); text-anchor: middle;" transform="scale(1.01,1)">FOLLOW US</text>
-  </g>
-  
   {{SIGNATURE_CARD}}
 </svg>
 `;

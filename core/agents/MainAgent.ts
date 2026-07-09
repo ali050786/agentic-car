@@ -16,9 +16,9 @@ export const repairVisualAssets = async () => {
   if (slides.length === 0) return;
 
   // Check if repair is actually needed
-  // Only repair if T3 and missing doodleUrl, OR if T1/T2 and missing icon
+  // Only repair if T3 and missing doodleUrl, OR if T1 and missing icon
   const needsDoodles = selectedTemplate === 'template-3' && slides.some(s => s.doodlePrompt && !s.doodleUrl && !(s as any).matchAttempted);
-  const needsIcons = (selectedTemplate === 'template-1' || selectedTemplate === 'template-2') && slides.some(s => !s.icon);
+  const needsIcons = selectedTemplate === 'template-1' && slides.some(s => !s.icon);
 
   if (!needsDoodles && !needsIcons) return;
 

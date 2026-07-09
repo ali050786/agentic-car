@@ -31,7 +31,6 @@ const TONE_OPTIONS = [
 
 const TEMPLATE_OPTIONS = [
     { id: 'template-1', label: 'The Truth' },
-    { id: 'template-2', label: 'The Clarity' },
     { id: 'template-3', label: 'The Sketch' },
     { id: 'template-4', label: 'The Statement' },
 ];
@@ -383,16 +382,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                                 : 'bg-white/5 text-neutral-200 border border-white/10'
                             }`}>
                             {msg.events && msg.events.length > 0 && (
-                                <div className="flex flex-col gap-1 mb-1.5">
-                                    {msg.events.map((ev, i) => (
-                                        <div key={i} className="flex items-center gap-1.5 text-[11px] text-neutral-400">
-                                            {ev.done
-                                                ? <span className="text-green-400/80">✓</span>
-                                                : <span className="w-2.5 h-2.5 border border-blue-400/50 border-t-blue-400 rounded-full animate-spin inline-block" />}
-                                            <span className={ev.done ? '' : 'text-blue-300'}>{ev.label}</span>
+                                msg.running ? (
+                                    <div className="flex flex-col gap-1 mb-1.5">
+                                        {msg.events.map((ev, i) => (
+                                            <div key={i} className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+                                                {ev.done
+                                                    ? <span className="text-green-400/80">✓</span>
+                                                    : <span className="w-2.5 h-2.5 border border-blue-400/50 border-t-blue-400 rounded-full animate-spin inline-block" />}
+                                                <span className={ev.done ? '' : 'text-blue-300'}>{ev.label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <details className="mb-1.5">
+                                        <summary className="text-[11px] text-blue-400 hover:text-blue-300 cursor-pointer select-none focus:outline-none font-medium">
+                                            View steps taken ({msg.events.length})
+                                        </summary>
+                                        <div className="mt-1.5 flex flex-col gap-1 pl-3.5 border-l border-white/5">
+                                            {msg.events.map((ev, i) => (
+                                                <div key={i} className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+                                                    <span className="text-green-400/80">✓</span>
+                                                    <span>{ev.label}</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
+                                    </details>
+                                )
                             )}
                             {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
                             {msg.error && (

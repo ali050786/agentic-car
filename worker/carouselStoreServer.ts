@@ -60,7 +60,7 @@ const incrementCarouselCount = (userId: string, templateType: string) => {
 export interface CreateCarouselParams {
     userId: string;
     title: string;
-    templateType: 'template1' | 'template2' | 'template3' | 'template4';
+    templateType: 'template1' | 'template3' | 'template4';
     theme: CarouselTheme;
     slides: SlideContent[];
     brandMode: BrandMode;

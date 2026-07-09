@@ -30,10 +30,19 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
 
     await assertOwnsCarousel(carouselId, userId);
 
+    const events: { label: string; done: boolean }[] = [];
+    const progress = async (statusMessage: string, progressPct: number) => {
+        for (const ev of events) {
+            ev.done = true;
+        }
+        events.push({ label: statusMessage, done: false });
+        await updateJob(job.$id, { status: 'running', statusMessage, progress: progressPct });
+    };
+
     await runWithAgentContext(
         { userId, selectedModel: payload.selectedModel },
         async () => {
-            await updateJob(job.$id, { status: 'running', statusMessage: 'Thinking...', progress: 20 });
+            await progress('Thinking...', 20);
 
             const { messages: recentMessages, summary: conversationSummary } = await loadChatServer(carouselId);
             const userMemory = await getUserMemory(userId);
@@ -53,7 +62,7 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
             if (result.intent === 'copy' && result.slides) {
                 slides = result.slides;
             } else if (result.intent === 'image' && result.imageBrief !== null && result.imageSlideIndex !== null) {
-                await updateJob(job.$id, { statusMessage: `Sketching a new image for slide ${result.imageSlideIndex + 1}...`, progress: 60 });
+                await progress(`Sketching a new image for slide ${result.imageSlideIndex + 1}...`, 60);
                 const doodleUrl = await generateAndPersistDoodle(result.imageBrief, '2:3');
                 slides = slides.map((s, i) => (i === result.imageSlideIndex ? { ...s, doodleUrl, doodlePrompt: result.imageBrief! } : s));
             }
@@ -61,15 +70,16 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
             // client-side once the job completes — they're free, local UI state
             // changes with no LLM-derived content to persist beyond the reply.
 
-            await updateJob(job.$id, { statusMessage: 'Saving...', progress: 85 });
+            await progress('Saving...', 85);
             if (result.intent === 'copy' || result.intent === 'image') {
                 await updateCarouselContentServer(carouselId, { theme: payload.theme, slides });
             }
 
+            const cleanEvents = events.map(e => ({ ...e, done: true }));
             const newMessages: ChatMessage[] = [
                 ...recentMessages,
                 { id: `msg-${Date.now()}-u`, role: 'user', text: payload.message },
-                { id: `msg-${Date.now()}-a`, role: 'assistant', text: result.reply },
+                { id: `msg-${Date.now()}-a`, role: 'assistant', text: result.reply, events: cleanEvents },
             ];
             // Best-effort — the edit itself is already saved above; losing the
             // chat log shouldn't fail a job that otherwise succeeded.

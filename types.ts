@@ -1,4 +1,4 @@
-export type TemplateId = 'template-1' | 'template-2' | 'template-3' | 'template-4';
+export type TemplateId = 'template-1' | 'template-3' | 'template-4';
 export type SlideVariant = 'hero' | 'body' | 'list' | 'cta' | 'closing';  // 'closing' is what LLM generates, 'cta' is template name
 export type AIModel = 'groq-llama' | 'claude-haiku';
 export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';

@@ -6,12 +6,12 @@
  * scopes the chat ("editing slide N") and enables slide-level actions.
  */
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { injectContentIntoSvg } from '../../utils/svgInjector';
-import { optimizeSvgForFigma } from '../../utils/figmaOptimizer';
+import { serializeStageForFigma } from '../../utils/figmaExport';
 import { exportSlideToJpg } from '../../utils/jpgExporter';
 import { exportSlideToPdf } from '../../utils/pdfExporter';
 import { ArtifactSettingsPanel } from './ArtifactSettingsPanel';
@@ -19,7 +19,6 @@ import { Copy, Edit2, FileText, Image, Settings2, CheckCircle, Loader2 } from 'l
 
 const TEMPLATE_NAMES: Record<string, string> = {
     'template-1': 'The Truth',
-    'template-2': 'The Clarity',
     'template-3': 'The Sketch',
     'template-4': 'The Statement',
 };
@@ -37,7 +36,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     const {
         slides, theme, topic, selectedTemplate, selectedFormat, selectedPattern,
         patternOpacity, patternScale, patternSpacing, brandKit, signaturePosition,
-        selectedSlideIndex, setSelectedSlideIndex, setRightPanelOpen,
+        selectedSlideIndex, setSelectedSlideIndex, setRightPanelOpen, updateSlide,
         isGenerating, generationStatus, generationProgress, pendingDoodleSlides,
     } = useCarouselStore(useShallow(s => ({
         slides: s.slides,
@@ -54,6 +53,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         selectedSlideIndex: s.selectedSlideIndex,
         setSelectedSlideIndex: s.setSelectedSlideIndex,
         setRightPanelOpen: s.setRightPanelOpen,
+        updateSlide: s.updateSlide,
         isGenerating: s.isGenerating,
         generationStatus: s.generationStatus,
         generationProgress: s.generationProgress,
@@ -87,6 +87,83 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         [slides, selectedTemplate, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing]
     );
 
+    // ── Inline editing ────────────────────────────────────────────────────────
+    // The HTML templates (T3/T4) render their text regions already tagged with
+    // `data-edit-field` AND `contenteditable` (baked into the SVG markup), so the
+    // text is editable the moment it paints — a post-render step can never leave
+    // it "looks editable but isn't". This effect only layers behavior on top, via
+    // delegation on the stable stage container: commit-on-leave + Enter/Escape.
+    //
+    // We DON'T write to the store per field — that would recompute the stage SVG
+    // and steal the caret. We flush every changed field in one `updateSlide` only
+    // when focus leaves the slide entirely (click-away / slide switch / unmount).
+    // Latest slide state is read lazily via a ref so the listeners never rebind.
+    const editCtxRef = useRef({ slides, currentIndex });
+    editCtxRef.current = { slides, currentIndex };
+
+    useEffect(() => {
+        const root = stageRef.current;
+        if (!root) return;
+
+        const flushAll = () => {
+            const { slides, currentIndex } = editCtxRef.current;
+            const slide = slides[currentIndex];
+            if (!slide) return;
+            const patch: Record<string, any> = {};
+            let listItems = slide.listItems ? [...slide.listItems] : undefined;
+            let listChanged = false;
+
+            root.querySelectorAll<HTMLElement>('[data-edit-field]').forEach((el) => {
+                const field = el.getAttribute('data-edit-field')!;
+                const text = (el.innerText ?? el.textContent ?? '').replace(/ /g, ' ').trim();
+                if (field === 'listItem') {
+                    if (!listItems) return;
+                    const idx = Number(el.getAttribute('data-edit-index'));
+                    const cur = listItems[idx];
+                    const curText = typeof cur === 'object' && cur !== null ? (cur.bullet || '') : String(cur ?? '');
+                    if (text !== curText) {
+                        listItems[idx] = (typeof cur === 'object' && cur !== null) ? { ...cur, bullet: text } : text;
+                        listChanged = true;
+                    }
+                } else if (((slide as any)[field] ?? '') !== text) {
+                    patch[field] = text;
+                }
+            });
+            if (listChanged) patch.listItems = listItems;
+            if (Object.keys(patch).length > 0) updateSlide(currentIndex, patch);
+        };
+
+        // Delegated on the stable stage container — contenteditable is already in
+        // the markup, so we only add Enter/Escape handling here.
+        const onKeyDown = (e: KeyboardEvent) => {
+            const region = (e.target as HTMLElement | null)?.closest?.('[data-edit-field]') as HTMLElement | null;
+            if (!region) return;
+            if (e.key === 'Escape') { e.preventDefault(); region.blur(); }
+            // Single-line fields commit on Enter; body keeps line breaks.
+            if (e.key === 'Enter' && region.getAttribute('data-edit-field') !== 'body') {
+                e.preventDefault(); region.blur();
+            }
+        };
+
+        // Focus leaving the slide entirely = commit. Moving between fields inside
+        // the slide keeps relatedTarget within root, so we skip (no re-render).
+        const onFocusOut = (e: FocusEvent) => {
+            const next = e.relatedTarget as Node | null;
+            if (next && root.contains(next)) return;
+            flushAll();
+        };
+
+        root.addEventListener('keydown', onKeyDown);
+        root.addEventListener('focusout', onFocusOut);
+        return () => {
+            root.removeEventListener('keydown', onKeyDown);
+            root.removeEventListener('focusout', onFocusOut);
+            flushAll(); // safety net for slide switch / unmount while focused
+        };
+        // Re-bind whenever the stage (re)renders so the listeners are guaranteed
+        // to exist once content is present — cheap: just two delegated handlers.
+    }, [stageSvg, updateSlide]);
+
     const withBusy = async (name: string, fn: () => Promise<void>) => {
         setBusyAction(name);
         try {
@@ -100,7 +177,9 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     };
 
     const handleCopyFigma = () => withBusy('Figma copy', async () => {
-        const svg = await optimizeSvgForFigma(currentSlide, theme, selectedTemplate, selectedFormat, effectiveBranding, selectedPattern, patternOpacity, patternScale, patternSpacing);
+        const liveSvg = stageRef.current?.querySelector('svg') as SVGSVGElement | null;
+        if (!liveSvg) throw new Error('No rendered slide to export');
+        const svg = await serializeStageForFigma(liveSvg);
         await navigator.clipboard.writeText(svg);
         onShowToast?.('Optimized SVG copied for Figma', 'success');
     });

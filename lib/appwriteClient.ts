@@ -81,7 +81,7 @@ export interface CarouselDocument {
     $id: string;
     userId: string;
     title: string;
-    templateType: 'template1' | 'template2';
+    templateType: 'template1' | 'template3' | 'template4';
     theme: any;
     slides: any[];
     presetId: string | null;

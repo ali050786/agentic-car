@@ -1,8 +1,6 @@
 import { SlideContent, CarouselTheme, BrandingConfig, CarouselFormat } from '../types';
 import { T1_HERO_SVG, T1_BODY_SVG, T1_LIST_SVG, T1_CTA_SVG } from '../assets/templates/template1';
-import { T2_HERO_SVG, T2_BODY_SVG, T2_LIST_SVG, T2_CTA_SVG } from '../assets/templates/template2';
 import { T1_HERO_SVG_SQUARE, T1_BODY_SVG_SQUARE, T1_LIST_SVG_SQUARE, T1_CTA_SVG_SQUARE } from '../assets/templates/template1_square';
-import { T2_HERO_SVG_SQUARE, T2_BODY_SVG_SQUARE, T2_LIST_SVG_SQUARE, T2_CTA_SVG_SQUARE } from '../assets/templates/template2_square';
 import { T3_HERO_SVG, T3_BODY_SVG, T3_LIST_SVG, T3_CTA_SVG } from '../assets/templates/template3';
 import { T3_HERO_SVG_SQUARE, T3_BODY_SVG_SQUARE, T3_LIST_SVG_SQUARE, T3_CTA_SVG_SQUARE } from '../assets/templates/template3_square';
 import { T4_HERO_SVG, T4_BODY_SVG, T4_LIST_SVG, T4_CTA_SVG } from '../assets/templates/template4';
@@ -30,6 +28,19 @@ export const injectContentIntoSvg = (
   let baseSvg = '';
   let listHtml = '';
   let themeCss = '';
+
+  // Inline-editing markers: T3/T4 render their text in HTML (foreignObject),
+  // so we wrap each editable value in a tagged <span> that ArtifactPanel turns
+  // into a click-to-edit region. T1/T2 render text as SVG <text> where a span
+  // is invalid, so they opt out. The attributes are inert for exports/thumbs.
+  // `contenteditable` lives in the markup (not applied by a later effect) so the
+  // text is editable the instant it renders — the click-to-edit affordance and
+  // the actual editability can never drift out of sync. ArtifactPanel only adds
+  // delegated commit/key handling on top. Inert in exports/thumbnails.
+  const htmlEditable = templateId === 'template-1' || templateId === 'template-3' || templateId === 'template-4';
+  const EDIT_ATTRS = 'contenteditable="true" spellcheck="false"';
+  const wrapEditable = (field: string, inner: string, extraAttrs = ''): string =>
+    htmlEditable ? `<span data-edit-field="${field}" ${EDIT_ATTRS}${extraAttrs}>${inner}</span>` : inner;
 
   // 1. Select Base SVG based on template and format
   const isSquare = format === 'square';
@@ -59,14 +70,23 @@ export const injectContentIntoSvg = (
       }
     }
 
-    // Conditionally adjust foreignObject position for bottom-left signature (T1)
+    // Conditionally adjust foreignObject position for the signature card (T1).
+    // Bottom-left: shift content up 60px AND shrink the height so the SWIPE row
+    // (pinned to the foreignObject bottom) ends ~30px above the card (card top:
+    // 1120 portrait / 860 square). Top-left/right: push content down past the
+    // card (bottom edge ~210 portrait / ~175 square) and shrink the height so
+    // the SWIPE row keeps its original bottom edge.
     if (branding && branding.enabled && branding.position === 'bottom-left') {
       if (isSquare) {
-        // Square: y="180" -> y="120" (move up 60px)
-        baseSvg = baseSvg.replace(/foreignObject x="150" y="180"/g, 'foreignObject x="150" y="120"');
+        baseSvg = baseSvg.replace(/foreignObject x="80" y="150" width="920" height="800"/g, 'foreignObject x="80" y="90" width="920" height="740"');
       } else {
-        // Portrait: y="220" -> y="160" (move up 60px)
-        baseSvg = baseSvg.replace(/foreignObject x="150" y="220"/g, 'foreignObject x="150" y="160"');
+        baseSvg = baseSvg.replace(/foreignObject x="90" y="190" width="900" height="1010"/g, 'foreignObject x="90" y="130" width="900" height="960"');
+      }
+    } else if (branding && branding.enabled && (branding.position === 'top-left' || branding.position === 'top-right')) {
+      if (isSquare) {
+        baseSvg = baseSvg.replace(/foreignObject x="80" y="150" width="920" height="800"/g, 'foreignObject x="80" y="260" width="920" height="690"');
+      } else {
+        baseSvg = baseSvg.replace(/foreignObject x="90" y="190" width="900" height="1010"/g, 'foreignObject x="90" y="300" width="900" height="900"');
       }
     }
 
@@ -82,14 +102,31 @@ export const injectContentIntoSvg = (
       }
     `;
 
-    // T1 List Style (Matching Updated Design: Bullet + Bold Key)
-    // Format-specific sizing: Portrait 32px/1.2, Square 28px/1.35
-    const listFontSize = isSquare ? '28px' : '32px';
-    const listLineHeight = isSquare ? '1.35' : '1.2';
+    // T1: Slide number for the kicker counter + ghost numeral
+    const t1IdxMatch = (content.id || '').match(/slide-(\d+)/);
+    const t1SlideNum = String((t1IdxMatch ? parseInt(t1IdxMatch[1], 10) : 0) + 1).padStart(2, '0');
+    baseSvg = baseSvg.replace(/\{\{SLIDE_NUM\}\}/g, t1SlideNum);
+
+    // T1: Headline with the accent phrase set in italic serif + accent color —
+    // the grotesk-x-serif contrast is the template's signature move.
+    const t1Headline = content.headline || '';
+    let t1HeadlineHtml = t1Headline;
+    if (content.accentPhrase && t1Headline.toLowerCase().includes(content.accentPhrase.toLowerCase())) {
+      const start = t1Headline.toLowerCase().indexOf(content.accentPhrase.toLowerCase());
+      const end = start + content.accentPhrase.length;
+      t1HeadlineHtml =
+        t1Headline.slice(0, start) +
+        `<em style="font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; letter-spacing: -0.01em; color: var(--background-2);">${t1Headline.slice(start, end)}</em>` +
+        t1Headline.slice(end);
+    }
+    baseSvg = baseSvg.replace('{{HEADLINE_HTML}}', wrapEditable('headline', t1HeadlineHtml));
+
+    // T1 List Style: mono index + bold key, hairline dividers between rows
+    const listFontSize = isSquare ? '28px' : '31px';
+    const listIdxSize = isSquare ? '24px' : '26px';
 
     listHtml = content.listItems && content.listItems.length > 0
-      ? content.listItems.map((item) => {
-        // Handle both string format and object format
+      ? content.listItems.map((item, itemIndex) => {
         let title = '';
         let desc = '';
 
@@ -98,16 +135,16 @@ export const injectContentIntoSvg = (
           title = parts.length > 1 ? parts[0] + ':' : '';
           desc = parts.length > 1 ? parts.slice(1).join(':') : item;
         } else if (typeof item === 'object' && item !== null) {
-          // Object format: { bullet: 'Key:', description: 'Value' }
           title = item.bullet || '';
           desc = item.description || '';
         }
 
         return `
-          <div style="display: flex; align-items: flex-start; gap: 24px; font-family: 'Lato', sans-serif; font-weight: 500; font-size: ${listFontSize}; color: var(--text-default); line-height: ${listLineHeight};">
-            <div style="min-width: 20px;">•</div>
-            <div>
-              ${title ? `<span style="color: var(--text-highlight); font-weight: 700;">${title}</span>` : ''} 
+          ${itemIndex > 0 ? '<div style="height: 1px; background: var(--text-default); opacity: 0.2;"></div>' : ''}
+          <div style="display: flex; align-items: flex-start; gap: 30px; padding: ${isSquare ? '22px' : '28px'} 0;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: ${listIdxSize}; color: var(--background-2); min-width: 52px; padding-top: 4px;">${String(itemIndex + 1).padStart(2, '0')}</div>
+            <div data-edit-field="listItem" data-edit-index="${itemIndex}" contenteditable="true" spellcheck="false" style="font-family: 'Lato', sans-serif; font-weight: 400; font-size: ${listFontSize}; color: var(--text-default); line-height: 1.45;">
+              ${title ? `<span style="color: var(--text-highlight); font-weight: 700;">${title}</span>` : ''}
               ${desc}
             </div>
           </div>
@@ -116,91 +153,6 @@ export const injectContentIntoSvg = (
       : '';
 
 
-  } else if (templateId === 'template-2') {
-    if (isSquare) {
-      switch (content.variant) {
-        case 'hero': baseSvg = T2_HERO_SVG_SQUARE; break;
-        case 'body': baseSvg = T2_BODY_SVG_SQUARE; break;
-        case 'list': baseSvg = T2_LIST_SVG_SQUARE; break;
-        case 'cta':
-        case 'closing':  // LLM uses 'closing' variant
-          baseSvg = T2_CTA_SVG_SQUARE;
-          break;
-        default: baseSvg = T2_HERO_SVG_SQUARE;
-      }
-    } else {
-      switch (content.variant) {
-        case 'hero': baseSvg = T2_HERO_SVG; break;
-        case 'body': baseSvg = T2_BODY_SVG; break;
-        case 'list': baseSvg = T2_LIST_SVG; break;
-        case 'cta':
-        case 'closing':  // LLM uses 'closing' variant
-          baseSvg = T2_CTA_SVG;
-          break;
-        default: baseSvg = T2_HERO_SVG;
-      }
-    }
-
-    // 2. Conditionally adjust foreignObject position for bottom-left signature
-    // Move content up to create better spacing when bottom signature is visible
-    if (branding && branding.enabled && branding.position === 'bottom-left') {
-      if (isSquare) {
-        // Square: y="220" -> y="160" (move up 60px) for hero
-        baseSvg = baseSvg.replace(/foreignObject x="150" y="220"/g, 'foreignObject x="150" y="160"');
-        // Square: y="200" -> y="140" (move up 60px) for body/list/cta
-        baseSvg = baseSvg.replace(/foreignObject x="150" y="200"/g, 'foreignObject x="150" y="140"');
-      } else {
-        // Portrait: y="240" -> y="180" (move up 60px)
-        baseSvg = baseSvg.replace(/foreignObject x="150" y="240"/g, 'foreignObject x="150" y="180"');
-      }
-    }
-
-    // T2: Inject CSS Variables for Theme (Exact PDF Mapping)
-    themeCss = `
-      :root {
-        --background: ${theme?.background || '#091c33'};
-        --text-highlight: ${theme?.textHighlight || '#f4782d'};
-        --background-2: ${theme?.background2 || '#6d51a2'};
-        --button-color: ${theme?.buttonColor || theme?.textHighlight || '#f4782d'};
-        --text-default: ${theme?.textDefault || '#ffffff'};
-        --pattern-color: ${theme?.patternColor || '#1A3A52'};
-        --pattern-opacity: ${patternOpacity !== undefined ? patternOpacity : (theme?.patternOpacity || '0.2')};
-        
-        /* Gradient Stops */
-        --bg-grad-start: ${theme?.bgGradStart || '#6d51a2'};
-        --bg-grad-end: ${theme?.bgGradEnd || '#091c33'};
-      }
-    `;
-
-    // T2 List Style (Matching PDF Slide 7: Bullet + Bold Key)
-    listHtml = content.listItems && content.listItems.length > 0
-      ? content.listItems.map((item) => {
-        // Handle both string format and object format
-        let title = '';
-        let desc = '';
-
-        if (typeof item === 'string') {
-          // Split "Key: Value" -> ["Key", "Value"]
-          const parts = item.split(':');
-          title = parts.length > 1 ? parts[0] + ':' : '';
-          desc = parts.length > 1 ? parts.slice(1).join(':') : item;
-        } else if (typeof item === 'object' && item !== null) {
-          // Object format: { bullet: 'Key:', description: 'Value' }
-          title = item.bullet || '';
-          desc = item.description || '';
-        }
-
-        return `
-          <div style="display: flex; align-items: flex-start; gap: 20px; font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-default); line-height: 1.4;">
-             <div style="min-width: 15px; color: var(--text-highlight);">•</div>
-             <div>
-               ${title ? `<span style="color: var(--text-highlight); font-weight: 700;">${title}</span>` : ''} 
-               ${desc}
-             </div>
-          </div>
-          `;
-      }).join('')
-      : '';
   } else if (templateId === 'template-3') {
     if (isSquare) {
       switch (content.variant) {
@@ -226,34 +178,45 @@ export const injectContentIntoSvg = (
       }
     }
 
-    // T3: Shift content DOWN for top signatures to avoid overlap
+    // T3: Shift content DOWN for top signatures to avoid overlap. The top
+    // signature card sits at y≈85 (square) / y≈120 (portrait) with a ~90px
+    // avatar, so its bottom edge is ~175 / ~210. Push content well past that
+    // to leave a comfortable gap instead of letting them touch.
     if (branding && branding.enabled && (branding.position === 'top-left' || branding.position === 'top-right')) {
       if (isSquare) {
-        // Square Hero/CTA: y="100" -> y="160"
-        baseSvg = baseSvg.replace(/foreignObject x="80" y="100"/g, 'foreignObject x="80" y="160"');
-        // Square Body/List: y="200" -> y="260"
-        baseSvg = baseSvg.replace(/foreignObject x="80" y="200"/g, 'foreignObject x="80" y="260"');
+        // Square Hero/CTA: y="100" -> y="240"
+        baseSvg = baseSvg.replace(/foreignObject x="80" y="100"/g, 'foreignObject x="80" y="240"');
+        // Square Body/List: y="200" -> y="280"
+        baseSvg = baseSvg.replace(/foreignObject x="80" y="200"/g, 'foreignObject x="80" y="280"');
       } else {
-        // Portrait: y="160" -> y="220"
-        baseSvg = baseSvg.replace(/foreignObject x="80" y="160"/g, 'foreignObject x="80" y="220"');
+        // Portrait: y="160" -> y="290"
+        baseSvg = baseSvg.replace(/foreignObject x="80" y="160"/g, 'foreignObject x="80" y="290"');
       }
     }
 
-    // T3: Inject CSS Variables for Theme (Sketch Style)
+    // T3: Inject CSS Variables for Theme (Editorial Paper Style)
+    // --highlight-soft: the accent at ~28% alpha, used for the marker
+    // highlight behind the headline's accent phrase.
+    const t3Accent = theme?.textHighlight || '#0E8A5F';
     themeCss = `
       :root {
-        --text-default: ${theme?.textDefault || '#1E1B4B'};
-        --text-highlight: ${theme?.textHighlight || '#9333EA'};
-        --background: ${theme?.background || '#FFFFFF'};
-        --background-2: ${theme?.background2 || '#055569'};
+        --text-default: ${theme?.textDefault || '#1A1A18'};
+        --text-highlight: ${t3Accent};
+        --highlight-soft: ${t3Accent}48;
+        --background: ${theme?.background || '#F5F1E8'};
+        --background-2: ${theme?.background2 || '#DCEFE6'};
         --pattern-color: ${theme?.patternColor || '#E0E7FF'};
         --pattern-opacity: ${patternOpacity !== undefined ? patternOpacity : (theme?.patternOpacity || '0.1')};
       }
     `;
 
-    // T3 List Style (Sketchy Bullet)
+    // T3: Headline without decorative highlight
+    const t3Headline = content.headline || '';
+    baseSvg = baseSvg.replace('{{HEADLINE_HTML}}', wrapEditable('headline', t3Headline));
+
+    // T3 List Style (accent checkmarks, editorial checklist)
     listHtml = content.listItems && content.listItems.length > 0
-      ? content.listItems.map((item) => {
+      ? content.listItems.map((item, itemIndex) => {
         let title = '';
         let desc = '';
 
@@ -266,13 +229,14 @@ export const injectContentIntoSvg = (
           desc = item.description || '';
         }
 
-        const listFontSize = isSquare ? '26px' : '32px';
+        const listFontSize = isSquare ? '26px' : '30px';
+        const checkSize = isSquare ? '30px' : '34px';
 
         return `
-          <div style="display: flex; align-items: flex-start; gap: 20px; font-family: 'Lato', sans-serif; font-weight: 500; font-size: ${listFontSize}; color: var(--text-default); line-height: 1.4;">
-            <div style="min-width: 15px; color: var(--text-highlight);">•</div>
-            <div>
-              ${title ? `<span style="color: var(--text-highlight); font-weight: 700;">${title}</span>` : ''} 
+          <div style="display: flex; align-items: flex-start; gap: 22px; font-family: 'Lato', sans-serif; font-weight: 400; font-size: ${listFontSize}; color: var(--text-default); line-height: 1.45;">
+            <div style="min-width: ${checkSize}; font-size: ${checkSize}; line-height: 1.1; color: var(--text-highlight); font-weight: 700;">&#10003;</div>
+            <div data-edit-field="listItem" data-edit-index="${itemIndex}" contenteditable="true" spellcheck="false">
+              ${title ? `<span style="font-weight: 700;">${title}</span>` : ''}
               ${desc}
             </div>
           </div>
@@ -281,7 +245,7 @@ export const injectContentIntoSvg = (
       : '';
 
     // T3: Dynamic Doodle Image URL
-    const fallbackDoodle = `https://image.pollinations.ai/prompt/A%20simple%20blackpencil%20doodle%20sketch%20of%20a%20rocket%20ship%20launching%20upwards%20representing%20startup%20growth%20isolated%20on%20strict%20pure%20white%20background%20%23FFFFFF?width=600&height=1000&nologo=true`;
+    const fallbackDoodle = `https://image.pollinations.ai/prompt/${encodeURIComponent('minimal editorial spot illustration of a person sprinting up a huge rising arrow like a ramp, loose confident black ink line art, monochrome black ink only, elegant magazine spot illustration style, isolated on a plain white background, no text')}?width=600&height=1000&nologo=true`;
     const doodleUrl = content.doodleUrl || fallbackDoodle;
     baseSvg = baseSvg.replace('{{DOODLE_IMAGE_URL}}', doodleUrl);
   } else if (templateId === 'template-4') {
@@ -335,10 +299,10 @@ export const injectContentIntoSvg = (
         `<span style="color: var(--background-2);">${headline.slice(start, end)}</span>` +
         headline.slice(end);
     }
-    baseSvg = baseSvg.replace('{{HEADLINE_HTML}}', headlineHtml);
+    baseSvg = baseSvg.replace('{{HEADLINE_HTML}}', wrapEditable('headline', headlineHtml));
 
     // T4: Default pill text on the closing slide
-    baseSvg = baseSvg.replace('{{FOOTER}}', content.footer || 'Follow for more →');
+    baseSvg = baseSvg.replace('{{FOOTER}}', wrapEditable('footer', content.footer || 'Follow for more →'));
 
     // T4 List Style (numbered rows with hairline dividers)
     const listFontSize = isSquare ? '28px' : '32px';
@@ -361,7 +325,7 @@ export const injectContentIntoSvg = (
           <div style="height: 1px; background: var(--text-default); opacity: 0.3;"></div>
           <div style="display: flex; align-items: flex-start; gap: 32px; padding: ${isSquare ? '24px' : '30px'} 0;">
             <div style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: ${listNumSize}; color: var(--background-2); min-width: 56px;">${String(itemIndex + 1).padStart(2, '0')}</div>
-            <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: ${listFontSize}; color: var(--text-default); line-height: 1.45;">
+            <div data-edit-field="listItem" data-edit-index="${itemIndex}" contenteditable="true" spellcheck="false" style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: ${listFontSize}; color: var(--text-default); line-height: 1.45;">
               ${title ? `<span style="color: var(--text-highlight); font-weight: 500;">${title}.</span> ` : ''}${desc}
             </div>
           </div>
@@ -392,9 +356,11 @@ export const injectContentIntoSvg = (
   };
 
   // 4. Injection Execution
-  baseSvg = replaceSafe('{{PREHEADER}}', content.preHeader);
+  // T3/T4 wrap preheader/body in click-to-edit spans; {{HEADLINE_HTML}} and the
+  // list rows were already wrapped in their template branches above.
+  baseSvg = replaceSafe('{{PREHEADER}}', content.preHeader ? wrapEditable('preHeader', content.preHeader) : '');
   baseSvg = replaceSafe('{{HEADLINE}}', content.headline);
-  baseSvg = replaceSafe('{{BODY}}', content.body);
+  baseSvg = replaceSafe('{{BODY}}', content.body ? wrapEditable('body', content.body) : '');
   baseSvg = replaceSafe('{{FOOTER}}', content.footer);
 
   // Inject List HTML

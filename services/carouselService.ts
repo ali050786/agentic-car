@@ -27,7 +27,7 @@ export interface BrandingConfig {
 export interface CarouselData {
   userId: string;
   title: string;
-  templateType: 'template1' | 'template2' | 'template3' | 'template4';
+  templateType: 'template1' | 'template3' | 'template4';
   theme: any;
   slides: any[];
   isPublic: boolean;
@@ -96,7 +96,7 @@ export const checkCarouselLimit = async (userId: string): Promise<boolean> => {
 export const createCarousel = async (
   userId: string,
   title: string,
-  templateType: 'template1' | 'template2' | 'template3' | 'template4',
+  templateType: 'template1' | 'template3' | 'template4',
   theme: any,
   slides: any[],
   isPublic: boolean = false,
@@ -185,7 +185,7 @@ export const createCarousel = async (
       signaturePosition: (parsedBranding.position as SignaturePosition) || 'bottom-left',
       userId: document.userId,
       title: document.title,
-      templateType: document.templateType as 'template1' | 'template2',
+      templateType: document.templateType as 'template1' | 'template3' | 'template4',
       isPublic: document.isPublic,
       format: (document.format as 'portrait' | 'square') || 'portrait',
       selectedPattern: document.selectedPattern || 1,
@@ -325,7 +325,7 @@ export const getUserCarousels = async (
         signaturePosition,
         userId: doc.userId,
         title: doc.title,
-        templateType: doc.templateType as 'template1' | 'template2',
+        templateType: doc.templateType as 'template1' | 'template3' | 'template4',
         isPublic: doc.isPublic,
         format: (doc.format as 'portrait' | 'square') || 'portrait',
         selectedPattern: doc.selectedPattern || 1,
@@ -379,7 +379,7 @@ export const getCarouselById = async (
       signaturePosition: (parsedBranding.position as SignaturePosition) || 'bottom-left',
       userId: document.userId,
       title: document.title,
-      templateType: document.templateType as 'template1' | 'template2',
+      templateType: document.templateType as 'template1' | 'template3' | 'template4',
       isPublic: document.isPublic,
       format: (document.format as 'portrait' | 'square') || 'portrait',
       selectedPattern: document.selectedPattern || 1,
@@ -438,7 +438,7 @@ export const searchUserCarousels = async (
         signaturePosition: (parsedBranding.position as SignaturePosition) || 'bottom-left',
         userId: doc.userId,
         title: doc.title,
-        templateType: doc.templateType as 'template1' | 'template2',
+        templateType: doc.templateType as 'template1' | 'template3' | 'template4',
         isPublic: doc.isPublic,
         format: (doc.format as 'portrait' | 'square') || 'portrait',
         selectedPattern: doc.selectedPattern || 1,
@@ -540,7 +540,7 @@ export const updateCarousel = async (
       signaturePosition,
       userId: document.userId,
       title: document.title,
-      templateType: document.templateType as 'template1' | 'template2',
+      templateType: document.templateType as 'template1' | 'template3' | 'template4',
       isPublic: document.isPublic,
       format: (document.format as 'portrait' | 'square') || 'portrait',
       selectedPattern: document.selectedPattern || 1,
@@ -577,7 +577,7 @@ export const updateCarouselContent = async (
   signaturePosition: SignaturePosition,
   selectedPattern?: number,
   patternOpacity?: number,
-  templateType?: 'template1' | 'template2' | 'template3' | 'template4',
+  templateType?: 'template1' | 'template3' | 'template4',
   format?: 'portrait' | 'square'
 ): Promise<{ data: Carousel | null; error: any }> => {
   const updates: Partial<CarouselData> = {

@@ -89,8 +89,7 @@ export const parseDesignActionsFallback = (message: string): DesignAction[] => {
     const templateMap: [RegExp, string][] = [
         [/sketch|hand.?drawn|doodle/, 'template-3'],
         [/statement|typographic/, 'template-4'],
-        [/clarity|clean|modern/, 'template-2'],
-        [/truth|industrial|bold template/, 'template-1'],
+        [/truth|industrial|bold template|clean|modern/, 'template-1'],
     ];
     if (/template|style|look/.test(m) || templateMap.some(([re]) => re.test(m))) {
         for (const [re, id] of templateMap) {
@@ -297,7 +296,7 @@ export const OrchestratorAgent = {
          ${templateId === 'template-4' ? 'Headlines are sentence case. Always include an accentPhrase that is an exact substring of the new headline.' : ''}
 
       2. intent "design" — the user wants a visual/setting change, not text. Return "designActions":
-         - set_template: ${Object.keys(TEMPLATE_CONFIGS).join(', ')} (The Truth=template-1, The Clarity=template-2, The Sketch=template-3, The Statement=template-4)
+         - set_template: ${Object.keys(TEMPLATE_CONFIGS).join(', ')} (The Truth=template-1, The Sketch=template-3, The Statement=template-4)
          - set_format: portrait, square
          - set_preset (color palette): ${getPresetIds().join(', ')}
          - set_pattern: 1-12

@@ -49,15 +49,34 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
     const payload: CreateJobPayload = JSON.parse(job.payload);
     const { userId } = job;
 
+    const events: { label: string; done: boolean }[] = [];
+    
+    // Prepopulate based on client input mode activity
+    if (payload.inputMode === 'url') {
+        events.push({ label: 'Article fetched', done: true });
+    } else if (payload.inputMode === 'video') {
+        events.push({ label: 'Transcript fetched', done: true });
+    } else if (payload.inputMode === 'pdf') {
+        events.push({ label: 'Document content parsed', done: true });
+    }
+
+    const progress = async (statusMessage: string, progressPct: number) => {
+        for (const ev of events) {
+            ev.done = true;
+        }
+        events.push({ label: statusMessage, done: false });
+        await updateJob(job.$id, { status: 'running', statusMessage, progress: progressPct });
+    };
+
     await runWithAgentContext(
         { userId, selectedModel: payload.selectedModel },
         async () => {
-            await progress(job.$id, 'Initializing AI agents...', 10);
+            await progress('Initializing AI agents...', 10);
 
             const effectiveInput = payload.sourceContent || payload.topic;
             const inputType = effectiveInput.length > 500 ? 'CONTEXT' : 'TOPIC';
 
-            await progress(job.$id, 'Analyzing content density & needs...', 20);
+            await progress('Analyzing content density & needs...', 20);
             let researchAnalysis;
             try {
                 researchAnalysis = await ResearchAgent.analyzeInputNeeds(effectiveInput);
@@ -68,12 +87,12 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
 
             let finalContent = effectiveInput;
             if (researchAnalysis.strategy !== 'NONE') {
-                await progress(job.$id, 'Researching for trends & data...', 30);
+                await progress('Researching for trends & data...', 30);
                 const researchData = await ResearchAgent.performResearch(researchAnalysis.searchQueries);
                 finalContent += researchData;
             }
 
-            await progress(job.$id, 'Strategist Agent: identifying viral angles...', 40);
+            await progress('Strategist Agent: identifying viral angles...', 40);
             let viralAngle = '';
             try {
                 viralAngle = await StrategistAgent.generateViralAngle(finalContent, inputType, payload.customInstructions || '');
@@ -93,11 +112,11 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
                 userMemory,
             };
 
-            await progress(job.$id, 'Designing slides & writing copy...', 60);
+            await progress('Designing slides & writing copy...', 60);
             const result = await TemplateAgent.generate(context, payload.selectedTemplate || 'template-1');
 
             result.slides = polishSlides(result.slides);
-            await progress(job.$id, 'Proofreading copy...', 75);
+            await progress('Proofreading copy...', 75);
             result.slides = await ProofreaderAgent.proofread(result.slides);
             result.slides = polishSlides(result.slides);
 
@@ -107,7 +126,7 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
             }
 
             if (result.slides.length > 0 && payload.selectedTemplate === 'template-3') {
-                await progress(job.$id, 'Art Director: designing sketches...', 82);
+                await progress('Art Director: designing sketches...', 82);
                 let fluxPrompts: string[];
                 try {
                     fluxPrompts = await ArtDirectorAgent.generatePrompts(result.slides, viralAngle || context.sourceContent);
@@ -119,7 +138,7 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
                 for (let i = 0; i < result.slides.length; i++) {
                     const fluxPrompt = fluxPrompts[i];
                     if (!fluxPrompt) continue;
-                    await progress(job.$id, `Sketching doodle ${i + 1}/${result.slides.length}...`, 82 + Math.round((i / result.slides.length) * 10));
+                    await progress(`Sketching doodle ${i + 1}/${result.slides.length}...`, 82 + Math.round((i / result.slides.length) * 10));
                     try {
                         const doodleUrl = await generateAndPersistDoodle(fluxPrompt, '2:3');
                         result.slides[i] = { ...result.slides[i], doodleUrl, doodlePrompt: fluxPrompt };
@@ -129,7 +148,7 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
                 }
             }
 
-            await progress(job.$id, 'Saving carousel...', 95);
+            await progress('Saving carousel...', 95);
             const carouselId = await createCarouselServer({
                 userId,
                 title: payload.topic.length > 80 ? payload.topic.slice(0, 77) + '…' : payload.topic,
@@ -146,13 +165,14 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
             });
 
             const reply = `Done — ${result.slides.length} slides. Tell me what to refine: a slide, the tone, or the whole angle.`;
-            // Best-effort — the carousel itself is already saved above; losing
-            // the chat log (e.g. chat_history collection missing) shouldn't
-            // fail a job that otherwise succeeded.
+            
+            // Mark all events as complete
+            const cleanEvents = events.map(e => ({ ...e, done: true }));
+
             try {
                 await saveChatServer(carouselId, userId, [
                     { id: `msg-${Date.now()}-u`, role: 'user', text: payload.topic },
-                    { id: `msg-${Date.now()}-a`, role: 'assistant', text: reply },
+                    { id: `msg-${Date.now()}-a`, role: 'assistant', text: reply, events: cleanEvents },
                 ], '', 0);
             } catch (err) {
                 console.warn('[createCarouselJob] Failed to persist chat history (non-fatal):', err);

@@ -93,14 +93,16 @@ export const TemplateAgent = {
             data = result.data;
         }
 
-        if (!data.slides || !Array.isArray(data.slides)) {
-            console.error(`[TemplateAgent] Missing or invalid slides array for ${templateId}:`, result);
-            throw new Error('API response missing slides array.');
+        if (!data.slides || !Array.isArray(data.slides) || data.slides.length === 0) {
+            console.error(`[TemplateAgent] Missing or empty slides array for ${templateId}:`, result);
+            throw new Error('API response returned 0 slides.');
         }
 
         // Post-processing
-        // Template-4 uses sentence-case headlines (statement style); others are uppercased
-        const keepCase = templateId === 'template-4';
+        // Template-1 (cinematic statement), Template-3 (editorial serif) and
+        // Template-4 (statement style) use sentence-case headlines; others are
+        // uppercased
+        const keepCase = templateId === 'template-1' || templateId === 'template-3' || templateId === 'template-4';
         const slides = data.slides.map((s: any, i: number) => {
             const slideVariant = s.variant || s.type;
 
@@ -114,7 +116,7 @@ export const TemplateAgent = {
                 footer: s.footer || '',
                 icon: s.icon || config.defaultIcon,
                 accentPhrase: s.accentPhrase || undefined,
-                doodlePrompt: s.doodleTopic ? `A black pencil sketch doodle of a ${s.doodleTopic.replace(/_/g, ' ')} isolated on a pure white background (#ffffff) with cross-hatch texture.` : undefined
+                doodlePrompt: s.doodleTopic ? `minimal editorial spot illustration of a ${s.doodleTopic.replace(/_/g, ' ')}, loose confident black ink line art, monochrome black ink only, elegant magazine spot illustration style, isolated on a plain white background, no text` : undefined
             };
         });
 

@@ -31,10 +31,13 @@ const PROMPT_SCHEMA = {
 };
 
 /**
- * Wraps a scene in the fixed Template-3 sketch style so all doodles match.
+ * Wraps a scene in the fixed Template-3 editorial style so all illustrations
+ * match. Mono black ink only: the slide templates knock out the white
+ * background with multiply blending and supply all color via themed SVG
+ * accents, so one cached image works with every theme.
  */
 export const buildFluxPrompt = (scene: string): string =>
-    `A simple hand-drawn doodle sketch of ${scene}, thick black marker lines, rough outlines, grey scribble shading and hatching, minimalist whiteboard animation style, line art, isolated on a plain white background`;
+    `minimal editorial spot illustration of ${scene}, loose confident black ink line art, hand-drawn imperfect strokes, monochrome black ink only, elegant magazine spot illustration style, lots of white space, isolated on a plain white background, no text`;
 
 export const ArtDirectorAgent = {
     /**
@@ -51,7 +54,9 @@ export const ArtDirectorAgent = {
             .join('\n');
 
         const prompt = `
-      You are an Art Director for a hand-drawn "whiteboard sketch" style LinkedIn carousel.
+      You are an Art Director for an editorial ink-illustration LinkedIn carousel — the style
+      of premium fintech branding: loose, confident black ink line art, like a magazine spot
+      illustration.
 
       Carousel angle:
       """
@@ -61,25 +66,30 @@ export const ArtDirectorAgent = {
       Slides:
       ${slideSummaries}
 
-      Task: For EACH slide, invent ONE witty visual metaphor scene that dramatizes that slide's
-      core message, described so it can be drawn as a single marker doodle.
+      Task: For EACH slide, invent ONE storytelling scene that dramatizes that slide's core
+      message, described so it can be drawn as a single ink spot illustration.
+
+      The storytelling formula — every scene follows it:
+      ONE person + ONE oversized symbolic object + a physical action that carries the emotion.
+      The person physically INTERACTS with the metaphor. Examples of the grammar:
+      - a person in a suit sprinting up a huge rising arrow like a ramp, papers flying behind
+      - a person watering a small plant that grows coins as leaves
+      - a person balancing on a seesaw against a towering stack of oversized coins
+      - a person relaxing on a cloud with a laptop while small arrows float upward around them
+      The interaction is what makes it a story instead of an icon — the object must be
+      exaggerated in scale, and the pose must show the feeling (strain, ease, triumph, doubt).
 
       Rules for each scene:
-      - ONE dominant subject performing ONE clear action — not a multi-part composition. The
-        image model renders a single focal idea reliably; splitting the frame into two staged
-        halves or stacking several props together muddles the composition.
-      - Convey the idea through the choice of subject, pose, and props alone — a robot with a
-        jetpack soaring over a tangled pile of wires while a stick figure looks up bewildered,
-        or an oversized key effortlessly opening a padlock the size of a house.
-      - Do NOT ask for any text, words, letters, or labels inside the image. Diffusion models
-        render in-image text as garbled scribbles, which wrecks the drawing — the metaphor must
-        read entirely from imagery, no captions or signage of any kind.
-      - Show CONTRAST through the objects and actions themselves when relevant (old/painful vs
-        new/easy, effort vs shortcut) — e.g. one figure straining to push a boulder up a hill
-        while another rides past on a rocket, not a split-screen or labeled comparison.
-      - 15 to 35 words. Concrete and spatial — say what the subject is, what it's doing, and
-        at most one supporting prop.
-      - Vary the metaphors across slides; never repeat the same scene or main prop twice.
+      - ONE person, ONE dominant object, ONE action — never a multi-part composition or
+        split-screen. The image model renders a single focal idea reliably.
+      - Do NOT ask for any text, words, letters, numbers, or labels inside the image. Diffusion
+        models render in-image text as garbled scribbles — the metaphor must read entirely from
+        imagery.
+      - Show CONTRAST through pose and scale when relevant (effort vs ease, big vs small),
+        never through labels or side-by-side panels.
+      - 15 to 35 words. Concrete and spatial — who, doing what, with what oversized object,
+        plus at most one small supporting detail (flying papers, droplets, motion lines).
+      - Vary the metaphors across slides; never repeat the same main object twice.
 
       Return JSON: { "prompts": [ { "slideIndex": 0, "subject": "..." }, ... ] } with exactly one entry per slide, where "subject" is the scene description.
     `;

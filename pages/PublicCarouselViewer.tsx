@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getCarouselById } from '../services/carouselService';
 import { Carousel } from '../services/carouselService';
+import { getTemplateDisplayName } from '../utils/templateConverter';
 import {
   Layout,
   AlertCircle,
@@ -69,7 +70,7 @@ export const PublicCarouselViewer: React.FC = () => {
   };
 
   const getTemplateLabel = (template: string) => {
-    return template === 'template-1' ? 'The Truth' : 'The Clarity';
+    return getTemplateDisplayName(template as any);
   };
 
   const handlePrevSlide = () => {

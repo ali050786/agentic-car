@@ -31,7 +31,7 @@ const cleanJsonResponse = (text: string): string => {
 const cleanAndDiagnose = (choice: any, model: string, label: string): string => {
     const content = choice?.message?.content ?? choice?.content ?? '';
     const finishReason = choice?.finish_reason ?? choice?.native_finish_reason ?? 'unknown';
-    const cleaned = cleanJsonResponse(content || '{"slides":[]}');
+    const cleaned = cleanJsonResponse(content);
 
     let parseError = '';
     try { JSON.parse(cleaned); } catch (e: any) { parseError = e?.message || 'parse failed'; }
@@ -130,8 +130,7 @@ export const generateContent = async ({
                             { role: 'user', content: prompt }
                         ],
                         temperature: 0.2,
-                        max_tokens: 4000,
-                        response_format: { type: 'json_object' }
+                        max_tokens: 4000
                     })
                 });
 
@@ -169,8 +168,7 @@ export const generateContent = async ({
                                 { role: 'user', content: prompt }
                             ],
                             temperature: 0.2,
-                            max_tokens: 4000,
-                            response_format: { type: 'json_object' }
+                            max_tokens: 4000
                         })
                     });
 

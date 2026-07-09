@@ -62,23 +62,14 @@ if (midnightPreset) {
 }
 
 // ============================================================================
-// Example 4: Generate Template 2 theme from a preset
+// Example 4: Generate Template 3 theme from a preset
 // ============================================================================
 
 const sunsetPreset = getPresetById('sunset');
 if (sunsetPreset) {
-    const template2Theme = resolveTheme(sunsetPreset.seeds, 'template-2');
+    const template3Theme = resolveTheme(sunsetPreset.seeds, 'template-3');
 
-    console.log('Template 2 (The Clarity) Theme:', template2Theme);
-    // Output:
-    // {
-    //   background: '#...',      // surface[950] - Almost black
-    //   textDefault: '#...',     // text[50] - Very light
-    //   textHighlight: '#...',   // secondary[400] - Lighter red
-    //   background2: '#...',     // primary[800] - Dark orange
-    //   bgGradStart: '#...',     // primary[900] - Very dark orange
-    //   bgGradEnd: '#...'        // surface[950] - Match background
-    // }
+    console.log('Template 3 (The Sketch) Theme:', template3Theme);
 }
 
 // ============================================================================
