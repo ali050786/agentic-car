@@ -54,7 +54,7 @@ export const ArtDirectorAgent = {
             .join('\n');
 
         const prompt = `
-      You are an Art Director for an editorial ink-illustration LinkedIn carousel — the style
+      You are an Art Director for an editorial ink-illustration carousel — the style
       of premium fintech branding: loose, confident black ink line art, like a magazine spot
       illustration.
 

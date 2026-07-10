@@ -49,11 +49,14 @@ export const StrategistAgent = {
             processedInput = input.substring(0, 24000) + "... [TRUNCATED]";
         }
 
-        const approachMode = brief?.contentStrategy?.approachMode ?? 'VIRAL_ANGLE';
+        // Defaults are deliberately NEUTRAL, not LinkedIn/viral: when a brief is
+        // missing we fall back to a factual spine on a general audience, so the
+        // absence of a strong signal never means "make it a LinkedIn post".
+        const approachMode = brief?.contentStrategy?.approachMode ?? 'FACTUAL_SPINE';
         const toneDesc = brief?.creativeStyle?.toneDescription ?? '';
-        const mustStayOnTopic = brief?.contentStrategy?.mustStayOnTopic ?? false;
-        const noBusinessMetaphors = brief === undefined ? false : !brief.contentStrategy.businessMetaphorsAllowed;
-        const audienceDesc = brief?.audience?.description ?? 'LinkedIn professionals';
+        const mustStayOnTopic = brief?.contentStrategy?.mustStayOnTopic ?? true;
+        const noBusinessMetaphors = brief === undefined ? true : !brief.contentStrategy.businessMetaphorsAllowed;
+        const audienceDesc = brief?.audience?.description ?? 'a general audience';
 
         // Build the mode-specific instruction block
         const modeBlock = buildModeBlock(approachMode);

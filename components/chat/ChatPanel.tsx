@@ -11,7 +11,7 @@ import { useCarouselStore } from '../../store/useCarouselStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { MemoryAgent } from '../../core/agents/MemoryAgent';
 import { CreativeDirectorAgent } from '../../core/agents/CreativeDirectorAgent';
-import { createJob } from '../../services/jobService';
+import { createJob, cancelJob } from '../../services/jobService';
 import { FreeLimitError } from '../../services/aiService';
 import { detectInputMode } from '../../utils/inputDetector';
 import { fetchYouTubeContent, fetchUrlContent, extractDomain } from '../../utils/contentProcessor';
@@ -57,7 +57,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         outputLanguage, setOutputLanguage,
         selectedModel, setModel,
         topic, activeCarouselId, activeJobId,
-        setActiveJobId, setGenerating,
+        setActiveJobId, setGenerating, generationProgress,
     } = useCarouselStore();
 
     const [draft, setDraft] = useState('');
@@ -71,6 +71,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
 
     const hasSlides = slides.length > 0;
     const busy = isGenerating;
+
+    const handleCancelJob = async () => {
+        if (!activeJobId) return;
+        try {
+            await cancelJob(activeJobId);
+            setGenerating(false);
+            setActiveJobId(null);
+            
+            const runningMsg = chatMessages.find(m => m.running);
+            if (runningMsg) {
+                updateChatMessage(runningMsg.id, {
+                    running: false,
+                    error: true,
+                    text: 'Generation stopped.',
+                });
+            }
+        } catch (err) {
+            console.error('[ChatPanel] Failed to cancel generation job:', err);
+        }
+    };
 
     // Creative Director state — tracks a pending brief and any quick-reply
     // questions waiting for the user to answer before generation starts.
@@ -451,6 +471,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                                                 <span className={ev.done ? '' : 'text-blue-300'}>{ev.label}</span>
                                             </div>
                                         ))}
+                                        {/* Stop button */}
+                                        <div className="mt-2 pt-1.5 border-t border-white/5 flex justify-end">
+                                            <button
+                                                onClick={handleCancelJob}
+                                                className="px-2 py-0.5 rounded border border-red-500/30 hover:border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-medium transition-all flex items-center gap-1"
+                                                title="Stop Generation"
+                                            >
+                                                <X size={10} />
+                                                Stop
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <details className="mb-1.5">
@@ -637,7 +668,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                         onChange={e => setDraft(e.target.value)}
                         onKeyDown={onKeyDown}
                         rows={draft.includes('\n') || draft.length > 80 ? 3 : 1}
-                        placeholder={hasSlides ? 'Refine anything...' : attachedFile ? 'Optional: add instructions (e.g. "keep it funny")...' : 'What should this carousel be about? (e.g. "dinosaurs for kids" or "burnout in Tanmay Bhat style")'}
+                        placeholder={hasSlides ? 'Refine anything...' : attachedFile ? 'Optional: add instructions (e.g. "keep it funny")...' : 'What should this carousel be about? (e.g. "dinosaurs for kids" or "burnout in startup culture")'}
 
                         className="flex-1 bg-transparent text-[13px] text-white placeholder-neutral-500 resize-none focus:outline-none leading-relaxed"
                         disabled={busy}

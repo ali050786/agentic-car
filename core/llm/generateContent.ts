@@ -9,7 +9,7 @@
  * runtime.
  */
 
-const SYSTEM_PROMPT = 'You are a specialized content agent for LinkedIn carousels. ERROR HANDLING: You MUST respond with ONLY valid JSON. Do NOT include any conversational filler like "Alright" or "Here is the JSON". Do NOT wrap the output in markdown code blocks if possible, but pure JSON string is best. START YOUR RESPONSE WITH { AND END WITH }.';
+const SYSTEM_PROMPT = 'You are a specialized content agent that writes social media carousels on any topic, for any audience. ERROR HANDLING: You MUST respond with ONLY valid JSON. Do NOT think out loud, show your reasoning or plan, count characters, or write ANY prose before or after the JSON — no "We need to...", no "Let\'s...", no step-by-step. Do NOT include conversational filler like "Alright" or "Here is the JSON". Do NOT wrap the output in markdown code blocks. Your ENTIRE response must be a single JSON object: START YOUR RESPONSE WITH { AND END WITH }.';
 
 const cleanJsonResponse = (text: string): string => {
     const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
@@ -22,6 +22,14 @@ const cleanJsonResponse = (text: string): string => {
     }
 
     return text.trim();
+};
+
+/** True if `str` parses as JSON. Used to detect models that emit reasoning/prose
+ *  instead of JSON (common on free reasoning models), so we can fall back to a
+ *  more instruction-following model instead of hard-crashing the job. */
+const isValidJson = (str: string): boolean => {
+    if (!str) return false;
+    try { JSON.parse(str); return true; } catch { return false; }
 };
 
 /**
@@ -130,13 +138,23 @@ export const generateContent = async ({
                             { role: 'user', content: prompt }
                         ],
                         temperature: 0.2,
-                        max_tokens: 4000
+                        max_tokens: 8000
                     })
                 });
 
                 if (openrouterResponse.ok) {
                     const openrouterData = await openrouterResponse.json();
-                    result = cleanAndDiagnose(openrouterData.choices?.[0], 'openrouter/free', 'free-tier router');
+                    const candidate = cleanAndDiagnose(openrouterData.choices?.[0], 'openrouter/free', 'free-tier router');
+                    // A 200 does NOT mean usable output: free reasoning models
+                    // (e.g. gpt-oss-120b) often emit chain-of-thought prose and
+                    // truncate before any JSON. Only accept parseable JSON —
+                    // otherwise leave result null so the Groq fallback fires.
+                    if (isValidJson(candidate)) {
+                        result = candidate;
+                    } else {
+                        openrouterError = 'OpenRouter returned 200 but the content was not valid JSON (model emitted reasoning/prose instead of JSON).';
+                        console.error('[LLM] ⚠️ OpenRouter output was not valid JSON — falling back to Groq. First 200 chars:', candidate.slice(0, 200));
+                    }
                 } else {
                     openrouterError = await openrouterResponse.text();
                     console.error('[LLM] OpenRouter API returned error status:', openrouterResponse.status, openrouterError);
@@ -168,13 +186,18 @@ export const generateContent = async ({
                                 { role: 'user', content: prompt }
                             ],
                             temperature: 0.2,
-                            max_tokens: 4000
+                            max_tokens: 8000
                         })
                     });
 
                     if (groqResponse.ok) {
                         const groqData = await groqResponse.json();
-                        result = cleanAndDiagnose(groqData.choices?.[0], 'llama-3.3-70b-versatile', 'groq-fallback');
+                        const candidate = cleanAndDiagnose(groqData.choices?.[0], 'llama-3.3-70b-versatile', 'groq-fallback');
+                        if (isValidJson(candidate)) {
+                            result = candidate;
+                        } else {
+                            console.error('[LLM] ⚠️ Groq output was not valid JSON either. First 200 chars:', candidate.slice(0, 200));
+                        }
                     } else {
                         const groqError = await groqResponse.text();
                         console.error('[LLM] Groq API returned error status:', groqResponse.status, groqError);

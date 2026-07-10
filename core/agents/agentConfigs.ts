@@ -84,7 +84,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     'template-1': {
         id: 'template-1',
         name: 'The Truth',
-        persona: 'LinkedIn Ghostwriter',
+        persona: 'a bold, contrarian editorial writer',
         styleName: 'The Truth',
 
         designConstraints: `
@@ -144,7 +144,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     'template-3': {
         id: 'template-3',
         name: 'The Sketch',
-        persona: 'LinkedIn Ghostwriter specializing in high-growth startup aesthetics',
+        persona: 'an editorial writer with a warm, premium magazine voice',
         styleName: 'The Sketch',
 
         designConstraints: `

@@ -40,12 +40,34 @@ export const ALLOWED_DOODLE_TOPICS = [
     "tech_stack", "terminal_window", "toggle_switch", "tooltip_info", "touch_gesture",
     "typography_specimen", "usb_drive", "user_avatar", "user_persona_card", "user_profile",
     "vector_pen_tool", "virtual_reality", "vr_headset", "web_globe", "wifi_signal",
-    "wireframe_layout", "wireless_signal"
+    "wireframe_layout", "wireless_signal",
+    // Nature / weather / science / education / everyday — so EDUCATIONAL, kids,
+    // and how-to carousels (illustrationMode LITERAL) can pick a doodle of the
+    // ACTUAL subject instead of being forced into a tech/B2B metaphor. These feed
+    // buildDoodlePrompt(), which draws the subject literally.
+    "rain_cloud", "storm_cloud", "sun_shining", "moon_crescent", "water_drop",
+    "water_cycle", "puddle_splash", "river_stream", "ocean_wave", "mountain_peak",
+    "tree_oak", "green_leaf", "flower_bloom", "seed_sprout", "snowflake_crystal",
+    "wind_gust", "rainbow_arc", "lightning_bolt", "thermometer_temperature",
+    "planet_earth", "solar_system", "volcano_erupting", "microscope_lab",
+    "test_tube", "atom_model", "dna_helix", "magnet_horseshoe", "telescope_stars",
+    "human_body", "beating_heart", "food_apple", "open_book", "pencil_writing",
+    "chalkboard", "school_bag", "globe_world", "compass_rose", "cozy_house",
+    "butterfly", "songbird", "swimming_fish", "dinosaur", "paw_print"
 ];
 
 export const SHARED_ICONS = [
     "Lightbulb", "Target", "TrendingUp", "TrendingDown", "Zap", "Award", "CheckCircle",
     "Star", "Rocket", "Brain", "Users", "MessageSquare", "Shield", "Globe", "Compass",
     "Heart", "Clock", "Calendar", "Book", "Briefcase", "DollarSign", "BarChart",
-    "Layers", "Package", "Settings", "AlertCircle", "Info", "Sparkles"
+    "Layers", "Package", "Settings", "AlertCircle", "Info", "Sparkles",
+    // Nature / weather / science / education / everyday. All are valid Lucide
+    // names, resolved dynamically by utils/iconGenerator.ts (unknown names fall
+    // back to empty, so these are safe to offer to the model).
+    "Cloud", "CloudRain", "CloudSun", "Sun", "Moon", "Droplet", "Droplets",
+    "Snowflake", "Wind", "Rainbow", "Thermometer", "Leaf", "TreeDeciduous",
+    "Sprout", "Flower", "Mountain", "Waves", "Flame", "Fish", "Bird", "Bug",
+    "PawPrint", "FlaskConical", "TestTube", "Microscope", "Atom", "Telescope",
+    "Magnet", "Dna", "GraduationCap", "Baby", "Pencil", "Ruler", "Palette",
+    "Music", "MapPin", "Home", "Apple", "Bike"
 ];

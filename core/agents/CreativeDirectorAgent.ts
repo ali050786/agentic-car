@@ -165,8 +165,12 @@ Set intentClear: false. Write a short friendly "clarifyingMessage" and produce
 1. Lean towards OUTCOME A — only ask when genuinely ambiguous.
 2. NEVER default to LinkedIn/professional framing. Factual topics like science,
    history, and nature default to EDUCATIONAL unless the user signals otherwise.
-3. "Style references" like "Tanmay Bhat", "Ali Abdaal", "Paul Graham" are
-   strong signals — use them to populate toneDescription precisely.
+3. STYLE REFERENCES — set "styleReference" ONLY when the user EXPLICITLY names a
+   person, creator, or brand to emulate (e.g. they write "in the style of <name>",
+   "like <creator>", "<author>'s voice"). If the user did not name anyone, leave
+   styleReference EMPTY. NEVER copy an example name from these instructions into
+   the brief — the names used here are only illustrations, not defaults. Inventing
+   a persona the user never asked for is a bug.
 4. If the user says "for kids", "for students", or "explain to my [family member]" →
    that's EDUCATIONAL + KIDS/STUDENTS + SIMPLE vocabulary.
 5. Only set approachMode: "VIRAL_ANGLE" when the user clearly wants LinkedIn-style
@@ -189,7 +193,26 @@ Set intentClear: false. Write a short friendly "clarifyingMessage" and produce
    approachMode: FACTUAL_SPINE (evidence-based opinion, not viral angle),
    vocabulary: PROFESSIONAL. businessMetaphorsAllowed: false — write plainly
    for the real professional, not for a LinkedIn performance.
+10. DEFAULT INVERSION — THIS IS CRITICAL. The safe default is FACTUAL_SPINE, NOT
+    VIRAL_ANGLE. Only choose approachMode: "VIRAL_ANGLE" when the user EXPLICITLY
+    signals it — words like "LinkedIn", "viral", "for my followers", "hook",
+    "thought leadership", "hot take". If those words are absent, do NOT invent a
+    viral/business angle. Take the request literally and teach or explain the
+    actual subject. When unsure between VIRAL_ANGLE and FACTUAL_SPINE, choose
+    FACTUAL_SPINE. A carousel that literally answers the prompt always beats one
+    that hijacks it into a LinkedIn lesson.
 
+━━━ WORKED EXAMPLES (match these exactly) ━━━
+- "create a carousel for kid teaching about how it rains"
+  → contentType: EDUCATIONAL, audience: KIDS, vocabulary: SIMPLE,
+    approachMode: FACTUAL_SPINE, businessMetaphorsAllowed: false,
+    illustrationMode: LITERAL. topic: "how rain forms (the water cycle)".
+    This is NOT about communication skills, simplicity, or LinkedIn — it teaches
+    a child how rain actually works.
+- "70% of UX jobs vanished — scrutinize how true this is, is the UX/UI market at risk"
+  → contentType: EDUCATIONAL, approachMode: FACTUAL_SPINE,
+    businessMetaphorsAllowed: false, stayFactuallyAccurate: true.
+    This is a fact-check/analysis, NOT a viral LinkedIn hook.
 
 SLIDE COUNT GUIDANCE (populate suggestedSlideCount in the brief):
 - Absolute minimum: 2 slides. Absolute maximum: 20 slides.
@@ -213,9 +236,10 @@ LANGUAGE DETECTION:
 BRIEF FIELD GUIDANCE:
 
 - topic: The actual subject matter in plain language (e.g. "why dinosaurs went extinct 66M years ago")
-- toneDescription: A rich 2-3 sentence description of the voice. For style references,
-  be specific: "Tanmay Bhat's style: irreverent comedy with genuine curiosity, punchy
-  one-liners, absurdist comparisons to everyday life, casual Indian-English, self-aware humor."
+- toneDescription: A rich 2-3 sentence description of the voice that FITS THIS TOPIC
+  AND AUDIENCE. If (and only if) the user named a creator to emulate, describe that
+  creator's voice specifically. If they did not, describe an appropriate voice for the
+  subject — do NOT attribute it to any named person the user didn't mention.
 - emotionToConvey: What feeling should a reader have after the last slide?
 
 Return JSON matching the schema exactly.
@@ -253,7 +277,7 @@ export const CreativeDirectorAgent = {
             const result = await generateContentFromAgent(prompt, INTENT_ANALYSIS_SCHEMA);
 
             if (result.intentClear && result.brief) {
-                const brief = result.brief as CreativeBrief;
+                const brief = applyIntentGuards(userInput, result.brief as CreativeBrief);
                 // Server-side clamp: enforce hard bounds regardless of model output
                 if (typeof brief.suggestedSlideCount === 'number') {
                     brief.suggestedSlideCount = Math.max(2, Math.min(20, brief.suggestedSlideCount));
@@ -273,13 +297,13 @@ export const CreativeDirectorAgent = {
                 };
             }
 
-            // Fallback: treat as clear professional intent (preserves old behaviour)
-            console.warn('[CreativeDirectorAgent] Unexpected shape, falling back to PROFESSIONAL default');
-            return { ready: true, brief: buildProfessionalFallback(userInput) };
+            // Fallback: neutral, topic-faithful default (NOT LinkedIn), then guarded.
+            console.warn('[CreativeDirectorAgent] Unexpected shape, falling back to NEUTRAL default');
+            return { ready: true, brief: applyIntentGuards(userInput, buildNeutralFallback(userInput)) };
 
         } catch (err) {
-            console.error('[CreativeDirectorAgent] Failed, using professional fallback:', err);
-            return { ready: true, brief: buildProfessionalFallback(userInput) };
+            console.error('[CreativeDirectorAgent] Failed, using neutral fallback:', err);
+            return { ready: true, brief: applyIntentGuards(userInput, buildNeutralFallback(userInput)) };
         }
     },
 
@@ -298,43 +322,131 @@ export const CreativeDirectorAgent = {
 
         try {
             const result = await generateContentFromAgent(prompt, INTENT_ANALYSIS_SCHEMA);
-            if (result.brief) return result.brief as CreativeBrief;
+            if (result.brief) return applyIntentGuards(combinedInput, result.brief as CreativeBrief);
         } catch (err) {
-            console.error('[CreativeDirectorAgent] Synthesis failed, using professional fallback:', err);
+            console.error('[CreativeDirectorAgent] Synthesis failed, using neutral fallback:', err);
         }
 
-        return buildProfessionalFallback(originalInput);
+        return applyIntentGuards(combinedInput, buildNeutralFallback(originalInput));
     },
 };
 
 // ---------------------------------------------------------------------------
-// Fallback brief — preserves current LinkedIn behaviour if the agent fails
+// Fallback brief — a NEUTRAL, topic-faithful default used when the classifier
+// fails or returns garbage. Deliberately NOT LinkedIn/viral: the old
+// PROFESSIONAL+VIRAL_ANGLE fallback was the main reason weak free models
+// (e.g. the default gpt-oss-120b) collapsed every prompt into a LinkedIn post.
+// A neutral factual default is safe for any topic; applyIntentGuards() then
+// specialises it from the actual words in the prompt.
 // ---------------------------------------------------------------------------
 
-function buildProfessionalFallback(topic: string): CreativeBrief {
+function buildNeutralFallback(topic: string): CreativeBrief {
     return {
         topic,
-        contentType: 'PROFESSIONAL',
+        contentType: 'EDUCATIONAL',
         suggestedSlideCount: 7,
-        audience: { type: 'PROFESSIONALS', description: 'LinkedIn professionals' },
+        audience: { type: 'GENERAL', description: 'a general audience curious about this topic' },
 
         creativeStyle: {
-            toneDescription: 'Direct, authoritative, LinkedIn thought leadership. Bold declarative statements.',
-            vocabulary: 'PROFESSIONAL',
+            toneDescription: 'Clear, knowledgeable, and genuinely helpful. Explains the actual topic plainly, without hype or jargon.',
+            vocabulary: 'CASUAL',
             humorAllowed: false,
             popCultureAllowed: false,
         },
         contentStrategy: {
-            approachMode: 'VIRAL_ANGLE',
-            mustStayOnTopic: false,
-            businessMetaphorsAllowed: true,
-            stayFactuallyAccurate: false,
+            approachMode: 'FACTUAL_SPINE',
+            mustStayOnTopic: true,
+            businessMetaphorsAllowed: false,
+            stayFactuallyAccurate: true,
         },
         visualStyle: {
-            illustrationMode: 'METAPHORICAL',
-            emotionToConvey: 'Inspired, motivated, informed',
+            illustrationMode: 'LITERAL',
+            emotionToConvey: 'Informed and curious',
         },
         outputLanguage: 'English',
     };
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic intent guards (model-agnostic safety net)
+//
+// The classifier LLM is whatever model the user picked — including the weak
+// free default — so we do NOT trust it to honour the nuanced rules above.
+// These guards run in code AFTER classification and hard-correct the two
+// failure classes we actually see, plus invert the viral default so a LinkedIn
+// angle requires an explicit signal. Never forces a model change (that stays
+// the user's choice); it just refuses to let intent collapse into "LinkedIn".
+// ---------------------------------------------------------------------------
+
+const KID_RE = /\b(for (a |my )?kids?|for (a |my )?child(ren)?|for (a |my )?(son|daughter)|explain (it |this )?to (a |my )?(kid|child|\d+[- ]?year[- ]?old|five|ten)|to a \d+[- ]?year[- ]?old|for (pre)?schoolers?|kindergarten|eli5|like i'?m (5|five))\b/i;
+const STUDENT_RE = /\b(for students?|for (high ?school|middle ?school|college|university) (students?|kids?)?|for my class|classroom)\b/i;
+const FACTCHECK_RE = /\b(scrutin\w+|how true|is (it|this|that) (really )?true|fact[- ]?check|debunk|verify (this|the|that) claim|myth or fact|is (it|this) a myth|what does the data (say|show)|analy[sz]e whether|is .* really (true|at risk))\b/i;
+const VIRAL_SIGNAL_RE = /\b(linkedin|for my followers?|go viral|viral|thought[- ]leadership|hot take|hook|engagement bait|for my audience|for my page)\b/i;
+
+function applyIntentGuards(userInput: string, brief: CreativeBrief): CreativeBrief {
+    const input = userInput || '';
+    const cs = brief.contentStrategy;
+    const vs = brief.visualStyle;
+
+    const isKid = KID_RE.test(input);
+    const isStudent = STUDENT_RE.test(input);
+    const isFactCheck = FACTCHECK_RE.test(input);
+    const hasViralSignal = VIRAL_SIGNAL_RE.test(input);
+
+    // Guard 1 — audience is children/students: this is teaching, never a LinkedIn post.
+    if (isKid || isStudent) {
+        brief.contentType = 'EDUCATIONAL';
+        brief.audience = {
+            type: isKid ? 'KIDS' : 'STUDENTS',
+            description: isKid ? 'young children being taught this topic' : 'students learning this topic',
+        };
+        brief.creativeStyle.vocabulary = 'SIMPLE';
+        cs.businessMetaphorsAllowed = false;
+        cs.mustStayOnTopic = true;
+        cs.stayFactuallyAccurate = true;
+        // Keep a deliberate story/how-to arc if the model chose one; otherwise teach the facts.
+        if (cs.approachMode !== 'NARRATIVE_ARC' && cs.approachMode !== 'HOW_TO_STEPS') {
+            cs.approachMode = 'FACTUAL_SPINE';
+        }
+        // Draw the real subject (or a fun character) — never a business metaphor doodle.
+        if (vs.illustrationMode === 'METAPHORICAL') vs.illustrationMode = 'LITERAL';
+        console.log('🛡️ [CreativeDirector] Guard: kid/student audience → EDUCATIONAL/SIMPLE/LITERAL, no business metaphors');
+    }
+
+    // Guard 2 — fact-check / analytical prompts: evidence, not a viral angle.
+    if (isFactCheck) {
+        if (brief.contentType !== 'OPINION') brief.contentType = 'EDUCATIONAL';
+        cs.approachMode = 'FACTUAL_SPINE';
+        cs.businessMetaphorsAllowed = false;
+        cs.mustStayOnTopic = true;
+        cs.stayFactuallyAccurate = true;
+        if (vs.illustrationMode === 'METAPHORICAL') vs.illustrationMode = 'LITERAL';
+        console.log('🛡️ [CreativeDirector] Guard: fact-check prompt → FACTUAL_SPINE, accurate, no business metaphors');
+    }
+
+    // Guard 3 — invert the viral default: a LinkedIn/viral angle now requires an
+    // EXPLICIT signal. Without one, VIRAL_ANGLE drops to a factual spine. This is
+    // what stops a weak model defaulting the whole app into "LinkedIn thought leadership".
+    if (cs.approachMode === 'VIRAL_ANGLE' && !hasViralSignal) {
+        cs.approachMode = 'FACTUAL_SPINE';
+        cs.businessMetaphorsAllowed = false;
+        console.log('🛡️ [CreativeDirector] Guard: VIRAL_ANGLE with no explicit viral signal → FACTUAL_SPINE');
+    }
+
+    // Guard 4 — a named style persona must come from the USER, not from the
+    // classifier copying an example name (e.g. "Tanmay Bhat") out of the prompt.
+    // buildPersona() turns styleReference into "a writer who adopts the style of X",
+    // so an unsolicited value leaks a whole persona the user never asked for. Drop
+    // any styleReference whose name does not actually appear in the user's input.
+    const ref = brief.creativeStyle.styleReference?.trim();
+    if (ref) {
+        const firstToken = ref.toLowerCase().split(/\s+/)[0];
+        if (firstToken && !input.toLowerCase().includes(firstToken)) {
+            console.log(`🛡️ [CreativeDirector] Guard: dropped unsolicited styleReference "${ref}" (user never named it)`);
+            brief.creativeStyle.styleReference = undefined;
+        }
+    }
+
+    return brief;
 }
 

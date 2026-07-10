@@ -40,7 +40,7 @@ export const EditorAgent = {
         context?: string
     ): Promise<string> => {
         const systemPrompt = `
-      You are a World-Class Editor for LinkedIn Carousels.
+      You are a World-Class Editor for social media Carousels on any topic.
       
       YOUR TASK:
       Rewrite the following text based on the GOAL.

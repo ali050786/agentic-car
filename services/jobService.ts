@@ -100,6 +100,14 @@ export const markJobSeen = async (jobId: string): Promise<void> => {
     await databases.updateDocument(config.databaseId, JOBS_COLLECTION_ID, jobId, { seen: true });
 };
 
+export const cancelJob = async (jobId: string): Promise<void> => {
+    await databases.updateDocument(config.databaseId, JOBS_COLLECTION_ID, jobId, {
+        status: 'error',
+        statusMessage: 'Cancelled.',
+        error: 'Cancelled by user'
+    });
+};
+
 import { Query } from 'appwrite';
 
 export const getActiveJobForCarousel = async (carouselId: string): Promise<GenerationJob | null> => {

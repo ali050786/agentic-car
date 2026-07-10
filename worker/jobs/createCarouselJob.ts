@@ -65,6 +65,12 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
     }
 
     const progress = async (statusMessage: string, progressPct: number) => {
+        const { getJob } = await import('../jobStore');
+        const currentJob = await getJob(job.$id);
+        if (currentJob.status === 'error' && (currentJob.error === 'Cancelled' || currentJob.error === 'Cancelled by user' || currentJob.statusMessage === 'Cancelled.' || currentJob.statusMessage === 'Cancelled by user')) {
+            throw new Error('Cancelled by user');
+        }
+
         for (const ev of events) {
             ev.done = true;
         }
@@ -185,6 +191,11 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
                         const [, item] = next;
                         
                         try {
+                            const { getJob } = await import('../jobStore');
+                            const currentJob = await getJob(job.$id);
+                            if (currentJob.status === 'error' && (currentJob.error === 'Cancelled' || currentJob.error === 'Cancelled by user' || currentJob.statusMessage === 'Cancelled.' || currentJob.statusMessage === 'Cancelled by user')) {
+                                throw new Error('Cancelled by user');
+                            }
                             const doodleUrl = await generateAndPersistDoodle(item.fluxPrompt, '2:3', jobSeed);
 
                             result.slides[item.index] = { 

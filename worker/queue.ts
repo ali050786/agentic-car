@@ -34,7 +34,12 @@ const runNext = () => {
             await handler!(job);
         } catch (err: any) {
             console.error(`[queue] Job ${jobId} failed:`, err);
-            await updateJob(jobId, { status: 'error', error: err?.message || String(err) }).catch(() => {});
+            const isCancel = err?.message === 'Cancelled by user';
+            await updateJob(jobId, {
+                status: 'error',
+                statusMessage: isCancel ? 'Cancelled.' : 'Error generating carousel.',
+                error: err?.message || String(err)
+            }).catch(() => {});
         } finally {
             active--;
             runNext();
