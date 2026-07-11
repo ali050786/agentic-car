@@ -126,7 +126,7 @@ const INTENT_ANALYSIS_SCHEMA = {
 // Prompt builder
 // ---------------------------------------------------------------------------
 
-const buildAnalysisPrompt = (userInput: string): string => `
+const buildAnalysisPrompt = (userInput: string, sourceContent?: string, isFirstTurn = true): string => `
 You are the Creative Director of a carousel-making AI. Your job is to understand
 the user's intent from their free-form input — before any slide is written.
 
@@ -135,34 +135,25 @@ USER INPUT:
 ${userInput}
 """
 
+${sourceContent ? `SOURCE CONTENT CONTEXT (This is the text/document the user has pasted or scraped):
+"""
+${sourceContent.substring(0, 1500)}
+"""` : ''}
+
 TASK:
-Analyse the input and decide one of two outcomes:
-
-━━━ OUTCOME A — INTENT IS CLEAR ━━━
-The input tells you enough to produce a complete creative brief. This is the
-case when you can confidently answer: topic, audience, desired tone/style.
-
-Examples of clear prompts:
-- "Dinosaur extinction in Tanmay Bhat style for a general audience"
-- "5 steps to close a Series A, for startup founders, keep it direct"
-- "Explain photosynthesis to kids, fun and simple"
-- "Why stoicism changed my life" (personal story → STORYTELLING is safe)
-
-Set intentClear: true and populate the "brief" object.
-
-━━━ OUTCOME B — INTENT IS AMBIGUOUS ━━━
-The input is short and could be interpreted very differently.
-
-Examples of ambiguous prompts:
-- "Dinosaurs" (who for? what angle? education or metaphor?)
-- "Leadership" (factual? LinkedIn? personal story? kids?)
-- "Climate change" (scientific explainer? opinion? business lesson?)
-
-Set intentClear: false. Write a short friendly "clarifyingMessage" and produce
-1-2 "questionGroups" with clickable chip options. Max 4 chips per group.
+${isFirstTurn ? `
+This is Turn 1 (Intent Clarification). Your goal is to gather more details from the user to align on intent before writing the carousel.
+You MUST set "intentClear": false.
+Write a short, friendly "clarifyingMessage" and produce 1-2 "questionGroups" with clickable chip options. Max 4 chips per group.
+Do NOT populate the "brief" object.
+` : `
+This is Turn 2 (Brief Generation). The user has provided clarifications to your questions. Your goal is to generate the complete Creative Brief.
+You MUST set "intentClear": true.
+Populate the "brief" object using the user's initial input and their clarifications. Do NOT populate "clarifyingMessage" or "questionGroups".
+`}
 
 ━━━ DECISION RULES ━━━
-1. Lean towards OUTCOME A — only ask when genuinely ambiguous.
+1. Turn 1 always sets "intentClear": false to ask clarifying questions. Turn 2 always sets "intentClear": true to generate the brief.
 2. NEVER default to LinkedIn/professional framing. Factual topics like science,
    history, and nature default to EDUCATIONAL unless the user signals otherwise.
 3. STYLE REFERENCES — set "styleReference" ONLY when the user EXPLICITLY names a
@@ -201,6 +192,7 @@ Set intentClear: false. Write a short friendly "clarifyingMessage" and produce
     actual subject. When unsure between VIRAL_ANGLE and FACTUAL_SPINE, choose
     FACTUAL_SPINE. A carousel that literally answers the prompt always beats one
     that hijacks it into a LinkedIn lesson.
+11. SOURCE CONTENT: If SOURCE CONTENT CONTEXT is provided, use it to understand the topic and content of the carousel. The user's input might be a generic string like 'Carousel from medium.com' because they pasted a link. Read the source content context to figure out the actual topic (e.g. data-heavy dashboard UX, stock market investing) and formulate your clarifying questions/chips based on the actual content, not the domain/website name.
 
 ━━━ WORKED EXAMPLES (match these exactly) ━━━
 - "create a carousel for kid teaching about how it rains"
@@ -268,10 +260,10 @@ export const CreativeDirectorAgent = {
      * Returns either a complete brief (ready: true) or clarifying questions
      * (ready: false) that the ChatPanel should present to the user.
      */
-    analyseIntent: async (userInput: string): Promise<IntentAnalysisResult> => {
+    analyseIntent: async (userInput: string, sourceContent?: string): Promise<IntentAnalysisResult> => {
         console.log('🎬 [CreativeDirectorAgent] Analysing intent for:', userInput.substring(0, 80));
 
-        const prompt = buildAnalysisPrompt(userInput);
+        const prompt = buildAnalysisPrompt(userInput, sourceContent, true);
 
         try {
             const result = await generateContentFromAgent(prompt, INTENT_ANALYSIS_SCHEMA);
@@ -288,11 +280,27 @@ export const CreativeDirectorAgent = {
 
             if (!result.intentClear && result.questionGroups?.length) {
                 console.log('🎬 [CreativeDirectorAgent] Intent ambiguous → asking', result.questionGroups.length, 'question(s)');
+                
+                // Normalize groups and chips to be robust against model formatting issues (e.g. returning array of strings)
+                const normalizedGroups = result.questionGroups.map((g: any) => {
+                    const rawChips = Array.isArray(g.chips) ? g.chips : [];
+                    const normalizedChips = rawChips.map((chip: any, ci: number) => {
+                        const label = typeof chip === 'string' ? chip : (chip?.label || chip?.text || '');
+                        const value = typeof chip === 'string' ? chip : (chip?.value || chip?.id || label || `chip-${ci}`);
+                        return { label, value };
+                    });
+                    return {
+                        question: g.question || g.title || g.text || g.label || g.questionText || 'Clarifying question:',
+                        multiSelect: !!g.multiSelect,
+                        chips: normalizedChips
+                    };
+                });
+
                 return {
                     ready: false,
                     questions: {
                         message: result.clarifyingMessage || 'Quick question before I start:',
-                        groups: result.questionGroups,
+                        groups: normalizedGroups,
                     },
                 };
             }
@@ -313,12 +321,13 @@ export const CreativeDirectorAgent = {
      */
     synthesiseBrief: async (
         originalInput: string,
-        userAnswers: string
+        userAnswers: string,
+        sourceContent?: string
     ): Promise<CreativeBrief> => {
         console.log('🎬 [CreativeDirectorAgent] Synthesising brief from answers...');
 
         const combinedInput = `${originalInput}\n\nUser clarifications: ${userAnswers}`;
-        const prompt = buildAnalysisPrompt(combinedInput);
+        const prompt = buildAnalysisPrompt(combinedInput, sourceContent, false);
 
         try {
             const result = await generateContentFromAgent(prompt, INTENT_ANALYSIS_SCHEMA);

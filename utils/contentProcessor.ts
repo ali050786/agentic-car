@@ -77,6 +77,7 @@ export function isYouTubeUrl(url: string): boolean {
 
 export interface ScrapedContent {
     content: string;
+    title?: string;
     truncated: boolean;
     originalLength: number;
 }
@@ -137,6 +138,7 @@ export async function fetchUrlContent(url: string): Promise<ScrapedContent> {
 
     return {
         content: data.content,
+        title: data.title || '',
         truncated: !!data.truncated,
         originalLength: typeof data.originalLength === 'number' ? data.originalLength : data.content.length,
     };

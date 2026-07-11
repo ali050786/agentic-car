@@ -67,6 +67,34 @@ const LandingPage = () => {
 
     return (
         <div className="min-h-screen bg-[#040406] text-white overflow-x-hidden selection:bg-blue-500/30" style={{ fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}>
+            {/* React 19 Document Metadata Hoisting */}
+            <title>Agentic Carousel Generator - Create Beautiful Social Media Carousels with AI</title>
+            <meta name="description" content="Generate high-converting, beautiful social media carousels for LinkedIn, Instagram, and Twitter in seconds using AI. Customize themes, colors, and layout instantly." />
+            <meta name="keywords" content="linkedin carousel kaise banaye, linkedin carousel tips, linkedin post design, ai se content creation, ai content creator tools, ai se social media post, personal branding linkedin india, personal branding tips linkedin, linkedin profile grow kaise kare, social media carousel design guide, carousel design tips, social media slide design, canva vs ai carousel tools, canva alternative for carousel, linkedin marketing tools, startup linkedin marketing, solopreneur content marketing, agentic ai tools review, linkedin engagement badhane ke tips, linkedin post viral kaise kare" />
+            <link rel="canonical" href="https://carousel.blinkwiser.com/" />
+
+            {/* Structured Schema.org Data (JSON-LD) */}
+            <script type="application/ld+json">
+                {JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "SoftwareApplication",
+                    "name": "Agentic Carousel Generator",
+                    "operatingSystem": "All",
+                    "applicationCategory": "MultimediaApplication",
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "0",
+                        "priceCurrency": "USD"
+                    },
+                    "description": "Generate high-converting, beautiful social media carousels for LinkedIn, Instagram, and Twitter in seconds using AI.",
+                    "creator": {
+                        "@type": "Organization",
+                        "name": "Blinkwiser",
+                        "url": "https://carousel.blinkwiser.com/"
+                    }
+                })}
+            </script>
+
             {/* Ambient background */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute inset-x-0 top-0 h-[60vh] bg-[linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:5rem_5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black_10%,transparent_75%)]" />
@@ -299,6 +327,47 @@ const LandingPage = () => {
                 </motion.div>
             </section>
 
+            {/* FAQ Section */}
+            <section id="faq" className="relative z-10 py-24 border-t border-white/10 bg-[#060608]/50">
+                <div className="container mx-auto px-6 max-w-4xl">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                            Frequently Asked Questions (FAQ)
+                        </h2>
+                        <p className="text-slate-400 max-w-xl mx-auto">
+                            Got questions about creating carousels or using our AI tools? Here are the answers.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <FAQItem 
+                            question="LinkedIn carousel kaise banaye using this tool?" 
+                            answer="LinkedIn carousel banana behad aasan hai! Simply step 1: Enter your topic or input URL/text. Step 2: Choose your brand preset or custom branding templates. Step 3: Click generate. The AI agent will automatically design professional slides and write engaging copy. You can download it as a high-quality PDF ready to post on LinkedIn."
+                        />
+                        <FAQItem 
+                            question="Is this tool a good Canva alternative for carousels?" 
+                            answer="Absolutely! While Canva requires you to manually design each slide, arrange layouts, and write text from scratch, Agentic Carousel uses AI to do everything for you. It automatically applies brand identity rules, creates perfect layouts, and generates professional copy in seconds."
+                        />
+                        <FAQItem 
+                            question="Can I use it for personal branding on LinkedIn in India?" 
+                            answer="Yes, personal branding for LinkedIn in India is growing rapidly, and carousels get 3x more engagement than text posts. Using this tool, you can regularly publish high-quality slides that showcase your expertise, grow your follower base, and establish your brand voice."
+                        />
+                        <FAQItem 
+                            question="What are some key LinkedIn carousel tips for better reach?" 
+                            answer="First, always keep the first slide extremely engaging with a bold hook. Second, use high-contrast colors (our brand kit config makes this easy). Third, keep text minimal per slide—focus on slide design and visual hierarchy. Lastly, end with a strong Call-To-Action (CTA)."
+                        />
+                        <FAQItem 
+                            question="Ai se content creation kaise kare with Agentic Carousel?" 
+                            answer="Hamare platform par AI content creation bahut simple hai. Aap direct topic daal sakte hain ya kisi YouTube video ya blog post ka URL paste kar sakte hain. AI automatic content analyze karke optimized structured slides generate kar dega."
+                        />
+                        <FAQItem 
+                            question="Does this tool support startup LinkedIn marketing?" 
+                            answer="Yes! Startups can build authority and share their journey, product updates, or educational content easily. By setting up your custom Brand Kit (logo, fonts, and colors), you can maintain consistent design guidelines across all team member posts."
+                        />
+                    </div>
+                </div>
+            </section>
+
             {/* Footer */}
             <footer className="relative z-10 py-12 border-t border-white/10">
                 <div className="container mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -339,5 +408,25 @@ const FeatureCard = ({ icon, title, description, span }: { icon: React.ReactNode
         <p className="text-slate-400 leading-relaxed">{description}</p>
     </motion.div>
 );
+
+const FAQItem = ({ question, answer }: { question: string; answer: string }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    return (
+        <div className="border border-white/10 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] transition-colors duration-300 overflow-hidden">
+            <button 
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full px-6 py-5 text-left flex items-center justify-between gap-4 font-semibold text-white hover:text-blue-400 transition-colors"
+            >
+                <span className="text-base sm:text-lg">{question}</span>
+                <span className={`text-2xl transition-transform duration-300 ${isOpen ? 'rotate-45 text-blue-400' : 'text-slate-500'}`}>{isOpen ? '−' : '+'}</span>
+            </button>
+            <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 border-t border-white/5' : 'max-h-0'} overflow-hidden`}>
+                <p className="px-6 py-5 text-slate-400 text-sm sm:text-base leading-relaxed bg-black/10">
+                    {answer}
+                </p>
+            </div>
+        </div>
+    );
+};
 
 export default LandingPage;

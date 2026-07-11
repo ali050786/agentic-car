@@ -59,6 +59,16 @@ export const useJobWatcher = () => {
 
             // status === 'done'
             if (job.type === 'create') {
+                let reply = 'Done! Tell me what to refine: a slide, the tone, or the whole angle.';
+                let tokenUsage = undefined;
+                try {
+                    const result = JSON.parse(job.resultSummary || '{}');
+                    if (result.reply) reply = result.reply;
+                    if (result.tokenUsage) tokenUsage = result.tokenUsage;
+                } catch {
+                    if (job.resultSummary) reply = job.resultSummary;
+                }
+
                 if (job.carouselId && store.activeCarouselId === null) {
                     getCarouselById(job.carouselId).then(({ data }) => {
                         if (!data) return;
@@ -72,7 +82,8 @@ export const useJobWatcher = () => {
                     store.updateChatMessage(runningMsg.id, {
                         running: false,
                         events: markEventsDone(runningMsg.events),
-                        text: 'Done! Tell me what to refine: a slide, the tone, or the whole angle.',
+                        text: reply,
+                        tokenUsage,
                     });
                 }
             } else {
@@ -97,6 +108,7 @@ export const useJobWatcher = () => {
                             running: false,
                             events: markEventsDone(runningMsg.events),
                             text: result.reply || 'Done.',
+                            tokenUsage: result.tokenUsage,
                         });
                     }
                 } catch {

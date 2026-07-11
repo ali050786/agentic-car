@@ -93,10 +93,20 @@ ${toneNote}
       `;
 
             const result = await generateContentFromAgent(prompt, PROOFREAD_SCHEMA);
-            const corrected = result?.slides;
+            let corrected = result?.slides;
+            
+            // Normalize raw array responses
+            if (!corrected && Array.isArray(result)) {
+                corrected = result;
+            }
 
             if (!Array.isArray(corrected) || corrected.length !== slides.length) {
-                console.warn('[ProofreaderAgent] Response shape mismatch — skipping proofread pass');
+                console.warn('[ProofreaderAgent] Response shape mismatch — skipping proofread pass:', {
+                    expectedLength: slides.length,
+                    actualLength: corrected?.length,
+                    resultType: typeof result,
+                    isArray: Array.isArray(result)
+                });
                 return slides;
             }
 

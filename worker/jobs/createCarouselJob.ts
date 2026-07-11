@@ -78,8 +78,15 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
         await updateJob(job.$id, { status: 'running', statusMessage, progress: progressPct });
     };
 
+    const tokenTracker = {
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        cachedTokens: 0
+    };
+
     await runWithAgentContext(
-        { userId, selectedModel: payload.selectedModel },
+        { userId, selectedModel: payload.selectedModel, tokenTracker },
         async () => {
             await progress('Initializing AI agents...', 10);
 
@@ -247,7 +254,13 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
             try {
                 await saveChatServer(carouselId, userId, [
                     { id: `msg-${Date.now()}-u`, role: 'user', text: payload.topic },
-                    { id: `msg-${Date.now()}-a`, role: 'assistant', text: reply, events: cleanEvents },
+                    { 
+                        id: `msg-${Date.now()}-a`, 
+                        role: 'assistant', 
+                        text: reply, 
+                        events: cleanEvents,
+                        tokenUsage: tokenTracker
+                    },
                 ], '', 0);
             } catch (err) {
                 console.warn('[createCarouselJob] Failed to persist chat history (non-fatal):', err);
@@ -258,7 +271,10 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
                 statusMessage: 'Done!',
                 progress: 100,
                 carouselId,
-                resultSummary: reply,
+                resultSummary: JSON.stringify({
+                    reply,
+                    tokenUsage: tokenTracker
+                }),
             });
         }
     );

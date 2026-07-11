@@ -124,6 +124,11 @@ export const PublicCarouselViewer: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex flex-col">
+      {/* React 19 Dynamic Metadata Hoisting */}
+      <title>{carousel ? `${carousel.title} | Agentic Carousel` : 'View Carousel | Agentic Carousel'}</title>
+      <meta name="description" content={carousel ? `Check out this carousel: ${carousel.title}. Created using Agentic Carousel Generator.` : 'View this carousel created with Agentic Carousel.'} />
+      <link rel="canonical" href={`https://carousel.blinkwiser.com/view/${id}`} />
+
       {/* Header */}
       <header className="border-b border-white/10 bg-neutral-900">
         <div className="max-w-7xl mx-auto px-6 py-4">

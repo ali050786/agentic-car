@@ -64,6 +64,7 @@ export interface GenerateContentParams {
     selectedModel?: string;
     /** System keys used for the free tier. */
     systemKeys?: SystemKeys;
+    onTokenUsage?: (usage: { promptTokens: number; completionTokens: number; totalTokens: number; cachedTokens: number }) => void;
 }
 
 /**
@@ -74,6 +75,7 @@ export const generateContent = async ({
     prompt,
     selectedModel,
     systemKeys = {},
+    onTokenUsage,
 }: GenerateContentParams): Promise<any> => {
     let result: string | undefined;
 
@@ -113,6 +115,15 @@ export const generateContent = async ({
         const data = await response.json();
         result = cleanJsonResponse(data.content[0]?.text || '{"slides":[]}');
 
+        if (onTokenUsage && data.usage) {
+            onTokenUsage({
+                promptTokens: data.usage.input_tokens || 0,
+                completionTokens: data.usage.output_tokens || 0,
+                totalTokens: (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0),
+                cachedTokens: data.usage.cache_read_input_tokens || 0
+            });
+        }
+
     } else {
         // Free Models Router (Auto) -> Use OpenRouter with "openrouter/free"
         const openrouterKey = systemKeys.openrouter;
@@ -151,6 +162,14 @@ export const generateContent = async ({
                     // otherwise leave result null so the Groq fallback fires.
                     if (isValidJson(candidate)) {
                         result = candidate;
+                        if (onTokenUsage && openrouterData.usage) {
+                            onTokenUsage({
+                                promptTokens: openrouterData.usage.prompt_tokens || 0,
+                                completionTokens: openrouterData.usage.completion_tokens || 0,
+                                totalTokens: openrouterData.usage.total_tokens || (openrouterData.usage.prompt_tokens || 0) + (openrouterData.usage.completion_tokens || 0),
+                                cachedTokens: openrouterData.usage.cached_tokens || 0
+                            });
+                        }
                     } else {
                         openrouterError = 'OpenRouter returned 200 but the content was not valid JSON (model emitted reasoning/prose instead of JSON).';
                         console.error('[LLM] ⚠️ OpenRouter output was not valid JSON — falling back to Groq. First 200 chars:', candidate.slice(0, 200));
@@ -195,6 +214,14 @@ export const generateContent = async ({
                         const candidate = cleanAndDiagnose(groqData.choices?.[0], 'llama-3.3-70b-versatile', 'groq-fallback');
                         if (isValidJson(candidate)) {
                             result = candidate;
+                            if (onTokenUsage && groqData.usage) {
+                                onTokenUsage({
+                                    promptTokens: groqData.usage.prompt_tokens || 0,
+                                    completionTokens: groqData.usage.completion_tokens || 0,
+                                    totalTokens: groqData.usage.total_tokens || (groqData.usage.prompt_tokens || 0) + (groqData.usage.completion_tokens || 0),
+                                    cachedTokens: groqData.usage.cached_tokens || 0
+                                });
+                            }
                         } else {
                             console.error('[LLM] ⚠️ Groq output was not valid JSON either. First 200 chars:', candidate.slice(0, 200));
                         }

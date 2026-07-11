@@ -1,6 +1,14 @@
 {
     "rewrites": [
         {
+            "source": "/sitemap.xml",
+            "destination": "/api/sitemap"
+        },
+        {
+            "source": "/view/:id",
+            "destination": "/api/seo-viewer?id=:id"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

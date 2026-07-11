@@ -45,8 +45,15 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
         await updateJob(job.$id, { status: 'running', statusMessage, progress: progressPct });
     };
 
+    const tokenTracker = {
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        cachedTokens: 0
+    };
+
     await runWithAgentContext(
-        { userId, selectedModel: payload.selectedModel },
+        { userId, selectedModel: payload.selectedModel, tokenTracker },
         async () => {
             await progress('Thinking...', 20);
 
@@ -91,7 +98,13 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
             const newMessages: ChatMessage[] = [
                 ...recentMessages,
                 { id: `msg-${Date.now()}-u`, role: 'user', text: payload.message },
-                { id: `msg-${Date.now()}-a`, role: 'assistant', text: result.reply, events: cleanEvents },
+                { 
+                    id: `msg-${Date.now()}-a`, 
+                    role: 'assistant', 
+                    text: result.reply, 
+                    events: cleanEvents,
+                    tokenUsage: tokenTracker
+                },
             ];
             // Best-effort — the edit itself is already saved above; losing the
             // chat log shouldn't fail a job that otherwise succeeded.
@@ -115,8 +128,8 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
                     slides: result.intent === 'copy' || result.intent === 'structure' || result.intent === 'image' ? slides : undefined,
                     changedIndices: result.changedIndices,
                     designActions: result.designActions,
+                    tokenUsage: tokenTracker,
                 }),
-
             });
         }
     );

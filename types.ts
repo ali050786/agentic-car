@@ -112,6 +112,13 @@ export interface QuickReplyChip {
   value: string;   // e.g. "funny and casual"
 }
 
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  cachedTokens: number;
+}
+
 /**
  * A message in the chat-driven editor
  */
@@ -139,6 +146,8 @@ export interface ChatMessage {
     /** Callback identifier the ChatPanel uses to resume generation */
     resumeToken: string;
   };
+  /** Total token usage information for this generation turn */
+  tokenUsage?: TokenUsage;
 }
 
 // ============================================================================

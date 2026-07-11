@@ -166,6 +166,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
 
             const store = useCarouselStore.getState();
             let topicForRun = text;
+            let sourceContentForRun = '';
 
             try {
                 if (pendingAttachment) {
@@ -176,6 +177,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                     updateChatMessage(runId, { events: preEvents });
                     store.setInputMode('pdf');
                     store.setSourceContent(pendingAttachment.content);
+                    sourceContentForRun = pendingAttachment.content;
                     topicForRun = text || pendingAttachment.name.replace(/\.[^.]+$/, '');
                 } else {
                     const detected = detectInputMode(text);
@@ -186,6 +188,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                         const capped = capSourceContent(transcript);
                         store.setInputMode('video');
                         store.setSourceContent(capped.content);
+                        sourceContentForRun = capped.content;
                         topicForRun = detected.instruction || 'Carousel from YouTube video';
                         const preEvents = [{ label: 'Transcript fetched', done: true }];
                         if (capped.truncated) preEvents.push({ label: truncationNote(capped.originalLength), done: true });
@@ -196,7 +199,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                         const article = await fetchUrlContent(detected.url);
                         store.setInputMode('url');
                         store.setSourceContent(article.content);
-                        topicForRun = detected.instruction || `Carousel from ${domain}`;
+                        sourceContentForRun = article.content;
+                        topicForRun = detected.instruction
+                            ? `${detected.instruction}${article.title ? ` (Reference: ${article.title})` : ''}`
+                            : article.title || `Carousel from ${domain}`;
                         const preEvents = [{ label: 'Article fetched', done: true }];
                         if (article.truncated) preEvents.push({ label: truncationNote(article.originalLength), done: true });
                         updateChatMessage(runId, { events: preEvents });
@@ -204,6 +210,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                         const capped = capSourceContent(detected.instruction);
                         store.setInputMode('text');
                         store.setSourceContent(capped.content);
+                        sourceContentForRun = capped.content;
                         topicForRun = detected.instruction;
                         if (capped.truncated) {
                             updateChatMessage(runId, { events: [{ label: truncationNote(capped.originalLength), done: true }] });
@@ -218,7 +225,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                 // If intent is clear → brief is attached directly and generation starts.
                 // If ambiguous → show quick-reply chips and wait for user answer.
                 updateChatMessage(runId, { events: [{ label: 'Understanding your intent...', done: false }] });
-                const intentResult = await CreativeDirectorAgent.analyseIntent(topicForRun);
+                const intentResult = await CreativeDirectorAgent.analyseIntent(topicForRun, sourceContentForRun);
 
                 if (!intentResult.ready) {
                     // Creative Director needs more info — show questions and stop.
@@ -501,22 +508,52 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                             )}
                             {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
 
+                            {msg.tokenUsage && (
+                                <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-neutral-400 select-none bg-neutral-900/50 border border-white/5 rounded-md py-1 px-2 w-fit">
+                                    <span className="text-blue-400 font-medium flex items-center gap-0.5">
+                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        </svg>
+                                        Tokens:
+                                    </span>
+                                    <span>Total: <strong className="text-neutral-100">{msg.tokenUsage.totalTokens}</strong></span>
+                                    <span className="text-white/10">•</span>
+                                    <span>Prompt: <strong className="text-neutral-300">{msg.tokenUsage.promptTokens}</strong></span>
+                                    <span className="text-white/10">•</span>
+                                    <span>Response: <strong className="text-neutral-300">{msg.tokenUsage.completionTokens}</strong></span>
+                                    {msg.tokenUsage.cachedTokens > 0 && (
+                                        <>
+                                            <span className="text-white/10">•</span>
+                                            <span className="text-emerald-400 font-medium">Cached: <strong>{msg.tokenUsage.cachedTokens}</strong></span>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Quick-reply chip UI for Creative Director clarifying questions */}
                             {msg.quickReplies && !msg.running && (() => {
                                 const { groups, resumeToken } = msg.quickReplies;
-                                const selections = chipSelections[resumeToken] || [];
-                                const toggleChip = (value: string, multiSelect?: boolean) => {
+                                const toggleChip = (groupKey: string, value: string, multiSelect?: boolean) => {
                                     setChipSelections(prev => {
-                                        const cur = prev[resumeToken] || [];
+                                        const cur = prev[groupKey] || [];
                                         if (multiSelect) {
-                                            return { ...prev, [resumeToken]: cur.includes(value) ? cur.filter(v => v !== value) : [...cur, value] };
+                                            return { ...prev, [groupKey]: cur.includes(value) ? cur.filter(v => v !== value) : [...cur, value] };
                                         }
-                                        return { ...prev, [resumeToken]: cur.includes(value) ? [] : [value] };
+                                        return { ...prev, [groupKey]: cur.includes(value) ? [] : [value] };
                                     });
                                 };
                                 const handleChipSubmit = async () => {
                                     if (busy) return;
-                                    const combinedAnswers = selections.join(', ') || 'general audience, factual';
+                                    const allSelections: string[] = [];
+                                    groups.forEach((_, gi) => {
+                                        const groupKey = `${resumeToken}-${gi}`;
+                                        const groupSels = chipSelections[groupKey] || [];
+                                        allSelections.push(...groupSels);
+                                    });
+                                    const customSels = chipSelections[`${resumeToken}-custom`] || [];
+                                    allSelections.push(...customSels);
+                                    const combinedAnswers = allSelections.join(', ') || 'general audience, factual';
+
                                     // Clear the chips from this message
                                     updateChatMessage(msg.id, { quickReplies: undefined });
                                     // Show the user's selections as a user bubble
@@ -526,51 +563,71 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                                     runMessageId.current = runId2;
                                     addChatMessage({ id: runId2, role: 'assistant', text: '', running: true, events: [{ label: 'Got it — preparing your carousel...', done: false }] });
                                     try {
-                                        const brief = await CreativeDirectorAgent.synthesiseBrief(pendingTopic, combinedAnswers);
+                                        const state = useCarouselStore.getState();
+                                        const brief = await CreativeDirectorAgent.synthesiseBrief(pendingTopic, combinedAnswers, state.sourceContent);
                                         setPendingBrief(brief);
                                         await onFirstPrompt(pendingTopic, brief);
                                     } catch (e: any) {
                                         updateChatMessage(runId2, { running: false, error: true, text: e?.message || 'Generation failed.' });
                                     }
                                 };
+
+                                const hasAnySelection = 
+                                    groups.some((_, gi) => (chipSelections[`${resumeToken}-${gi}`] || []).length > 0) ||
+                                    (chipSelections[`${resumeToken}-custom`] || []).length > 0;
+
                                 return (
                                     <div className="mt-2 space-y-3">
-                                        {groups.map((g, gi) => (
-                                            <div key={gi}>
-                                                <p className="text-[11px] text-neutral-400 mb-1.5 font-medium">{g.question}</p>
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {g.chips.map(chip => {
-                                                        const selected = selections.includes(chip.value);
-                                                        return (
-                                                            <button
-                                                                key={chip.value}
-                                                                onClick={() => toggleChip(chip.value, g.multiSelect)}
-                                                                className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
-                                                                    selected
-                                                                        ? 'border-blue-500 bg-blue-500/20 text-blue-200'
-                                                                        : 'border-white/15 bg-white/5 text-neutral-300 hover:border-white/30 hover:bg-white/10'
-                                                                }`}
-                                                            >
-                                                                {chip.label}
-                                                            </button>
-                                                        );
-                                                    })}
+                                        {groups.map((g, gi) => {
+                                            const groupKey = `${resumeToken}-${gi}`;
+                                            const selections = chipSelections[groupKey] || [];
+                                            return (
+                                                <div key={gi}>
+                                                    <p className="text-[11px] text-neutral-400 mb-1.5 font-medium">{g.question}</p>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {g.chips.map((chip, ci) => {
+                                                            const label = typeof chip === 'string' ? chip : ((chip as any)?.label || (chip as any)?.text || '');
+                                                            const value = typeof chip === 'string' ? chip : ((chip as any)?.value || (chip as any)?.id || label || `chip-${ci}`);
+                                                            const selected = selections.includes(value);
+                                                            return (
+                                                                <button
+                                                                    key={value}
+                                                                    onClick={() => toggleChip(groupKey, value, g.multiSelect)}
+                                                                    className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
+                                                                        selected
+                                                                            ? 'border-blue-500 bg-blue-500/20 text-blue-200'
+                                                                            : 'border-white/15 bg-white/5 text-neutral-300 hover:border-white/30 hover:bg-white/10'
+                                                                    }`}
+                                                                >
+                                                                    {label}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                         <div className="flex items-center gap-2 pt-1">
                                             <input
                                                 type="text"
                                                 placeholder="Or describe in your own words..."
                                                 className="flex-1 bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-[11px] text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500"
-                                                onKeyDown={e => { if (e.key === 'Enter') { const v = (e.target as HTMLInputElement).value.trim(); if (v) { setChipSelections(prev => ({ ...prev, [resumeToken]: [...(prev[resumeToken] || []), v] })); (e.target as HTMLInputElement).value = ''; } } }}
+                                                onKeyDown={e => { 
+                                                    if (e.key === 'Enter') { 
+                                                        const v = (e.target as HTMLInputElement).value.trim(); 
+                                                        if (v) { 
+                                                            setChipSelections(prev => ({ ...prev, [`${resumeToken}-custom`]: [...(prev[`${resumeToken}-custom`] || []), v] })); 
+                                                            (e.target as HTMLInputElement).value = ''; 
+                                                        } 
+                                                    } 
+                                                }}
                                             />
                                             <button
                                                 onClick={handleChipSubmit}
                                                 disabled={busy}
                                                 className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-medium transition-colors disabled:opacity-50 flex-shrink-0"
                                             >
-                                                {selections.length > 0 ? 'Go →' : 'Skip →'}
+                                                {hasAnySelection ? 'Go →' : 'Skip →'}
                                             </button>
                                         </div>
                                     </div>
