@@ -14,6 +14,7 @@ import { useAutoSave } from './hooks/useAutoSave';
 import { useJobWatcher } from './hooks/useJobWatcher';
 import { createJob, getActiveJobForCarousel } from './services/jobService';
 import BrandEditorPanel from './components/BrandEditorPanel';
+import { Analytics } from '@vercel/analytics/react';
 
 // Auth Pages
 import { SignUp } from './pages/SignUp';
@@ -557,6 +558,7 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter>
+      <Analytics />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
