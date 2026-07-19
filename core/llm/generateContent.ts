@@ -11,17 +11,91 @@
 
 const SYSTEM_PROMPT = 'You are a specialized content agent that writes social media carousels on any topic, for any audience. ERROR HANDLING: You MUST respond with ONLY valid JSON. Do NOT think out loud, show your reasoning or plan, count characters, or write ANY prose before or after the JSON — no "We need to...", no "Let\'s...", no step-by-step. Do NOT include conversational filler like "Alright" or "Here is the JSON". Do NOT wrap the output in markdown code blocks. Your ENTIRE response must be a single JSON object: START YOUR RESPONSE WITH { AND END WITH }.';
 
-const cleanJsonResponse = (text: string): string => {
-    const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
-    if (jsonMatch) return jsonMatch[1];
+/**
+ * Attempts to repair truncated or slightly malformed JSON by auto-closing
+ * open quotes, brackets, and braces in LIFO order.
+ */
+export const repairJson = (str: string): string => {
+    if (!str) return str;
+    const start = str.indexOf('{');
+    if (start === -1) return str;
 
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if (start !== -1 && end !== -1 && end > start) {
-        return text.substring(start, end + 1);
+    let sub = str.substring(start).trim();
+
+    let inString = false;
+    let isEscaped = false;
+    const stack: string[] = [];
+
+    for (let i = 0; i < sub.length; i++) {
+        const char = sub[i];
+
+        if (isEscaped) {
+            isEscaped = false;
+            continue;
+        }
+
+        if (char === '\\' && inString) {
+            isEscaped = true;
+            continue;
+        }
+
+        if (char === '"') {
+            inString = !inString;
+            continue;
+        }
+
+        if (!inString) {
+            if (char === '{') {
+                stack.push('}');
+            } else if (char === '[') {
+                stack.push(']');
+            } else if (char === '}' || char === ']') {
+                if (stack.length > 0 && stack[stack.length - 1] === char) {
+                    stack.pop();
+                }
+            }
+        }
     }
 
-    return text.trim();
+    if (inString) {
+        sub += '"';
+    }
+
+    sub = sub.replace(/[,:\s]+$/, '');
+
+    while (stack.length > 0) {
+        sub += stack.pop();
+    }
+
+    return sub;
+};
+
+const cleanJsonResponse = (text: string): string => {
+    let cleaned = text;
+    const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+    if (jsonMatch) {
+        cleaned = jsonMatch[1];
+    } else {
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if (start !== -1 && end !== -1 && end > start) {
+            cleaned = text.substring(start, end + 1);
+        } else if (start !== -1) {
+            cleaned = text.substring(start);
+        } else {
+            cleaned = text.trim();
+        }
+    }
+
+    if (!isValidJson(cleaned)) {
+        const repaired = repairJson(cleaned);
+        if (isValidJson(repaired)) {
+            console.log('[LLM] 🔧 Successfully auto-repaired truncated/incomplete JSON response');
+            return repaired;
+        }
+    }
+
+    return cleaned;
 };
 
 /** True if `str` parses as JSON. Used to detect models that emit reasoning/prose
@@ -165,63 +239,63 @@ export const generateContent = async ({
             }
 
         } else {
-            // Use OpenRouter with the mapped model (defaults to "openrouter/free")
+            // Use OpenRouter with model fallbacks
             const openrouterKey = systemKeys.openrouter;
-            const modelId = selectedModel === 'deepseek-v4-flash' ? 'deepseek/deepseek-v4-flash' : 'openrouter/free';
-            
-            let openrouterResponse: Response | null = null;
-            let openrouterError = '';
+            const primaryModel = selectedModel === 'deepseek-v4-flash' ? 'deepseek/deepseek-v4-flash' : 'openrouter/free';
+            const modelsToTry = Array.from(new Set([
+                primaryModel,
+                'meta-llama/llama-3.3-70b-instruct:free',
+                'google/gemini-2.0-flash-lite-001'
+            ]));
 
             if (openrouterKey) {
-                console.log(`[LLM] Using OpenRouter API for ${selectedModel || 'default'} (model: ${modelId})`);
-                try {
-                    openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${openrouterKey}`,
-                            'HTTP-Referer': 'https://agentic-carousel.vercel.app',
-                            'X-Title': 'Agentic Carousel Generator',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            model: modelId,
-                            messages: [
-                                { role: 'system', content: systemPromptString ? `${SYSTEM_PROMPT}\n\n${systemPromptString}` : SYSTEM_PROMPT },
-                                { role: 'user', content: promptString }
-                            ],
-                            temperature: 0.2,
-                            max_tokens: 8000
-                        })
-                    });
+                for (const currentModel of modelsToTry) {
+                    console.log(`[LLM] Using OpenRouter API for ${selectedModel || 'default'} (model: ${currentModel})`);
+                    try {
+                        const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${openrouterKey}`,
+                                'HTTP-Referer': 'https://agentic-carousel.vercel.app',
+                                'X-Title': 'Agentic Carousel Generator',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                model: currentModel,
+                                messages: [
+                                    { role: 'system', content: systemPromptString ? `${SYSTEM_PROMPT}\n\n${systemPromptString}` : SYSTEM_PROMPT },
+                                    { role: 'user', content: promptString }
+                                ],
+                                response_format: { type: 'json_object' },
+                                temperature: 0.2,
+                                max_tokens: 8000
+                            })
+                        });
 
-                    if (openrouterResponse.ok) {
-                        const openrouterData = await openrouterResponse.json();
-                        const candidate = cleanAndDiagnose(openrouterData.choices?.[0], modelId, 'openrouter');
-                        // A 200 does NOT mean usable output: free reasoning models
-                        // (e.g. gpt-oss-120b) often emit chain-of-thought prose and
-                        // truncate before any JSON. Only accept parseable JSON —
-                        // otherwise leave result null so the Groq fallback fires.
-                        if (isValidJson(candidate)) {
-                            result = candidate;
-                            if (openrouterData.usage) {
-                                wrappedOnTokenUsage({
-                                    promptTokens: openrouterData.usage.prompt_tokens || 0,
-                                    completionTokens: openrouterData.usage.completion_tokens || 0,
-                                    totalTokens: openrouterData.usage.total_tokens || (openrouterData.usage.prompt_tokens || 0) + (openrouterData.usage.completion_tokens || 0),
-                                    cachedTokens: openrouterData.usage.cached_tokens || 0
-                                });
+                        if (openrouterResponse.ok) {
+                            const openrouterData = await openrouterResponse.json();
+                            const candidate = cleanAndDiagnose(openrouterData.choices?.[0], currentModel, 'openrouter');
+                            if (isValidJson(candidate)) {
+                                result = candidate;
+                                if (openrouterData.usage) {
+                                    wrappedOnTokenUsage({
+                                        promptTokens: openrouterData.usage.prompt_tokens || 0,
+                                        completionTokens: openrouterData.usage.completion_tokens || 0,
+                                        totalTokens: openrouterData.usage.total_tokens || (openrouterData.usage.prompt_tokens || 0) + (openrouterData.usage.completion_tokens || 0),
+                                        cachedTokens: openrouterData.usage.cached_tokens || 0
+                                    });
+                                }
+                                break; // Successfully got valid JSON!
+                            } else {
+                                console.error(`[LLM] ⚠️ OpenRouter (${currentModel}) output was not valid JSON — attempting next model fallback.`);
                             }
                         } else {
-                            openrouterError = `OpenRouter returned 200 but the content was not valid JSON (model emitted reasoning/prose instead of JSON).`;
-                            console.error(`[LLM] ⚠️ OpenRouter output was not valid JSON — falling back to Groq. First 200 chars:`, candidate.slice(0, 200));
+                            const openrouterError = await openrouterResponse.text();
+                            console.error(`[LLM] OpenRouter (${currentModel}) API returned error status: ${openrouterResponse.status} ${openrouterError}`);
                         }
-                    } else {
-                        openrouterError = await openrouterResponse.text();
-                        console.error('[LLM] OpenRouter API returned error status:', openrouterResponse.status, openrouterError);
+                    } catch (err: any) {
+                        console.error(`[LLM] OpenRouter (${currentModel}) fetch failed:`, err?.message || String(err));
                     }
-                } catch (err: any) {
-                    openrouterError = err?.message || String(err);
-                    console.error('[LLM] OpenRouter fetch failed:', openrouterError);
                 }
             } else {
                 console.warn('[LLM] Missing OPENROUTER_API_KEY, skipping OpenRouter');
@@ -245,6 +319,7 @@ export const generateContent = async ({
                                     { role: 'system', content: systemPromptString ? `${SYSTEM_PROMPT}\n\n${systemPromptString}` : SYSTEM_PROMPT },
                                     { role: 'user', content: promptString }
                                 ],
+                                response_format: { type: 'json_object' },
                                 temperature: 0.2,
                                 max_tokens: 8000
                             })
@@ -264,11 +339,14 @@ export const generateContent = async ({
                                     });
                                 }
                             } else {
-                                console.error('[LLM] ⚠️ Groq output was not valid JSON either. First 200 chars:', candidate.slice(0, 200));
+                                console.error('[LLM] ⚠️ Groq output was not valid JSON either.');
                             }
                         } else {
                             const groqError = await groqResponse.text();
-                            console.error('[LLM] Groq API returned error status:', groqResponse.status, groqError);
+                            console.error(`[LLM] Groq API error status (${groqResponse.status}):`, groqError);
+                            if (groqResponse.status === 401) {
+                                console.warn('[LLM] 💡 Groq returned 401 Unauthorized. Check your GROQ_API_KEY setting in .env if you wish to use Groq as fallback.');
+                            }
                         }
                     } catch (err: any) {
                         console.error('[LLM] Groq fetch failed:', err?.message || String(err));
