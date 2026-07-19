@@ -23,7 +23,7 @@ export class FreeLimitError extends Error {
  * - If no API key: uses free tier (3 generations max)
  * - Throws FreeLimitError when free tier exhausted
  */
-export const generateContentFromAgent = async (prompt: string, responseSchema: any) => {
+export const generateContentFromAgent = async (prompt: string | { systemPrompt?: string; prompt: string }, responseSchema: any) => {
     // core/agents/*.ts run unmodified in the background worker (Node), where
     // there is no browser and no Zustand store to read model/BYOK state from.
     // Delegate to the Node-side gateway, which gets that context via

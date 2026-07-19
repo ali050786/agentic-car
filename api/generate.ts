@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { generateContent } from '../core/llm/generateContent.js';
 import { verifySessionAndConsumeLimit } from '../lib/apiAuth.js';
+import { langfuse } from '../core/llm/langfuse.js';
 
 /**
  * Vercel Serverless Function: AI Model Proxy
@@ -14,11 +15,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
+    let userId = 'unknown';
     try {
         const { prompt, selectedModel } = req.body;
 
         // Verify session and statefully consume free-tier limits on the server
-        let userId: string;
         try {
             const authResult = await verifySessionAndConsumeLimit(req);
             userId = authResult.userId;
@@ -38,6 +39,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         console.log(`[Vercel API] Running content generation for user ${userId}`);
+
+        // Start Langfuse Trace for direct API call
+        const trace = langfuse?.trace({
+            name: 'api-generate',
+            userId,
+            metadata: {
+                selectedModel,
+            }
+        });
+
         const result = await generateContent({
             prompt,
             selectedModel,
@@ -46,6 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 openrouter: process.env.OPENROUTER_API_KEY,
                 groq: process.env.GROQ_API_KEY,
             },
+            langfuseTrace: trace,
         });
 
         return res.status(200).json(result);
@@ -56,5 +68,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             error: 'AI proxy error',
             message: 'An internal error occurred during content generation. Please try again later.'
         });
+    } finally {
+        if (langfuse) {
+            try {
+                await langfuse.flushAsync();
+            } catch (err) {
+                console.error('[Vercel API] Langfuse flush failed:', err);
+            }
+        }
     }
 }

@@ -60,11 +60,12 @@ export interface SystemKeys {
 }
 
 export interface GenerateContentParams {
-    prompt: string;
+    prompt: string | { systemPrompt?: string; prompt: string };
     selectedModel?: string;
     /** System keys used for the free tier. */
     systemKeys?: SystemKeys;
     onTokenUsage?: (usage: { promptTokens: number; completionTokens: number; totalTokens: number; cachedTokens: number }) => void;
+    byok?: any;
 }
 
 /**
@@ -76,192 +77,254 @@ export const generateContent = async ({
     selectedModel,
     systemKeys = {},
     onTokenUsage,
-}: GenerateContentParams): Promise<any> => {
+    langfuseTrace,
+    langfuseSpan,
+}: GenerateContentParams & { langfuseTrace?: any; langfuseSpan?: any }): Promise<any> => {
     let result: string | undefined;
 
-    // System keys (free tier)
-    if (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet') {
-        const anthropicKey = systemKeys.anthropic;
-        if (!anthropicKey) {
-            throw new Error('Missing CLAUDE_API_KEY for Anthropic API');
-        }
+    let promptString = '';
+    let systemPromptString: string | undefined;
 
-        console.log(`[LLM] Using system Anthropic API for ${selectedModel}`);
-        const model = selectedModel === 'claude-sonnet' ? 'claude-sonnet-4-5-20250929' : 'claude-haiku-4-5-20251001';
-
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'x-api-key': anthropicKey,
-                'anthropic-version': '2023-06-01',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model,
-                max_tokens: 4096,
-                messages: [
-                    { role: 'user', content: `${SYSTEM_PROMPT}\n\n${prompt}` }
-                ],
-                temperature: 0.2,
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[LLM] Anthropic API error:', errorText);
-            throw new Error(`Anthropic API error: ${errorText}`);
-        }
-
-        const data = await response.json();
-        result = cleanJsonResponse(data.content[0]?.text || '{"slides":[]}');
-
-        if (onTokenUsage && data.usage) {
-            onTokenUsage({
-                promptTokens: data.usage.input_tokens || 0,
-                completionTokens: data.usage.output_tokens || 0,
-                totalTokens: (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0),
-                cachedTokens: data.usage.cache_read_input_tokens || 0
-            });
-        }
-
+    if (typeof prompt === 'object' && prompt !== null) {
+        promptString = prompt.prompt || '';
+        systemPromptString = prompt.systemPrompt;
     } else {
-        // Free Models Router (Auto) -> Use OpenRouter with "openrouter/free"
-        const openrouterKey = systemKeys.openrouter;
-        
-        let openrouterResponse: Response | null = null;
-        let openrouterError = '';
+        promptString = (prompt as string) || '';
+    }
 
-        if (openrouterKey) {
-            console.log(`[LLM] Using OpenRouter API for ${selectedModel || 'default'} (model: openrouter/free)`);
-            try {
-                openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${openrouterKey}`,
-                        'HTTP-Referer': 'https://agentic-carousel.vercel.app',
-                        'X-Title': 'Agentic Carousel Generator',
-                        'Content-Type': 'application/json'
-                    },
-            body: JSON.stringify({
-                        model: 'openrouter/free',
-                        messages: [
-                            { role: 'system', content: SYSTEM_PROMPT },
-                            { role: 'user', content: prompt }
-                        ],
-                        temperature: 0.2,
-                        max_tokens: 8000
-                    })
-                });
+    const resolvedModel = selectedModel === 'deepseek-v4-flash' ? 'deepseek/deepseek-v4-flash' : (selectedModel || 'openrouter/free');
+    const parent = langfuseSpan || langfuseTrace;
+    const generation = parent ? parent.generation({
+        name: selectedModel ? `generate-content-${selectedModel}` : 'generate-content',
+        model: resolvedModel,
+        input: { prompt: promptString, systemPrompt: systemPromptString },
+    }) : null;
 
-                if (openrouterResponse.ok) {
-                    const openrouterData = await openrouterResponse.json();
-                    const candidate = cleanAndDiagnose(openrouterData.choices?.[0], 'openrouter/free', 'free-tier router');
-                    // A 200 does NOT mean usable output: free reasoning models
-                    // (e.g. gpt-oss-120b) often emit chain-of-thought prose and
-                    // truncate before any JSON. Only accept parseable JSON —
-                    // otherwise leave result null so the Groq fallback fires.
-                    if (isValidJson(candidate)) {
-                        result = candidate;
-                        if (onTokenUsage && openrouterData.usage) {
-                            onTokenUsage({
-                                promptTokens: openrouterData.usage.prompt_tokens || 0,
-                                completionTokens: openrouterData.usage.completion_tokens || 0,
-                                totalTokens: openrouterData.usage.total_tokens || (openrouterData.usage.prompt_tokens || 0) + (openrouterData.usage.completion_tokens || 0),
-                                cachedTokens: openrouterData.usage.cached_tokens || 0
-                            });
-                        }
-                    } else {
-                        openrouterError = 'OpenRouter returned 200 but the content was not valid JSON (model emitted reasoning/prose instead of JSON).';
-                        console.error('[LLM] ⚠️ OpenRouter output was not valid JSON — falling back to Groq. First 200 chars:', candidate.slice(0, 200));
-                    }
-                } else {
-                    openrouterError = await openrouterResponse.text();
-                    console.error('[LLM] OpenRouter API returned error status:', openrouterResponse.status, openrouterError);
-                }
-            } catch (err: any) {
-                openrouterError = err?.message || String(err);
-                console.error('[LLM] OpenRouter fetch failed:', openrouterError);
-            }
-        } else {
-            console.warn('[LLM] Missing OPENROUTER_API_KEY, skipping OpenRouter');
+    let usageTracker: { promptTokens: number; completionTokens: number; totalTokens: number; cachedTokens: number } | undefined;
+    const wrappedOnTokenUsage = (usage: { promptTokens: number; completionTokens: number; totalTokens: number; cachedTokens: number }) => {
+        usageTracker = usage;
+        if (onTokenUsage) {
+            onTokenUsage(usage);
         }
+    };
 
-        // Fallback to Groq API if OpenRouter failed
-        if (!result) {
-            const groqKey = systemKeys.groq;
-            if (groqKey) {
-                console.log(`[LLM] OpenRouter failed, attempting fallback to Groq API (model: llama-3.3-70b-versatile)`);
+    try {
+        // System keys (free tier)
+        if (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet') {
+            const anthropicKey = systemKeys.anthropic;
+            if (!anthropicKey) {
+                throw new Error('Missing CLAUDE_API_KEY for Anthropic API');
+            }
+
+            console.log(`[LLM] Using system Anthropic API for ${selectedModel}`);
+            const model = selectedModel === 'claude-sonnet' ? 'claude-sonnet-4-5-20250929' : 'claude-haiku-4-5-20251001';
+
+            const systemPromptBlock = systemPromptString ? `${SYSTEM_PROMPT}\n\n${systemPromptString}` : SYSTEM_PROMPT;
+
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'x-api-key': anthropicKey,
+                    'anthropic-version': '2023-06-01',
+                    'Content-Type': 'application/json',
+                    'anthropic-beta': 'prompt-caching-2024-07-31'
+                },
+                body: JSON.stringify({
+                    model,
+                    max_tokens: 4096,
+                    system: [
+                        {
+                            type: 'text',
+                            text: systemPromptBlock,
+                            cache_control: { type: 'ephemeral' }
+                        }
+                    ],
+                    messages: [
+                        { role: 'user', content: promptString }
+                    ],
+                    temperature: 0.2,
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[LLM] Anthropic API error:', errorText);
+                throw new Error(`Anthropic API error: ${errorText}`);
+            }
+
+            const data = await response.json();
+            result = cleanJsonResponse(data.content[0]?.text || '{"slides":[]}');
+
+            if (data.usage) {
+                wrappedOnTokenUsage({
+                    promptTokens: data.usage.input_tokens || 0,
+                    completionTokens: data.usage.output_tokens || 0,
+                    totalTokens: (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0),
+                    cachedTokens: data.usage.cache_read_input_tokens || 0
+                });
+            }
+
+        } else {
+            // Use OpenRouter with the mapped model (defaults to "openrouter/free")
+            const openrouterKey = systemKeys.openrouter;
+            const modelId = selectedModel === 'deepseek-v4-flash' ? 'deepseek/deepseek-v4-flash' : 'openrouter/free';
+            
+            let openrouterResponse: Response | null = null;
+            let openrouterError = '';
+
+            if (openrouterKey) {
+                console.log(`[LLM] Using OpenRouter API for ${selectedModel || 'default'} (model: ${modelId})`);
                 try {
-                    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${groqKey}`,
+                            'Authorization': `Bearer ${openrouterKey}`,
+                            'HTTP-Referer': 'https://agentic-carousel.vercel.app',
+                            'X-Title': 'Agentic Carousel Generator',
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            model: 'llama-3.3-70b-versatile',
+                            model: modelId,
                             messages: [
-                                { role: 'system', content: SYSTEM_PROMPT },
-                                { role: 'user', content: prompt }
+                                { role: 'system', content: systemPromptString ? `${SYSTEM_PROMPT}\n\n${systemPromptString}` : SYSTEM_PROMPT },
+                                { role: 'user', content: promptString }
                             ],
                             temperature: 0.2,
                             max_tokens: 8000
                         })
                     });
 
-                    if (groqResponse.ok) {
-                        const groqData = await groqResponse.json();
-                        const candidate = cleanAndDiagnose(groqData.choices?.[0], 'llama-3.3-70b-versatile', 'groq-fallback');
+                    if (openrouterResponse.ok) {
+                        const openrouterData = await openrouterResponse.json();
+                        const candidate = cleanAndDiagnose(openrouterData.choices?.[0], modelId, 'openrouter');
+                        // A 200 does NOT mean usable output: free reasoning models
+                        // (e.g. gpt-oss-120b) often emit chain-of-thought prose and
+                        // truncate before any JSON. Only accept parseable JSON —
+                        // otherwise leave result null so the Groq fallback fires.
                         if (isValidJson(candidate)) {
                             result = candidate;
-                            if (onTokenUsage && groqData.usage) {
-                                onTokenUsage({
-                                    promptTokens: groqData.usage.prompt_tokens || 0,
-                                    completionTokens: groqData.usage.completion_tokens || 0,
-                                    totalTokens: groqData.usage.total_tokens || (groqData.usage.prompt_tokens || 0) + (groqData.usage.completion_tokens || 0),
-                                    cachedTokens: groqData.usage.cached_tokens || 0
+                            if (openrouterData.usage) {
+                                wrappedOnTokenUsage({
+                                    promptTokens: openrouterData.usage.prompt_tokens || 0,
+                                    completionTokens: openrouterData.usage.completion_tokens || 0,
+                                    totalTokens: openrouterData.usage.total_tokens || (openrouterData.usage.prompt_tokens || 0) + (openrouterData.usage.completion_tokens || 0),
+                                    cachedTokens: openrouterData.usage.cached_tokens || 0
                                 });
                             }
                         } else {
-                            console.error('[LLM] ⚠️ Groq output was not valid JSON either. First 200 chars:', candidate.slice(0, 200));
+                            openrouterError = `OpenRouter returned 200 but the content was not valid JSON (model emitted reasoning/prose instead of JSON).`;
+                            console.error(`[LLM] ⚠️ OpenRouter output was not valid JSON — falling back to Groq. First 200 chars:`, candidate.slice(0, 200));
                         }
                     } else {
-                        const groqError = await groqResponse.text();
-                        console.error('[LLM] Groq API returned error status:', groqResponse.status, groqError);
+                        openrouterError = await openrouterResponse.text();
+                        console.error('[LLM] OpenRouter API returned error status:', openrouterResponse.status, openrouterError);
                     }
                 } catch (err: any) {
-                    console.error('[LLM] Groq fetch failed:', err?.message || String(err));
+                    openrouterError = err?.message || String(err);
+                    console.error('[LLM] OpenRouter fetch failed:', openrouterError);
                 }
             } else {
-                console.warn('[LLM] Missing GROQ_API_KEY, cannot fall back to Groq');
+                console.warn('[LLM] Missing OPENROUTER_API_KEY, skipping OpenRouter');
+            }
+
+            // Fallback to Groq API if OpenRouter failed
+            if (!result) {
+                const groqKey = systemKeys.groq;
+                if (groqKey) {
+                    console.log(`[LLM] OpenRouter failed, attempting fallback to Groq API (model: llama-3.3-70b-versatile)`);
+                    try {
+                        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${groqKey}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                model: 'llama-3.3-70b-versatile',
+                                messages: [
+                                    { role: 'system', content: systemPromptString ? `${SYSTEM_PROMPT}\n\n${systemPromptString}` : SYSTEM_PROMPT },
+                                    { role: 'user', content: promptString }
+                                ],
+                                temperature: 0.2,
+                                max_tokens: 8000
+                            })
+                        });
+
+                        if (groqResponse.ok) {
+                            const groqData = await groqResponse.json();
+                            const candidate = cleanAndDiagnose(groqData.choices?.[0], 'llama-3.3-70b-versatile', 'groq-fallback');
+                            if (isValidJson(candidate)) {
+                                result = candidate;
+                                if (groqData.usage) {
+                                    wrappedOnTokenUsage({
+                                        promptTokens: groqData.usage.prompt_tokens || 0,
+                                        completionTokens: groqData.usage.completion_tokens || 0,
+                                        totalTokens: groqData.usage.total_tokens || (groqData.usage.prompt_tokens || 0) + (groqData.usage.completion_tokens || 0),
+                                        cachedTokens: groqData.usage.cached_tokens || 0
+                                    });
+                                }
+                            } else {
+                                console.error('[LLM] ⚠️ Groq output was not valid JSON either. First 200 chars:', candidate.slice(0, 200));
+                            }
+                        } else {
+                            const groqError = await groqResponse.text();
+                            console.error('[LLM] Groq API returned error status:', groqResponse.status, groqError);
+                        }
+                    } catch (err: any) {
+                        console.error('[LLM] Groq fetch failed:', err?.message || String(err));
+                    }
+                } else {
+                    console.warn('[LLM] Missing GROQ_API_KEY, cannot fall back to Groq');
+                }
+            }
+
+            // If both failed, throw a specific user friendly error
+            if (!result) {
+                throw new Error('Free API servers are busy or unavailable, please try again after some time.');
             }
         }
 
-        // If both failed, throw a specific user friendly error
-        if (!result) {
-            throw new Error('Free API servers are busy or unavailable, please try again after some time.');
+        const cleanedResult = result ? result.trim() : '';
+        
+        // Check if OpenRouter/Groq safety guardrail (Llama Guard) blocked the prompt
+        if (
+            cleanedResult === 'User Safety: safe' || 
+            cleanedResult === 'User Safety: unsafe' || 
+            cleanedResult.startsWith('User Safety:')
+        ) {
+            throw new Error(
+                'The free-tier AI safety filter (Llama Guard) flagged this request. ' +
+                'This usually happens when search queries, inputs, or chat messages contain sensitive terms (such as "password" or "credentials"). ' +
+                'Please try rephrasing your prompt without using those keywords, or switch to another model.'
+            );
         }
-    }
 
-    const cleanedResult = result ? result.trim() : '';
-    
-    // Check if OpenRouter/Groq safety guardrail (Llama Guard) blocked the prompt
-    if (
-        cleanedResult === 'User Safety: safe' || 
-        cleanedResult === 'User Safety: unsafe' || 
-        cleanedResult.startsWith('User Safety:')
-    ) {
-        throw new Error(
-            'The free-tier AI safety filter (Llama Guard) flagged this request. ' +
-            'This usually happens when search queries, inputs, or chat messages contain sensitive terms (such as "password" or "credentials"). ' +
-            'Please try rephrasing your prompt without using those keywords, or switch to another model.'
-        );
-    }
-
-    try {
-        return JSON.parse(cleanedResult);
-    } catch (e: any) {
-        console.error('[LLM] JSON parse failed. Raw response:', cleanedResult);
-        throw new Error(`The model returned invalid JSON structure: ${e.message || String(e)}`);
+        try {
+            const parsed = JSON.parse(cleanedResult);
+            if (generation) {
+                generation.update({
+                    output: cleanedResult,
+                    usage: usageTracker ? {
+                        inputTokens: usageTracker.promptTokens,
+                        outputTokens: usageTracker.completionTokens,
+                        totalTokens: usageTracker.totalTokens
+                    } : undefined
+                });
+                generation.end();
+            }
+            return parsed;
+        } catch (e: any) {
+            console.error('[LLM] JSON parse failed. Raw response:', cleanedResult);
+            throw new Error(`The model returned invalid JSON structure: ${e.message || String(e)}`);
+        }
+    } catch (err: any) {
+        if (generation) {
+            generation.update({
+                output: err.message || String(err),
+                metadata: { error: err.message || String(err) }
+            });
+            generation.end();
+        }
+        throw err;
     }
 };

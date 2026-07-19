@@ -456,6 +456,21 @@ function applyIntentGuards(userInput: string, brief: CreativeBrief): CreativeBri
         }
     }
 
+    // Guard 5 — honor explicit user slide/page/card count requests
+    const explicitSlideMatch = input.match(/\b(\d+)\s*(slides?|pages?|cards?)\b/i);
+    if (explicitSlideMatch) {
+        const requested = parseInt(explicitSlideMatch[1], 10);
+        const SLIDE_MIN = 2, SLIDE_MAX = 20;
+        const clamped = Math.max(SLIDE_MIN, Math.min(SLIDE_MAX, requested));
+        brief.suggestedSlideCount = clamped;
+        if (requested < SLIDE_MIN && !brief.slideCountNote) {
+            brief.slideCountNote = `Minimum is ${SLIDE_MIN} slides — generating ${SLIDE_MIN} for you.`;
+        } else if (requested > SLIDE_MAX && !brief.slideCountNote) {
+            brief.slideCountNote = `Maximum allowed is ${SLIDE_MAX} slides — I'll generate ${SLIDE_MAX} for you and we can always add more!`;
+        }
+        console.log(`🛡️ [CreativeDirector] Guard: override suggestedSlideCount to ${clamped} based on explicit request in prompt: "${explicitSlideMatch[0]}"`);
+    }
+
     return brief;
 }
 

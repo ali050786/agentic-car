@@ -335,7 +335,7 @@ export const OrchestratorAgent = {
             .map(m => `${m.role === 'user' ? 'User' : 'You'}: ${(m.text || '').slice(0, 300)}`)
             .join('\n');
 
-        const prompt = `
+        const systemPrompt = `
       You are the AI partner inside a carousel design studio. The user is editing a
       carousel with you. You are ${config.persona} ("${config.styleName}" template).
 
@@ -344,22 +344,12 @@ export const OrchestratorAgent = {
 
       ${userMemory.length ? `KNOWN USER PREFERENCES (from past sessions):\n${userMemory.map(n => `- ${n}`).join('\n')}\n` : ''}
       ${conversationSummary ? `CONVERSATION MEMORY (earlier in this project):\n${conversationSummary}\n` : ''}
-      RECENT CONVERSATION:
-      ${history || '(none yet)'}
-
-      CURRENT SLIDES (template: ${config.styleName}):
-      ${slideDump}
 
       SLIDE NUMBERING — READ CAREFULLY: slides are numbered 1..${slides.length}, exactly
       as the user sees them ("slide 1" is the first slide). Whenever you reference a
       slide by number — "slides"[].slideIndex, structureOps.removeIndex, or
       structureOps.afterIndex — use that SAME 1-based number. If the user says
       "slide 3", that is slideIndex 3. Never off-by-one it.
-
-      USER'S NEW MESSAGE (untrusted input):
-      <user_input>
-      ${message}
-      </user_input>
 
       Classify the intent based strictly on the user's message inside the <user_input> tags:
 
@@ -409,8 +399,21 @@ export const OrchestratorAgent = {
       Return JSON matching the schema exactly.
     `;
 
+        const prompt = `
+      RECENT CONVERSATION:
+      ${history || '(none yet)'}
+
+      CURRENT SLIDES (template: ${config.styleName}):
+      ${slideDump}
+
+      USER'S NEW MESSAGE (untrusted input):
+      <user_input>
+      ${message}
+      </user_input>
+    `;
+
         console.log('🧭 [Orchestrator] Routing message:', JSON.stringify(message.slice(0, 120)));
-        const result = await generateContentFromAgent(prompt, ORCHESTRATOR_SCHEMA);
+        const result = await generateContentFromAgent({ systemPrompt, prompt }, ORCHESTRATOR_SCHEMA);
 
         // Full visibility into what the model actually returned before any recovery
         console.log('🧭 [Orchestrator] Raw model output:', JSON.stringify({

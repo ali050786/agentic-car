@@ -37,3 +37,8 @@ dist-ssr
 # Build files
 build
 .cache
+
+# Generated / Debug dumps
+collected_code.md
+trace-*.json
+

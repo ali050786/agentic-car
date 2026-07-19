@@ -20,7 +20,7 @@ export const TemplateAgent = {
             const businessOk = creativeBrief.contentStrategy.businessMetaphorsAllowed !== false;
             const lines: string[] = [];
             if (ct === 'EDUCATIONAL') {
-                lines.push('CONTENT MODE: EDUCATIONAL — Write like a knowledgeable expert sharing accurate, well-structured information. No hype, no slang, no viral angles. Cite the data from the strategy.');
+                lines.push('CONTENT MODE: EDUCATIONAL — Write like a knowledgeable expert sharing accurate, well-structured information. Cite the data from the strategy. If user preferences request a specific creator style (like Tanmay Bhat), present this accurate educational info using that creator\'s voice, formatting, and tone.');
             } else if (ct === 'EDUTAINMENT') {
                 lines.push('CONTENT MODE: EDUTAINMENT — Blend solid information with light humor and accessible language. Energetic but still accurate.');
             } else if (ct === 'STORYTELLING') {
@@ -33,7 +33,7 @@ export const TemplateAgent = {
                 lines.push('CONTENT MODE: OPINION — Bold declarative statements with evidence. First-person allowed. Challenge assumptions.');
             }
             if (!businessOk) {
-                lines.push('CRITICAL TONE GUARD: Do NOT use LinkedIn buzzwords, growth-hacking jargon, "hustle" language, slang like "here\'s the tea", "Yo", "VIP pass", or Gen-Z idioms. Write for the actual audience described in the persona.');
+                lines.push('CRITICAL TONE GUARD: Do NOT use corporate LinkedIn buzzwords, generic growth-hacking templates, or boring "hustle" language. Keep it highly focused on the actual topic. If user preferences request a creator voice like Tanmay Bhat, feel free to use conversational internet slang and vernacular to fit that style, but avoid generic corporate jargon.');
             }
             if (creativeBrief.contentStrategy.stayFactuallyAccurate) {
                 lines.push('ACCURACY GUARD: Only state facts that appear in the strategy/angle above. Do NOT fabricate statistics, percentages, or named studies.');
@@ -50,7 +50,7 @@ export const TemplateAgent = {
       """
 
       User Constraints: ${customInstructions || 'None'}
-      ${userMemory && userMemory.length ? `\n      Known preferences of this user (respect them unless the constraints above contradict):\n${userMemory.map(n => `      - ${n}`).join('\n')}\n` : ''}
+      ${userMemory && userMemory.length ? `\n      Known preferences of this user (CRITICAL: You must adapt the tone, formatting, and voice to match these preferences):\n${userMemory.map(n => `      - ${n}`).join('\n')}\n` : ''}
       ${contentTypeNote ? `\n      ════════════════════════════════\n      CONTENT & TONE RULES\n      ════════════════════════════════\n      ${contentTypeNote}\n` : ''}
       ════════════════════════════════════════════════════════════════════════
       !! SLIDE COUNT — NON-NEGOTIABLE !!

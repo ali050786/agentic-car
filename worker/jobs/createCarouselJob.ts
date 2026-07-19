@@ -18,6 +18,7 @@ import { resolveTheme } from '../../utils/brandUtils';
 import { getPresetById } from '../../config/colorPresets';
 import { runWithAgentContext } from '../../core/llm/agentGateway';
 import { generateAndPersistDoodle } from '../doodleGen';
+import { langfuse } from '../../core/llm/langfuse';
 import { createCarouselServer } from '../carouselStoreServer';
 import { saveChatServer } from '../chatStoreServer';
 import { getUserMemory } from '../../lib/memoryServer';
@@ -85,9 +86,47 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
         cachedTokens: 0
     };
 
+    const trace = langfuse?.trace({
+        name: 'create-carousel',
+        userId,
+        metadata: {
+            topic: payload.topic,
+            inputMode: payload.inputMode,
+            slideCount: payload.slideCount,
+            selectedModel: payload.selectedModel,
+            selectedTemplate: payload.selectedTemplate,
+            presetId: payload.presetId,
+            brandMode: payload.brandMode,
+            format: payload.format,
+        }
+    });
+
+    const ctx = {
+        userId,
+        selectedModel: payload.selectedModel,
+        tokenTracker,
+        langfuseTrace: trace,
+        langfuseSpan: undefined as any,
+    };
+
     await runWithAgentContext(
-        { userId, selectedModel: payload.selectedModel, tokenTracker },
+        ctx,
         async () => {
+            const runAgentSpan = async <R>(name: string, input: any, fn: () => Promise<R>): Promise<R> => {
+                const span = trace ? trace.span({ name, input }) : null;
+                ctx.langfuseSpan = span;
+                try {
+                    const output = await fn();
+                    span?.end({ output });
+                    return output;
+                } catch (err: any) {
+                    span?.end({ output: { error: err.message || String(err) } });
+                    throw err;
+                } finally {
+                    ctx.langfuseSpan = undefined;
+                }
+            };
+
             await progress('Initializing AI agents...', 10);
 
             const effectiveInput = payload.sourceContent || payload.topic;
@@ -96,7 +135,11 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
             await progress('Analyzing content density & needs...', 20);
             let researchAnalysis;
             try {
-                researchAnalysis = await ResearchAgent.analyzeInputNeeds(effectiveInput);
+                researchAnalysis = await runAgentSpan(
+                    'ResearchAgent.analyzeInputNeeds',
+                    { input: effectiveInput },
+                    () => ResearchAgent.analyzeInputNeeds(effectiveInput)
+                );
             } catch (err) {
                 console.error('[createCarouselJob] Research analysis failed:', err);
                 researchAnalysis = { strategy: 'NONE' as const, reasoning: 'Research analysis failed, skipping.', searchQueries: [] };
@@ -105,7 +148,11 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
             let finalContent = effectiveInput;
             if (researchAnalysis.strategy !== 'NONE') {
                 await progress('Researching for trends & data...', 30);
-                const researchData = await ResearchAgent.performResearch(researchAnalysis.searchQueries);
+                const researchData = await runAgentSpan(
+                    'ResearchAgent.performResearch',
+                    { queries: researchAnalysis.searchQueries },
+                    () => ResearchAgent.performResearch(researchAnalysis.searchQueries)
+                );
                 finalContent += researchData;
             }
 
@@ -115,11 +162,20 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
             await progress(strategyLabel, 40);
             let viralAngle = '';
             try {
-                viralAngle = await StrategistAgent.generateViralAngle(
-                    finalContent,
-                    inputType,
-                    payload.customInstructions || '',
-                    payload.creativeBrief
+                viralAngle = await runAgentSpan(
+                    'StrategistAgent.generateViralAngle',
+                    {
+                        finalContentLength: finalContent.length,
+                        inputType,
+                        customInstructions: payload.customInstructions,
+                        creativeBrief: payload.creativeBrief
+                    },
+                    () => StrategistAgent.generateViralAngle(
+                        finalContent,
+                        inputType,
+                        payload.customInstructions || '',
+                        payload.creativeBrief
+                    )
                 );
             } catch (err) {
                 console.error('[createCarouselJob] Strategist Agent failed, falling back to raw input:', err);
@@ -145,11 +201,19 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
 
 
             await progress('Designing slides & writing copy...', 60);
-            const result = await TemplateAgent.generate(context, payload.selectedTemplate || 'template-1');
+            const result = await runAgentSpan(
+                'TemplateAgent.generate',
+                { context, selectedTemplate: payload.selectedTemplate },
+                () => TemplateAgent.generate(context, payload.selectedTemplate || 'template-1')
+            );
 
             result.slides = polishSlides(result.slides);
             await progress('Proofreading copy...', 75);
-            result.slides = await ProofreaderAgent.proofread(result.slides, payload.creativeBrief);
+            result.slides = await runAgentSpan(
+                'ProofreaderAgent.proofread',
+                { slideCount: result.slides.length, creativeBrief: payload.creativeBrief },
+                () => ProofreaderAgent.proofread(result.slides, payload.creativeBrief)
+            );
             result.slides = polishSlides(result.slides);
 
 
@@ -162,7 +226,11 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
                 await progress('Art Director: designing sketches...', 82);
                 let fluxPrompts: string[];
                 try {
-                    fluxPrompts = await ArtDirectorAgent.generatePrompts(result.slides, viralAngle || context.sourceContent);
+                    fluxPrompts = await runAgentSpan(
+                        'ArtDirectorAgent.generatePrompts',
+                        { slideCount: result.slides.length, viralAngleOrSource: viralAngle || context.sourceContent },
+                        () => ArtDirectorAgent.generatePrompts(result.slides, viralAngle || context.sourceContent)
+                    );
                 } catch (err) {
                     console.error('[createCarouselJob] Art Director failed, falling back to topic prompts:', err);
                     fluxPrompts = result.slides.map(s => s.doodlePrompt || '');
@@ -203,7 +271,11 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
                             if (currentJob.status === 'error' && (currentJob.error === 'Cancelled' || currentJob.error === 'Cancelled by user' || currentJob.statusMessage === 'Cancelled.' || currentJob.statusMessage === 'Cancelled by user')) {
                                 throw new Error('Cancelled by user');
                             }
-                            const doodleUrl = await generateAndPersistDoodle(item.fluxPrompt, '2:3', jobSeed);
+                            const doodleUrl = await runAgentSpan(
+                                'DoodleImageGeneration',
+                                { prompt: item.fluxPrompt, index: item.index },
+                                () => generateAndPersistDoodle(item.fluxPrompt, '2:3', jobSeed)
+                            );
 
                             result.slides[item.index] = { 
                                 ...result.slides[item.index], 

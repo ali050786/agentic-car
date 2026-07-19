@@ -7,6 +7,7 @@
 import { OrchestratorAgent } from '../../core/agents/OrchestratorAgent';
 import { generateAndPersistDoodle } from '../doodleGen';
 import { runWithAgentContext } from '../../core/llm/agentGateway';
+import { langfuse } from '../../core/llm/langfuse';
 import { updateCarouselContentServer, assertOwnsCarousel } from '../carouselStoreServer';
 import { loadChatServer, saveChatServer } from '../chatStoreServer';
 import { rememberUserPreference } from '../../lib/memoryServer';
@@ -52,23 +53,66 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
         cachedTokens: 0
     };
 
+    const trace = langfuse?.trace({
+        name: 'edit-carousel',
+        userId,
+        metadata: {
+            carouselId,
+            message: payload.message,
+            selectedModel: payload.selectedModel,
+            templateId: payload.templateId,
+        }
+    });
+
+    const ctx = {
+        userId,
+        selectedModel: payload.selectedModel,
+        tokenTracker,
+        langfuseTrace: trace,
+        langfuseSpan: undefined as any,
+    };
+
     await runWithAgentContext(
-        { userId, selectedModel: payload.selectedModel, tokenTracker },
+        ctx,
         async () => {
+            const runAgentSpan = async <R>(name: string, input: any, fn: () => Promise<R>): Promise<R> => {
+                const span = trace ? trace.span({ name, input }) : null;
+                ctx.langfuseSpan = span;
+                try {
+                    const output = await fn();
+                    span?.end({ output });
+                    return output;
+                } catch (err: any) {
+                    span?.end({ output: { error: err.message || String(err) } });
+                    throw err;
+                } finally {
+                    ctx.langfuseSpan = undefined;
+                }
+            };
+
             await progress('Thinking...', 20);
 
             const { messages: recentMessages, summary: conversationSummary } = await loadChatServer(carouselId);
             const userMemory = await getUserMemory(userId);
 
-            const result = await OrchestratorAgent.handle({
-                message: payload.message,
-                slides: payload.slides,
-                templateId: payload.templateId,
-                selectedSlideIndex: payload.selectedSlideIndex,
-                recentMessages: recentMessages.filter(m => !m.running),
-                conversationSummary,
-                userMemory,
-            });
+            const result = await runAgentSpan(
+                'OrchestratorAgent.handle',
+                {
+                    messageLength: payload.message.length,
+                    slideCount: payload.slides.length,
+                    templateId: payload.templateId,
+                    selectedSlideIndex: payload.selectedSlideIndex,
+                },
+                () => OrchestratorAgent.handle({
+                    message: payload.message,
+                    slides: payload.slides,
+                    templateId: payload.templateId,
+                    selectedSlideIndex: payload.selectedSlideIndex,
+                    recentMessages: recentMessages.filter(m => !m.running),
+                    conversationSummary,
+                    userMemory,
+                })
+            );
 
             let slides = payload.slides;
 
@@ -81,7 +125,11 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
                 const carouselSeed = Math.abs(
                     Array.from(carouselId).reduce((acc, ch) => (Math.imul(31, acc) + ch.charCodeAt(0)) | 0, 0)
                 ) % 2_147_483_647;
-                const doodleUrl = await generateAndPersistDoodle(result.imageBrief, '2:3', carouselSeed);
+                const doodleUrl = await runAgentSpan(
+                    'DoodleImageGeneration',
+                    { prompt: result.imageBrief, index: result.imageSlideIndex },
+                    () => generateAndPersistDoodle(result.imageBrief, '2:3', carouselSeed)
+                );
                 slides = slides.map((s, i) => (i === result.imageSlideIndex ? { ...s, doodleUrl, doodlePrompt: result.imageBrief! } : s));
             }
             // "design" intents (template/preset/format/pattern/signature) are applied

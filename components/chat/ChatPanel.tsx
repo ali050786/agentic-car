@@ -32,6 +32,7 @@ const TEMPLATE_OPTIONS = [
 
 const MODEL_OPTIONS = [
     { id: 'gpt-oss-120b', label: 'Free Models Router (Auto)' },
+    { id: 'deepseek-v4-flash', label: 'DeepSeek v4 Flash' },
     { id: 'claude-sonnet', label: 'Claude Sonnet' },
     { id: 'claude-haiku', label: 'Claude Haiku' },
 ];
@@ -249,7 +250,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                 // The Creative Director estimates a natural count, but if the user
                 // explicitly wrote "N slides" we always honour that number.
                 // Regex is far more reliable than the LLM for this extraction.
-                const explicitSlideMatch = text.match(/\b(\d+)\s*slides?\b/i);
+                const explicitSlideMatch = text.match(/\b(\d+)\s*(slides?|pages?|cards?)\b/i);
                 if (explicitSlideMatch) {
                     const requested = parseInt(explicitSlideMatch[1], 10);
                     const SLIDE_MIN = 2, SLIDE_MAX = 20;
