@@ -40,7 +40,7 @@ const MODEL_OPTIONS = [
 const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Portuguese', 'Hindi'];
 
 interface ChatPanelProps {
-    onFirstPrompt: (text: string, brief?: CreativeBrief) => Promise<void>;
+    onFirstPrompt: (text: string, brief?: CreativeBrief, userMessage?: string) => Promise<void>;
 }
 
 
@@ -155,9 +155,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         setDraft('');
         const pendingAttachment = attachedFile;
         setAttachedFile(null);
+        // The verbatim message (full URL included) — shown in the bubble AND
+        // persisted as the user turn, so the saved thread is a faithful record.
+        const userMessageText = text || `📎 Attached: ${pendingAttachment?.name}`;
         addChatMessage({
             id: nextId(), role: 'user',
-            text: text || `📎 Attached: ${pendingAttachment?.name}`,
+            text: userMessageText,
         });
 
         if (!hasSlides) {
@@ -274,7 +277,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                     });
                 }
 
-                await onFirstPrompt(topicForRun, intentResult.brief);
+                await onFirstPrompt(topicForRun, intentResult.brief, userMessageText);
 
 
 
@@ -302,16 +305,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
             events: [{ label: 'Thinking...', done: false }]
         });
         try {
+            // Server-authoritative: the worker loads the deck + thread from Appwrite
+            // by carouselId, so the client ships only the message + which slide is
+            // in focus. Never re-send slides/theme (that was the stale-state bug).
             const { jobId } = await createJob({
                 type: 'edit',
                 carouselId: activeCarouselId,
                 payload: {
                     message: text,
-                    slides: state.slides,
-                    theme: state.theme,
-                    templateId: state.selectedTemplate,
                     selectedSlideIndex: scope,
-                    selectedModel: state.selectedModel,
                 },
             });
             setActiveJobId(jobId);
@@ -363,7 +365,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
             runMessageId.current = runId;
             addChatMessage({ id: runId, role: 'assistant', text: '', running: true, events: [] });
             try {
-                await onFirstPrompt(promptText);
+                await onFirstPrompt(promptText, undefined, promptText);
             } catch (e: any) {
                 runMessageId.current = null;
                 if (e instanceof FreeLimitError) {
@@ -376,7 +378,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
             // Edit flow
             const runId = nextId();
             runMessageId.current = runId;
-            const store = useCarouselStore.getState();
             addChatMessage({
                 id: runId, role: 'assistant', text: '', running: true,
                 events: [{ label: 'Thinking...', done: false }]
@@ -387,11 +388,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                     carouselId: activeCarouselId,
                     payload: {
                         message: promptText,
-                        slides: store.slides,
-                        theme: store.theme,
-                        templateId: store.selectedTemplate,
                         selectedSlideIndex: selectedSlideIndex,
-                        selectedModel: store.selectedModel,
                     },
                 });
                 setActiveJobId(jobId);
@@ -566,7 +563,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                                         const state = useCarouselStore.getState();
                                         const brief = await CreativeDirectorAgent.synthesiseBrief(pendingTopic, combinedAnswers, state.sourceContent);
                                         setPendingBrief(brief);
-                                        await onFirstPrompt(pendingTopic, brief);
+                                        await onFirstPrompt(pendingTopic, brief, pendingTopic);
                                     } catch (e: any) {
                                         updateChatMessage(runId2, { running: false, error: true, text: e?.message || 'Generation failed.' });
                                     }

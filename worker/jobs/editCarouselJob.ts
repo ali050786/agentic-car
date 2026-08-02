@@ -1,27 +1,25 @@
 /**
- * Server-side edit/refine job handler. OrchestratorAgent.ts runs completely
- * unchanged (it has no browser dependencies) — this just supplies the job
- * context, executes the returned design actions, and persists the result.
+ * Server-authoritative continuation-turn handler.
+ *
+ * Every turn after creation flows through here. Unlike the old fork, the client
+ * ships only { message, selectedSlideIndex } — the worker loads the deck, the
+ * conversation thread, and user memory from Appwrite by id (source of truth),
+ * runs the unified planner's edit turn (classify → guard-backed execution), and
+ * appends the turn to the per-message `chat_messages` thread.
  */
 
-import { OrchestratorAgent } from '../../core/agents/OrchestratorAgent';
-import { generateAndPersistDoodle } from '../doodleGen';
+import { runEditTurn, CreateJobPayload } from '../../core/agents/CarouselPlanner';
 import { runWithAgentContext } from '../../core/llm/agentGateway';
 import { langfuse } from '../../core/llm/langfuse';
-import { updateCarouselContentServer, assertOwnsCarousel } from '../carouselStoreServer';
-import { loadChatServer, saveChatServer } from '../chatStoreServer';
+import { loadCarouselServer, assertOwnsCarousel } from '../carouselStoreServer';
+import { loadThread, appendMessage, migrateThreadIfNeeded } from '../threadStoreServer';
+import { loadCarouselBriefServer } from '../briefStoreServer';
 import { rememberUserPreference } from '../../lib/memoryServer';
-import { getUserMemory } from '../../lib/memoryServer';
 import { GenerationJob, updateJob } from '../jobStore';
-import { SlideContent, CarouselTheme, ChatMessage } from '../../types';
 
 export interface EditJobPayload {
     message: string;
-    slides: SlideContent[];
-    theme: CarouselTheme;
-    templateId: string;
     selectedSlideIndex: number | null;
-    selectedModel: string;
 }
 
 export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
@@ -60,7 +58,6 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
             carouselId,
             message: payload.message,
             selectedModel: 'openrouter/deepseek-v4-flash',
-            templateId: payload.templateId,
         }
     });
 
@@ -90,76 +87,50 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
                 }
             };
 
-            await progress('Thinking...', 20);
+            await progress('Thinking...', 15);
 
-            const { messages: recentMessages, summary: conversationSummary } = await loadChatServer(carouselId);
-            const userMemory = await getUserMemory(userId);
+            // ── Server-authoritative load: deck + thread from Appwrite by id ──────
+            // Backfill any legacy chat_history blob into chat_messages once, so a
+            // pre-existing carousel's history is visible to this (and every) turn.
+            await migrateThreadIfNeeded(carouselId, userId);
+            const deck = await loadCarouselServer(carouselId);
+            const thread = await loadThread(carouselId);
+            const carouselBrief = await loadCarouselBriefServer(carouselId);
 
-            const result = await runAgentSpan(
-                'OrchestratorAgent.handle',
-                {
-                    messageLength: payload.message.length,
-                    slideCount: payload.slides.length,
-                    templateId: payload.templateId,
-                    selectedSlideIndex: payload.selectedSlideIndex,
-                },
-                () => OrchestratorAgent.handle({
-                    message: payload.message,
-                    slides: payload.slides,
-                    templateId: payload.templateId,
-                    selectedSlideIndex: payload.selectedSlideIndex,
-                    recentMessages: recentMessages.filter(m => !m.running),
-                    conversationSummary,
-                    userMemory,
-                })
-            );
+            // The planner's edit turn owns intent classification, guard-backed
+            // execution, doodle regen, the honesty guard, and deck persistence.
+            const editPayload = {
+                isEditTurn: true,
+                carouselId,
+                message: payload.message,
+                existingSlides: deck.slides,
+                existingTheme: deck.theme,
+                selectedTemplate: deck.templateId,
+                format: deck.format,
+                presetId: deck.presetId,
+                selectedSlideIndex: payload.selectedSlideIndex ?? null,
+                conversationThread: thread,
+                conversationSummary: '',
+                carouselBrief: carouselBrief ?? undefined,
+                selectedModel: 'openrouter/deepseek-v4-flash',
+            } as unknown as CreateJobPayload;
 
-            let slides = payload.slides;
+            const result = await runEditTurn({ userId, payload: editPayload, progress, runAgentSpan });
 
-            if (result.intent === 'copy' && result.slides) {
-                slides = result.slides;
-            } else if (result.intent === 'image' && result.imageBrief !== null && result.imageSlideIndex !== null) {
-                await progress(`Sketching a new image for slide ${result.imageSlideIndex + 1}...`, 60);
-                // Derive a stable seed from the carousel ID so this newly generated
-                // doodle matches the visual style of the existing slides in the carousel.
-                const carouselSeed = Math.abs(
-                    Array.from(carouselId).reduce((acc, ch) => (Math.imul(31, acc) + ch.charCodeAt(0)) | 0, 0)
-                ) % 2_147_483_647;
-                const doodleUrl = await runAgentSpan(
-                    'DoodleImageGeneration',
-                    { prompt: result.imageBrief, index: result.imageSlideIndex },
-                    () => generateAndPersistDoodle(result.imageBrief, '2:3', carouselSeed)
-                );
-                slides = slides.map((s, i) => (i === result.imageSlideIndex ? { ...s, doodleUrl, doodlePrompt: result.imageBrief! } : s));
-            }
-            // "design" intents (template/preset/format/pattern/signature) are applied
-            // client-side once the job completes — they're free, local UI state
-            // changes with no LLM-derived content to persist beyond the reply.
-
-            await progress('Saving...', 85);
-            if (result.intent === 'copy' || result.intent === 'structure' || result.intent === 'image') {
-                await updateCarouselContentServer(carouselId, { theme: payload.theme, slides });
-            }
-
-
+            // ── Persist the turn onto the ordered thread (user + assistant) ───────
             const cleanEvents = events.map(e => ({ ...e, done: true }));
-            const newMessages: ChatMessage[] = [
-                ...recentMessages,
-                { id: `msg-${Date.now()}-u`, role: 'user', text: payload.message },
-                { 
-                    id: `msg-${Date.now()}-a`, 
-                    role: 'assistant', 
-                    text: result.reply, 
-                    events: cleanEvents,
-                    tokenUsage: tokenTracker
-                },
-            ];
-            // Best-effort — the edit itself is already saved above; losing the
-            // chat log shouldn't fail a job that otherwise succeeded.
             try {
-                await saveChatServer(carouselId, userId, newMessages, conversationSummary, 0);
+                await appendMessage(carouselId, userId, {
+                    id: `msg-${Date.now()}-u`, role: 'user', text: payload.message,
+                });
+                await appendMessage(carouselId, userId, {
+                    id: `msg-${Date.now()}-a`, role: 'assistant', text: result.reply,
+                    events: cleanEvents, tokenUsage: tokenTracker,
+                });
             } catch (err) {
-                console.warn('[editCarouselJob] Failed to persist chat history (non-fatal):', err);
+                // The edit itself is already saved (runEditTurn persisted the deck);
+                // losing the chat log must not fail an otherwise-successful turn.
+                console.warn('[editCarouselJob] Failed to persist thread turn (non-fatal):', err);
             }
 
             if (result.memoryNote) {
@@ -173,7 +144,7 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
                 resultSummary: JSON.stringify({
                     reply: result.reply,
                     intent: result.intent,
-                    slides: result.intent === 'copy' || result.intent === 'structure' || result.intent === 'image' ? slides : undefined,
+                    slides: result.intent === 'copy' || result.intent === 'structure' || result.intent === 'image' || result.intent === 'regenerate' ? result.slides : undefined,
                     changedIndices: result.changedIndices,
                     designActions: result.designActions,
                     tokenUsage: tokenTracker,

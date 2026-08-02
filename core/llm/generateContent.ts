@@ -121,7 +121,7 @@ const cleanAndDiagnose = (choice: any, model: string, label: string): string => 
     const truncated = finishReason === 'length';
     if (truncated || parseError) {
         console.error(`[LLM] ⚠️ MODEL RESPONSE PROBLEM (${label}, ${model}): finishReason=${finishReason}, truncated=${truncated}, validJson=${!parseError}, rawLen=${(content || '').length}`);
-        if (truncated) console.error('[LLM]    → hit token limit; raise max_tokens or shrink the request');
+        if (truncated) console.error('[LLM]    → hit the model\'s output limit; shrink the request');
         if (parseError) console.error('[LLM]    → invalid JSON, first 300 chars:', cleaned.slice(0, 300));
     }
     return cleaned;
@@ -203,8 +203,7 @@ export const generateContent = async ({
                     { role: 'user', content: promptString }
                 ],
                 response_format: { type: 'json_object' },
-                temperature: 0.2,
-                max_tokens: 8000
+                temperature: 0.2
             })
         });
 

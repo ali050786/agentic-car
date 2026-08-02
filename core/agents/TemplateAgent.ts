@@ -20,7 +20,7 @@ export const TemplateAgent = {
             const businessOk = creativeBrief.contentStrategy.businessMetaphorsAllowed !== false;
             const lines: string[] = [];
             if (ct === 'EDUCATIONAL') {
-                lines.push('CONTENT MODE: EDUCATIONAL — Write like a knowledgeable expert sharing accurate, well-structured information. Cite the data from the strategy. If user preferences request a specific creator style (like Tanmay Bhat), present this accurate educational info using that creator\'s voice, formatting, and tone.');
+                lines.push('CONTENT MODE: EDUCATIONAL — Write like a knowledgeable expert sharing accurate, well-structured information. Cite the data from the strategy. Only if the user has EXPLICITLY named a creator or style to emulate, present this accurate educational info in that creator\'s voice, formatting, and tone; otherwise use a neutral, clear expert voice — do NOT invent or default to any particular creator persona.');
             } else if (ct === 'EDUTAINMENT') {
                 lines.push('CONTENT MODE: EDUTAINMENT — Blend solid information with light humor and accessible language. Energetic but still accurate.');
             } else if (ct === 'STORYTELLING') {
@@ -33,7 +33,7 @@ export const TemplateAgent = {
                 lines.push('CONTENT MODE: OPINION — Bold declarative statements with evidence. First-person allowed. Challenge assumptions.');
             }
             if (!businessOk) {
-                lines.push('CRITICAL TONE GUARD: Do NOT use corporate LinkedIn buzzwords, generic growth-hacking templates, or boring "hustle" language. Keep it highly focused on the actual topic. If user preferences request a creator voice like Tanmay Bhat, feel free to use conversational internet slang and vernacular to fit that style, but avoid generic corporate jargon.');
+                lines.push('CRITICAL TONE GUARD: Do NOT use corporate LinkedIn buzzwords, generic growth-hacking templates, or boring "hustle" language. Keep it highly focused on the actual topic. Only if the user has EXPLICITLY named a creator voice or an informal/slangy style may you use conversational slang and vernacular to fit it; otherwise stay in the tone described by the brief and do NOT default to a casual creator persona.');
             }
             if (creativeBrief.contentStrategy.stayFactuallyAccurate) {
                 lines.push('ACCURACY GUARD: Only state facts that appear in the strategy/angle above. Do NOT fabricate statistics, percentages, or named studies.');

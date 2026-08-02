@@ -16,7 +16,7 @@ export function buildPersona(brief: CreativeBrief | undefined, fallbackPersona: 
 
     const parts: string[] = [];
 
-    // Lead with the style reference if given (e.g. "Tanmay Bhat")
+    // Lead with the style reference ONLY when the user explicitly named one
     if (styleReference) {
         parts.push(`a writer who adopts the style of ${styleReference}`);
     } else {

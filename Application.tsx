@@ -267,7 +267,7 @@ const CarouselGenerator: React.FC = () => {
   // Chat-driven creation: the first chat message dispatches a background job
   // (hooks/useJobWatcher.ts, mounted below, applies the result once it's done)
   // instead of running the agent pipeline in this tab.
-  const handleFirstPrompt = async (text: string, creativeBrief?: import('./types').CreativeBrief) => {
+  const handleFirstPrompt = async (text: string, creativeBrief?: import('./types').CreativeBrief, userMessage?: string) => {
 
     if (!checkGuestLimit()) return;
     setTopic(text.length > 80 ? text.slice(0, 77) + '…' : text);
@@ -278,6 +278,7 @@ const CarouselGenerator: React.FC = () => {
       type: 'create',
       payload: {
         topic: text,
+        userMessage: userMessage ?? text,
         inputMode: state.inputMode,
         sourceContent: state.sourceContent,
         customInstructions: state.customInstructions,

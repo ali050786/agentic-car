@@ -123,6 +123,48 @@ export const assertOwnsCarousel = async (carouselId: string, userId: string): Pr
     if ((doc as any).userId !== userId) throw new ForbiddenError('You do not own this carousel');
 };
 
+import { TemplateId, CarouselFormat } from '../types';
+
+export interface LoadedCarousel {
+    slides: SlideContent[];
+    theme: CarouselTheme;
+    templateId: TemplateId;
+    format: CarouselFormat;
+    presetId: string;
+}
+
+/**
+ * Server-authoritative deck load. Reads the carousel doc by id and parses the
+ * JSON-stringified slides/theme back into the shapes the agents work with, so a
+ * continuation turn never has to trust client-supplied state. `templateType` is
+ * stored compactly (`template1`) — normalise it to a `TemplateId` (`template-1`).
+ */
+export const loadCarouselServer = async (carouselId: string): Promise<LoadedCarousel> => {
+    const doc: any = await databasesServer.getDocument(
+        serverConfig.databaseId,
+        serverConfig.carouselsCollectionId,
+        carouselId
+    );
+
+    const parse = <T>(raw: unknown, fallback: T): T => {
+        if (typeof raw !== 'string') return fallback;
+        try { return JSON.parse(raw) as T; } catch { return fallback; }
+    };
+
+    const rawTemplate: string = doc.templateType || 'template1';
+    const templateId = (rawTemplate.includes('-')
+        ? rawTemplate
+        : rawTemplate.replace(/^template(\d+)$/, 'template-$1')) as TemplateId;
+
+    return {
+        slides: parse<SlideContent[]>(doc.slides, []),
+        theme: parse<CarouselTheme>(doc.theme, {} as CarouselTheme),
+        templateId,
+        format: (doc.format === 'square' ? 'square' : 'portrait') as CarouselFormat,
+        presetId: doc.presetId || '',
+    };
+};
+
 export const updateCarouselContentServer = async (
     carouselId: string,
     updates: { theme?: CarouselTheme; slides?: SlideContent[] }

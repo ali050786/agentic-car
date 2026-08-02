@@ -460,7 +460,7 @@ function applyIntentGuards(userInput: string, brief: CreativeBrief): CreativeBri
     }
 
     // Guard 4 — a named style persona must come from the USER, not from the
-    // classifier copying an example name (e.g. "Tanmay Bhat") out of the prompt.
+    // classifier copying an example creator name out of the prompt.
     // buildPersona() turns styleReference into "a writer who adopts the style of X",
     // so an unsolicited value leaks a whole persona the user never asked for. Drop
     // any styleReference whose name does not actually appear in the user's input.

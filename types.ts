@@ -194,7 +194,7 @@ export interface ChatMessage {
 export type ContentType =
   | 'EDUCATIONAL'     // Factual explainer — stay on topic, no business metaphors
   | 'ENTERTAINMENT'   // Comedy / fun — factual accuracy nice but not critical
-  | 'EDUTAINMENT'     // Educational + funny (e.g. Tanmay Bhat style science)
+  | 'EDUTAINMENT'     // Educational + funny (e.g. an entertaining explainer style)
   | 'PROFESSIONAL'    // LinkedIn thought leadership — viral angle appropriate
   | 'STORYTELLING'    // Narrative arc — personal or historical story
   | 'HOW_TO'          // Step-by-step tutorial
@@ -210,6 +210,20 @@ export type IllustrationMode =
   | 'LITERAL'         // Draw actual subject matter (dinosaurs, asteroids)
   | 'METAPHORICAL'    // Abstract business metaphor scenes (current default)
   | 'CHARACTER';      // Expressive cartoon characters (comedy/entertainment)
+
+/**
+ * A per-carousel living brief — the persisted source of truth for a deck's
+ * intent. Authored at creation from the CreativeBrief + the generated deck, then
+ * injected into every edit turn so edits (especially whole-deck regenerate) stay
+ * consistent with the original premise/audience/voice instead of drifting off
+ * the current slides. Stored on the carousel doc as JSON (see carouselStoreServer).
+ */
+export interface CarouselBrief {
+  premise: string;      // the content spine / angle the deck argues
+  audience: string;     // who it's for
+  voice: string;        // tone / style
+  keyPoints: string[];  // the essential points the deck covers (kept in sync with the deck)
+}
 
 export interface CreativeBrief {
   topic: string;
@@ -236,7 +250,7 @@ export interface CreativeBrief {
   };
 
   creativeStyle: {
-    styleReference?: string;      // "Tanmay Bhat", "Paul Graham", etc.
+    styleReference?: string;      // a creator/author to emulate, ONLY when the user names one
     toneDescription: string;      // Prose description of voice/tone
     vocabulary: 'SIMPLE' | 'CASUAL' | 'PROFESSIONAL' | 'ACADEMIC';
     humorAllowed: boolean;
