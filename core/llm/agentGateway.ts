@@ -26,6 +26,8 @@ export interface AgentJobContext {
     };
     langfuseTrace?: any;
     langfuseSpan?: any;
+    /** Eval/internal only — skip the per-call free-tier gate. Default off. */
+    bypassFreeTier?: boolean;
 }
 
 const storage = new AsyncLocalStorage<AgentJobContext>();
@@ -54,7 +56,9 @@ export const generateContentFromAgentServer = async (prompt: string | { systemPr
         throw new Error('generateContentFromAgentServer called outside of runWithAgentContext — no job context available');
     }
 
-    await assertAndConsumeFreeTier(ctx.userId);
+    if (!ctx.bypassFreeTier) {
+        await assertAndConsumeFreeTier(ctx.userId);
+    }
 
     return generateContent({
         prompt,

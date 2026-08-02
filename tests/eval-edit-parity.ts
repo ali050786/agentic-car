@@ -17,7 +17,16 @@
 import 'dotenv/config';
 import { OrchestratorAgent } from '../core/agents/OrchestratorAgent';
 import { runEditTurn, CreateJobPayload } from '../core/agents/CarouselPlanner';
+import { runWithAgentContext } from '../core/llm/agentGateway';
 import { SlideContent } from '../types';
+
+// Agent LLM calls run through AsyncLocalStorage context under Node; establish
+// one per prompt. bypassFreeTier so the eval's many calls don't burn quota.
+const withCtx = <T>(fn: () => Promise<T>): Promise<T> =>
+  runWithAgentContext(
+    { userId: USER_ID, selectedModel: 'openrouter/deepseek-v4-flash', bypassFreeTier: true },
+    fn,
+  );
 
 const TEMPLATE_ID = 'template-1' as const;
 const USER_ID = process.env.EVAL_USER_ID || 'eval-user';
@@ -67,19 +76,19 @@ const main = async () => {
     let oldIntent = 'ERR', newIntent = 'ERR';
     let oldChanged = '-', newChanged = '-';
     try {
-      const o = await OrchestratorAgent.handle({
+      const o = await withCtx(() => OrchestratorAgent.handle({
         message, slides: deck(), templateId: TEMPLATE_ID, selectedSlideIndex: null,
         recentMessages: [], conversationSummary: '', userMemory: [],
-      });
+      }));
       oldIntent = o.intent;
       oldChanged = o.changedIndices.length ? o.changedIndices.join(',') : (o.designActions.length ? 'design' : (o.structureOps.length ? 'struct' : (o.imageBrief ? 'img' : '-')));
     } catch (e: any) { oldIntent = `ERR(${e?.message?.slice(0, 20)})`; }
 
     try {
-      const n = await runEditTurn({
+      const n = await withCtx(() => runEditTurn({
         userId: USER_ID, progress: noopProgress, runAgentSpan: runSpan,
         payload: { ...basePayload(), isEditTurn: true, dryRun: true, carouselId: 'eval', message, existingSlides: deck() },
-      });
+      }));
       newIntent = n.intent;
       newChanged = n.changedIndices.length ? n.changedIndices.join(',') : (n.designActions.length ? 'design' : (n.structureOps.length ? 'struct' : (n.imageBrief ? 'img' : '-')));
     } catch (e: any) { newIntent = `ERR(${e?.message?.slice(0, 20)})`; }
