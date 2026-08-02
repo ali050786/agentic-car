@@ -49,5 +49,6 @@ export const serverConfig = {
     profilesCollectionId: process.env.APPWRITE_PROFILES_COLLECTION_ID || process.env.VITE_APPWRITE_PROFILES_COLLECTION_ID || 'profiles',
     storageBucketId: process.env.APPWRITE_STORAGE_BUCKET_ID || process.env.VITE_APPWRITE_STORAGE_BUCKET_ID || '',
     chatHistoryCollectionId: 'chat_history',
+    chatMessagesCollectionId: process.env.APPWRITE_CHAT_MESSAGES_COLLECTION_ID || 'chat_messages',
     generationJobsCollectionId: process.env.APPWRITE_GENERATION_JOBS_COLLECTION_ID || 'generation_jobs',
 };
