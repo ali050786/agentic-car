@@ -124,13 +124,19 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
                     items: {
                         type: 'object',
                         properties: {
-                            variant: { type: 'string', enum: ['hero', 'body', 'list', 'closing'] },
+                            variant: { type: 'string', enum: ['hero', 'body', 'list', 'closing', 'stat', 'quote', 'split'] },
+                            blockType: { type: 'string', enum: ['hero', 'body', 'list', 'closing', 'stat', 'quote', 'split'] },
                             preHeader: { type: 'string' },
                             headline: { type: 'string' },
                             accentPhrase: { type: 'string' },
                             body: { type: 'string' },
                             listItems: { type: 'array', items: { type: 'string' } },
                             footer: { type: 'string' },
+                            statNumber: { type: 'string' },
+                            statLabel: { type: 'string' },
+                            quoteAuthor: { type: 'string' },
+                            splitLeft: { type: 'string' },
+                            splitRight: { type: 'string' },
                             icon: { type: 'string', enum: SHARED_ICONS },
                             doodleTopic: { type: 'string', enum: ALLOWED_DOODLE_TOPICS }
                         },
@@ -187,12 +193,19 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
                     items: {
                         type: 'object',
                         properties: {
-                            variant: { type: 'string', enum: ['hero', 'body', 'list', 'closing'] },
+                            variant: { type: 'string', enum: ['hero', 'body', 'list', 'closing', 'stat', 'quote', 'split'] },
+                            blockType: { type: 'string', enum: ['hero', 'body', 'list', 'closing', 'stat', 'quote', 'split'] },
                             preHeader: { type: 'string' },
                             headline: { type: 'string' },
                             accentPhrase: { type: 'string' },
                             body: { type: 'string' },
                             listItems: { type: 'array', items: { type: 'string' } },
+                            footer: { type: 'string' },
+                            statNumber: { type: 'string' },
+                            statLabel: { type: 'string' },
+                            quoteAuthor: { type: 'string' },
+                            splitLeft: { type: 'string' },
+                            splitRight: { type: 'string' },
                             icon: { type: 'string', enum: SHARED_ICONS },
                             doodleTopic: { type: 'string', enum: ALLOWED_DOODLE_TOPICS }
                         },
@@ -246,13 +259,19 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
                     items: {
                         type: 'object',
                         properties: {
-                            variant: { type: 'string', enum: ['hero', 'body', 'list', 'closing'] },
+                            variant: { type: 'string', enum: ['hero', 'body', 'list', 'closing', 'stat', 'quote', 'split'] },
+                            blockType: { type: 'string', enum: ['hero', 'body', 'list', 'closing', 'stat', 'quote', 'split'] },
                             preHeader: { type: 'string' },
                             headline: { type: 'string' },
                             body: { type: 'string' },
                             listItems: { type: 'array', items: { type: 'string' } },
                             footer: { type: 'string' },
                             accentPhrase: { type: 'string' },
+                            statNumber: { type: 'string' },
+                            statLabel: { type: 'string' },
+                            quoteAuthor: { type: 'string' },
+                            splitLeft: { type: 'string' },
+                            splitRight: { type: 'string' },
                             icon: { type: 'string', enum: SHARED_ICONS },
                             doodleTopic: { type: 'string', enum: ALLOWED_DOODLE_TOPICS }
                         },

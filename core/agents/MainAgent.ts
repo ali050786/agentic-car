@@ -17,8 +17,8 @@ export const repairVisualAssets = async () => {
 
   // Check if repair is actually needed
   // Only repair if T3 and missing doodleUrl, OR if T1 and missing icon
-  const needsDoodles = selectedTemplate === 'template-3' && slides.some(s => s.doodlePrompt && !s.doodleUrl && !(s as any).matchAttempted);
-  const needsIcons = selectedTemplate === 'template-1' && slides.some(s => !s.icon);
+  const needsDoodles = selectedTemplate === 'template-3' && slides.some(s => ((s as any).doodlePrompt || (s as any).visual?.doodlePrompt) && !((s as any).doodleUrl || (s as any).visual?.doodleUrl) && !(s as any).matchAttempted);
+  const needsIcons = selectedTemplate === 'template-1' && slides.some(s => !((s as any).icon || (s as any).visual?.icon));
 
   if (!needsDoodles && !needsIcons) return;
 
@@ -30,45 +30,60 @@ export const repairVisualAssets = async () => {
     // 1. Check which slides are missing metadata (doodleTopic or icon)
     const { SHARED_ICONS } = await import('../../config/constants');
 
-    const slidesToEnrich = slides.map((s, i) => ({
+    const slidesToEnrich = slides.map((s: any, i: number) => ({
       index: i,
-      headline: s.headline,
-      body: s.body,
-      hasIcon: !!s.icon && SHARED_ICONS.includes(s.icon),
-      hasDoodle: !!s.doodlePrompt
+      headline: s.headline || s.slots?.headline || '',
+      body: s.body || s.slots?.body || '',
+      hasIcon: !!(s.icon || s.visual?.icon) && SHARED_ICONS.includes(s.icon || s.visual?.icon),
+      hasDoodle: !!(s.doodlePrompt || s.visual?.doodlePrompt)
     })).filter(s => !s.hasIcon || !s.hasDoodle);
 
     if (slidesToEnrich.length > 0) {
       console.log(`[MainAgent] Enriching ${slidesToEnrich.length} slides with missing visual metadata...`);
       const enrichmentData = await getVisualAssetsForSlides(slidesToEnrich);
 
-      const updatedSlides = [...slides];
+      const updatedSlides = [...slides] as any[];
       enrichmentData.forEach((data: any, i: number) => {
         const originalIndex = slidesToEnrich[i].index;
+        const target = updatedSlides[originalIndex];
+        const newIcon = target.icon || target.visual?.icon || data.icon;
+        const newDoodlePrompt = target.doodlePrompt || target.visual?.doodlePrompt ||
+          `A black pencil sketch doodle of a ${data.doodleTopic.replace(/_/g, ' ')} isolated on a pure white background (#ffffff) with cross-hatch texture.`;
+
         updatedSlides[originalIndex] = {
-          ...updatedSlides[originalIndex],
-          icon: updatedSlides[originalIndex].icon || data.icon,
-          doodlePrompt: updatedSlides[originalIndex].doodlePrompt ||
-            `A black pencil sketch doodle of a ${data.doodleTopic.replace(/_/g, ' ')} isolated on a pure white background (#ffffff) with cross-hatch texture.`
+          ...target,
+          icon: newIcon,
+          doodlePrompt: newDoodlePrompt,
+          visual: {
+            ...(target.visual || {}),
+            icon: newIcon,
+            doodlePrompt: newDoodlePrompt,
+          }
         };
       });
       store.setSlides(updatedSlides);
     }
 
     // 2. Trigger doodle matching for any slides that now have prompts but no URLs
-    const currentSlides = useCarouselStore.getState().slides;
+    const currentSlides = useCarouselStore.getState().slides as any[];
     const finalSlides = [...currentSlides];
     let changed = false;
 
     for (let i = 0; i < finalSlides.length; i++) {
       const slide = finalSlides[i];
-      if (slide.doodlePrompt && !slide.doodleUrl && !(slide as any).matchAttempted) {
-        const imageUrl = findMatchingImage(slide.doodlePrompt);
+      const doodlePrompt = slide.doodlePrompt || slide.visual?.doodlePrompt;
+      const doodleUrl = slide.doodleUrl || slide.visual?.doodleUrl;
+      if (doodlePrompt && !doodleUrl && !slide.matchAttempted) {
+        const imageUrl = findMatchingImage(doodlePrompt);
         finalSlides[i] = {
           ...slide,
           doodleUrl: imageUrl || undefined,
+          visual: {
+            ...(slide.visual || {}),
+            doodleUrl: imageUrl || undefined,
+          },
           matchAttempted: true // Custom property to prevent infinite loops
-        } as any;
+        };
         changed = true;
       }
     }

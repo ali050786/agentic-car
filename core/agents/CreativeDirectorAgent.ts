@@ -16,6 +16,27 @@
 import { generateContentFromAgent } from '../../services/aiService';
 import { CreativeBrief, QuickReplyChip } from '../../types';
 
+const WORD_TO_NUMBER: Record<string, number> = {
+    one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+    eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17,
+    eighteen: 18, nineteen: 19, twenty: 20,
+};
+
+export function parseExplicitSlideCount(text: string): number | null {
+    if (!text) return null;
+    const digitMatch = text.match(/\b(\d+)\s*[-_]?\s*(slides?|pages?|cards?)\b/i);
+    if (digitMatch) {
+        return parseInt(digitMatch[1], 10);
+    }
+    const wordsPattern = Object.keys(WORD_TO_NUMBER).join('|');
+    const wordMatch = text.match(new RegExp(`\\b(${wordsPattern})\\s*[-_]?\\s*(slides?|pages?|cards?)\\b`, 'i'));
+    if (wordMatch) {
+        const word = wordMatch[1].toLowerCase();
+        return WORD_TO_NUMBER[word] ?? null;
+    }
+    return null;
+}
+
 // ---------------------------------------------------------------------------
 // Schema: Turn 1 — Intent Analysis
 // ---------------------------------------------------------------------------
@@ -34,7 +55,7 @@ const INTENT_ANALYSIS_SCHEMA = {
                 topic: { type: 'string' },
                 suggestedSlideCount: {
                     type: 'number',
-                    description: 'Optimal number of slides. Hard bounds: min 2, max 20. Simple/punchy = 5-6. Standard = 7. Educational/complex = 8-10. Cap user requests at 20 and floor at 2.'
+                    description: 'Optimal number of slides. Hard bounds: min 2, max 20. If user requests N slides in prompt (e.g., 5 slides, eight pages), set suggestedSlideCount = N. Otherwise dynamically choose 4-12 based on content depth. NEVER hardcode or default to 7.'
                 },
                 outputLanguage: {
                     type: 'string',
@@ -208,17 +229,10 @@ Populate the "brief" object using the user's initial input and their clarificati
 
 SLIDE COUNT GUIDANCE (populate suggestedSlideCount in the brief):
 - Absolute minimum: 2 slides. Absolute maximum: 20 slides.
-- 2-4 slides: User explicitly wants very few slides (e.g. "2 slides", "super short")
-- 5-6 slides: Simple, punchy opinion or single insight
-- 7 slides: Default for most topics
-- 8-9 slides: Multi-step how-to or moderately complex topic
-- 10+ slides: Rich educational content (history, science, deep-dive)
-- 20 slides: Maximum — only if user explicitly requests it
-- If the user requests FEWER than 2 slides: set suggestedSlideCount=2 and populate
-  slideCountNote with a friendly message: "Minimum is 2 slides — generating 2 for you."
-- If the user requests MORE than 20 slides: set suggestedSlideCount=20 and populate
-  slideCountNote: "Maximum allowed is 20 slides — I'll generate 20 for you and we can refine from there!"
-- If no count is specified: choose naturally based on content type.
+- If user explicitly requests N slides in prompt (in digits or words, e.g. "5 slides", "eight pages", "3 cards"): MUST set suggestedSlideCount = N.
+- If no count is specified by user: Dynamically determine slide count based on topic complexity and depth (e.g. 4-5 for concise topics, 6-8 for standard/educational topics, 8-12 for deep-dives). DO NOT default to a fixed count of 7.
+- If user requests FEWER than 2 slides: set suggestedSlideCount=2 and populate slideCountNote: "Minimum is 2 slides — generating 2 for you."
+- If user requests MORE than 20 slides: set suggestedSlideCount=20 and populate slideCountNote: "Maximum allowed is 20 slides — I'll generate 20 for you and we can refine from there!"
 
 LANGUAGE DETECTION:
 - Default is "English".
@@ -350,10 +364,13 @@ export const CreativeDirectorAgent = {
 // ---------------------------------------------------------------------------
 
 function buildNeutralFallback(topic: string): CreativeBrief {
+    const requestedCount = parseExplicitSlideCount(topic);
+    const suggestedSlideCount = requestedCount !== null ? Math.max(2, Math.min(20, requestedCount)) : 5;
+
     return {
         topic,
         contentType: 'EDUCATIONAL',
-        suggestedSlideCount: 7,
+        suggestedSlideCount,
         audience: { type: 'GENERAL', description: 'a general audience curious about this topic' },
 
         creativeStyle: {
@@ -456,19 +473,18 @@ function applyIntentGuards(userInput: string, brief: CreativeBrief): CreativeBri
         }
     }
 
-    // Guard 5 — honor explicit user slide/page/card count requests
-    const explicitSlideMatch = input.match(/\b(\d+)\s*(slides?|pages?|cards?)\b/i);
-    if (explicitSlideMatch) {
-        const requested = parseInt(explicitSlideMatch[1], 10);
+    // Guard 5 — honor explicit user slide/page/card count requests (digits or words)
+    const explicitCount = parseExplicitSlideCount(input);
+    if (explicitCount !== null) {
         const SLIDE_MIN = 2, SLIDE_MAX = 20;
-        const clamped = Math.max(SLIDE_MIN, Math.min(SLIDE_MAX, requested));
+        const clamped = Math.max(SLIDE_MIN, Math.min(SLIDE_MAX, explicitCount));
         brief.suggestedSlideCount = clamped;
-        if (requested < SLIDE_MIN && !brief.slideCountNote) {
+        if (explicitCount < SLIDE_MIN && !brief.slideCountNote) {
             brief.slideCountNote = `Minimum is ${SLIDE_MIN} slides — generating ${SLIDE_MIN} for you.`;
-        } else if (requested > SLIDE_MAX && !brief.slideCountNote) {
+        } else if (explicitCount > SLIDE_MAX && !brief.slideCountNote) {
             brief.slideCountNote = `Maximum allowed is ${SLIDE_MAX} slides — I'll generate ${SLIDE_MAX} for you and we can always add more!`;
         }
-        console.log(`🛡️ [CreativeDirector] Guard: override suggestedSlideCount to ${clamped} based on explicit request in prompt: "${explicitSlideMatch[0]}"`);
+        console.log(`🛡️ [CreativeDirector] Guard: override suggestedSlideCount to ${clamped} based on explicit request: ${explicitCount}`);
     }
 
     return brief;

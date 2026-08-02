@@ -1,4 +1,4 @@
-import { CreativeBrief } from '../../types';
+import { CreativeBrief, StructuredMemory } from '../../types';
 
 /**
  * Shared input context passed to TemplateAgent (and read by MainAgent when
@@ -14,7 +14,7 @@ export interface AgentContext {
     outputLanguage: string;
     slideCount: number;
     viralAngle?: string;       // The Strategist's output (content spine/arc/angle)
-    userMemory?: string[];     // Durable cross-carousel preferences (memoryService)
+    userMemory?: string[] | StructuredMemory;     // Durable cross-carousel preferences (memoryService)
     creativeBrief?: CreativeBrief; // The Creative Director's intent brief
 }
 

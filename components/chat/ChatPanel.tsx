@@ -10,7 +10,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { MemoryAgent } from '../../core/agents/MemoryAgent';
-import { CreativeDirectorAgent } from '../../core/agents/CreativeDirectorAgent';
+import { CreativeDirectorAgent, parseExplicitSlideCount } from '../../core/agents/CreativeDirectorAgent';
 import { createJob, cancelJob } from '../../services/jobService';
 import { FreeLimitError } from '../../services/aiService';
 import { detectInputMode } from '../../utils/inputDetector';
@@ -250,15 +250,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                 // The Creative Director estimates a natural count, but if the user
                 // explicitly wrote "N slides" we always honour that number.
                 // Regex is far more reliable than the LLM for this extraction.
-                const explicitSlideMatch = text.match(/\b(\d+)\s*(slides?|pages?|cards?)\b/i);
-                if (explicitSlideMatch) {
-                    const requested = parseInt(explicitSlideMatch[1], 10);
+                const requestedCount = parseExplicitSlideCount(text);
+                if (requestedCount !== null) {
                     const SLIDE_MIN = 2, SLIDE_MAX = 20;
-                    const clamped = Math.max(SLIDE_MIN, Math.min(SLIDE_MAX, requested));
+                    const clamped = Math.max(SLIDE_MIN, Math.min(SLIDE_MAX, requestedCount));
                     intentResult.brief.suggestedSlideCount = clamped;
-                    if (requested < SLIDE_MIN && !intentResult.brief.slideCountNote) {
+                    if (requestedCount < SLIDE_MIN && !intentResult.brief.slideCountNote) {
                         intentResult.brief.slideCountNote = `Minimum is ${SLIDE_MIN} slides — generating ${SLIDE_MIN} for you.`;
-                    } else if (requested > SLIDE_MAX && !intentResult.brief.slideCountNote) {
+                    } else if (requestedCount > SLIDE_MAX && !intentResult.brief.slideCountNote) {
                         intentResult.brief.slideCountNote = `Maximum allowed is ${SLIDE_MAX} slides — I'll generate ${SLIDE_MAX} for you and we can always add more!`;
                     }
                 }
@@ -664,15 +663,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                         title="Template Style"
                     >
                         {TEMPLATE_OPTIONS.map(t => <option key={t.id} value={t.id} className="bg-neutral-900">Style: {t.label}</option>)}
-                    </select>
-
-                    <select
-                        value={selectedModel}
-                        onChange={e => setModel(e.target.value)}
-                        className="bg-black/30 border border-white/10 rounded-md text-[11px] text-neutral-300 px-1.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
-                        title="AI Model"
-                    >
-                        {MODEL_OPTIONS.map(m => <option key={m.id} value={m.id} className="bg-neutral-900">Model: {m.label}</option>)}
                     </select>
                 </div>
 

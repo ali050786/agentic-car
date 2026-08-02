@@ -9,8 +9,8 @@
 import { databases, config } from '../lib/appwriteClient';
 import { BrandKit } from '../types';
 
-// Note: Profiles collection should use userId as document ID
-const PROFILES_COLLECTION_ID = import.meta.env.VITE_APPWRITE_PROFILES_COLLECTION_ID || 'profiles';
+const getEnv = (key: string) => (typeof import.meta !== 'undefined' && (import.meta as any).env ? (import.meta as any).env[key] : process.env[key]);
+const PROFILES_COLLECTION_ID = getEnv('VITE_APPWRITE_PROFILES_COLLECTION_ID') || 'profiles';
 
 /**
  * Update user's global brand kit in their profile

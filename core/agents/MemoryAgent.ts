@@ -1,26 +1,23 @@
-/**
- * Conversation compaction — keeps long chat sessions coherent without an
- * unbounded transcript. The orchestrator only ever sees the last ~10 raw
- * messages (see OrchestratorAgent's recentMessages slice); once a
- * conversation grows past that window, this folds the messages about to
- * scroll out into the rolling per-carousel summary instead of just
- * dropping them — a running "what's happened" account, not just the
- * durable-preference notes memoryNote already captures.
- *
- * Never blocks or breaks the chat: a failed compaction falls back to a
- * deterministic (non-LLM) fold so nothing is silently lost, and the result
- * is hard-capped so it can never grow past what a persisted field can hold.
- */
-
 import { generateContentFromAgent } from '../../services/aiService';
-import { ChatMessage } from '../../types';
+import { ChatMessage, StructuredMemory } from '../../types';
 
 const COMPACT_SCHEMA = {
-    type: 'object',
-    properties: {
-        summary: { type: 'string', description: 'The updated, still-compact running summary.' },
-    },
-    required: ['summary'],
+  type: 'object',
+  properties: {
+    summary: { type: 'string', description: 'The updated, still-compact running summary.' },
+  },
+  required: ['summary'],
+};
+
+const DISTILL_SCHEMA = {
+  type: 'object',
+  properties: {
+    brandRules: { type: 'array', items: { type: 'string' } },
+    bannedWords: { type: 'array', items: { type: 'string' } },
+    tonePrefs: { type: 'array', items: { type: 'string' } },
+    pastDecisions: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['brandRules', 'bannedWords', 'tonePrefs', 'pastDecisions'],
 };
 
 const MAX_SUMMARY_CHARS = 4000;
@@ -28,26 +25,21 @@ const MAX_SUMMARY_CHARS = 4000;
 const capLength = (s: string): string => (s.length > MAX_SUMMARY_CHARS ? s.slice(-MAX_SUMMARY_CHARS) : s);
 
 const deterministicFallback = (existingSummary: string, messages: ChatMessage[]): string => {
-    const lines = messages.map(m => `${m.role === 'user' ? 'User' : 'Agent'}: ${(m.text || '').slice(0, 200)}`);
-    const combined = [existingSummary, ...lines].filter(Boolean).join('\n');
-    return capLength(combined);
+  const lines = messages.map((m) => `${m.role === 'user' ? 'User' : 'Agent'}: ${(m.text || '').slice(0, 200)}`);
+  const combined = [existingSummary, ...lines].filter(Boolean).join('\n');
+  return capLength(combined);
 };
 
 export const MemoryAgent = {
-    /**
-     * Folds `messagesToFold` (older messages about to leave the raw-history
-     * window) into `existingSummary`, returning an updated, still-compact
-     * summary — merged and condensed, not just appended.
-     */
-    compactHistory: async (existingSummary: string, messagesToFold: ChatMessage[]): Promise<string> => {
-        if (messagesToFold.length === 0) return existingSummary;
+  compactHistory: async (existingSummary: string, messagesToFold: ChatMessage[]): Promise<string> => {
+    if (messagesToFold.length === 0) return existingSummary;
 
-        try {
-            const transcript = messagesToFold
-                .map(m => `${m.role === 'user' ? 'User' : 'Agent'}: ${(m.text || '').slice(0, 300)}`)
-                .join('\n');
+    try {
+      const transcript = messagesToFold
+        .map((m) => `${m.role === 'user' ? 'User' : 'Agent'}: ${(m.text || '').slice(0, 300)}`)
+        .join('\n');
 
-            const prompt = `
+      const prompt = `
         You maintain a compact running summary of an ongoing carousel-editing conversation
         between a user and an AI design partner. The messages below are about to scroll out
         of the visible window — fold anything worth remembering into the summary.
@@ -65,18 +57,50 @@ export const MemoryAgent = {
         Return ONLY the updated summary text.
       `;
 
-            const result = await generateContentFromAgent(prompt, COMPACT_SCHEMA);
-            const summary = typeof result?.summary === 'string' ? result.summary.trim() : '';
+      const result = await generateContentFromAgent(prompt, COMPACT_SCHEMA);
+      const summary = typeof result?.summary === 'string' ? result.summary.trim() : '';
 
-            if (!summary) {
-                console.warn('[MemoryAgent] Empty summary returned — using deterministic fallback');
-                return deterministicFallback(existingSummary, messagesToFold);
-            }
+      if (!summary) {
+        console.warn('[MemoryAgent] Empty summary returned — using deterministic fallback');
+        return deterministicFallback(existingSummary, messagesToFold);
+      }
 
-            return capLength(summary);
-        } catch (err) {
-            console.warn('[MemoryAgent] Compaction failed, using deterministic fallback:', err);
-            return deterministicFallback(existingSummary, messagesToFold);
-        }
-    },
+      return capLength(summary);
+    } catch (err) {
+      console.warn('[MemoryAgent] Compaction failed, using deterministic fallback:', err);
+      return deterministicFallback(existingSummary, messagesToFold);
+    }
+  },
+
+  distillStructuredFacts: async (transcript: string): Promise<StructuredMemory> => {
+    if (!transcript) {
+      return { brandRules: [], bannedWords: [], tonePrefs: [], pastDecisions: [] };
+    }
+
+    try {
+      const prompt = `
+        Analyze the conversation transcript below and distill durable user facts into structured categories.
+
+        TRANSCRIPT:
+        ${transcript}
+
+        Categories:
+        - brandRules: Explicit brand guidelines (e.g. "always use high contrast background").
+        - bannedWords: Words, phrases, or symbols the user explicitly prohibits (e.g. "never use emojis", "banned: synergy").
+        - tonePrefs: Voice/tone preferences (e.g. "prefers direct contrarian tone").
+        - pastDecisions: Durable decisions or topic preferences made during generation.
+      `;
+
+      const result = await generateContentFromAgent(prompt, DISTILL_SCHEMA);
+      return {
+        brandRules: Array.isArray(result?.brandRules) ? result.brandRules : [],
+        bannedWords: Array.isArray(result?.bannedWords) ? result.bannedWords : [],
+        tonePrefs: Array.isArray(result?.tonePrefs) ? result.tonePrefs : [],
+        pastDecisions: Array.isArray(result?.pastDecisions) ? result.pastDecisions : [],
+      };
+    } catch (err) {
+      console.warn('[MemoryAgent] Distill structured facts failed:', err);
+      return { brandRules: [], bannedWords: [], tonePrefs: [], pastDecisions: [] };
+    }
+  },
 };

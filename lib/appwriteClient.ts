@@ -13,19 +13,19 @@ import { Client, Account, Databases, Storage, ID } from 'appwrite';
 // ENVIRONMENT VARIABLES
 // ============================================================================
 
-const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT;
-const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
-const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const carouselsCollectionId = import.meta.env.VITE_APPWRITE_CAROUSELS_COLLECTION_ID;
-const analyticsCollectionId = import.meta.env.VITE_APPWRITE_ANALYTICS_COLLECTION_ID;
-const storageBucketId = import.meta.env.VITE_APPWRITE_STORAGE_BUCKET_ID;
+const getEnv = (key: string) => (typeof import.meta !== 'undefined' && (import.meta as any).env ? (import.meta as any).env[key] : process.env[key]);
+
+const endpoint = getEnv('VITE_APPWRITE_ENDPOINT') || 'https://cloud.appwrite.io/v1';
+const projectId = getEnv('VITE_APPWRITE_PROJECT_ID') || '';
+const databaseId = getEnv('VITE_APPWRITE_DATABASE_ID') || '';
+const carouselsCollectionId = getEnv('VITE_APPWRITE_CAROUSELS_COLLECTION_ID') || '';
+const analyticsCollectionId = getEnv('VITE_APPWRITE_ANALYTICS_COLLECTION_ID') || '';
+const storageBucketId = getEnv('VITE_APPWRITE_STORAGE_BUCKET_ID') || '';
 
 // Validate environment variables
 if (!endpoint || !projectId) {
-    throw new Error(
-        'Missing Appwrite environment variables. ' +
-        'Please check that VITE_APPWRITE_ENDPOINT and VITE_APPWRITE_PROJECT_ID ' +
-        'are set in your .env file.'
+    console.warn(
+        '[appwriteClient] ⚠️ Missing VITE_APPWRITE_ENDPOINT or VITE_APPWRITE_PROJECT_ID environment variables.'
     );
 }
 

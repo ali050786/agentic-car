@@ -59,14 +59,14 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
         metadata: {
             carouselId,
             message: payload.message,
-            selectedModel: payload.selectedModel,
+            selectedModel: 'openrouter/deepseek-v4-flash',
             templateId: payload.templateId,
         }
     });
 
     const ctx = {
         userId,
-        selectedModel: payload.selectedModel,
+        selectedModel: 'openrouter/deepseek-v4-flash',
         tokenTracker,
         langfuseTrace: trace,
         langfuseSpan: undefined as any,

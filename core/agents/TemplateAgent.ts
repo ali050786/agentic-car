@@ -49,8 +49,21 @@ export const TemplateAgent = {
       ${viralAngle || sourceContent}
       """
 
-      User Constraints: ${customInstructions || 'None'}
-      ${userMemory && userMemory.length ? `\n      Known preferences of this user (CRITICAL: You must adapt the tone, formatting, and voice to match these preferences):\n${userMemory.map(n => `      - ${n}`).join('\n')}\n` : ''}
+      ${userMemory ? (() => {
+          if (Array.isArray(userMemory) && userMemory.length > 0) {
+            return `\n      Known preferences of this user:\n${userMemory.map(n => `      - ${n}`).join('\n')}\n`;
+          } else if (typeof userMemory === 'object' && !Array.isArray(userMemory)) {
+            const mem = userMemory as any;
+            const items = [
+              ...(mem.bannedWords || []).map((w: string) => `Banned Word: ${w}`),
+              ...(mem.brandRules || []).map((b: string) => `Brand Rule: ${b}`),
+              ...(mem.tonePrefs || []).map((t: string) => `Tone Pref: ${t}`),
+              ...(mem.pastDecisions || []).map((d: string) => `Preference: ${d}`),
+            ];
+            return items.length > 0 ? `\n      Known preferences of this user:\n${items.map(n => `      - ${n}`).join('\n')}\n` : '';
+          }
+          return '';
+      })() : ''}
       ${contentTypeNote ? `\n      ════════════════════════════════\n      CONTENT & TONE RULES\n      ════════════════════════════════\n      ${contentTypeNote}\n` : ''}
       ════════════════════════════════════════════════════════════════════════
       !! SLIDE COUNT — NON-NEGOTIABLE !!
@@ -140,20 +153,47 @@ export const TemplateAgent = {
             templateId === 'template-3' || templateId === 'template3' ||
             templateId === 'template-4' || templateId === 'template4';
         const slides = data.slides.map((s: any, i: number) => {
-            const slideVariant = s.variant || s.type;
+            const rawType = s.blockType || s.variant || s.type || 'body';
+            const blockType = rawType === 'cta' ? 'closing' : rawType;
+
+            const headline = keepCase ? (s.headline || '') : (s.headline || '').toUpperCase();
+            const preHeader = (s.preHeader || '').toUpperCase();
+            const body = s.body || '';
+            const listItems = s.listItems || [];
+            const footer = s.footer || '';
+            const accentPhrase = s.accentPhrase || undefined;
+            const icon = s.icon || config.defaultIcon;
+            const doodlePrompt = s.doodleTopic ? buildDoodlePrompt(s.doodleTopic, illustrationMode) : undefined;
 
             return {
                 id: `${templateId}-slide-${i}`,
-                variant: slideVariant,
-                headline: keepCase ? (s.headline || '') : (s.headline || '').toUpperCase(),
-                preHeader: (s.preHeader || '').toUpperCase(),
-                body: s.body || '',
-                listItems: s.listItems || [],
-                footer: s.footer || '',
-                icon: s.icon || config.defaultIcon,
-                accentPhrase: s.accentPhrase || undefined,
-                doodlePrompt: s.doodleTopic ? buildDoodlePrompt(s.doodleTopic, illustrationMode) : undefined
-
+                blockType,
+                variant: blockType,
+                headline,
+                preHeader,
+                body,
+                listItems,
+                footer,
+                accentPhrase,
+                icon,
+                doodlePrompt,
+                slots: {
+                    headline,
+                    preHeader,
+                    body,
+                    listItems,
+                    footer,
+                    accentPhrase,
+                    statNumber: s.statNumber || undefined,
+                    statLabel: s.statLabel || undefined,
+                    quoteAuthor: s.quoteAuthor || undefined,
+                    splitLeft: s.splitLeft || undefined,
+                    splitRight: s.splitRight || undefined,
+                },
+                visual: {
+                    icon,
+                    doodlePrompt,
+                }
             };
         });
 

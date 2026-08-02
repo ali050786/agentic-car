@@ -14,8 +14,9 @@ import { injectContentIntoSvg } from '../../utils/svgInjector';
 import { serializeStageForFigma } from '../../utils/figmaExport';
 import { exportSlideToJpg } from '../../utils/jpgExporter';
 import { exportSlideToPdf } from '../../utils/pdfExporter';
+import { exportCarouselToHtml } from '../../utils/htmlExporter';
 import { ArtifactSettingsPanel } from './ArtifactSettingsPanel';
-import { Copy, FileText, Image, Settings2, CheckCircle, Loader2, Edit3 } from 'lucide-react';
+import { Copy, FileText, Image, Settings2, CheckCircle, Loader2, Edit3, Code2 } from 'lucide-react';
 
 const TEMPLATE_NAMES: Record<string, string> = {
     'template-1': 'The Truth',
@@ -126,11 +127,13 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
 
         const flushAll = () => {
             const { slides, currentIndex, brandKit } = editCtxRef.current;
-            const slide = slides[currentIndex];
+            const slide = slides[currentIndex] as any;
             if (!slide) return;
             const patch: Record<string, any> = {};
+            const slotsPatch: Record<string, any> = {};
             const identityPatch: Record<string, string> = {};
-            let listItems = slide.listItems ? [...slide.listItems] : undefined;
+            const currentSlots = slide.slots || {};
+            let listItems = (slide.slots?.listItems || slide.listItems) ? [...(slide.slots?.listItems || slide.listItems)] : undefined;
             let listChanged = false;
 
             root.querySelectorAll<HTMLElement>('[data-edit-field]').forEach((el) => {
@@ -149,14 +152,22 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
                     if ((brandKit.identity.name ?? '') !== text) identityPatch.name = text;
                 } else if (field === 'brandTitle') {
                     if ((brandKit.identity.title ?? '') !== text) identityPatch.title = text;
-                } else if (((slide as any)[field] ?? '') !== text) {
-                    patch[field] = text;
+                } else {
+                    const existingVal = currentSlots[field] ?? slide[field] ?? '';
+                    if (existingVal !== text) {
+                        patch[field] = text;
+                        slotsPatch[field] = text;
+                    }
                 }
             });
-            if (listChanged) patch.listItems = listItems;
+            if (listChanged) {
+                patch.listItems = listItems;
+                slotsPatch.listItems = listItems;
+            }
+            if (Object.keys(slotsPatch).length > 0) {
+                patch.slots = { ...currentSlots, ...slotsPatch };
+            }
             if (Object.keys(patch).length > 0) updateSlide(currentIndex, patch);
-            // Signature name/title belong to the global brand kit, not the slide.
-            // (setBrandKit merges a partial identity at runtime.)
             if (Object.keys(identityPatch).length > 0) setBrandKit({ identity: identityPatch as any });
         };
 
@@ -252,6 +263,24 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         if (stageRef.current) await exportSlideToPdf(stageRef.current, currentIndex, selectedFormat);
     });
 
+    // Whole-deck HTML export — built from slide data (not the live stage), so it
+    // captures every slide regardless of which one is currently on canvas.
+    const handleHtml = () => withBusy('HTML export', async () => {
+        await exportCarouselToHtml({
+            templateId: selectedTemplate,
+            slides,
+            theme,
+            branding: effectiveBranding,
+            format: selectedFormat,
+            pattern: selectedPattern,
+            patternOpacity,
+            patternScale,
+            patternSpacing,
+            title: topic,
+        });
+        onShowToast?.('Carousel exported as standalone HTML', 'success');
+    });
+
     // Empty state: generation progress or a quiet canvas
     if (slides.length === 0) {
         return (
@@ -332,6 +361,10 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
                     <button onClick={handlePdf} disabled={!!busyAction} title="Export slide as PDF" aria-label="Export slide as PDF"
                         className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40">
                         {busyAction === 'PDF export' ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+                    </button>
+                    <button onClick={handleHtml} disabled={!!busyAction} title="Export carousel as standalone HTML" aria-label="Export carousel as standalone HTML"
+                        className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40">
+                        {busyAction === 'HTML export' ? <Loader2 size={14} className="animate-spin" /> : <Code2 size={14} />}
                     </button>
                 </div>
             </div>

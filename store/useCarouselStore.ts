@@ -41,7 +41,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     // Core carousel data
     topic: '',
     selectedTemplate: 'template-1',
-    selectedModel: 'gpt-oss-120b',
+    selectedModel: 'openrouter/deepseek-v4-flash',
     selectedFormat: 'portrait',
     selectedPattern: 1,
     patternOpacity: 0.1,
@@ -137,16 +137,49 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
 
     setError: (error: string | null) => set({ error }),
 
-    setSlides: (slides: SlideContent[]) => set({ slides }),
+    setSlides: (slides: any[]) => set({ slides }),
 
     setTheme: (theme: CarouselTheme) => set({ theme }),
 
-    updateSlide: (index: number, content: Partial<SlideContent>) => {
+    updateSlide: (index: number, content: Record<string, any>) => {
         const slides = get().slides;
         if (index >= 0 && index < slides.length) {
             const updatedSlides = [...slides];
-            updatedSlides[index] = { ...updatedSlides[index], ...content };
+            const target = updatedSlides[index] as any;
+            if (target && target.slots) {
+                const updatedSlots = { ...target.slots };
+                for (const [key, val] of Object.entries(content)) {
+                    if (key === 'slots') {
+                        Object.assign(updatedSlots, val);
+                    } else if (key in updatedSlots || ['headline', 'preHeader', 'body', 'listItems', 'footer', 'accentPhrase', 'statNumber', 'statLabel', 'quoteAuthor', 'splitLeft', 'splitRight'].includes(key)) {
+                        updatedSlots[key] = val;
+                    }
+                }
+                updatedSlides[index] = { ...target, ...content, slots: updatedSlots };
+            } else {
+                updatedSlides[index] = { ...target, ...content };
+            }
             set({ slides: updatedSlides });
+        }
+    },
+
+    updateSlideSlot: (index: number, slotName: string, value: any) => {
+        const slides = get().slides;
+        if (index >= 0 && index < slides.length) {
+            const updatedSlides = [...slides];
+            const target = updatedSlides[index] as any;
+            if (target) {
+                const currentSlots = target.slots || {};
+                updatedSlides[index] = {
+                    ...target,
+                    [slotName]: value,
+                    slots: {
+                        ...currentSlots,
+                        [slotName]: value,
+                    },
+                };
+                set({ slides: updatedSlides });
+            }
         }
     },
 
@@ -203,7 +236,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
         set({
             topic: '',
             selectedTemplate: 'template-1',
-            selectedModel: 'gpt-oss-120b',
+            selectedModel: 'openrouter/deepseek-v4-flash',
             selectedFormat: 'portrait',
             selectedPattern: 1,
             patternOpacity: 0.1,

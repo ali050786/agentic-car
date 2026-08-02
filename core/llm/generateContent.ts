@@ -148,7 +148,6 @@ export interface GenerateContentParams {
  */
 export const generateContent = async ({
     prompt,
-    selectedModel,
     systemKeys = {},
     onTokenUsage,
     langfuseTrace,
@@ -166,11 +165,11 @@ export const generateContent = async ({
         promptString = (prompt as string) || '';
     }
 
-    const resolvedModel = selectedModel === 'deepseek-v4-flash' ? 'deepseek/deepseek-v4-flash' : (selectedModel || 'openrouter/free');
+    const modelName = 'deepseek/deepseek-v4-flash';
     const parent = langfuseSpan || langfuseTrace;
     const generation = parent ? parent.generation({
-        name: selectedModel ? `generate-content-${selectedModel}` : 'generate-content',
-        model: resolvedModel,
+        name: 'generate-content-deepseek-v4-flash',
+        model: modelName,
         input: { prompt: promptString, systemPrompt: systemPromptString },
     }) : null;
 
@@ -183,183 +182,53 @@ export const generateContent = async ({
     };
 
     try {
-        // System keys (free tier)
-        if (selectedModel === 'claude-haiku' || selectedModel === 'claude-sonnet') {
-            const anthropicKey = systemKeys.anthropic;
-            if (!anthropicKey) {
-                throw new Error('Missing CLAUDE_API_KEY for Anthropic API');
-            }
+        const openrouterKey = systemKeys.openrouter;
+        if (!openrouterKey) {
+            throw new Error('Missing OPENROUTER_API_KEY for DeepSeek v4 Flash execution');
+        }
 
-            console.log(`[LLM] Using system Anthropic API for ${selectedModel}`);
-            const model = selectedModel === 'claude-sonnet' ? 'claude-sonnet-4-5-20250929' : 'claude-haiku-4-5-20251001';
+        console.log(`[LLM] Calling OpenRouter API with model ${modelName}`);
+        const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${openrouterKey}`,
+                'HTTP-Referer': 'https://agentic-carousel.vercel.app',
+                'X-Title': 'Agentic Carousel Generator',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: modelName,
+                messages: [
+                    { role: 'system', content: systemPromptString ? `${SYSTEM_PROMPT}\n\n${systemPromptString}` : SYSTEM_PROMPT },
+                    { role: 'user', content: promptString }
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.2,
+                max_tokens: 8000
+            })
+        });
 
-            const systemPromptBlock = systemPromptString ? `${SYSTEM_PROMPT}\n\n${systemPromptString}` : SYSTEM_PROMPT;
+        if (!openrouterResponse.ok) {
+            const openrouterError = await openrouterResponse.text();
+            console.error(`[LLM] OpenRouter API error status: ${openrouterResponse.status} ${openrouterError}`);
+            throw new Error(`OpenRouter API error (${openrouterResponse.status}): ${openrouterError}`);
+        }
 
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                    'x-api-key': anthropicKey,
-                    'anthropic-version': '2023-06-01',
-                    'Content-Type': 'application/json',
-                    'anthropic-beta': 'prompt-caching-2024-07-31'
-                },
-                body: JSON.stringify({
-                    model,
-                    max_tokens: 4096,
-                    system: [
-                        {
-                            type: 'text',
-                            text: systemPromptBlock,
-                            cache_control: { type: 'ephemeral' }
-                        }
-                    ],
-                    messages: [
-                        { role: 'user', content: promptString }
-                    ],
-                    temperature: 0.2,
-                })
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('[LLM] Anthropic API error:', errorText);
-                throw new Error(`Anthropic API error: ${errorText}`);
-            }
-
-            const data = await response.json();
-            result = cleanJsonResponse(data.content[0]?.text || '{"slides":[]}');
-
-            if (data.usage) {
+        const openrouterData = await openrouterResponse.json();
+        const candidate = cleanAndDiagnose(openrouterData.choices?.[0], modelName, 'openrouter');
+        if (isValidJson(candidate)) {
+            result = candidate;
+            if (openrouterData.usage) {
                 wrappedOnTokenUsage({
-                    promptTokens: data.usage.input_tokens || 0,
-                    completionTokens: data.usage.output_tokens || 0,
-                    totalTokens: (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0),
-                    cachedTokens: data.usage.cache_read_input_tokens || 0
+                    promptTokens: openrouterData.usage.prompt_tokens || 0,
+                    completionTokens: openrouterData.usage.completion_tokens || 0,
+                    totalTokens: openrouterData.usage.total_tokens || (openrouterData.usage.prompt_tokens || 0) + (openrouterData.usage.completion_tokens || 0),
+                    cachedTokens: openrouterData.usage.cached_tokens || 0
                 });
             }
-
         } else {
-            // Use OpenRouter with model fallbacks
-            const openrouterKey = systemKeys.openrouter;
-            const primaryModel = selectedModel === 'deepseek-v4-flash' ? 'deepseek/deepseek-v4-flash' : 'openrouter/free';
-            const modelsToTry = Array.from(new Set([
-                primaryModel,
-                'meta-llama/llama-3.3-70b-instruct:free',
-                'google/gemini-2.0-flash-lite-001'
-            ]));
-
-            if (openrouterKey) {
-                for (const currentModel of modelsToTry) {
-                    console.log(`[LLM] Using OpenRouter API for ${selectedModel || 'default'} (model: ${currentModel})`);
-                    try {
-                        const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${openrouterKey}`,
-                                'HTTP-Referer': 'https://agentic-carousel.vercel.app',
-                                'X-Title': 'Agentic Carousel Generator',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                model: currentModel,
-                                messages: [
-                                    { role: 'system', content: systemPromptString ? `${SYSTEM_PROMPT}\n\n${systemPromptString}` : SYSTEM_PROMPT },
-                                    { role: 'user', content: promptString }
-                                ],
-                                response_format: { type: 'json_object' },
-                                temperature: 0.2,
-                                max_tokens: 8000
-                            })
-                        });
-
-                        if (openrouterResponse.ok) {
-                            const openrouterData = await openrouterResponse.json();
-                            const candidate = cleanAndDiagnose(openrouterData.choices?.[0], currentModel, 'openrouter');
-                            if (isValidJson(candidate)) {
-                                result = candidate;
-                                if (openrouterData.usage) {
-                                    wrappedOnTokenUsage({
-                                        promptTokens: openrouterData.usage.prompt_tokens || 0,
-                                        completionTokens: openrouterData.usage.completion_tokens || 0,
-                                        totalTokens: openrouterData.usage.total_tokens || (openrouterData.usage.prompt_tokens || 0) + (openrouterData.usage.completion_tokens || 0),
-                                        cachedTokens: openrouterData.usage.cached_tokens || 0
-                                    });
-                                }
-                                break; // Successfully got valid JSON!
-                            } else {
-                                console.error(`[LLM] ⚠️ OpenRouter (${currentModel}) output was not valid JSON — attempting next model fallback.`);
-                            }
-                        } else {
-                            const openrouterError = await openrouterResponse.text();
-                            console.error(`[LLM] OpenRouter (${currentModel}) API returned error status: ${openrouterResponse.status} ${openrouterError}`);
-                        }
-                    } catch (err: any) {
-                        console.error(`[LLM] OpenRouter (${currentModel}) fetch failed:`, err?.message || String(err));
-                    }
-                }
-            } else {
-                console.warn('[LLM] Missing OPENROUTER_API_KEY, skipping OpenRouter');
-            }
-
-            // Fallback to Groq API if OpenRouter failed
-            if (!result) {
-                const groqKey = systemKeys.groq;
-                if (groqKey) {
-                    console.log(`[LLM] OpenRouter failed, attempting fallback to Groq API (model: llama-3.3-70b-versatile)`);
-                    try {
-                        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${groqKey}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                model: 'llama-3.3-70b-versatile',
-                                messages: [
-                                    { role: 'system', content: systemPromptString ? `${SYSTEM_PROMPT}\n\n${systemPromptString}` : SYSTEM_PROMPT },
-                                    { role: 'user', content: promptString }
-                                ],
-                                response_format: { type: 'json_object' },
-                                temperature: 0.2,
-                                max_tokens: 8000
-                            })
-                        });
-
-                        if (groqResponse.ok) {
-                            const groqData = await groqResponse.json();
-                            const candidate = cleanAndDiagnose(groqData.choices?.[0], 'llama-3.3-70b-versatile', 'groq-fallback');
-                            if (isValidJson(candidate)) {
-                                result = candidate;
-                                if (groqData.usage) {
-                                    wrappedOnTokenUsage({
-                                        promptTokens: groqData.usage.prompt_tokens || 0,
-                                        completionTokens: groqData.usage.completion_tokens || 0,
-                                        totalTokens: groqData.usage.total_tokens || (groqData.usage.prompt_tokens || 0) + (groqData.usage.completion_tokens || 0),
-                                        cachedTokens: groqData.usage.cached_tokens || 0
-                                    });
-                                }
-                            } else {
-                                console.error('[LLM] ⚠️ Groq output was not valid JSON either.');
-                            }
-                        } else {
-                            const groqError = await groqResponse.text();
-                            console.error(`[LLM] Groq API error status (${groqResponse.status}):`, groqError);
-                            if (groqResponse.status === 401) {
-                                console.warn('[LLM] 💡 Groq returned 401 Unauthorized. Check your GROQ_API_KEY setting in .env if you wish to use Groq as fallback.');
-                            }
-                        }
-                    } catch (err: any) {
-                        console.error('[LLM] Groq fetch failed:', err?.message || String(err));
-                    }
-                } else {
-                    console.warn('[LLM] Missing GROQ_API_KEY, cannot fall back to Groq');
-                }
-            }
-
-            // If both failed, throw a specific user friendly error
-            if (!result) {
-                throw new Error('Free API servers are busy or unavailable, please try again after some time.');
-            }
+            console.error('[LLM] ⚠️ OpenRouter output was not valid JSON.');
+            throw new Error('LLM output failed JSON validation.');
         }
 
         const cleanedResult = result ? result.trim() : '';

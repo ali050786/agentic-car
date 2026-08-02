@@ -76,6 +76,43 @@ export interface SlideContent {
   accentPhrase?: string; // Template-4: exact substring of headline rendered in the accent color
 }
 
+export type BlockType = 'hero' | 'body' | 'list' | 'closing' | 'cta' | 'stat' | 'quote' | 'split';
+
+export interface SlideLayoutSlots {
+  headline?: string;
+  preHeader?: string;
+  body?: string;
+  listItems?: (string | ListItemObject)[];
+  footer?: string;
+  accentPhrase?: string;
+  statNumber?: string;
+  statLabel?: string;
+  quoteAuthor?: string;
+  splitLeft?: string;
+  splitRight?: string;
+}
+
+export interface SlideLayoutVisual {
+  icon?: string;
+  doodlePrompt?: string;
+  doodleUrl?: string;
+}
+
+export interface SlideLayout {
+  id: string;
+  blockType: BlockType;
+  slots: SlideLayoutSlots;
+  styleOverrides?: Record<string, string>;
+  visual?: SlideLayoutVisual;
+}
+
+export interface StructuredMemory {
+  brandRules: string[];
+  bannedWords: string[];
+  tonePrefs: string[];
+  pastDecisions: string[];
+}
+
 export interface CarouselTheme {
   // Common / Template 1 & 2 Shared
   textDefault?: string;      // --text-default
@@ -226,7 +263,7 @@ export interface CarouselState {
   patternOpacity: number;   // User-controlled pattern opacity (0-1)
   patternScale: number;     // User-controlled pattern scale (0.5-2.0)
   patternSpacing: number;   // User-controlled pattern spacing (scale factor)
-  slides: SlideContent[];
+  slides: (SlideLayout | SlideContent)[];
   theme: CarouselTheme | null;
   isGenerating: boolean;
   error: string | null;
@@ -330,9 +367,10 @@ export interface CarouselState {
   setGenerationStatus: (status: string) => void;
   setGenerationProgress: (progress: number) => void;
   setError: (error: string | null) => void;
-  setSlides: (slides: SlideContent[]) => void;
+  setSlides: (slides: (SlideLayout | SlideContent)[]) => void;
   setTheme: (theme: CarouselTheme) => void;
-  updateSlide: (index: number, content: Partial<SlideContent>) => void;
+  updateSlide: (index: number, content: Partial<SlideContent> | Partial<SlideLayout> | Record<string, any>) => void;
+  updateSlideSlot?: (index: number, slotName: string, value: any) => void;
   setPendingDoodleSlides: (indices: number[]) => void;
   removePendingDoodleSlide: (index: number) => void;
   addChatMessage: (message: ChatMessage) => void;

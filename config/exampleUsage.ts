@@ -8,14 +8,14 @@
  */
 
 import { PRESETS, getPresetById } from './colorPresets';
-import { generateScale, generateAllScales, resolveTheme } from '../utils/brandUtils';
+import { generateColorScale, generateAllScales, resolveTheme } from '../utils/brandUtils';
 
 // ============================================================================
 // Example 1: Generate a single color scale
 // ============================================================================
 
 const primaryColor = '#3B82F6'; // Blue
-const primaryScale = generateScale(primaryColor);
+const primaryScale = generateColorScale(primaryColor);
 
 console.log('Single Scale Example:', primaryScale);
 // Output:

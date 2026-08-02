@@ -71,7 +71,10 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
       theme,
       slides,
       isPublic,
+      'preset',  // brandMode
       presetId,  // Save the active preset ID
+      undefined,
+      undefined,
       format  // Save the format
     );
 

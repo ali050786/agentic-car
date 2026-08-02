@@ -1,37 +1,48 @@
-/**
- * Server-side port of services/memoryService.ts. Same storage location
- * (Appwrite user prefs, `carouselMemory` field) — reads/writes go through
- * the privileged Users API instead of the client-session Account API.
- */
-
 import { usersServer } from './appwriteServer';
+import { StructuredMemory } from '../types';
+import { migrateMemory } from '../services/memoryService';
 
-const MAX_NOTES = 15;
+const MAX_BUCKET_NOTES = 10;
 
-export const getUserMemory = async (userId: string): Promise<string[]> => {
-    try {
-        const user = await usersServer.get(userId);
-        const notes = (user.prefs as any)?.carouselMemory;
-        return Array.isArray(notes) ? notes.filter((n: any) => typeof n === 'string') : [];
-    } catch {
-        return [];
-    }
+export const getUserMemory = async (userId: string): Promise<StructuredMemory> => {
+  try {
+    const user = await usersServer.get(userId);
+    const raw = (user.prefs as any)?.carouselMemory;
+    return migrateMemory(raw);
+  } catch {
+    return {
+      brandRules: [],
+      bannedWords: [],
+      tonePrefs: [],
+      pastDecisions: [],
+    };
+  }
 };
 
-export const rememberUserPreference = async (userId: string, note: string): Promise<void> => {
-    const trimmed = note.trim();
-    if (!trimmed) return;
+export const rememberUserPreference = async (
+  userId: string,
+  note: string,
+  category: keyof StructuredMemory = 'pastDecisions'
+): Promise<void> => {
+  const trimmed = note.trim();
+  if (!trimmed) return;
 
-    try {
-        const user = await usersServer.get(userId);
-        const existing = Array.isArray((user.prefs as any)?.carouselMemory) ? (user.prefs as any).carouselMemory : [];
-        const lower = trimmed.toLowerCase();
-        if (existing.some((n: string) => n.toLowerCase() === lower)) return;
+  try {
+    const user = await usersServer.get(userId);
+    const existing = migrateMemory((user.prefs as any)?.carouselMemory);
+    const bucket = existing[category] || [];
+    const lower = trimmed.toLowerCase();
+    if (bucket.some((n) => n.toLowerCase() === lower)) return;
 
-        const updated = [...existing, trimmed].slice(-MAX_NOTES);
-        await usersServer.updatePrefs(userId, { ...(user.prefs as any), carouselMemory: updated });
-        console.log('[memoryServer] Remembered:', trimmed);
-    } catch (e) {
-        console.warn('[memoryServer] Failed to persist memory note:', e);
-    }
+    const updatedBucket = [...bucket, trimmed].slice(-MAX_BUCKET_NOTES);
+    const updatedMemory: StructuredMemory = {
+      ...existing,
+      [category]: updatedBucket,
+    };
+
+    await usersServer.updatePrefs(userId, { ...(user.prefs as any), carouselMemory: updatedMemory });
+    console.log(`[memoryServer] Remembered in ${category}:`, trimmed);
+  } catch (e) {
+    console.warn('[memoryServer] Failed to persist memory note:', e);
+  }
 };
