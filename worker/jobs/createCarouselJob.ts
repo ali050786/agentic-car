@@ -2,7 +2,7 @@ import { runWithAgentContext } from '../../core/llm/agentGateway';
 import { langfuse } from '../../core/llm/langfuse';
 import { GenerationJob, updateJob } from '../jobStore';
 import { CarouselPlanner, CreateJobPayload } from '../../core/agents/CarouselPlanner';
-import { GatekeeperAgent, GateResult } from '../../core/agents/GatekeeperAgent';
+import { GatekeeperAgent, GateResult, slideTexts } from '../../core/agents/GatekeeperAgent';
 import { deleteCarouselServer } from '../carouselStoreServer';
 import { recordRefusal } from '../abuseGuard';
 
@@ -16,18 +16,6 @@ const finishRefused = async (jobId: string, userId: string, gate: GateResult) =>
         resultSummary: JSON.stringify({ reply: gate.reason, refused: true, category: gate.category }),
     });
 };
-
-/** Pull the human-visible text out of generated slides for output moderation. */
-const slideTexts = (slides: any[]): string[] =>
-    slides.flatMap((s) => {
-        const slot = s?.slots || {};
-        const list = s?.listItems || slot.listItems || [];
-        return [
-            s?.preHeader, s?.headline, s?.body, s?.footer,
-            slot.preHeader, slot.headline, slot.body, slot.footer,
-            ...(Array.isArray(list) ? list.map((li: any) => (typeof li === 'object' && li ? li.bullet : li)) : []),
-        ].filter((v) => typeof v === 'string' && v.trim());
-    });
 
 const progress = (jobId: string, statusMessage: string, progressPct: number) =>
   updateJob(jobId, { status: 'running', statusMessage, progress: progressPct });

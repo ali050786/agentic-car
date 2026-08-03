@@ -11,12 +11,12 @@
 import { runEditTurn, CreateJobPayload } from '../../core/agents/CarouselPlanner';
 import { runWithAgentContext } from '../../core/llm/agentGateway';
 import { langfuse } from '../../core/llm/langfuse';
-import { loadCarouselServer, assertOwnsCarousel } from '../carouselStoreServer';
+import { loadCarouselServer, assertOwnsCarousel, updateCarouselContentServer } from '../carouselStoreServer';
 import { loadThread, appendMessage, migrateThreadIfNeeded } from '../threadStoreServer';
 import { loadCarouselBriefServer } from '../briefStoreServer';
 import { rememberUserPreference } from '../../lib/memoryServer';
 import { GenerationJob, updateJob } from '../jobStore';
-import { GatekeeperAgent } from '../../core/agents/GatekeeperAgent';
+import { GatekeeperAgent, GateResult, slideTexts } from '../../core/agents/GatekeeperAgent';
 import { recordRefusal } from '../abuseGuard';
 
 export interface EditJobPayload {
@@ -32,19 +32,23 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
 
     await assertOwnsCarousel(carouselId, userId);
 
-    // Guardrail: cheap deterministic check on the edit message. Scope/safety
-    // classification isn't needed here (the subject was already vetted at
-    // creation) — this just blocks blatant instruction-override / empty input.
-    const pre = GatekeeperAgent.preScreen(payload.message);
-    if (pre && !pre.allowed) {
-        console.warn(`[editCarouselJob] Gatekeeper blocked edit from user ${userId}: ${pre.category}`);
-        recordRefusal(userId, pre.category);
+    // A guardrail refusal: friendly reply, no slide change, no error styling.
+    const refuse = async (gate: GateResult) => {
+        recordRefusal(userId, gate.category);
         await updateJob(job.$id, {
             status: 'done',
             statusMessage: 'Request declined',
             progress: 100,
-            resultSummary: JSON.stringify({ reply: pre.reason, refused: true, intent: 'answer', category: pre.category }),
+            resultSummary: JSON.stringify({ reply: gate.reason, refused: true, intent: 'answer', category: gate.category }),
         });
+    };
+
+    // Guardrail, layer 1: cheap deterministic check on the edit message — blocks
+    // blatant instruction-override / empty input before any model call.
+    const pre = GatekeeperAgent.preScreen(payload.message);
+    if (pre && !pre.allowed) {
+        console.warn(`[editCarouselJob] preScreen blocked edit from user ${userId}: ${pre.category}`);
+        await refuse(pre);
         return;
     }
 
@@ -108,6 +112,18 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
 
             await progress('Thinking...', 15);
 
+            // ── Guardrail, layer 2: safety-only classify on the edit instruction.
+            // Categories only (not scope) — a normal edit like "make it funnier"
+            // isn't a fresh carousel request, so scope-checking it would misfire.
+            const safety = await runAgentSpan('Gatekeeper.classifySafety', { message: payload.message }, () =>
+                GatekeeperAgent.classifySafety(payload.message)
+            );
+            if (!safety.allowed) {
+                console.warn(`[editCarouselJob] Safety gate blocked edit from user ${userId}: ${safety.category}`);
+                await refuse(safety);
+                return;
+            }
+
             // ── Server-authoritative load: deck + thread from Appwrite by id ──────
             // Backfill any legacy chat_history blob into chat_messages once, so a
             // pre-existing carousel's history is visible to this (and every) turn.
@@ -136,6 +152,26 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
             } as unknown as CreateJobPayload;
 
             const result = await runEditTurn({ userId, payload: editPayload, progress, runAgentSpan });
+
+            // ── Guardrail, layer 3: moderate the edited deck. runEditTurn already
+            // persisted the new slides, so on a flag we revert to the pre-edit
+            // deck (deck.slides/theme) and refuse rather than leaving it saved. ──
+            const contentChanged = ['copy', 'structure', 'image', 'regenerate'].includes(result.intent);
+            if (contentChanged) {
+                const moderation = await runAgentSpan('Gatekeeper.moderateOutput', { carouselId }, () =>
+                    GatekeeperAgent.moderateOutput(slideTexts(result.slides))
+                );
+                if (!moderation.allowed) {
+                    console.warn(`[editCarouselJob] Output moderation blocked edit ${carouselId} for user ${userId}: ${moderation.category}`);
+                    try {
+                        await updateCarouselContentServer(carouselId, { theme: deck.theme, slides: deck.slides });
+                    } catch (err) {
+                        console.warn('[editCarouselJob] Failed to revert moderated edit (non-fatal):', err);
+                    }
+                    await refuse(moderation);
+                    return;
+                }
+            }
 
             // ── Persist the turn onto the ordered thread (user + assistant) ───────
             const cleanEvents = events.map(e => ({ ...e, done: true }));
