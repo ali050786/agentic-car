@@ -7,7 +7,7 @@ import { ChatGroq } from '@langchain/groq';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { YoutubeTranscript } from 'youtube-transcript';
-import { FREE_TIER_LIMIT, MAX_SOURCE_CONTENT_CHARS } from './config/constants';
+import { MAX_SOURCE_CONTENT_CHARS } from './config/constants';
 import { htmlToReadableText, extractTitle } from './utils/htmlToText';
 import { generateContent } from './core/llm/generateContent';
 import dns from 'dns';
@@ -25,9 +25,8 @@ dotenv.config();
  * handles all AI proxy requests. This plugin is ignored in production builds.
  * 
  * Both implementations share the same logic:
- * - Hybrid authentication (BYOK + free tier)
+ * - Hybrid authentication (BYOK + system keys)
  * - Multi-provider support (OpenRouter, OpenAI, Anthropic)
- * - Free tier usage limits (10 generations)
  */
 const aiModelProxyPlugin = (env: Record<string, string>) => ({
   name: 'ai-model-proxy',
@@ -58,34 +57,18 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
             byok: { apiKey: userApiKey, provider: apiProvider },
           });
         } else {
-          // BRANCH B: FREE TIER - No user key provided
-          console.log('[Vite Proxy] No user API key, using free tier');
+          // BRANCH B: SYSTEM KEYS - No user key provided (platform is free)
+          console.log('[Vite Proxy] No user API key, using system keys');
 
           if (!userId) {
             res.statusCode = 403;
             res.setHeader('Content-Type', 'application/json');
             return res.end(JSON.stringify({
               error: 'MISSING_USER_ID',
-              message: 'User ID is required for free tier usage'
+              message: 'User ID is required'
             }));
           }
 
-          // Get usage count from client (sent via header to avoid server-side Appwrite auth)
-          const usageCountHeader = req.headers['x-usage-count'] as string | undefined;
-          const usageCount = usageCountHeader ? parseInt(usageCountHeader, 10) : 0;
-
-          if (usageCount >= FREE_TIER_LIMIT) {
-            console.log(`[Vite Proxy] User ${userId} has exhausted free tier (${usageCount}/${FREE_TIER_LIMIT})`);
-            res.statusCode = 403;
-            res.setHeader('Content-Type', 'application/json');
-            return res.end(JSON.stringify({
-              error: 'FREE_LIMIT_REACHED',
-              message: 'Free trial exhausted. Please contact admin for more credits.',
-              usageCount: usageCount
-            }));
-          }
-
-          console.log(`[Vite Proxy] Using free tier for user ${userId} (${usageCount}/${FREE_TIER_LIMIT})`);
           result = await generateContent({
             prompt,
             selectedModel,
@@ -96,8 +79,6 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
               groq: process.env.GROQ_API_KEY || env.GROQ_API_KEY,
             },
           });
-
-          // Note: Usage count increment happens on client side after successful response
         }
 
         res.statusCode = 200;

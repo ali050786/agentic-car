@@ -100,7 +100,7 @@ For sketch-based layouts (Template 3), it translates each slide's topic into a d
 
 ## 5. State Management (`/store`)
 
-*   **`useAuthStore`**: Handles active Appwrite sessions, login states, and user credits.
+*   **`useAuthStore`**: Handles active Appwrite sessions, login states, and the user's brand kit.
 *   **`useCarouselStore`**: Manages the current active carousel state, including:
     *   `slides`: Array of SlideContent.
     *   `theme`: Current color palette variables.

@@ -12,7 +12,6 @@
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { generateContent } from './generateContent';
-import { assertAndConsumeFreeTier } from '../../lib/freeTierServer';
 import { langfuse } from './langfuse';
 
 export interface AgentJobContext {
@@ -26,8 +25,6 @@ export interface AgentJobContext {
     };
     langfuseTrace?: any;
     langfuseSpan?: any;
-    /** Eval/internal only — skip the per-call free-tier gate. Default off. */
-    bypassFreeTier?: boolean;
 }
 
 const storage = new AsyncLocalStorage<AgentJobContext>();
@@ -54,10 +51,6 @@ export const generateContentFromAgentServer = async (prompt: string | { systemPr
     const ctx = storage.getStore();
     if (!ctx) {
         throw new Error('generateContentFromAgentServer called outside of runWithAgentContext — no job context available');
-    }
-
-    if (!ctx.bypassFreeTier) {
-        await assertAndConsumeFreeTier(ctx.userId);
     }
 
     return generateContent({

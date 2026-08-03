@@ -77,6 +77,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
 
     // UI state
     selectedSlideIndex: null,
+    selectedSlideIndices: [],
     rightPanelOpen: false,
 
     // Getter for activePresetId (for backward compatibility)
@@ -96,7 +97,22 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     // UI ACTIONS
     // ============================================================================
 
-    setSelectedSlideIndex: (selectedSlideIndex: number | null) => set({ selectedSlideIndex }),
+    setSelectedSlideIndex: (selectedSlideIndex: number | null) =>
+        set({ selectedSlideIndex, selectedSlideIndices: selectedSlideIndex === null ? [] : [selectedSlideIndex] }),
+
+    setSelectedSlideIndices: (indices: number[]) =>
+        set({ selectedSlideIndices: indices, selectedSlideIndex: indices.length ? indices[indices.length - 1] : null }),
+
+    // Plain toggle: tapping a slide adds it to (or removes it from) the scope set.
+    // The most-recently-toggled slide that's still selected becomes the primary
+    // (shown big + inline-edited); clearing the set falls back to the whole carousel.
+    toggleSlideSelection: (index: number) => set((state) => {
+        const exists = state.selectedSlideIndices.includes(index);
+        const next = exists
+            ? state.selectedSlideIndices.filter(i => i !== index)
+            : [...state.selectedSlideIndices, index];
+        return { selectedSlideIndices: next, selectedSlideIndex: next.length ? next[next.length - 1] : null };
+    }),
 
     setRightPanelOpen: (rightPanelOpen: boolean) => set({ rightPanelOpen }),
 
@@ -264,6 +280,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
             generationStatus: 'Initializing...',
             generationProgress: 0,
             selectedSlideIndex: null,
+            selectedSlideIndices: [],
             rightPanelOpen: false,
         });
     },

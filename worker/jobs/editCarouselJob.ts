@@ -16,10 +16,13 @@ import { loadThread, appendMessage, migrateThreadIfNeeded } from '../threadStore
 import { loadCarouselBriefServer } from '../briefStoreServer';
 import { rememberUserPreference } from '../../lib/memoryServer';
 import { GenerationJob, updateJob } from '../jobStore';
+import { GatekeeperAgent } from '../../core/agents/GatekeeperAgent';
+import { recordRefusal } from '../abuseGuard';
 
 export interface EditJobPayload {
     message: string;
     selectedSlideIndex: number | null;
+    selectedSlideIndices?: number[];
 }
 
 export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
@@ -28,6 +31,22 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
     if (!carouselId) throw new Error('Edit job is missing carouselId');
 
     await assertOwnsCarousel(carouselId, userId);
+
+    // Guardrail: cheap deterministic check on the edit message. Scope/safety
+    // classification isn't needed here (the subject was already vetted at
+    // creation) — this just blocks blatant instruction-override / empty input.
+    const pre = GatekeeperAgent.preScreen(payload.message);
+    if (pre && !pre.allowed) {
+        console.warn(`[editCarouselJob] Gatekeeper blocked edit from user ${userId}: ${pre.category}`);
+        recordRefusal(userId, pre.category);
+        await updateJob(job.$id, {
+            status: 'done',
+            statusMessage: 'Request declined',
+            progress: 100,
+            resultSummary: JSON.stringify({ reply: pre.reason, refused: true, intent: 'answer', category: pre.category }),
+        });
+        return;
+    }
 
     const events: { label: string; done: boolean }[] = [];
     const progress = async (statusMessage: string, progressPct: number) => {
@@ -109,6 +128,7 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
                 format: deck.format,
                 presetId: deck.presetId,
                 selectedSlideIndex: payload.selectedSlideIndex ?? null,
+                selectedSlideIndices: payload.selectedSlideIndices ?? [],
                 conversationThread: thread,
                 conversationSummary: '',
                 carouselBrief: carouselBrief ?? undefined,

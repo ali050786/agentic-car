@@ -11,13 +11,13 @@ import { useCarouselStore } from '../../store/useCarouselStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { MemoryAgent } from '../../core/agents/MemoryAgent';
 import { CreativeDirectorAgent, parseExplicitSlideCount } from '../../core/agents/CreativeDirectorAgent';
+import { GatekeeperAgent } from '../../core/agents/GatekeeperAgent';
 import { createJob, cancelJob } from '../../services/jobService';
-import { FreeLimitError } from '../../services/aiService';
 import { detectInputMode } from '../../utils/inputDetector';
 import { fetchYouTubeContent, fetchUrlContent, extractDomain } from '../../utils/contentProcessor';
 import { extractTextFromFile } from '../../utils/fileProcessor';
 import { capSourceContent, assertUploadSizeOk, truncationNote } from '../../utils/contentLimits';
-import { ArrowUp, SlidersHorizontal, Sparkles, X, Plus, Paperclip } from 'lucide-react';
+import { ArrowUp, SlidersHorizontal, Sparkles, X, Plus, Paperclip, Layers } from 'lucide-react';
 import type { CreativeBrief } from '../../types';
 
 
@@ -51,7 +51,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
     const {
         chatMessages, addChatMessage, updateChatMessage,
         slides, isGenerating, generationStatus, error, theme,
-        selectedSlideIndex, setSelectedSlideIndex,
+        selectedSlideIndex, selectedSlideIndices, setSelectedSlideIndices,
         selectedTemplate, setTemplate,
         slideCount, setSlideCount,
         customInstructions, setCustomInstructions,
@@ -225,6 +225,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                     }
                 }
 
+                // Guardrail (instant, zero-cost): reject obvious off-purpose or
+                // instruction-override prompts before spending any model calls.
+                // The authoritative gate still runs server-side in the worker.
+                const preGate = GatekeeperAgent.preScreen(topicForRun, sourceContentForRun);
+                if (preGate && !preGate.allowed) {
+                    runMessageId.current = null;
+                    updateChatMessage(runId, { running: false, events: [], text: preGate.reason });
+                    return;
+                }
+
                 // Creative Director: analyse intent before dispatching the job.
                 // If intent is clear → brief is attached directly and generation starts.
                 // If ambiguous → show quick-reply chips and wait for user answer.
@@ -283,11 +293,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
 
             } catch (e: any) {
                 runMessageId.current = null;
-                if (e instanceof FreeLimitError) {
-                    updateChatMessage(runId, { running: false, error: true, text: 'Free usage limit reached. Please contact admin for more credits.' });
-                } else {
-                    updateChatMessage(runId, { running: false, error: true, text: e?.message || 'Generation failed.' });
-                }
+                updateChatMessage(runId, { running: false, error: true, text: e?.message || 'Generation failed.' });
             }
             return;
         }
@@ -300,13 +306,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         runMessageId.current = runId;
         const state = useCarouselStore.getState();
         const scope = state.selectedSlideIndex;
+        const scopeIndices = state.selectedSlideIndices;
         addChatMessage({
             id: runId, role: 'assistant', text: '', running: true,
             events: [{ label: 'Thinking...', done: false }]
         });
         try {
             // Server-authoritative: the worker loads the deck + thread from Appwrite
-            // by carouselId, so the client ships only the message + which slide is
+            // by carouselId, so the client ships only the message + which slide(s) are
             // in focus. Never re-send slides/theme (that was the stale-state bug).
             const { jobId } = await createJob({
                 type: 'edit',
@@ -314,6 +321,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                 payload: {
                     message: text,
                     selectedSlideIndex: scope,
+                    selectedSlideIndices: scopeIndices,
                 },
             });
             setActiveJobId(jobId);
@@ -339,11 +347,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
             }
         } catch (e: any) {
             runMessageId.current = null;
-            if (e instanceof FreeLimitError) {
-                updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free usage limit reached. Please contact admin for more credits.' });
-            } else {
-                updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
-            }
+            updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
         }
     };
 
@@ -368,11 +372,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                 await onFirstPrompt(promptText, undefined, promptText);
             } catch (e: any) {
                 runMessageId.current = null;
-                if (e instanceof FreeLimitError) {
-                    updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free usage limit reached. Please contact admin for more credits.' });
-                } else {
-                    updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
-                }
+                updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
             }
         } else {
             // Edit flow
@@ -389,17 +389,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                     payload: {
                         message: promptText,
                         selectedSlideIndex: selectedSlideIndex,
+                        selectedSlideIndices: selectedSlideIndices,
                     },
                 });
                 setActiveJobId(jobId);
                 setGenerating(true);
             } catch (e: any) {
                 runMessageId.current = null;
-                if (e instanceof FreeLimitError) {
-                    updateChatMessage(runId, { running: false, error: true, events: [], text: 'Free usage limit reached. Please contact admin for more credits.' });
-                } else {
-                    updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
-                }
+                updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
             }
         }
     };
@@ -732,19 +729,28 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                 </div>
 
                 {hasSlides && (
-                    <div className="flex items-center gap-1 text-[11px] text-neutral-500 px-1">
-                        {selectedSlideIndex !== null ? (
-                            <>
-                                <span>Editing slide {selectedSlideIndex + 1}</span>
+                    <div className="flex items-center gap-2 px-1">
+                        {selectedSlideIndices.length > 0 ? (
+                            <div className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full bg-blue-500/15 border border-blue-500/40 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.15)]">
+                                <Layers size={12} className="text-blue-400 flex-shrink-0" />
+                                <span className="text-[11px] font-semibold whitespace-nowrap">
+                                    {selectedSlideIndices.length === 1
+                                        ? `Editing slide ${selectedSlideIndices[0] + 1}`
+                                        : `Editing slides ${[...selectedSlideIndices].sort((a, b) => a - b).map(i => i + 1).join(', ')}`}
+                                </span>
                                 <button
-                                    onClick={() => setSelectedSlideIndex(null)}
-                                    className="inline-flex items-center gap-0.5 text-blue-400 hover:text-blue-300 ml-1"
+                                    onClick={() => setSelectedSlideIndices([])}
+                                    title="Clear selection — edit the whole carousel"
+                                    aria-label="Clear slide selection"
+                                    className="flex items-center justify-center w-4 h-4 rounded-full text-blue-300/80 hover:text-white hover:bg-blue-500/40 transition-colors"
                                 >
-                                    <X size={10} /> whole carousel
+                                    <X size={11} />
                                 </button>
-                            </>
+                            </div>
                         ) : (
-                            <span>Editing the whole carousel — select a slide to scope changes</span>
+                            <span className="text-[11px] text-neutral-500">
+                                Editing the whole carousel — click a slide to scope · ⌘/Alt-click for several
+                            </span>
                         )}
                     </div>
                 )}

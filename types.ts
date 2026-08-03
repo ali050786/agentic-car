@@ -365,7 +365,11 @@ export interface CarouselState {
   signaturePosition: SignaturePosition;
 
   // UI State for Floating Toolbars
+  // selectedSlideIndex is the "primary" slide (the one shown big + inline-edited);
+  // it always mirrors the most recently toggled entry of selectedSlideIndices.
   selectedSlideIndex: number | null;
+  // Full multi-select set used to scope chat edits. Empty = whole carousel.
+  selectedSlideIndices: number[];
   rightPanelOpen: boolean;
 
   // Actions
@@ -435,6 +439,10 @@ export interface CarouselState {
 
   // UI Actions
   setSelectedSlideIndex: (index: number | null) => void;
+  /** Replace the whole multi-select set (keeps selectedSlideIndex in sync). */
+  setSelectedSlideIndices: (indices: number[]) => void;
+  /** Add/remove a slide from the multi-select set. */
+  toggleSlideSelection: (index: number) => void;
   setRightPanelOpen: (open: boolean) => void;
   reset: () => void;
 }

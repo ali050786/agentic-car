@@ -1,27 +1,10 @@
 /// <reference types="vite/client" />
 
-import { FREE_TIER_LIMIT } from '../config/constants';
-
-/**
- * Custom error for when free tier limit is reached
- */
-export class FreeLimitError extends Error {
-    public usageCount: number;
-
-    constructor(message: string, usageCount: number = FREE_TIER_LIMIT) {
-        super(message);
-        this.name = 'FreeLimitError';
-        this.usageCount = usageCount;
-    }
-}
-
 /**
  * Generic generator function that Agents can call with their specific prompts.
- * 
- * Implements hybrid authentication:
- * - If user has API key stored: sends x-api-key header (BYOK)
- * - If no API key: uses free tier (3 generations max)
- * - Throws FreeLimitError when free tier exhausted
+ *
+ * Sends the authenticated user's session so the server can verify the request.
+ * The platform is free — there are no usage limits.
  */
 export const generateContentFromAgent = async (prompt: string | { systemPrompt?: string; prompt: string }, responseSchema: any) => {
     // core/agents/*.ts run unmodified in the background worker (Node), where
@@ -39,43 +22,16 @@ export const generateContentFromAgent = async (prompt: string | { systemPrompt?:
         const { useAuthStore } = await import('../store/useAuthStore');
 
         const { selectedModel } = useCarouselStore.getState();
-        const { user, freeUsageCount } = useAuthStore.getState();
-
-        // Check free tier limit BEFORE making request
-        if (user?.$id) {
-            console.log(`[aiService] Free tier check: ${freeUsageCount}/${FREE_TIER_LIMIT} used`);
-
-            if (freeUsageCount >= FREE_TIER_LIMIT) {
-                console.warn('[aiService] Free tier limit reached before request');
-                throw new FreeLimitError(
-                    'Free trial exhausted. Please contact admin for more credits.',
-                    freeUsageCount
-                );
-            }
-
-            // Optimistically increment BEFORE making request to prevent race conditions
-            const { incrementUsageCount } = await import('../services/profileService');
-            try {
-                const newCount = await incrementUsageCount(user.$id);
-                console.log(`[aiService] Pre-incremented usage count to ${newCount}`);
-
-                // Update store immediately
-                useAuthStore.setState({ freeUsageCount: newCount });
-            } catch (error) {
-                console.error('[aiService] Failed to increment usage count:', error);
-                throw new Error('Failed to update usage tracking. Please try again.');
-            }
-        }
+        const { user } = useAuthStore.getState();
 
         // Build headers
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
         };
 
-        // Add user ID and Authorization JWT for tracking
+        // Add user ID and Authorization JWT so the server can verify the session
         if (user?.$id) {
             headers['x-user-id'] = user.$id;
-            headers['x-usage-count'] = String(freeUsageCount + 1);
 
             try {
                 const { getClientJwt } = await import('../lib/appwriteClient');
@@ -86,38 +42,14 @@ export const generateContentFromAgent = async (prompt: string | { systemPrompt?:
             }
         }
 
-        console.log('[aiService] Using free tier');
-
         const res = await fetch('/api/generate', {
             method: 'POST',
             headers,
             body: JSON.stringify({ prompt, responseSchema, selectedModel })
         });
 
-        // Handle 403 - Free tier limit reached
-        if (res.status === 403) {
-            const errorData = await res.json();
-
-            if (errorData.error === 'FREE_LIMIT_REACHED') {
-                console.warn('[aiService] Free tier limit reached:', errorData);
-                throw new FreeLimitError(
-                    errorData.message || 'Free trial exhausted. Please contact admin for more credits.',
-                    errorData.usageCount || FREE_TIER_LIMIT
-                );
-            }
-
-            throw new Error(errorData.message || 'Access forbidden');
-        }
-
         if (!res.ok) {
             const msg = await res.text();
-
-            // If request failed and we incremented count, we should ideally decrement
-            // But since we're using optimistic increment, we'll just refresh the count
-            if (user?.$id) {
-                useAuthStore.getState().fetchFreeUsageCount();
-            }
-
             throw new Error(msg || 'Generation failed');
         }
 

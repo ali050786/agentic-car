@@ -9,7 +9,6 @@
 import { databases, config, ID } from '../lib/appwriteClient';
 import { Query } from 'appwrite';
 import { BrandKit, BrandMode, SignaturePosition } from '../types';
-import { FREE_TIER_LIMIT } from '../config/constants';
 
 // ============================================================================
 // TYPES
@@ -50,43 +49,6 @@ export interface Carousel extends CarouselData {
 }
 
 // ============================================================================
-// CUSTOM ERRORS
-// ============================================================================
-
-export class StorageLimitError extends Error {
-  constructor(message: string = 'Storage limit reached') {
-    super(message);
-    this.name = 'StorageLimitError';
-  }
-}
-
-// ============================================================================
-// LIMIT CHECKING
-// ============================================================================
-
-/**
- * Check if user has reached carousel limit
- */
-export const checkCarouselLimit = async (userId: string): Promise<boolean> => {
-  try {
-    const { total } = await databases.listDocuments(
-      config.databaseId,
-      config.carouselsCollectionId,
-      [
-        Query.equal('userId', userId),
-        Query.limit(1) // We only need the count
-      ]
-    );
-
-    return total >= FREE_TIER_LIMIT;
-  } catch (error) {
-    console.error('[checkCarouselLimit] Error:', error);
-    // If there's an error checking, allow the operation (fail open)
-    return false;
-  }
-};
-
-// ============================================================================
 // CREATE OPERATIONS
 // ============================================================================
 
@@ -114,13 +76,6 @@ export const createCarousel = async (
 ): Promise<{ data: Carousel | null; error: any }> => {
   try {
     console.log('[createCarousel] Starting save...', { userId, title, templateType });
-
-    // Check carousel limit before creating
-    const limitReached = await checkCarouselLimit(userId);
-    if (limitReached) {
-      console.warn('[createCarousel] User has reached carousel limit');
-      throw new StorageLimitError(`You have reached the maximum of ${FREE_TIER_LIMIT} carousels. Please delete old ones to save new work.`);
-    }
 
     // Store brand kit in existing branding field (extended format)
     const extendedBranding = {
@@ -736,5 +691,4 @@ export default {
   deleteCarousels,
   getUserAnalytics,
   duplicateCarousel,
-  checkCarouselLimit,
 };

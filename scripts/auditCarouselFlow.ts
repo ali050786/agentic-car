@@ -13,9 +13,9 @@ if (!process.env.APPWRITE_API_KEY) process.env.APPWRITE_API_KEY = 'mock-api-key'
 
 // Import databasesServer and mock its database calls to avoid Appwrite errors
 const { databasesServer } = await import('../lib/appwriteServer');
-databasesServer.getDocument = async () => ({ free_usage_count: 0 } as any);
-databasesServer.updateDocument = async () => ({ free_usage_count: 1 } as any);
-databasesServer.createDocument = async () => ({ free_usage_count: 1 } as any);
+databasesServer.getDocument = async () => ({} as any);
+databasesServer.updateDocument = async () => ({} as any);
+databasesServer.createDocument = async () => ({ $id: 'mock-doc' } as any);
 
 // Dynamic imports to ensure environment variables and mocks are set before modules load
 const { ResearchAgent } = await import('../core/agents/ResearchAgent');

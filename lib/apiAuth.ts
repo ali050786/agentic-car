@@ -1,6 +1,5 @@
 import { VercelRequest } from '@vercel/node';
 import { getUserFromJwt, usersServer } from './appwriteServer.js';
-import { assertAndConsumeFreeTier } from './freeTierServer.js';
 
 export interface AuthenticatedUser {
     userId: string;
@@ -61,13 +60,4 @@ export async function verifySession(req: VercelRequest): Promise<AuthenticatedUs
         console.error('[API Auth] JWT verification failed:', err?.message || err);
         throw new Error('UNAUTHORIZED');
     }
-}
-
-/**
- * Authenticates a request and statefully consumes a free-tier usage count in the database.
- */
-export async function verifySessionAndConsumeLimit(req: VercelRequest): Promise<AuthenticatedUser & { remainingCount: number }> {
-    const user = await verifySession(req);
-    const count = await assertAndConsumeFreeTier(user.userId);
-    return { ...user, remainingCount: count };
 }

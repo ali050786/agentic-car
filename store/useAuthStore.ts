@@ -11,8 +11,7 @@ import { create } from 'zustand';
 import { account, AppwriteUser } from '../lib/appwriteClient';
 import { Models, OAuthProvider } from 'appwrite';
 import { BrandKit } from '../types';
-import { getUserBrandKit, updateUserBrandKit, initializeDefaultBrandKit, getFreeUsageCount } from '../services/profileService';
-import { FREE_TIER_LIMIT } from '../config/constants';
+import { getUserBrandKit, updateUserBrandKit, initializeDefaultBrandKit } from '../services/profileService';
 import { useCarouselStore } from './useCarouselStore';
 
 // ============================================================================
@@ -52,12 +51,6 @@ interface AuthState {
   globalBrandKit: BrandKit | null;
   brandKitLoading: boolean;
 
-  /**
-   * Free tier usage tracking
-   */
-  freeUsageCount: number;
-  freeUsageLoading: boolean;
-
   // Actions
   initialize: () => Promise<void>;
   signUp: (data: SignUpData) => Promise<AuthResponse>;
@@ -78,12 +71,6 @@ interface AuthState {
    * Update global brand kit in profile
    */
   updateGlobalBrandKit: (brandKit: BrandKit) => Promise<void>;
-
-  /**
-   * Free usage tracking
-   */
-  fetchFreeUsageCount: () => Promise<void>;
-  refreshFreeUsageCount: () => Promise<void>;
 }
 
 // ============================================================================
@@ -100,8 +87,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialized: false,
   globalBrandKit: null,
   brandKitLoading: false,
-  freeUsageCount: 0,
-  freeUsageLoading: false,
 
   // ============================================================================
   // INITIALIZE - Setup auth and get current session
@@ -120,9 +105,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Fetch global brand kit in background
       get().fetchGlobalBrandKit();
-
-      // Fetch free usage count in background
-      get().fetchFreeUsageCount();
     } catch (error) {
       // No active session
       set({
@@ -188,9 +170,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Fetch global brand kit in background
       get().fetchGlobalBrandKit();
 
-      // Fetch free usage count in background
-      get().fetchFreeUsageCount();
-
       return { error: null, success: true };
     } catch (error: any) {
       return {
@@ -242,8 +221,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Reset all stores/state
       set({
         user: null,
-        globalBrandKit: null,
-        freeUsageCount: 0
+        globalBrandKit: null
       });
 
       // Reset carousel state
@@ -254,8 +232,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Clear state even on error
       set({
         user: null,
-        globalBrandKit: null,
-        freeUsageCount: 0
+        globalBrandKit: null
       });
 
       // Reset carousel state even on error
@@ -386,41 +363,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error('[AuthStore] Failed to update brand kit:', error);
       throw error;
     }
-  },
-
-
-
-  // ============================================================================
-  // FREE USAGE TRACKING
-  // ============================================================================
-
-  /**
-   * Fetch free usage count from Appwrite
-   */
-  fetchFreeUsageCount: async () => {
-    const { user } = get();
-    if (!user) {
-      console.log('[AuthStore] No user, skipping free usage count fetch');
-      return;
-    }
-
-    set({ freeUsageLoading: true });
-
-    try {
-      const count = await getFreeUsageCount(user.$id);
-      set({ freeUsageCount: count, freeUsageLoading: false });
-      console.log(`[AuthStore] Free usage count: ${count}/${FREE_TIER_LIMIT}`);
-    } catch (error) {
-      console.error('[AuthStore] Failed to fetch free usage count:', error);
-      set({ freeUsageLoading: false });
-    }
-  },
-
-  /**
-   * Refresh free usage count (alias for fetchFreeUsageCount)
-   */
-  refreshFreeUsageCount: async () => {
-    await get().fetchFreeUsageCount();
   },
 }));
 

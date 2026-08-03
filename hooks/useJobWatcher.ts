@@ -61,15 +61,18 @@ export const useJobWatcher = () => {
             if (job.type === 'create') {
                 let reply = 'Done! Tell me what to refine: a slide, the tone, or the whole angle.';
                 let tokenUsage = undefined;
+                let refused = false;
                 try {
                     const result = JSON.parse(job.resultSummary || '{}');
                     if (result.reply) reply = result.reply;
                     if (result.tokenUsage) tokenUsage = result.tokenUsage;
+                    refused = result.refused === true;
                 } catch {
                     if (job.resultSummary) reply = job.resultSummary;
                 }
 
-                if (job.carouselId && store.activeCarouselId === null) {
+                // A guardrail refusal: show the friendly reply, load/alter nothing.
+                if (!refused && job.carouselId && store.activeCarouselId === null) {
                     getCarouselById(job.carouselId).then(({ data }) => {
                         if (!data) return;
                         const s = useCarouselStore.getState();

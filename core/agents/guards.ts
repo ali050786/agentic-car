@@ -90,11 +90,13 @@ export const applySlidePatches = (
     slides: SlideContent[],
     entries: any[],
     templateId: string,
-    targetIndex: number | null = null
+    target: number | number[] | null = null
 ): { slides: SlideContent[] | null; changedIndices: number[] } => {
     const updated = [...slides];
     const changedIndices: number[] = [];
     const keepCase = templateId === 'template-4';
+    // Normalize the scope to a 0-based index list (empty = whole deck).
+    const targetIndices = target === null ? [] : (Array.isArray(target) ? target : [target]);
 
     entries.forEach((entry, pos) => {
         // The model sees slides numbered 1..N (matching the "slide N" UI badge),
@@ -103,7 +105,10 @@ export const applySlidePatches = (
         const rawIndex = entry?.slideIndex;
         let i = (typeof rawIndex === 'number' && Number.isFinite(rawIndex)) ? Math.round(rawIndex) - 1 : NaN;
         if (!Number.isInteger(i) || i < 0 || i >= slides.length) {
-            if (targetIndex !== null && entries.length === 1) i = targetIndex;
+            // Single scoped slide + single returned entry → that slide.
+            if (targetIndices.length === 1 && entries.length === 1) i = targetIndices[0];
+            // Multiple scoped slides mapped positionally to the returned entries.
+            else if (targetIndices.length > 1 && pos < targetIndices.length) i = targetIndices[pos];
             else if (pos < slides.length) i = pos;
             else return;
         }
@@ -169,9 +174,13 @@ export const forcedCopyEdit = async (
     slides: SlideContent[],
     instruction: string,
     templateId: string,
-    targetIndex: number | null
+    target: number | number[] | null
 ): Promise<{ slides: any[]; summary: string }> => {
     const config = TEMPLATE_CONFIGS[templateId] || TEMPLATE_CONFIGS['template-1'];
+    // Normalize the scope to a sorted, in-range, 0-based index list (empty = whole deck).
+    const targetIndices = (target === null ? [] : (Array.isArray(target) ? target : [target]))
+        .filter(i => Number.isInteger(i) && i >= 0 && i < slides.length)
+        .sort((a, b) => a - b);
 
     const slideDump = slides.map((s, i) => {
         return [
@@ -184,9 +193,11 @@ export const forcedCopyEdit = async (
         ].filter(Boolean).join(' | ');
     }).join('\n');
 
-    const scope = targetIndex !== null
-        ? `Rewrite ONLY slide ${targetIndex + 1} and return only that slide (set its "slideIndex" to ${targetIndex + 1}).`
-        : `Rewrite EVERY slide and return ALL ${slides.length} slides in "slides".`;
+    const scope = targetIndices.length === 1
+        ? `Rewrite ONLY slide ${targetIndices[0] + 1} and return only that slide (set its "slideIndex" to ${targetIndices[0] + 1}).`
+        : targetIndices.length > 1
+            ? `Rewrite ONLY slides ${targetIndices.map(i => i + 1).join(', ')} and return only those slides, each with its correct 1-based "slideIndex". Leave every other slide untouched.`
+            : `Rewrite EVERY slide and return ALL ${slides.length} slides in "slides".`;
 
     const prompt = `
       You are ${config.persona} rewriting an existing "${config.styleName}" carousel.

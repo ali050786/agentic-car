@@ -7,26 +7,6 @@
 
 import { databasesServer, serverConfig, ID, Query } from '../lib/appwriteServer';
 import { BrandKit, BrandMode, SignaturePosition, SlideContent, CarouselTheme } from '../types';
-import { FREE_TIER_LIMIT } from '../config/constants';
-
-export class StorageLimitError extends Error {
-    constructor(message: string = 'Storage limit reached') {
-        super(message);
-        this.name = 'StorageLimitError';
-    }
-}
-
-const checkCarouselLimit = async (userId: string): Promise<boolean> => {
-    try {
-        const { total } = await databasesServer.listDocuments(serverConfig.databaseId, serverConfig.carouselsCollectionId, [
-            Query.equal('userId', userId),
-            Query.limit(1),
-        ]);
-        return total >= FREE_TIER_LIMIT;
-    } catch {
-        return false;
-    }
-};
 
 const incrementCarouselCount = (userId: string, templateType: string) => {
     setTimeout(async () => {
@@ -74,11 +54,6 @@ export interface CreateCarouselParams {
 
 /** Returns the new carousel's document id. */
 export const createCarouselServer = async (params: CreateCarouselParams): Promise<string> => {
-    const limitReached = await checkCarouselLimit(params.userId);
-    if (limitReached) {
-        throw new StorageLimitError(`You have reached the maximum of ${FREE_TIER_LIMIT} carousels. Please delete old ones to save new work.`);
-    }
-
     const extendedBranding = {
         enabled: params.brandKit.enabled,
         name: params.brandKit.identity.name,
@@ -173,4 +148,9 @@ export const updateCarouselContentServer = async (
     if (updates.theme) updateData.theme = JSON.stringify(updates.theme);
     if (updates.slides) updateData.slides = JSON.stringify(updates.slides);
     await databasesServer.updateDocument(serverConfig.databaseId, serverConfig.carouselsCollectionId, carouselId, updateData);
+};
+
+/** Hard-delete a carousel. Used to clean up when output moderation rejects a freshly generated deck. */
+export const deleteCarouselServer = async (carouselId: string): Promise<void> => {
+    await databasesServer.deleteDocument(serverConfig.databaseId, serverConfig.carouselsCollectionId, carouselId);
 };

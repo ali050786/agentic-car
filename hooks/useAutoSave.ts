@@ -6,20 +6,19 @@
  *
  * Features:
  * - 2-second debounce on changes
- * - Automatic limit checking
- * - Status tracking (idle, saving, saved, error, limit-reached)
+ * - Status tracking (idle, saving, saved, error)
  * - Promotes drafts to saved carousels
  *
  * Location: src/hooks/useAutoSave.ts
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { createCarousel, updateCarouselContent, StorageLimitError } from '../services/carouselService';
+import { createCarousel, updateCarouselContent } from '../services/carouselService';
 import { appToDbTemplate } from '../utils/templateConverter';
 import { BrandKit, BrandMode, SignaturePosition } from '../types';
 import { useCarouselStore } from '../store/useCarouselStore';
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'limit-reached';
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 interface UseAutoSaveParams {
     slides: any[];
@@ -105,8 +104,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
         // 1. No user ID
         // 2. No slides
         // 3. No theme
-        // 4. Already at limit
-        if (!userId || slides.length === 0 || !theme || saveStatus === 'limit-reached') {
+        if (!userId || slides.length === 0 || !theme) {
             return;
         }
 
@@ -167,15 +165,9 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                     );
 
                     if (error) {
-                        if (error instanceof StorageLimitError) {
-                            console.warn('[useAutoSave] Storage limit reached');
-                            setSaveStatus('limit-reached');
-                            setErrorMessage(error.message);
-                        } else {
-                            console.error('[useAutoSave] Create error:', error);
-                            setSaveStatus('error');
-                            setErrorMessage('Failed to save carousel');
-                        }
+                        console.error('[useAutoSave] Create error:', error);
+                        setSaveStatus('error');
+                        setErrorMessage('Failed to save carousel');
                     } else if (data) {
                         console.log('[useAutoSave] Successfully created carousel:', data.$id);
                         prevCarouselIdRef.current = data.$id;
@@ -219,13 +211,8 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                 }
             } catch (err: any) {
                 console.error('[useAutoSave] Unexpected error:', err);
-                if (err instanceof StorageLimitError) {
-                    setSaveStatus('limit-reached');
-                    setErrorMessage(err.message);
-                } else {
-                    setSaveStatus('error');
-                    setErrorMessage('An unexpected error occurred');
-                }
+                setSaveStatus('error');
+                setErrorMessage('An unexpected error occurred');
             } finally {
                 isSavingRef.current = false;
             }

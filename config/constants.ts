@@ -2,9 +2,6 @@
  * Application Constants
  */
 
-// Free tier generation limit
-export const FREE_TIER_LIMIT = 10;
-
 // Source-material limits for the composer's file/URL/video/text intake.
 // Content flows through several sequential LLM calls (Research -> Strategist
 // -> Template -> Proofreader), so its size drives cost across the whole

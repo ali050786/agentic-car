@@ -63,6 +63,8 @@ export interface CreateJobPayload {
   conversationThread?: ChatMessage[];
   conversationSummary?: string;
   selectedSlideIndex?: number | null;
+  /** Full multi-select set (0-based) scoping the edit. Empty/undefined = whole carousel. */
+  selectedSlideIndices?: number[];
   /** The persisted living brief (source of truth), injected into edit turns. */
   carouselBrief?: CarouselBrief;
   /** Eval/testing only — skip the Appwrite persistence write. */
@@ -838,6 +840,14 @@ export async function runEditTurn(params: {
   const theme: CarouselTheme = payload.existingTheme || {};
   const carouselId = payload.carouselId!;
   const selectedSlideIndex = payload.selectedSlideIndex ?? null;
+  // Full multi-select scope (0-based). Falls back to the single primary index for
+  // older clients that only send selectedSlideIndex. Empty = whole carousel.
+  const selectedSlideIndices: number[] = (payload.selectedSlideIndices && payload.selectedSlideIndices.length > 0)
+    ? payload.selectedSlideIndices.filter(i => Number.isInteger(i) && i >= 0 && i < slides.length)
+    : (selectedSlideIndex !== null ? [selectedSlideIndex] : []);
+  const selectionLabel = selectedSlideIndices.length
+    ? [...selectedSlideIndices].sort((a, b) => a - b).map(i => i + 1).join(', ')
+    : '';
   const thread = payload.conversationThread || [];
   const summary = payload.conversationSummary || '';
 
@@ -851,7 +861,7 @@ export async function runEditTurn(params: {
     ...structuredMemory.pastDecisions.map(d => `Preference: ${d}`),
   ];
   const slideDump = slides
-    .map((s, i) => `Slide ${i + 1} [${s.variant}] headline: ${s.headline}${s.body ? ' | body: ' + s.body : ''}${selectedSlideIndex === i ? '   <<< SELECTED' : ''}`)
+    .map((s, i) => `Slide ${i + 1} [${s.variant}] headline: ${s.headline}${s.body ? ' | body: ' + s.body : ''}${selectedSlideIndices.includes(i) ? '   <<< SELECTED' : ''}`)
     .join('\n');
   const history = thread
     .slice(-10)
@@ -869,7 +879,7 @@ export async function runEditTurn(params: {
   const systemPrompt = `You classify a single edit request inside a carousel studio and produce a short reply. Do NOT rewrite slide copy here — copy rewrites are executed by a separate focused step.
 
 Intents (pick the ONE that best fulfils the whole request):
-- copy: change the TEXT of one or a few SPECIFIC slides that stay in place. Return "targetSlideIndices" (1-based)${selectedSlideIndex !== null ? `; the user has slide ${selectedSlideIndex + 1} selected — scope to it unless they clearly mean otherwise` : ''}.
+- copy: change the TEXT of one or a few SPECIFIC slides that stay in place. Return "targetSlideIndices" (1-based)${selectionLabel ? `; the user has ${selectedSlideIndices.length > 1 ? `slides ${selectionLabel}` : `slide ${selectionLabel}`} selected — scope to ${selectedSlideIndices.length > 1 ? 'them' : 'it'} unless they clearly mean otherwise` : ''}.
 - design: a visual/setting change. Return "designActions" (set_template/set_format/set_preset/set_pattern/set_signature_position).
 - image: only for template-3 — regenerate a slide's sketch. Return "imageBrief" and 1-based "imageSlideIndex".
 - structure: a SMALL, TARGETED count change to ONE specific position — remove slide N, or add ONE slide at a known spot. Return "structureOps" (insert/append/remove; 1-based indices). For an insert/append, also fill "slideData" (variant + headline + body/listItems) so the new slide has real content. Min 2, max 20 slides.
@@ -910,15 +920,18 @@ Slide numbers are 1-based, exactly as the user sees them. "memoryNote": one sent
   // copy — focused rewrite call + patch merge (reuses guards.forcedCopyEdit).
   if (out.intent === 'copy') {
     await progress('EXECUTE: Rewriting the copy you asked for...', 55);
-    const idxList: number[] = Array.isArray(cls.targetSlideIndices) ? cls.targetSlideIndices : [];
-    const targetIndex = idxList.length === 1
-      ? idxList[0] - 1
-      : (selectedSlideIndex !== null ? selectedSlideIndex : null);
+    // The classifier's 1-based targetSlideIndices win when present; otherwise fall
+    // back to the user's on-canvas multi-selection; otherwise null = whole deck.
+    const clsTargets: number[] = Array.isArray(cls.targetSlideIndices)
+      ? cls.targetSlideIndices.map((n: number) => n - 1).filter((i: number) => Number.isInteger(i) && i >= 0 && i < slides.length)
+      : [];
+    const targets: number[] = clsTargets.length ? clsTargets : selectedSlideIndices;
+    const targetArg: number | number[] | null = targets.length === 0 ? null : (targets.length === 1 ? targets[0] : targets);
     try {
-      const rewrite = await runAgentSpan('CarouselPlanner.COPY_REWRITE', { targetIndex }, () =>
-        forcedCopyEdit(slides, message, templateId, targetIndex)
+      const rewrite = await runAgentSpan('CarouselPlanner.COPY_REWRITE', { targets }, () =>
+        forcedCopyEdit(slides, message, templateId, targetArg)
       );
-      const patched = applySlidePatches(slides, rewrite.slides, templateId, targetIndex);
+      const patched = applySlidePatches(slides, rewrite.slides, templateId, targetArg);
       if (patched.slides) {
         slides = polishSlides(patched.slides);
         slides = await ProofreaderAgent.proofread(slides, payload.creativeBrief);
@@ -988,7 +1001,7 @@ Slide numbers are 1-based, exactly as the user sees them. "memoryNote": one sent
 
   // image — regenerate one template-3 doodle.
   if (out.intent === 'image' && templateId === 'template-3' && typeof cls.imageBrief === 'string' && cls.imageBrief.trim()) {
-    const briefIdx = typeof cls.imageSlideIndex === 'number' ? cls.imageSlideIndex - 1 : (selectedSlideIndex ?? 0);
+    const briefIdx = typeof cls.imageSlideIndex === 'number' ? cls.imageSlideIndex - 1 : (selectedSlideIndices[0] ?? 0);
     const idx = Math.max(0, Math.min(slides.length - 1, briefIdx));
     out.imageBrief = cls.imageBrief;
     out.imageSlideIndex = idx;

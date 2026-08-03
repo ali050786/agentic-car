@@ -1,11 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Layout, Download, CheckCircle, Loader, AlertCircle, FileText, ChevronDown, Zap } from 'lucide-react';
+import { Layout, Download, CheckCircle, Loader, AlertCircle, FileText, ChevronDown } from 'lucide-react';
 import { UserMenu } from './UserMenu';
-import { useAuthStore } from '../store/useAuthStore';
-import { FREE_TIER_LIMIT } from '../config/constants';
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'limit-reached';
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 interface FloatingTopBarProps {
     slidesCount: number;
@@ -15,7 +13,6 @@ interface FloatingTopBarProps {
     onDownloadPdf: () => void;
     isExportingPdf: boolean;
     onOpenAuthModal: () => void;
-    onOpenHistory: () => void;
 }
 
 export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
@@ -25,11 +22,8 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
     onDownload,
     onDownloadPdf,
     isExportingPdf,
-    onOpenAuthModal,
-    onOpenHistory
+    onOpenAuthModal
 }) => {
-    const { freeUsageCount } = useAuthStore();
-    const [showLimitTooltip, setShowLimitTooltip] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
     const downloadDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -77,38 +71,6 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
                     </div>
                 );
 
-            case 'limit-reached':
-                return (
-                    <div
-                        className="relative flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-xs cursor-pointer hover:bg-red-500/20 transition-all"
-                        onClick={() => setShowLimitTooltip(!showLimitTooltip)}
-                        onMouseEnter={() => setShowLimitTooltip(true)}
-                        onMouseLeave={() => setShowLimitTooltip(false)}
-                    >
-                        <AlertCircle size={12} />
-                        <span className="text-[10px] font-semibold">Limit Reached</span>
-                        {showLimitTooltip && (
-                            <div className="absolute top-full mt-2 right-0 w-64 p-3 bg-neutral-950 border border-white/10 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85)] z-50">
-                                <p className="text-[11px] text-white mb-1">
-                                    You have reached the free limit of {FREE_TIER_LIMIT} carousels.
-                                </p>
-                                <p className="text-[10px] text-neutral-400 mb-2.5">
-                                    Delete old carousels to save new work.
-                                </p>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onOpenHistory();
-                                    }}
-                                    className="w-full px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-[10px] text-white font-semibold transition-colors"
-                                >
-                                    View your carousels
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                );
-
             case 'error':
                 return (
                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full text-orange-400 text-xs">
@@ -140,24 +102,6 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
 
             {/* Right: Action Buttons */}
             <div className="flex items-center gap-2.5">
-                {/* Free Tier Usage Slider (Header Version) */}
-                {hasUser && (
-                    <div className="hidden md:flex items-center gap-2 px-2.5 py-1 bg-white/[0.02] border border-white/5 rounded-full">
-                        <Zap size={11} className="text-blue-400" />
-                        <div className="flex flex-col w-16">
-                            <span className="text-[9px] font-semibold text-blue-300 leading-none mb-0.5">
-                                Free: {freeUsageCount}/{FREE_TIER_LIMIT}
-                            </span>
-                            <div className="w-full bg-neutral-800 rounded-full h-1 overflow-hidden">
-                                <div
-                                    className="bg-blue-400 h-full rounded-full transition-all"
-                                    style={{ width: `${Math.min((freeUsageCount / FREE_TIER_LIMIT) * 100, 100)}%` }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Auto-Save Status Badge (Generator Mode) */}
                 {renderAutoSaveStatus()}
 

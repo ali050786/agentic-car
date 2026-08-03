@@ -5,7 +5,6 @@
  */
 
 import client, { account, databases, config } from '../lib/appwriteClient';
-import { FreeLimitError } from './aiService';
 
 const WORKER_URL = import.meta.env.VITE_WORKER_URL as string | undefined;
 const JOBS_COLLECTION_ID = 'generation_jobs';
@@ -16,9 +15,8 @@ const JOBS_COLLECTION_ID = 'generation_jobs';
  * platform-side issue, not this app's config — see worker/auth.ts for
  * details and the rollback path). Falls back to the same client-trusted
  * x-user-id header api/generate.ts already uses. Guests previously had no
- * Appwrite session at all — give them a lightweight anonymous one so their
- * one free trial (still capped client-side in Application.tsx's
- * checkGuestLimit) still has a $id to send.
+ * Appwrite session at all — give them a lightweight anonymous one so they
+ * still have a $id to send.
  */
 const getUserId = async (): Promise<string> => {
     try {
@@ -78,11 +76,6 @@ export const createJob = async (params: {
         headers,
         body: JSON.stringify({ type: params.type, carouselId: params.carouselId, payload: params.payload }),
     });
-
-    if (res.status === 403) {
-        const body = await res.json().catch(() => ({}));
-        throw new FreeLimitError(body?.error || 'Free trial exhausted. Please contact admin for more credits.', body?.usageCount);
-    }
 
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));

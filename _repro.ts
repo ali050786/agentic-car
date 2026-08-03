@@ -11,7 +11,7 @@ const deck: SlideContent[] = [
 ];
 const instr = 'make it at least 10 to 12 slides, explain in more detail. Make the cover less verbose with a better hook.';
 const ne = (s:SlideContent)=>!!(s.headline?.trim()||s.body?.trim()||s.listItems?.length);
-runWithAgentContext({ userId:'smoke', selectedModel:'openrouter/deepseek-v4-flash', bypassFreeTier:true } as any, async () => {
+runWithAgentContext({ userId:'smoke', selectedModel:'openrouter/deepseek-v4-flash' } as any, async () => {
   for (let i=1;i<=3;i++){
     const res = await regenerateDeck(deck, 'template-1', instr, 12, [], undefined, undefined);
     const s = res!.slides;

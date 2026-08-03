@@ -8,16 +8,15 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Zap, ChevronDown } from 'lucide-react';
+import { LogOut, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
-import { FREE_TIER_LIMIT } from '../config/constants';
 
 interface UserMenuProps {}
 
 export const UserMenu: React.FC<UserMenuProps> = () => {
   const navigate = useNavigate();
-  const { user, signOut, freeUsageCount } = useAuthStore();
+  const { user, signOut } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -70,25 +69,6 @@ export const UserMenu: React.FC<UserMenuProps> = () => {
             <p className="text-[10px] text-neutral-400 truncate mt-0.5 font-medium">
               {user?.email}
             </p>
-          </div>
-
-          {/* Usage Status Bar */}
-          <div className="p-3 bg-white/[0.02] border-b border-white/5">
-            <div className="flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center text-[10px] font-bold text-blue-300">
-                  <span>Usage Limit</span>
-                  <span>{freeUsageCount}/{FREE_TIER_LIMIT}</span>
-                </div>
-                <div className="w-full bg-neutral-800 rounded-full h-1 mt-1 overflow-hidden">
-                  <div
-                    className="bg-blue-400 h-full rounded-full transition-all"
-                    style={{ width: `${(freeUsageCount / FREE_TIER_LIMIT) * 100}%` }}
-                  />
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Menu Items list */}

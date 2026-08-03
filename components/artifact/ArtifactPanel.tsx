@@ -51,7 +51,8 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     const {
         slides, theme, topic, selectedTemplate, selectedFormat, setFormat, selectedPattern,
         patternOpacity, patternScale, patternSpacing, brandKit, signaturePosition, setSignaturePosition,
-        selectedSlideIndex, setSelectedSlideIndex, updateSlide, setBrandKit,
+        selectedSlideIndex, selectedSlideIndices, toggleSlideSelection, setSelectedSlideIndex, setSelectedSlideIndices,
+        updateSlide, setBrandKit,
         isGenerating, generationStatus, generationProgress, pendingDoodleSlides,
     } = useCarouselStore(useShallow(s => ({
         slides: s.slides,
@@ -68,7 +69,10 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         signaturePosition: s.signaturePosition,
         setSignaturePosition: s.setSignaturePosition,
         selectedSlideIndex: s.selectedSlideIndex,
+        selectedSlideIndices: s.selectedSlideIndices,
+        toggleSlideSelection: s.toggleSlideSelection,
         setSelectedSlideIndex: s.setSelectedSlideIndex,
+        setSelectedSlideIndices: s.setSelectedSlideIndices,
         updateSlide: s.updateSlide,
         setBrandKit: s.setBrandKit,
         isGenerating: s.isGenerating,
@@ -87,6 +91,27 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
 
     const currentIndex = selectedSlideIndex !== null && selectedSlideIndex < slides.length ? selectedSlideIndex : 0;
     const currentSlide = slides[currentIndex];
+
+    // Thumbnail selection, desktop-standard:
+    // - plain click  → select ONLY that slide (or clear it if it was the sole one)
+    // - ⌘/Ctrl/Alt   → add/remove that slide from the multi-select set
+    // - Shift        → select the contiguous range from the primary slide to here
+    const handleThumbClick = (e: React.MouseEvent, i: number) => {
+        const additive = e.metaKey || e.ctrlKey || e.altKey;
+        if (additive) {
+            toggleSlideSelection(i);
+        } else if (e.shiftKey && selectedSlideIndex !== null) {
+            const start = Math.min(selectedSlideIndex, i);
+            const end = Math.max(selectedSlideIndex, i);
+            const range: number[] = [];
+            for (let k = start; k <= end; k++) range.push(k);
+            setSelectedSlideIndices(range);
+        } else if (selectedSlideIndices.length === 1 && selectedSlideIndices[0] === i) {
+            setSelectedSlideIndices([]); // clicking the sole selected slide again → whole carousel
+        } else {
+            setSelectedSlideIndex(i); // replace selection with just this slide
+        }
+    };
 
     // Object literal — memoized so it's a stable dependency for the SVG
     // useMemo calls below instead of invalidating them on every render.
@@ -428,31 +453,37 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
                 </div>
             </div>
 
-            {/* Thumbnail strip */}
+            {/* Thumbnail strip — tap to (de)select; multiple can be selected to scope edits */}
             <div className="flex items-center gap-2 px-4 py-3 border-t border-white/10 overflow-x-auto">
                 {slides.map((slide, i) => {
                     const thumbSvg = thumbSvgs[i];
-                    const isActive = i === currentIndex && selectedSlideIndex !== null;
+                    const isSelected = selectedSlideIndices.includes(i);
                     const isShown = i === currentIndex;
                     return (
                         <button
                             key={i}
-                            onClick={() => setSelectedSlideIndex(selectedSlideIndex === i ? null : i)}
-                            title={`Slide ${i + 1}`}
-                            className={`relative flex-shrink-0 rounded-md overflow-hidden transition-all ${isActive
+                            onClick={(e) => handleThumbClick(e, i)}
+                            title={`Slide ${i + 1} — click to select · ⌘/Alt-click to select multiple`}
+                            aria-pressed={isSelected}
+                            className={`relative flex-shrink-0 rounded-md overflow-hidden transition-all ${isSelected
                                 ? 'ring-2 ring-blue-500'
                                 : isShown
-                                    ? 'ring-1 ring-white/40'
+                                    ? 'ring-1 ring-white/40 opacity-90 hover:opacity-100'
                                     : 'ring-1 ring-white/10 opacity-60 hover:opacity-100'
                                 }`}
                             style={{ width: selectedFormat === 'square' ? 52 : 44, height: 52 }}
                         >
                             <div className="artifact-thumb svg-preview-container w-full h-full pointer-events-none" dangerouslySetInnerHTML={{ __html: thumbSvg }} />
+                            {isSelected && (
+                                <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
+                                    <CheckCircle size={10} strokeWidth={3} />
+                                </span>
+                            )}
                         </button>
                     );
                 })}
                 <span className="text-[11px] text-neutral-500 ml-auto flex-shrink-0 pl-3">
-                    {slides.length} slides{selectedSlideIndex !== null ? ` · slide ${currentIndex + 1} selected` : ''}
+                    {slides.length} slides{selectedSlideIndices.length > 0 ? ` · ${selectedSlideIndices.length} selected` : ''}
                 </span>
             </div>
 

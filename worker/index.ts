@@ -18,8 +18,8 @@ import { createJob } from './jobStore';
 import { enqueue, setHandler, resumeOnBoot, startStalenessWatcher } from './queue';
 import { runCreateCarouselJob } from './jobs/createCarouselJob';
 import { runEditCarouselJob } from './jobs/editCarouselJob';
-import { FreeLimitError } from '../lib/freeTierServer';
 import { assertOwnsCarousel, ForbiddenError } from './carouselStoreServer';
+import { isBackedOff } from './abuseGuard';
 
 const app = express();
 const PORT = Number(process.env.WORKER_PORT) || 4000;
@@ -51,6 +51,10 @@ app.post('/jobs', async (req, res) => {
         if (rateLimited(userId)) {
             return res.status(429).json({ error: 'Too many requests — please slow down.' });
         }
+        // Guardrail: back off users who keep tripping the content gate.
+        if (isBackedOff(userId)) {
+            return res.status(429).json({ error: "Too many requests were declined. Please wait a few minutes, then try a carousel topic." });
+        }
 
         const { type, carouselId, payload } = req.body;
         if (type !== 'create' && type !== 'edit') {
@@ -69,7 +73,6 @@ app.post('/jobs', async (req, res) => {
     } catch (err: any) {
         if (err instanceof UnauthorizedError) return res.status(401).json({ error: err.message });
         if (err instanceof ForbiddenError) return res.status(403).json({ error: err.message });
-        if (err instanceof FreeLimitError) return res.status(403).json({ error: err.message, usageCount: err.usageCount });
         console.error('[worker] POST /jobs error:', err);
         return res.status(500).json({ error: err?.message || 'Failed to create job' });
     }

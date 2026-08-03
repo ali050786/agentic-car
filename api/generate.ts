@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { generateContent } from '../core/llm/generateContent.js';
-import { verifySessionAndConsumeLimit } from '../lib/apiAuth.js';
+import { verifySession } from '../lib/apiAuth.js';
 import { langfuse } from '../core/llm/langfuse.js';
 
 /**
@@ -19,19 +19,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const { prompt, selectedModel } = req.body;
 
-        // Verify session and statefully consume free-tier limits on the server
+        // Verify the session on the server (no usage limits — the platform is free)
         try {
-            const authResult = await verifySessionAndConsumeLimit(req);
+            const authResult = await verifySession(req);
             userId = authResult.userId;
         } catch (authErr: any) {
-            console.warn('[Vercel API] Authentication/limits failure:', authErr?.message || authErr);
-            if (authErr.name === 'FreeLimitError') {
-                return res.status(403).json({
-                    error: 'FREE_LIMIT_REACHED',
-                    message: authErr.message || 'Free trial exhausted. Please contact admin for more credits.',
-                    usageCount: authErr.usageCount
-                });
-            }
+            console.warn('[Vercel API] Authentication failure:', authErr?.message || authErr);
             return res.status(401).json({
                 error: 'UNAUTHORIZED',
                 message: 'A valid session token is required to access this service.'

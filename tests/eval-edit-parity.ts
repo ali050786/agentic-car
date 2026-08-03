@@ -21,10 +21,10 @@ import { runWithAgentContext } from '../core/llm/agentGateway';
 import { SlideContent } from '../types';
 
 // Agent LLM calls run through AsyncLocalStorage context under Node; establish
-// one per prompt. bypassFreeTier so the eval's many calls don't burn quota.
+// one per prompt.
 const withCtx = <T>(fn: () => Promise<T>): Promise<T> =>
   runWithAgentContext(
-    { userId: USER_ID, selectedModel: 'openrouter/deepseek-v4-flash', bypassFreeTier: true },
+    { userId: USER_ID, selectedModel: 'openrouter/deepseek-v4-flash' },
     fn,
   );
 

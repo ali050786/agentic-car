@@ -37,7 +37,6 @@ import { loadChat } from './services/chatService';
 import { Toast } from './components/Toast';
 import { useToast } from './hooks/useToast';
 import { AuthModal } from './components/AuthModal';
-import { FreeLimitError } from './services/aiService';
 
 // Main carousel generator (protected)
 const CarouselGenerator: React.FC = () => {
@@ -109,27 +108,6 @@ const CarouselGenerator: React.FC = () => {
   // Share Modal state (moved here from the retired My Carousels dashboard)
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [carouselToShare, setCarouselToShare] = useState<Carousel | null>(null);
-
-  // Check guest usage
-  const checkGuestLimit = (): boolean => {
-    if (user) return true; // Logged in users always pass
-
-    const guestUsage = parseInt(localStorage.getItem('guest_usage_count') || '0');
-    if (guestUsage >= 1) {
-      setAuthModalMessage('Create an account to generate more carousels');
-      setAuthMode('signup');
-      setAuthModalOpen(true);
-      return false;
-    }
-    return true;
-  };
-
-  const incrementGuestUsage = () => {
-    if (!user) {
-      const guestUsage = parseInt(localStorage.getItem('guest_usage_count') || '0');
-      localStorage.setItem('guest_usage_count', (guestUsage + 1).toString());
-    }
-  };
 
   const requireAuth = (message: string = 'Sign up to continue'): boolean => {
     if (user) return true;
@@ -269,7 +247,6 @@ const CarouselGenerator: React.FC = () => {
   // instead of running the agent pipeline in this tab.
   const handleFirstPrompt = async (text: string, creativeBrief?: import('./types').CreativeBrief, userMessage?: string) => {
 
-    if (!checkGuestLimit()) return;
     setTopic(text.length > 80 ? text.slice(0, 77) + '…' : text);
 
     const state = useCarouselStore.getState();
@@ -300,7 +277,6 @@ const CarouselGenerator: React.FC = () => {
 
     useCarouselStore.getState().setActiveJobId(jobId);
     useCarouselStore.getState().setGenerating(true);
-    incrementGuestUsage();
   };
 
   // Applies background job updates (create + edit) to the live UI — keeps
@@ -468,7 +444,6 @@ const CarouselGenerator: React.FC = () => {
           setAuthMode('login');
           setAuthModalOpen(true);
         }}
-        onOpenHistory={() => setHistoryOpen(true)}
       />
 
       {/* History + Chat + Artifact split (chat is the control plane, the carousel is the hero) */}
