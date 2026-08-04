@@ -1,0 +1,38 @@
+# Runs the background worker + a Caddy reverse proxy that terminates HTTPS.
+# Caddy auto-provisions a Let's Encrypt cert for worker.blinkwiser.com.
+# The worker port (4000) is NOT published to the host — only Caddy reaches it
+# over the internal Docker network, so nothing but 80/443 is exposed publicly.
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    expose:
+      - "4000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data       # persists issued TLS certs across restarts
+      - caddy_config:/config
+    depends_on:
+      - worker
+
+volumes:
+  caddy_data:
+  caddy_config:

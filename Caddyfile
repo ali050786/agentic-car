@@ -1,0 +1,6 @@
+# Caddy handles HTTPS automatically: it fetches and renews a Let's Encrypt
+# cert for this domain and proxies traffic to the worker container on :4000.
+# Requires worker.blinkwiser.com to already point (DNS A record) at this server.
+worker.blinkwiser.com {
+	reverse_proxy worker:4000
+}
