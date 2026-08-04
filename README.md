@@ -126,6 +126,13 @@ npm run build
 
 ---
 
+## 🌐 Deployment Guides
+
+- **Vercel Frontend**: See [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) for deploying the React SPA to Vercel.
+- **Background Worker (DigitalOcean + Docker)**: See [docs/digitalocean-deployment.md](docs/digitalocean-deployment.md) for running the worker in Docker behind Caddy (automatic HTTPS) on a DigitalOcean droplet.
+
+---
+
 ## 📂 Project Structure
 ```
 agentic-car/
