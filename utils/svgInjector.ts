@@ -15,7 +15,8 @@ export const injectContentIntoSvg = (
   patternOpacity?: number,
   patternScale?: number,
   patternSpacing?: number,
-  uniqueId: string = ''
+  uniqueId: string = '',
+  slideNumber?: number
 ): string => {
   return renderSlide(
     templateId,
@@ -27,6 +28,7 @@ export const injectContentIntoSvg = (
     patternOpacity,
     patternScale,
     patternSpacing,
-    uniqueId
+    uniqueId,
+    slideNumber
   );
 };

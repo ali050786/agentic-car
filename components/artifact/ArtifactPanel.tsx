@@ -124,11 +124,11 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     // worth redoing on renders where none of these inputs changed.
     const stageSvg = useMemo(() => {
         if (!currentSlide) return '';
-        return injectContentIntoSvg(selectedTemplate, currentSlide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `stage-${currentIndex}`);
+        return injectContentIntoSvg(selectedTemplate, currentSlide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `stage-${currentIndex}`, currentIndex + 1);
     }, [selectedTemplate, currentSlide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, currentIndex]);
 
     const thumbSvgs = useMemo(
-        () => slides.map((slide, i) => injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `thumb-${i}`)),
+        () => slides.map((slide, i) => injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `thumb-${i}`, i + 1)),
         [slides, selectedTemplate, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing]
     );
 

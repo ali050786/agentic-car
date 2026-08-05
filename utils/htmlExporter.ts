@@ -64,7 +64,8 @@ export const exportCarouselToHtml = async (opts: HtmlExportOptions): Promise<voi
         opts.patternOpacity,
         opts.patternScale,
         opts.patternSpacing,
-        `export-${i}`
+        `export-${i}`,
+        i + 1
       );
       return renderSlideWithEmbeddedImages(svg);
     })

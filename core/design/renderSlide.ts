@@ -32,7 +32,8 @@ export const renderSlide = (
   patternOpacity?: number,
   patternScale?: number,
   patternSpacing?: number,
-  uniqueId: string = ''
+  uniqueId: string = '',
+  slideNumber?: number
 ): string => {
   // Normalize input into SlideLayout IR
   const layout = slideToLayout(content);
@@ -80,9 +81,24 @@ export const renderSlide = (
   const wrapEditable = (field: string, inner: string, extraAttrs = ''): string =>
     htmlEditable ? `<span data-edit-field="${field}" ${EDIT_ATTRS}${extraAttrs}>${inner}</span>` : inner;
 
-  // Compute slide number string
-  const idxMatch = (layout.id || '').match(/slide-(\d+)/);
-  const slideNum = String((idxMatch ? parseInt(idxMatch[1], 10) : 0) + 1).padStart(2, '0');
+  // Compute the displayed slide number. The caller's explicit 1-based
+  // `slideNumber` (the slide's position in the deck) is the source of truth.
+  // We only fall back to parsing the id for legacy callers that don't pass it —
+  // and even then guard against timestamp-style ids (`slide-<Date.now()>-…`
+  // from regenerate/edit), whose leading number is NOT a position and used to
+  // render as a 13-digit red number on the slide.
+  let slideNum: string;
+  if (typeof slideNumber === 'number' && slideNumber > 0) {
+    slideNum = String(Math.round(slideNumber)).padStart(2, '0');
+  } else {
+    const idxMatch = (layout.id || '').match(/slide-(\d+)/);
+    const parsed = idxMatch ? parseInt(idxMatch[1], 10) : NaN;
+    // Small values are 0-based positions (e.g. `template-4-slide-9`); anything
+    // implausibly large is a timestamp id → render no number rather than junk.
+    slideNum = Number.isFinite(parsed) && parsed >= 0 && parsed < 1000
+      ? String(parsed + 1).padStart(2, '0')
+      : '';
+  }
 
   // Prepare theme CSS variables
   let themeCss = '';
