@@ -134,10 +134,17 @@ export const exportSlideToPdf = async (
             zIndex: '-9999', backgroundColor: 'white',
         });
 
-        // Attach a fresh clone for raster rendering
+        // Attach a fresh clone for raster rendering. Embed external images
+        // (signature avatar, doodles) as base64 first — html2canvas with
+        // allowTaint:false would otherwise drop any URL it can't CORS-load.
         const rasterClone = liveSvg.cloneNode(true) as SVGSVGElement;
         rasterClone.setAttribute('width', String(exportW));
         rasterClone.setAttribute('height', String(exportH));
+        try {
+            await embedImagesInSvg(rasterClone);
+        } catch (e) {
+            console.warn('[pdfExporter] Fallback image embedding partially failed:', e);
+        }
         tempContainer.appendChild(rasterClone);
         document.body.appendChild(tempContainer);
 

@@ -12,38 +12,58 @@ export const isSlideLayout = (item: any): item is SlideLayout => {
   return item && typeof item === 'object' && ('blockType' in item || 'slots' in item);
 };
 
+/** Map a legacy `variant` onto a block type. */
+const variantToBlockType = (variant?: string): BlockType => {
+  switch (variant) {
+    case 'hero':
+      return 'hero';
+    case 'list':
+      return 'list';
+    case 'cta':
+    case 'closing':
+      return 'closing';
+    case 'body':
+    default:
+      return 'body';
+  }
+};
+
 export const slideToLayout = (item: SlideContent | SlideLayout): SlideLayout => {
   if (isSlideLayout(item)) {
+    const raw = item as any;
+
+    // A slide can be a *hybrid*: a legacy shape (top-level `headline`/`body`/
+    // `listItems` + `variant`) that later gained a `slots` object — e.g. from an
+    // inline edit — while a subsequent chat edit rewrote only the top-level
+    // fields. The top-level fields are the source of truth those edit paths
+    // write to, so a non-empty top-level value must win over a stale/empty slot;
+    // slot-only fields (statNumber, quote, split…) pass through untouched.
+    const src = item.slots || {};
+    const has = (v: any) => v !== undefined && v !== null && !(typeof v === 'string' && v === '');
+    const slots = {
+      ...src,
+      headline: has(raw.headline) ? raw.headline : src.headline,
+      preHeader: has(raw.preHeader) ? raw.preHeader : src.preHeader,
+      body: has(raw.body) ? raw.body : src.body,
+      footer: has(raw.footer) ? raw.footer : src.footer,
+      accentPhrase: has(raw.accentPhrase) ? raw.accentPhrase : src.accentPhrase,
+      listItems: (Array.isArray(raw.listItems) && raw.listItems.length) ? raw.listItems : src.listItems,
+    };
+
     return {
       id: item.id || `slide-${Date.now()}`,
-      blockType: item.blockType || 'body',
-      slots: item.slots || {},
+      // Fall back to the legacy `variant` before defaulting — a hybrid slide
+      // often carries `variant: 'list'` but no `blockType`, and defaulting
+      // straight to 'body' silently drops its list rendering.
+      blockType: item.blockType || variantToBlockType(raw.variant),
+      slots,
       styleOverrides: item.styleOverrides,
       visual: item.visual,
     };
   }
 
   const legacy = item as SlideContent;
-  let blockType: BlockType = 'body';
-
-  switch (legacy.variant) {
-    case 'hero':
-      blockType = 'hero';
-      break;
-    case 'body':
-      blockType = 'body';
-      break;
-    case 'list':
-      blockType = 'list';
-      break;
-    case 'cta':
-    case 'closing':
-      blockType = 'closing';
-      break;
-    default:
-      blockType = 'body';
-      break;
-  }
+  const blockType: BlockType = variantToBlockType(legacy.variant);
 
   return {
     id: legacy.id || `slide-${Date.now()}`,

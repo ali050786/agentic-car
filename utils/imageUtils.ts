@@ -118,30 +118,45 @@ export const createCircularImage = async (imageUrl: string, size: number = 88): 
 };
 
 /**
- * Scans an element for <image> tags and converts external URLs to base64
- * This is crucial for html2canvas to render images correctly in PDF/JPG exports
+ * Scans an element for images and rewrites external URLs to inline base64.
+ * This is crucial for exports (PDF/JPG/Figma): when an SVG is rasterized or
+ * serialized, it can't fetch external resources, so any un-embedded URL renders
+ * blank. We handle BOTH:
+ *   - SVG `<image>` elements (href / xlink:href) — e.g. template-3 doodles.
+ *   - HTML `<img>` elements inside `<foreignObject>` (src) — e.g. the signature
+ *     avatar. `querySelectorAll('image')` does NOT match `<img>`, so these were
+ *     previously left as external URLs and dropped from every export.
  */
 export const embedImagesInSvg = async (element: Element): Promise<void> => {
-    const images = Array.from(element.querySelectorAll('image'));
+    const isExternal = (url: string | null): url is string =>
+        !!url && (url.startsWith('http') || url.startsWith('//'));
 
-    // Process all images in parallel
-    await Promise.all(images.map(async (img) => {
+    // SVG <image> elements — addressed via href / xlink:href.
+    const svgImages = Array.from(element.querySelectorAll('image')).map(async (img) => {
         const href = img.getAttribute('href') || img.getAttribute('xlink:href');
-
-        if (href && (href.startsWith('http') || href.startsWith('//'))) {
-            try {
-                // Add crossOrigin attribute just in case
-                img.setAttribute('crossOrigin', 'anonymous');
-
-                // Fetch and convert to base64
-                const base64 = await imageUrlToBase64(href);
-
-                // Update attributes
-                img.setAttribute('href', base64);
-                img.setAttribute('xlink:href', base64);
-            } catch (err) {
-                console.warn('Failed to embed image:', href, err);
-            }
+        if (!isExternal(href)) return;
+        try {
+            img.setAttribute('crossOrigin', 'anonymous');
+            const base64 = await imageUrlToBase64(href);
+            img.setAttribute('href', base64);
+            img.setAttribute('xlink:href', base64);
+        } catch (err) {
+            console.warn('Failed to embed image:', href, err);
         }
-    }));
+    });
+
+    // HTML <img> elements inside foreignObjects (signature avatar) — src.
+    const htmlImages = Array.from(element.querySelectorAll('img')).map(async (img) => {
+        const src = img.getAttribute('src');
+        if (!isExternal(src)) return;
+        try {
+            img.setAttribute('crossOrigin', 'anonymous');
+            const base64 = await imageUrlToBase64(src);
+            img.setAttribute('src', base64);
+        } catch (err) {
+            console.warn('Failed to embed <img>:', src, err);
+        }
+    });
+
+    await Promise.all([...svgImages, ...htmlImages]);
 };
