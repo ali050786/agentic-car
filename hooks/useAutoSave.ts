@@ -12,9 +12,10 @@
  * Location: src/hooks/useAutoSave.ts
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createCarousel, updateCarouselContent } from '../services/carouselService';
-import { appToDbTemplate } from '../utils/templateConverter';
+import { appToDbTemplate, stampTheme, type AppTemplateType } from '../utils/templateConverter';
+import { compactDesigns } from '../core/design/canvas';
 import { BrandKit, BrandMode, SignaturePosition } from '../types';
 import { useCarouselStore } from '../store/useCarouselStore';
 
@@ -25,7 +26,7 @@ interface UseAutoSaveParams {
     theme: any | null;
     topic: string;
     userId: string;
-    templateType: 'template-1' | 'template-3' | 'template-4';
+    templateType: AppTemplateType;
     brandMode: BrandMode;
     presetId: string;
     brandKit: BrandKit;
@@ -45,7 +46,7 @@ const DEBOUNCE_DELAY = 2000; // 2 seconds
 export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
     const {
         slides,
-        theme,
+        theme: rawTheme,
         topic,
         userId,
         templateType,
@@ -62,6 +63,12 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
     // here means this effect re-runs the moment anything else (loading a
     // carousel from the sidebar, starting a new one) changes it.
     const activeCarouselId = useCarouselStore(s => s.activeCarouselId);
+    // A create job's draft on screen isn't a carousel yet: the job saves the final deck itself.
+    const draftPreview = useCarouselStore(s => s.draftPreview);
+    // The Canvas is stored as template1 + a marker on the theme (utils/templateConverter.ts).
+    const rawThemeKey = rawTheme ? JSON.stringify(rawTheme) : '';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const theme = useMemo(() => stampTheme(rawTheme, templateType), [rawThemeKey, templateType]);
 
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -104,7 +111,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
         // 1. No user ID
         // 2. No slides
         // 3. No theme
-        if (!userId || slides.length === 0 || !theme) {
+        if (!userId || slides.length === 0 || !theme || draftPreview) {
             return;
         }
 
@@ -129,6 +136,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
 
         // Set up debounced save
         timeoutRef.current = setTimeout(async () => {
+            if (useCarouselStore.getState().draftPreview) return;
             if (isSavingRef.current) {
                 console.warn('[useAutoSave] A save is already in flight — skipping this overlapping trigger');
                 return;
@@ -153,7 +161,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                         topic || 'Untitled Carousel',
                         dbTemplateType,
                         theme,
-                        slides,
+                        compactDesigns(slides),
                         false, // isPublic
                         brandMode,
                         presetId,
@@ -185,7 +193,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                     const { data, error } = await updateCarouselContent(
                         idToSave,
                         theme,
-                        slides,
+                        compactDesigns(slides),
                         brandMode,
                         presetId,
                         brandKit,
@@ -226,6 +234,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
         };
     }, [
         activeCarouselId,
+        draftPreview,
         slides,
         theme,
         userId,

@@ -1,6 +1,7 @@
 import { SlideContent, SlideLayout, CarouselTheme, BrandingConfig, CarouselFormat } from '../types';
 import { injectContentIntoSvg } from './svgInjector';
 import { embedImagesInSvg } from './imageUtils';
+import { FIT_SCRIPT } from '../core/design/canvas/fit';
 
 /**
  * Standalone HTML export.
@@ -65,7 +66,8 @@ export const exportCarouselToHtml = async (opts: HtmlExportOptions): Promise<voi
         opts.patternScale,
         opts.patternSpacing,
         `export-${i}`,
-        i + 1
+        i + 1,
+        slides.length
       );
       return renderSlideWithEmbeddedImages(svg);
     })
@@ -111,7 +113,7 @@ export const exportCarouselToHtml = async (opts: HtmlExportOptions): Promise<voi
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
       background: #fff;
     }
-    .slide svg { display: block; width: 100%; height: auto; }
+    .slide > svg { display: block; width: 100%; height: auto; }
     .slide figcaption {
       color: #888;
       font-size: 12px;
@@ -123,7 +125,7 @@ export const exportCarouselToHtml = async (opts: HtmlExportOptions): Promise<voi
 <body>
   <h1 class="deck-title">${deckTitle}</h1>
 ${slidesHtml}
-</body>
+${opts.templateId === 'template-5' ? `  <script>${FIT_SCRIPT}</script>\n` : ''}</body>
 </html>`;
 
   const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });

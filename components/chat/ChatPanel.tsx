@@ -10,14 +10,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { MemoryAgent } from '../../core/agents/MemoryAgent';
-import { CreativeDirectorAgent, parseExplicitSlideCount } from '../../core/agents/CreativeDirectorAgent';
+import { CreativeDirectorAgent, isSpecificRequest, parseExplicitSlideCount } from '../../core/agents/CreativeDirectorAgent';
 import { GatekeeperAgent } from '../../core/agents/GatekeeperAgent';
 import { createJob, cancelJob } from '../../services/jobService';
 import { detectInputMode } from '../../utils/inputDetector';
 import { fetchYouTubeContent, fetchUrlContent, extractDomain } from '../../utils/contentProcessor';
 import { extractTextFromFile } from '../../utils/fileProcessor';
 import { capSourceContent, assertUploadSizeOk, truncationNote } from '../../utils/contentLimits';
-import { ArrowUp, SlidersHorizontal, Sparkles, X, Plus, Paperclip, Layers } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+    ArrowUp, ArrowRight, Sparkles, X, Paperclip, Layers, Check, ChevronRight, Square, RotateCcw, Zap, FileText, Link2, Youtube, Undo2,
+    Lightbulb, Scissors, BarChart3, Palette, Megaphone,
+} from 'lucide-react';
+import { DrawCheck, EASE, IconButton, Kbd, PHASE_COLOR, SPRING, Segmented, Spinner, phaseLabel, phaseOf } from '../studio/ui';
 import type { CreativeBrief } from '../../types';
 
 
@@ -25,6 +30,7 @@ const HISTORY_WINDOW = 10;
 
 
 const TEMPLATE_OPTIONS = [
+    { id: 'template-5', label: 'The Canvas' },
     { id: 'template-1', label: 'The Truth' },
     { id: 'template-3', label: 'The Sketch' },
     { id: 'template-4', label: 'The Statement' },
@@ -40,7 +46,7 @@ const MODEL_OPTIONS = [
 const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Portuguese', 'Hindi'];
 
 interface ChatPanelProps {
-    onFirstPrompt: (text: string, brief?: CreativeBrief, userMessage?: string) => Promise<void>;
+    onFirstPrompt: (text: string, brief?: CreativeBrief, userMessage?: string, options?: { briefInWorker?: boolean }) => Promise<void>;
 }
 
 
@@ -61,7 +67,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         setActiveJobId, setGenerating, generationProgress,
     } = useCarouselStore();
 
-    const [draft, setDraft] = useState('');
+    // A prompt typed on the landing page is handed over via sessionStorage so
+    // visitors land in the studio with their idea already in the composer.
+    const [draft, setDraft] = useState(() => {
+        try { return sessionStorage.getItem('ac:landing-prompt') || ''; } catch { return ''; }
+    });
+    useEffect(() => {
+        try { sessionStorage.removeItem('ac:landing-prompt'); } catch { /* ignore */ }
+    }, []);
 
     const [attachedFile, setAttachedFile] = useState<{ name: string; content: string; truncated: boolean; originalLength: number } | null>(null);
     const [isAttaching, setIsAttaching] = useState(false);
@@ -149,8 +162,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
     }, [chatMessages, generationStatus]);
 
-    const send = async () => {
-        const text = draft.trim();
+    const send = async (override?: unknown) => {
+        const text = (typeof override === 'string' ? override : draft).trim();
         if ((!text && !attachedFile) || busy) return;
         setDraft('');
         const pendingAttachment = attachedFile;
@@ -232,6 +245,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                 if (preGate && !preGate.allowed) {
                     runMessageId.current = null;
                     updateChatMessage(runId, { running: false, events: [], text: preGate.reason });
+                    return;
+                }
+
+                // A specific request (enough words, or real source material) never needs a
+                // clarifying question: start the job right away and let the worker write the
+                // brief alongside its safety check and research, instead of a model round
+                // trip here first.
+                if (isSpecificRequest(topicForRun, sourceContentForRun)) {
+                    await onFirstPrompt(topicForRun, undefined, userMessageText, { briefInWorker: true });
                     return;
                 }
 
@@ -322,6 +344,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                     message: text,
                     selectedSlideIndex: scope,
                     selectedSlideIndices: scopeIndices,
+                    // Older turns folded by MemoryAgent; the worker only loads the recent thread.
+                    conversationSummary: (state.chatSummary || '').slice(0, 2000),
                 },
             });
             setActiveJobId(jobId);
@@ -337,8 +361,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                 const toFold = allMessages.slice(summarizedUpTo, allMessages.length - HISTORY_WINDOW);
                 if (toFold.length > 0) {
                     const foldTarget = allMessages.length - HISTORY_WINDOW;
+                    const foldCarouselId = activeCarouselId;
                     MemoryAgent.compactHistory(useCarouselStore.getState().chatSummary, toFold)
                         .then(updatedSummary => {
+                            // The user may have opened another carousel meanwhile: never leak this summary into it.
+                            if (useCarouselStore.getState().activeCarouselId !== foldCarouselId) return;
                             useCarouselStore.getState().setChatSummary(updatedSummary);
                             useCarouselStore.getState().setChatSummarizedUpTo(foldTarget);
                         })
@@ -433,307 +460,474 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         }
     };
 
+    // ── Studio UX helpers (presentation only) ────────────────────────────────
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+    const [composerFocused, setComposerFocused] = useState(false);
+    const [openSteps, setOpenSteps] = useState<Record<string, boolean>>({});
+
+    // Auto-grow the composer up to ~6 lines.
+    useEffect(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.style.height = '0px';
+        el.style.height = `${Math.min(el.scrollHeight, 168)}px`;
+    }, [draft]);
+
+    // "/" focuses the composer from anywhere that isn't already a text field.
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+            const t = e.target as HTMLElement | null;
+            if (t && (t.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]'))) return;
+            e.preventDefault();
+            textareaRef.current?.focus();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
+
+    // Other panels (e.g. the Canvas layout controls) send requests through the chat.
+    const sendRef = useRef(send);
+    sendRef.current = send;
+    useEffect(() => {
+        const onSend = (e: Event) => {
+            const text = (e as CustomEvent<{ text?: string }>).detail?.text;
+            if (typeof text === 'string' && text.trim()) sendRef.current(text);
+        };
+        window.addEventListener('studio:chat-send', onSend);
+        return () => window.removeEventListener('studio:chat-send', onSend);
+    }, []);
+
+    const fillDraft = (text: string) => {
+        setDraft(text);
+        requestAnimationFrame(() => {
+            const el = textareaRef.current;
+            if (!el) return;
+            el.focus();
+            el.setSelectionRange(text.length, text.length);
+        });
+    };
+
+    const detected = !hasSlides && !attachedFile && draft.trim() ? detectInputMode(draft).mode : null;
+    const lastMsg = chatMessages[chatMessages.length - 1];
+    const canSend = !busy && (!!draft.trim() || !!attachedFile);
+
     return (
-        <div className="flex flex-col h-full w-full bg-neutral-925 bg-neutral-900/60 border-r border-white/10">
+        <div className="st-panel rounded-2xl flex flex-col h-full w-full overflow-hidden">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2">
-                <Sparkles size={15} className="text-blue-400" />
-                <span className="text-sm font-medium text-white truncate">{hasSlides ? (topic || 'Carousel') : 'New carousel'}</span>
+            <div className="flex items-center gap-2.5 pl-4 pr-3 h-12 border-b border-white/[0.06] shrink-0">
+                <AgentStack busy={busy} />
+                <AnimatePresence mode="wait" initial={false}>
+                    <motion.span
+                        key={hasSlides ? (topic || 'Carousel') : 'new'}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.25, ease: EASE }}
+                        className="text-[13px] font-medium text-white truncate flex-1"
+                    >
+                        {hasSlides ? (topic || 'Carousel') : 'New carousel'}
+                    </motion.span>
+                </AnimatePresence>
+                <AnimatePresence>
+                    {hasSlides && (
+                        <motion.span initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={SPRING} className="lp-mono text-[10.5px] text-white/45 rounded-full border border-white/10 px-2 py-0.5 shrink-0">
+                            {slides.length} slides
+                        </motion.span>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto st-scroll px-4 py-5 space-y-4 min-h-0">
                 {chatMessages.length === 0 && (
-                    <div className="text-center mt-16 px-4">
-                        <p className="text-neutral-300 text-sm font-medium mb-1">What should we make?</p>
-                        <p className="text-neutral-500 text-xs leading-relaxed">
-                            Describe your topic — or paste an article, notes, anything.
-                            The agents research, find an angle, and design the carousel.
-                        </p>
-                    </div>
+                    <EmptyState
+                        onPick={fillDraft}
+                        onAttach={() => fileInputRef.current?.click()}
+                    />
                 )}
 
-                {chatMessages.map(msg => (
-                    <div key={msg.id} className={msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
-                        <div className={`max-w-[88%] rounded-xl px-3 py-2 text-[13px] leading-relaxed ${msg.role === 'user'
-                            ? 'bg-blue-600/20 text-blue-100 border border-blue-500/20'
-                            : msg.error
-                                ? 'bg-red-500/10 text-red-200 border border-red-500/30'
-                                : 'bg-white/5 text-neutral-200 border border-white/10'
-                            }`}>
-                            {msg.events && msg.events.length > 0 && (
-                                msg.running ? (
-                                    <div className="flex flex-col gap-1 mb-1.5">
-                                        {msg.events.map((ev, i) => (
-                                            <div key={i} className="flex items-center gap-1.5 text-[11px] text-neutral-400">
-                                                {ev.done
-                                                    ? <span className="text-green-400/80">✓</span>
-                                                    : <span className="w-2.5 h-2.5 border border-blue-400/50 border-t-blue-400 rounded-full animate-spin inline-block" />}
-                                                <span className={ev.done ? '' : 'text-blue-300'}>{ev.label}</span>
-                                            </div>
-                                        ))}
-                                        {/* Stop button */}
-                                        <div className="mt-2 pt-1.5 border-t border-white/5 flex justify-end">
-                                            <button
-                                                onClick={handleCancelJob}
-                                                className="px-2 py-0.5 rounded border border-red-500/30 hover:border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-medium transition-all flex items-center gap-1"
-                                                title="Stop Generation"
-                                            >
-                                                <X size={10} />
-                                                Stop
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <details className="mb-1.5">
-                                        <summary className="text-[11px] text-blue-400 hover:text-blue-300 cursor-pointer select-none focus:outline-none font-medium">
-                                            View steps taken ({msg.events.length})
-                                        </summary>
-                                        <div className="mt-1.5 flex flex-col gap-1 pl-3.5 border-l border-white/5">
-                                            {msg.events.map((ev, i) => (
-                                                <div key={i} className="flex items-center gap-1.5 text-[11px] text-neutral-400">
-                                                    <span className="text-green-400/80">✓</span>
-                                                    <span>{ev.label}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </details>
-                                )
-                            )}
-                            {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
-
-                            {msg.tokenUsage && (
-                                <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-neutral-400 select-none bg-neutral-900/50 border border-white/5 rounded-md py-1 px-2 w-fit">
-                                    <span className="text-blue-400 font-medium flex items-center gap-0.5">
-                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                        </svg>
-                                        Tokens:
-                                    </span>
-                                    <span>Total: <strong className="text-neutral-100">{msg.tokenUsage.totalTokens}</strong></span>
-                                    <span className="text-white/10">•</span>
-                                    <span>Prompt: <strong className="text-neutral-300">{msg.tokenUsage.promptTokens}</strong></span>
-                                    <span className="text-white/10">•</span>
-                                    <span>Response: <strong className="text-neutral-300">{msg.tokenUsage.completionTokens}</strong></span>
-                                    {msg.tokenUsage.cachedTokens > 0 && (
-                                        <>
-                                            <span className="text-white/10">•</span>
-                                            <span className="text-emerald-400 font-medium">Cached: <strong>{msg.tokenUsage.cachedTokens}</strong></span>
-                                        </>
-                                    )}
+                <AnimatePresence initial={false}>
+                    {chatMessages.map(msg => (
+                        <motion.div
+                            key={msg.id}
+                            layout="position"
+                            initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.4, ease: EASE }}
+                            className={msg.role === 'user' ? 'flex justify-end' : 'flex justify-start gap-2.5'}
+                        >
+                            {msg.role === 'user' ? (
+                                <div className="max-w-[86%] rounded-2xl rounded-br-md bg-white text-[#0b0b12] px-3.5 py-2.5 text-[13.5px] leading-relaxed whitespace-pre-wrap break-words shadow-[0_8px_24px_-12px_rgba(255,255,255,0.35)]">
+                                    {msg.text}
                                 </div>
-                            )}
+                            ) : (
+                                <>
+                                    <AssistantAvatar running={!!msg.running} error={!!msg.error} />
+                                    <div className={`min-w-0 max-w-[88%] rounded-2xl rounded-tl-md px-3.5 py-3 text-[13.5px] leading-relaxed border ${msg.error
+                                        ? 'bg-rose-500/[0.07] text-rose-100 border-rose-400/25'
+                                        : 'bg-white/[0.035] text-white/85 border-white/[0.08]'
+                                        }`}>
+                                        {msg.events && msg.events.length > 0 && (
+                                            msg.running ? (
+                                                <div className="mb-1">
+                                                    <AgentTimeline events={msg.events} progress={generationProgress} />
+                                                    <div className="mt-3 flex items-center justify-between gap-3">
+                                                        <span className="lp-mono text-[10.5px] text-white/35">{activeJobId ? 'Runs in the background · safe to close' : 'Working on it…'}</span>
+                                                        {activeJobId && <motion.button
+                                                            whileTap={{ scale: 0.94 }}
+                                                            onClick={handleCancelJob}
+                                                            className="group flex items-center gap-1.5 rounded-full border border-white/12 px-2.5 py-1 text-[11px] text-white/60 hover:text-rose-200 hover:border-rose-400/40 hover:bg-rose-500/10 transition-colors"
+                                                            title="Stop generation"
+                                                        >
+                                                            <Square size={9} className="fill-current" /> Stop
+                                                        </motion.button>}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="mb-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setOpenSteps(p => ({ ...p, [msg.id]: !p[msg.id] }))}
+                                                        className="flex items-center gap-1.5 text-[11.5px] text-white/45 hover:text-white/80 transition-colors"
+                                                        aria-expanded={!!openSteps[msg.id]}
+                                                    >
+                                                        <span className="grid place-items-center w-4 h-4 rounded-full bg-emerald-400/15 text-emerald-300"><Check size={10} strokeWidth={3} /></span>
+                                                        {msg.events.length} {msg.events.length === 1 ? 'step' : 'steps'} completed
+                                                        <motion.span animate={{ rotate: openSteps[msg.id] ? 90 : 0 }} transition={SPRING}><ChevronRight size={12} /></motion.span>
+                                                    </button>
+                                                    <AnimatePresence initial={false}>
+                                                        {openSteps[msg.id] && (
+                                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: EASE }} className="overflow-hidden">
+                                                                <div className="mt-2 ml-2 pl-3 border-l border-white/10 space-y-1.5">
+                                                                    {msg.events.map((ev, i) => {
+                                                                        const c = PHASE_COLOR[phaseOf(ev.label)];
+                                                                        return (
+                                                                            <motion.div key={i} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }} className="flex items-center gap-2 text-[11.5px] text-white/50">
+                                                                                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c }} />
+                                                                                <span className="truncate">{phaseLabel(ev.label)}</span>
+                                                                            </motion.div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
+                                            )
+                                        )}
+                                        {msg.text && <div className="whitespace-pre-wrap break-words">{msg.text}</div>}
 
-                            {/* Quick-reply chip UI for Creative Director clarifying questions */}
-                            {msg.quickReplies && !msg.running && (() => {
-                                const { groups, resumeToken } = msg.quickReplies;
-                                const toggleChip = (groupKey: string, value: string, multiSelect?: boolean) => {
-                                    setChipSelections(prev => {
-                                        const cur = prev[groupKey] || [];
-                                        if (multiSelect) {
-                                            return { ...prev, [groupKey]: cur.includes(value) ? cur.filter(v => v !== value) : [...cur, value] };
-                                        }
-                                        return { ...prev, [groupKey]: cur.includes(value) ? [] : [value] };
-                                    });
-                                };
-                                const handleChipSubmit = async () => {
-                                    if (busy) return;
-                                    const allSelections: string[] = [];
-                                    groups.forEach((_, gi) => {
-                                        const groupKey = `${resumeToken}-${gi}`;
-                                        const groupSels = chipSelections[groupKey] || [];
-                                        allSelections.push(...groupSels);
-                                    });
-                                    const customSels = chipSelections[`${resumeToken}-custom`] || [];
-                                    allSelections.push(...customSels);
-                                    const combinedAnswers = allSelections.join(', ') || 'general audience, factual';
+                                        {msg.tokenUsage && (
+                                            <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 lp-mono text-[10px] text-white/35 select-none">
+                                                <span className="flex items-center gap-1 text-violet-300/80"><Zap size={10} /> {msg.tokenUsage.totalTokens.toLocaleString()} tokens</span>
+                                                <span>in {msg.tokenUsage.promptTokens.toLocaleString()}</span>
+                                                <span>out {msg.tokenUsage.completionTokens.toLocaleString()}</span>
+                                                {msg.tokenUsage.cachedTokens > 0 && <span className="text-emerald-300/70">cached {msg.tokenUsage.cachedTokens.toLocaleString()}</span>}
+                                                {(msg.tokenUsage.costUsd ?? 0) > 0 && <span className="text-amber-200/70">${msg.tokenUsage.costUsd! < 0.01 ? msg.tokenUsage.costUsd!.toFixed(4) : msg.tokenUsage.costUsd!.toFixed(3)}</span>}
+                                            </div>
+                                        )}
 
-                                    // Clear the chips from this message
-                                    updateChatMessage(msg.id, { quickReplies: undefined });
-                                    // Show the user's selections as a user bubble
-                                    addChatMessage({ id: nextId(), role: 'user', text: combinedAnswers });
-                                    // Synthesise the brief from the original topic + answers
-                                    const runId2 = nextId();
-                                    runMessageId.current = runId2;
-                                    addChatMessage({ id: runId2, role: 'assistant', text: '', running: true, events: [{ label: 'Got it — preparing your carousel...', done: false }] });
-                                    try {
-                                        const state = useCarouselStore.getState();
-                                        const brief = await CreativeDirectorAgent.synthesiseBrief(pendingTopic, combinedAnswers, state.sourceContent);
-                                        setPendingBrief(brief);
-                                        await onFirstPrompt(pendingTopic, brief, pendingTopic);
-                                    } catch (e: any) {
-                                        updateChatMessage(runId2, { running: false, error: true, text: e?.message || 'Generation failed.' });
-                                    }
-                                };
+                                        {/* Quick-reply chip UI for Creative Director clarifying questions */}
+                                        {msg.quickReplies && !msg.running && (() => {
+                                            const { groups, resumeToken } = msg.quickReplies;
+                                            const toggleChip = (groupKey: string, value: string, multiSelect?: boolean) => {
+                                                setChipSelections(prev => {
+                                                    const cur = prev[groupKey] || [];
+                                                    if (multiSelect) {
+                                                        return { ...prev, [groupKey]: cur.includes(value) ? cur.filter(v => v !== value) : [...cur, value] };
+                                                    }
+                                                    return { ...prev, [groupKey]: cur.includes(value) ? [] : [value] };
+                                                });
+                                            };
+                                            const handleChipSubmit = async () => {
+                                                if (busy) return;
+                                                const allSelections: string[] = [];
+                                                groups.forEach((_, gi) => {
+                                                    const groupKey = `${resumeToken}-${gi}`;
+                                                    const groupSels = chipSelections[groupKey] || [];
+                                                    allSelections.push(...groupSels);
+                                                });
+                                                const customSels = chipSelections[`${resumeToken}-custom`] || [];
+                                                allSelections.push(...customSels);
+                                                const combinedAnswers = allSelections.join(', ') || 'general audience, factual';
 
-                                const hasAnySelection = 
-                                    groups.some((_, gi) => (chipSelections[`${resumeToken}-${gi}`] || []).length > 0) ||
-                                    (chipSelections[`${resumeToken}-custom`] || []).length > 0;
+                                                updateChatMessage(msg.id, { quickReplies: undefined });
+                                                addChatMessage({ id: nextId(), role: 'user', text: combinedAnswers });
+                                                const runId2 = nextId();
+                                                runMessageId.current = runId2;
+                                                addChatMessage({ id: runId2, role: 'assistant', text: '', running: true, events: [{ label: 'Got it — preparing your carousel...', done: false }] });
+                                                try {
+                                                    const state = useCarouselStore.getState();
+                                                    const brief = await CreativeDirectorAgent.synthesiseBrief(pendingTopic, combinedAnswers, state.sourceContent);
+                                                    setPendingBrief(brief);
+                                                    await onFirstPrompt(pendingTopic, brief, pendingTopic);
+                                                } catch (e: any) {
+                                                    updateChatMessage(runId2, { running: false, error: true, text: e?.message || 'Generation failed.' });
+                                                }
+                                            };
 
-                                return (
-                                    <div className="mt-2 space-y-3">
-                                        {groups.map((g, gi) => {
-                                            const groupKey = `${resumeToken}-${gi}`;
-                                            const selections = chipSelections[groupKey] || [];
+                                            const customSels = chipSelections[`${resumeToken}-custom`] || [];
+                                            const hasAnySelection =
+                                                groups.some((_, gi) => (chipSelections[`${resumeToken}-${gi}`] || []).length > 0) ||
+                                                customSels.length > 0;
+
                                             return (
-                                                <div key={gi}>
-                                                    <p className="text-[11px] text-neutral-400 mb-1.5 font-medium">{g.question}</p>
-                                                    <div className="flex flex-wrap gap-1.5">
-                                                        {g.chips.map((chip, ci) => {
-                                                            const label = typeof chip === 'string' ? chip : ((chip as any)?.label || (chip as any)?.text || '');
-                                                            const value = typeof chip === 'string' ? chip : ((chip as any)?.value || (chip as any)?.id || label || `chip-${ci}`);
-                                                            const selected = selections.includes(value);
-                                                            return (
-                                                                <button
-                                                                    key={value}
-                                                                    onClick={() => toggleChip(groupKey, value, g.multiSelect)}
-                                                                    className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
-                                                                        selected
-                                                                            ? 'border-blue-500 bg-blue-500/20 text-blue-200'
-                                                                            : 'border-white/15 bg-white/5 text-neutral-300 hover:border-white/30 hover:bg-white/10'
-                                                                    }`}
-                                                                >
-                                                                    {label}
-                                                                </button>
-                                                            );
-                                                        })}
+                                                <div className="mt-3.5 space-y-3.5">
+                                                    {groups.map((g, gi) => {
+                                                        const groupKey = `${resumeToken}-${gi}`;
+                                                        const selections = chipSelections[groupKey] || [];
+                                                        return (
+                                                            <motion.div key={gi} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + gi * 0.08 }}>
+                                                                <p className="text-[11.5px] text-white/50 mb-2 font-medium">{g.question}{g.multiSelect && <span className="text-white/30 font-normal"> · pick any</span>}</p>
+                                                                <div className="flex flex-wrap gap-1.5">
+                                                                    {g.chips.map((chip, ci) => {
+                                                                        const label = typeof chip === 'string' ? chip : ((chip as any)?.label || (chip as any)?.text || '');
+                                                                        const value = typeof chip === 'string' ? chip : ((chip as any)?.value || (chip as any)?.id || label || `chip-${ci}`);
+                                                                        const selected = selections.includes(value);
+                                                                        return (
+                                                                            <motion.button
+                                                                                key={value}
+                                                                                layout
+                                                                                whileTap={{ scale: 0.94 }}
+                                                                                onClick={() => toggleChip(groupKey, value, g.multiSelect)}
+                                                                                aria-pressed={selected}
+                                                                                transition={SPRING}
+                                                                                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] border transition-colors ${selected
+                                                                                    ? 'border-white bg-white text-black'
+                                                                                    : 'border-white/12 bg-white/[0.03] text-white/75 hover:border-white/30 hover:text-white'
+                                                                                    }`}
+                                                                            >
+                                                                                <AnimatePresence initial={false}>
+                                                                                    {selected && (
+                                                                                        <motion.span initial={{ width: 0, opacity: 0 }} animate={{ width: 'auto', opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="overflow-hidden flex">
+                                                                                            <Check size={12} strokeWidth={3} />
+                                                                                        </motion.span>
+                                                                                    )}
+                                                                                </AnimatePresence>
+                                                                                {label}
+                                                                            </motion.button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </motion.div>
+                                                        );
+                                                    })}
+                                                    {customSels.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {customSels.map(v => (
+                                                                <motion.span key={v} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="rounded-full bg-violet-400/15 border border-violet-300/30 px-2.5 py-1 text-[11.5px] text-violet-100">{v}</motion.span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-center gap-2 pt-0.5">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Or say it in your own words, then Enter"
+                                                            className="flex-1 min-w-0 rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-[12px] text-white placeholder-white/30 outline-none focus:border-violet-400/50 focus:shadow-[0_0_0_4px_rgba(155,107,255,0.12)] transition-[border-color,box-shadow]"
+                                                            onKeyDown={e => {
+                                                                if (e.key === 'Enter') {
+                                                                    const v = (e.target as HTMLInputElement).value.trim();
+                                                                    if (v) {
+                                                                        setChipSelections(prev => ({ ...prev, [`${resumeToken}-custom`]: [...(prev[`${resumeToken}-custom`] || []), v] }));
+                                                                        (e.target as HTMLInputElement).value = '';
+                                                                    }
+                                                                }
+                                                            }}
+                                                        />
+                                                        <motion.button
+                                                            whileTap={{ scale: 0.95 }}
+                                                            onClick={handleChipSubmit}
+                                                            disabled={busy}
+                                                            className={`shrink-0 h-8 px-3.5 rounded-full text-[12px] font-semibold transition-colors disabled:opacity-50 ${hasAnySelection ? 'lp-btn-primary' : 'border border-white/15 text-white/70 hover:text-white hover:bg-white/[0.06]'}`}
+                                                        >
+                                                            {hasAnySelection ? 'Go' : 'Skip'} <ArrowRight size={12} className="inline -mt-px" />
+                                                        </motion.button>
                                                     </div>
                                                 </div>
                                             );
-                                        })}
-                                        <div className="flex items-center gap-2 pt-1">
-                                            <input
-                                                type="text"
-                                                placeholder="Or describe in your own words..."
-                                                className="flex-1 bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-[11px] text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500"
-                                                onKeyDown={e => { 
-                                                    if (e.key === 'Enter') { 
-                                                        const v = (e.target as HTMLInputElement).value.trim(); 
-                                                        if (v) { 
-                                                            setChipSelections(prev => ({ ...prev, [`${resumeToken}-custom`]: [...(prev[`${resumeToken}-custom`] || []), v] })); 
-                                                            (e.target as HTMLInputElement).value = ''; 
-                                                        } 
-                                                    } 
-                                                }}
-                                            />
-                                            <button
-                                                onClick={handleChipSubmit}
-                                                disabled={busy}
-                                                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-medium transition-colors disabled:opacity-50 flex-shrink-0"
-                                            >
-                                                {hasAnySelection ? 'Go →' : 'Skip →'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
+                                        })()}
 
-                            {msg.error && (
-                                <button
-                                    onClick={() => handleRetry(msg.id)}
-                                    className="mt-2 px-2.5 py-0.5 rounded bg-red-500/20 hover:bg-red-500/35 text-red-200 text-[10px] font-medium transition-colors border border-red-500/25 flex items-center gap-1 w-fit cursor-pointer"
-                                >
-                                    <Sparkles size={10} /> Retry Generation
-                                </button>
+                                        {msg.error && (
+                                            <motion.button
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => handleRetry(msg.id)}
+                                                className="group mt-2.5 flex items-center gap-1.5 rounded-full border border-rose-300/30 bg-rose-400/10 px-3 py-1 text-[11.5px] font-medium text-rose-100 hover:bg-rose-400/20 transition-colors"
+                                            >
+                                                <RotateCcw size={11} className="transition-transform duration-500 group-hover:-rotate-180" /> Try again
+                                            </motion.button>
+                                        )}
+                                        {msg.running && !msg.text && (!msg.events || msg.events.length === 0) && <TypingDots />}
+                                    </div>
+                                </>
                             )}
-                            {msg.running && !msg.text && (!msg.events || msg.events.length === 0) && (
-                                <span className="text-neutral-400 text-xs">Thinking...</span>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
             </div>
 
             {/* Composer */}
-            <div className="border-t border-white/10 p-3 space-y-2">
-                {/* Tone buttons removed — Creative Director handles intent automatically */}
-
-
-                <div className="flex items-center gap-1.5">
-                    <select
-                        value={selectedTemplate}
-                        onChange={e => setTemplate(e.target.value as any)}
-                        className="bg-black/30 border border-white/10 rounded-md text-[11px] text-neutral-300 px-1.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
-                        title="Template Style"
-                    >
-                        {TEMPLATE_OPTIONS.map(t => <option key={t.id} value={t.id} className="bg-neutral-900">Style: {t.label}</option>)}
-                    </select>
-                </div>
-
-                {!hasSlides && attachedFile && (
-                    <div className="flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 rounded-md px-2 py-1 text-[11px] text-blue-200 w-fit max-w-full">
-                        <Paperclip size={11} className="flex-shrink-0" />
-                        <span className="truncate">{attachedFile.name}</span>
-                        {attachedFile.truncated && (
-                            <span className="text-blue-400/70 flex-shrink-0" title={truncationNote(attachedFile.originalLength)}>
-                                (truncated)
-                            </span>
-                        )}
-                        <button
-                            onClick={() => setAttachedFile(null)}
-                            className="text-blue-300 hover:text-white flex-shrink-0"
-                            aria-label="Remove attachment"
+            <div className="shrink-0 px-3 pb-3 pt-2 space-y-2">
+                {/* Refinement suggestions (fill the composer, never auto-send) */}
+                <AnimatePresence>
+                    {hasSlides && !busy && !draft && !(lastMsg && lastMsg.quickReplies) && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 6, transition: { duration: 0.12 } }}
+                            className="flex gap-1.5 overflow-x-auto lp-scrollbar-none -mx-1 px-1 pb-0.5"
                         >
-                            <X size={11} />
-                        </button>
-                    </div>
-                )}
-                {!hasSlides && attachError && (
-                    <div className="text-[11px] text-red-400 px-1">{attachError}</div>
-                )}
-
-                <div className="flex items-end gap-2 bg-black/40 border border-white/10 rounded-xl px-3 py-2 focus-within:border-blue-500 transition-colors">
-                    {!hasSlides && (
-                        <>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".pdf,.docx,.doc,.md,.txt"
-                                onChange={onFileSelected}
-                                className="hidden"
-                            />
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={busy || isAttaching}
-                                title="Attach a PDF, Word doc, or text file"
-                                aria-label="Attach a file"
-                                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40 flex-shrink-0"
-                            >
-                                {isAttaching
-                                    ? <span className="w-3.5 h-3.5 border border-neutral-400/50 border-t-neutral-200 rounded-full animate-spin inline-block" />
-                                    : <Plus size={14} />}
-                            </button>
-                        </>
+                            {lastMsg?.role === 'assistant' && lastMsg.undoable && (
+                                <motion.button
+                                    key="undo"
+                                    initial={{ opacity: 0, y: 6 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={SPRING}
+                                    whileHover={{ y: -2 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => send('undo')}
+                                    title="Restore the deck as it was before this change"
+                                    className="shrink-0 flex items-center gap-1.5 rounded-full border border-amber-200/25 bg-amber-200/[0.06] px-3 py-1.5 text-[11.5px] text-amber-100/85 hover:text-white hover:border-amber-200/45 transition-colors"
+                                >
+                                    <Undo2 size={11} /> Undo last change
+                                </motion.button>
+                            )}
+                            {REFINE_SUGGESTIONS.map((sug, i) => (
+                                <motion.button
+                                    key={sug.label}
+                                    initial={{ opacity: 0, y: 6 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.05 + i * 0.05, ...SPRING }}
+                                    whileHover={{ y: -2 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => fillDraft(sug.prompt)}
+                                    className="shrink-0 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11.5px] text-white/65 hover:text-white hover:border-white/25 transition-colors"
+                                >
+                                    <sug.icon size={11} style={{ color: sug.color }} /> {sug.label}
+                                </motion.button>
+                            ))}
+                        </motion.div>
                     )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {!hasSlides && attachedFile && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={SPRING}
+                            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] pl-2 pr-1.5 py-1.5 w-fit max-w-full"
+                        >
+                            <span className="grid place-items-center w-7 h-7 rounded-lg bg-rose-400/10 border border-rose-300/20 shrink-0"><FileText size={13} className="text-rose-300" /></span>
+                            <div className="min-w-0">
+                                <div className="text-[12px] text-white truncate">{attachedFile.name}</div>
+                                <div className="text-[10.5px] text-white/40" title={attachedFile.truncated ? truncationNote(attachedFile.originalLength) : undefined}>
+                                    {attachedFile.truncated ? 'Long file · trimmed to fit' : 'Ready to use as source'}
+                                </div>
+                            </div>
+                            <button onClick={() => setAttachedFile(null)} className="grid place-items-center w-6 h-6 rounded-full text-white/50 hover:text-white hover:bg-white/10 shrink-0" aria-label="Remove attachment">
+                                <X size={12} />
+                            </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                <AnimatePresence>
+                    {!hasSlides && attachError && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto', x: [0, -4, 4, 0] }} exit={{ opacity: 0, height: 0 }} className="text-[11.5px] text-rose-300 px-1">{attachError}</motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div
+                    className={`relative rounded-2xl border transition-[border-color,box-shadow,background-color] duration-300 ${composerFocused
+                        ? 'lp-conic border-transparent bg-black/40'
+                        : 'border-white/10 bg-black/30 hover:border-white/20'}`}
+                >
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.docx,.doc,.md,.txt"
+                        onChange={onFileSelected}
+                        className="hidden"
+                    />
                     <textarea
+                        ref={textareaRef}
                         value={draft}
                         onChange={e => setDraft(e.target.value)}
                         onKeyDown={onKeyDown}
-                        rows={draft.includes('\n') || draft.length > 80 ? 3 : 1}
-                        placeholder={hasSlides ? 'Refine anything...' : attachedFile ? 'Optional: add instructions (e.g. "keep it funny")...' : 'What should this carousel be about? (e.g. "dinosaurs for kids" or "burnout in startup culture")'}
-
-                        className="flex-1 bg-transparent text-[13px] text-white placeholder-neutral-500 resize-none focus:outline-none leading-relaxed"
+                        onFocus={() => setComposerFocused(true)}
+                        onBlur={() => setComposerFocused(false)}
+                        rows={1}
+                        aria-label="Message the studio"
+                        placeholder={busy ? 'Agents are working…' : hasSlides ? 'Ask for any change, like you would a designer…' : attachedFile ? 'Optional: add instructions (e.g. "keep it funny")…' : 'What should this carousel be about?'}
+                        className="block w-full bg-transparent text-[14px] text-white placeholder-white/30 resize-none outline-none leading-relaxed px-3.5 pt-3 pb-1 max-h-[168px] st-scroll"
                         disabled={busy}
                     />
-                    <button
-                        onClick={send}
-                        disabled={busy || (!draft.trim() && !attachedFile)}
-                        className={`p-1.5 rounded-lg transition-all ${busy || (!draft.trim() && !attachedFile)
-                            ? 'bg-white/5 text-neutral-600'
-                            : 'bg-blue-600 hover:bg-blue-500 text-white'
-                            }`}
-                        aria-label="Send"
-                    >
-                        <ArrowUp size={14} />
-                    </button>
+                    <div className="flex items-center gap-1.5 px-2 pb-2 pt-1">
+                        {!hasSlides && (
+                            <IconButton
+                                tip="Attach PDF, DOCX, MD or TXT"
+                                tipPos="top"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={busy || isAttaching}
+                            >
+                                {isAttaching ? <Spinner size={14} /> : <Paperclip size={15} />}
+                            </IconButton>
+                        )}
+                        <Segmented
+                            id="chat-template"
+                            size="xs"
+                            value={selectedTemplate}
+                            onChange={(v) => setTemplate(v as any)}
+                            options={TEMPLATE_OPTIONS.map(t => ({ value: t.id, label: t.label.replace('The ', ''), title: `Style: ${t.label}` }))}
+                        />
+                        <AnimatePresence>
+                            {detected && (
+                                <motion.span
+                                    key={detected}
+                                    initial={{ opacity: 0, scale: 0.8, filter: 'blur(4px)' }}
+                                    animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    transition={SPRING}
+                                    className="hidden sm:flex items-center gap-1 rounded-full bg-white/[0.06] border border-white/10 px-2 py-1 lp-mono text-[10px] text-white/70 whitespace-nowrap"
+                                    title="Detected automatically"
+                                >
+                                    {React.createElement(MODE_META[detected].icon, { size: 11, className: MODE_META[detected].tint })}
+                                    {MODE_META[detected].label}
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                        <div className="flex-1" />
+                        <motion.button
+                            onClick={() => send()}
+                            disabled={!canSend}
+                            whileTap={canSend ? { scale: 0.88 } : undefined}
+                            animate={{ scale: canSend ? 1 : 0.92 }}
+                            transition={SPRING}
+                            className={`grid place-items-center w-8 h-8 rounded-full transition-colors ${canSend
+                                ? 'bg-white text-black shadow-[0_6px_20px_-6px_rgba(155,107,255,0.8)]'
+                                : 'bg-white/[0.06] text-white/30'
+                                }`}
+                            aria-label="Send"
+                        >
+                            {busy ? <Spinner size={14} /> : <ArrowUp size={15} strokeWidth={2.4} />}
+                        </motion.button>
+                    </div>
                 </div>
 
-                {hasSlides && (
-                    <div className="flex items-center gap-2 px-1">
-                        {selectedSlideIndices.length > 0 ? (
-                            <div className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full bg-blue-500/15 border border-blue-500/40 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.15)]">
-                                <Layers size={12} className="text-blue-400 flex-shrink-0" />
-                                <span className="text-[11px] font-semibold whitespace-nowrap">
+                <div className="flex items-center justify-between gap-2 px-1 min-h-[22px]">
+                    <AnimatePresence mode="wait" initial={false}>
+                        {hasSlides && selectedSlideIndices.length > 0 ? (
+                            <motion.div
+                                key="scope"
+                                initial={{ opacity: 0, scale: 0.9, x: -6 }}
+                                animate={{ opacity: 1, scale: 1, x: 0 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                transition={SPRING}
+                                className="inline-flex items-center gap-1.5 pl-2 pr-1 py-0.5 rounded-full bg-violet-400/15 border border-violet-300/35 text-violet-100"
+                            >
+                                <Layers size={11} className="text-violet-300 shrink-0" />
+                                <span className="text-[11px] font-medium whitespace-nowrap">
                                     {selectedSlideIndices.length === 1
                                         ? `Editing slide ${selectedSlideIndices[0] + 1}`
                                         : `Editing slides ${[...selectedSlideIndices].sort((a, b) => a - b).map(i => i + 1).join(', ')}`}
@@ -742,18 +936,170 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                                     onClick={() => setSelectedSlideIndices([])}
                                     title="Clear selection — edit the whole carousel"
                                     aria-label="Clear slide selection"
-                                    className="flex items-center justify-center w-4 h-4 rounded-full text-blue-300/80 hover:text-white hover:bg-blue-500/40 transition-colors"
+                                    className="grid place-items-center w-4 h-4 rounded-full text-violet-200/80 hover:text-white hover:bg-violet-400/40 transition-colors"
                                 >
-                                    <X size={11} />
+                                    <X size={10} />
                                 </button>
-                            </div>
+                            </motion.div>
                         ) : (
-                            <span className="text-[11px] text-neutral-500">
-                                Editing the whole carousel — click a slide to scope · ⌘/Alt-click for several
-                            </span>
+                            <motion.span key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-[11px] text-white/30 truncate">
+                                {hasSlides ? 'Whole carousel · click a slide to focus · ⌘-click for several' : 'Topic, link, YouTube video or a file'}
+                            </motion.span>
                         )}
-                    </div>
-                )}
+                    </AnimatePresence>
+                    <span className="hidden lg:flex items-center gap-1 text-[10.5px] text-white/25 shrink-0">
+                        <Kbd>↵</Kbd> send <Kbd>⇧↵</Kbd> line <Kbd>/</Kbd> focus
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/* ------------------------------------------------------------------ */
+/* Presentational helpers                                               */
+/* ------------------------------------------------------------------ */
+
+const MODE_META = {
+    topic: { label: 'Topic', icon: Lightbulb, tint: 'text-amber-300' },
+    text: { label: 'Long text', icon: FileText, tint: 'text-emerald-300' },
+    url: { label: 'Article link', icon: Link2, tint: 'text-sky-300' },
+    video: { label: 'YouTube', icon: Youtube, tint: 'text-rose-300' },
+} as const;
+
+const REFINE_SUGGESTIONS = [
+    { label: 'Punchier hook', prompt: 'Make the hook on slide 1 punchier', icon: Zap, color: '#3ee6f5' },
+    { label: 'Tighten copy', prompt: 'Tighten the copy on every slide, fewer words', icon: Scissors, color: '#9b6bff' },
+    { label: 'Add a stat slide', prompt: 'Add a stat slide with a strong number', icon: BarChart3, color: '#4f8cff' },
+    { label: 'Warmer palette', prompt: 'Switch to a warmer color palette', icon: Palette, color: '#ff7a8a' },
+    { label: 'Stronger CTA', prompt: 'Make the final call to action stronger', icon: Megaphone, color: '#b6f36a' },
+];
+
+const STARTERS = [
+    { icon: Lightbulb, tint: '#fcd34d', title: 'Start from a topic', example: '7 lessons from 3 years of building in public', fill: '7 lessons from 3 years of building in public' },
+    { icon: Link2, tint: '#7dd3fc', title: 'Turn an article into slides', example: 'Paste any blog or news link', fill: 'https://' },
+    { icon: Youtube, tint: '#fda4af', title: 'Summarize a YouTube video', example: 'Paste a video link, add an angle', fill: 'https://youtu.be/' },
+];
+
+const EmptyState: React.FC<{ onPick: (text: string) => void; onAttach: () => void }> = ({ onPick, onAttach }) => (
+    <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } } }} className="pt-6 pb-2">
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } } }} className="px-1">
+            <div className="lp-mono text-[10.5px] uppercase tracking-[0.18em] text-white/35">New carousel</div>
+            <h2 className="lp-display mt-3 text-[30px] leading-[1.05] font-semibold text-white">
+                What should we <span className="lp-serif lp-prism-text text-[1.12em]">make</span> today?
+            </h2>
+            <p className="mt-3 text-[13.5px] leading-relaxed text-white/50">
+                Give the agents a topic, a link or a file. They research, find the angle and design every slide.
+            </p>
+        </motion.div>
+        <div className="mt-6 space-y-2">
+            {STARTERS.map(s => (
+                <motion.button
+                    key={s.title}
+                    type="button"
+                    variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => onPick(s.fill)}
+                    className="group w-full flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] hover:bg-white/[0.05] hover:border-white/20 p-3 text-left transition-colors"
+                >
+                    <span className="grid place-items-center w-9 h-9 rounded-xl border border-white/10 bg-black/30 shrink-0">
+                        <s.icon size={16} style={{ color: s.tint }} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                        <span className="block text-[13px] font-medium text-white">{s.title}</span>
+                        <span className="block text-[12px] text-white/40 truncate">{s.example}</span>
+                    </span>
+                    <ArrowRight size={14} className="text-white/30 -translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300" />
+                </motion.button>
+            ))}
+            <motion.button
+                type="button"
+                variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onAttach}
+                className="group w-full flex items-center gap-3 rounded-2xl border border-dashed border-white/15 hover:border-violet-300/40 hover:bg-violet-400/[0.04] p-3 text-left transition-colors"
+            >
+                <span className="grid place-items-center w-9 h-9 rounded-xl border border-white/10 bg-black/30 shrink-0">
+                    <Paperclip size={15} className="text-violet-300" />
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-medium text-white">Upload a document</span>
+                    <span className="block text-[12px] text-white/40">PDF, DOCX, Markdown or plain text</span>
+                </span>
+                <ArrowRight size={14} className="text-white/30 -translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300" />
+            </motion.button>
+        </div>
+    </motion.div>
+);
+
+/** Small "crew" mark in the header; orbits while agents are working. */
+const AgentStack: React.FC<{ busy: boolean }> = ({ busy }) => (
+    <div className="relative w-7 h-7 shrink-0">
+        <motion.div className="absolute inset-0" animate={busy ? { rotate: 360 } : { rotate: 0 }} transition={busy ? { duration: 3, repeat: Infinity, ease: 'linear' } : { duration: 0.6 }}>
+            {['#3ee6f5', '#9b6bff', '#ff7a8a'].map((c, i) => (
+                <span key={c} className="absolute w-2 h-2 rounded-full" style={{ background: c, left: `${50 + 34 * Math.cos((i * 2 * Math.PI) / 3) - 14}%`, top: `${50 + 34 * Math.sin((i * 2 * Math.PI) / 3) - 14}%`, boxShadow: `0 0 8px ${c}` }} />
+            ))}
+        </motion.div>
+        <span className="absolute inset-[9px] rounded-full bg-white/90" />
+    </div>
+);
+
+const AssistantAvatar: React.FC<{ running: boolean; error: boolean }> = ({ running, error }) => (
+    <div className="relative w-7 h-7 shrink-0 mt-0.5">
+        {running && <motion.span className="absolute -inset-[3px] rounded-full bg-[conic-gradient(from_0deg,transparent,#9b6bff,#3ee6f5,transparent)]" animate={{ rotate: 360 }} transition={{ duration: 1.4, repeat: Infinity, ease: 'linear' }} />}
+        <span className={`relative grid place-items-center w-7 h-7 rounded-full ${error ? 'bg-rose-400/20' : 'bg-gradient-to-br from-[#1b1b2a] to-[#10101a]'} ring-1 ring-white/15`}>
+            <Sparkles size={13} className={error ? 'text-rose-300' : 'text-white'} />
+        </span>
+    </div>
+);
+
+const TypingDots: React.FC = () => (
+    <span className="inline-flex items-center gap-1 py-1" aria-label="Thinking">
+        {[0, 1, 2].map(i => (
+            <motion.span key={i} className="w-1.5 h-1.5 rounded-full bg-white/60" animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }} transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }} />
+        ))}
+    </span>
+);
+
+/** Live agent run: phase-coloured steps, an animated rail and the job's progress. */
+const AgentTimeline: React.FC<{ events: { label: string; done: boolean }[]; progress?: number }> = ({ events, progress }) => {
+    const current = events.find(e => !e.done) || events[events.length - 1];
+    const color = PHASE_COLOR[phaseOf(current?.label)];
+    return (
+        <div>
+            <div className="relative space-y-2.5">
+                <span className="absolute left-[9px] top-2 bottom-2 w-px bg-white/10" />
+                {events.map((ev, i) => {
+                    const c = PHASE_COLOR[phaseOf(ev.label)];
+                    const phase = phaseOf(ev.label);
+                    return (
+                        <motion.div
+                            key={`${i}-${ev.label}`}
+                            initial={{ opacity: 0, x: -8, filter: 'blur(4px)' }}
+                            animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                            transition={{ duration: 0.4, ease: EASE }}
+                            className="relative flex items-start gap-2.5"
+                        >
+                            <span className="relative z-10 grid place-items-center w-[19px] h-[19px] rounded-full shrink-0 bg-[#10101a]" style={{ boxShadow: `0 0 0 1px ${ev.done ? 'rgba(255,255,255,0.15)' : c}` }}>
+                                {ev.done ? <DrawCheck size={11} color="#6ee7b7" /> : <Spinner size={11} color={c} />}
+                            </span>
+                            <span className="min-w-0 pt-px">
+                                {phase !== 'THINK' && <span className="lp-mono text-[9.5px] tracking-[0.14em] mr-1.5" style={{ color: ev.done ? 'rgba(255,255,255,0.3)' : c }}>{phase}</span>}
+                                <span className={`text-[12px] ${ev.done ? 'text-white/45' : 'lp-shimmer'}`}>{phaseLabel(ev.label)}</span>
+                            </span>
+                        </motion.div>
+                    );
+                })}
+            </div>
+            <div className="mt-3 h-1 rounded-full bg-white/[0.07] overflow-hidden">
+                <motion.div
+                    className="h-full rounded-full st-sheen"
+                    style={{ background: `linear-gradient(90deg, ${color}99, ${color})` }}
+                    animate={{ width: `${Math.max(4, progress || 0)}%` }}
+                    transition={{ duration: 0.7, ease: EASE }}
+                />
             </div>
         </div>
     );

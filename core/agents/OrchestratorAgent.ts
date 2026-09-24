@@ -243,7 +243,7 @@ export const OrchestratorAgent = {
     `;
 
         console.log('🧭 [Orchestrator] Routing message:', JSON.stringify(message.slice(0, 120)));
-        const result = await generateContentFromAgent({ systemPrompt, prompt }, ORCHESTRATOR_SCHEMA);
+        const result = await generateContentFromAgent({ systemPrompt, prompt }, ORCHESTRATOR_SCHEMA, { role: 'planner', label: 'orchestrator' });
 
         // Full visibility into what the model actually returned before any recovery
         console.log('🧭 [Orchestrator] Raw model output:', JSON.stringify({

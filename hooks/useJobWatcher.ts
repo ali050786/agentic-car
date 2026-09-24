@@ -22,6 +22,8 @@ export const useJobWatcher = () => {
 
     useEffect(() => {
         if (!activeJobId) return;
+        // The last draft preview shown, so progress ticks don't re-apply it.
+        let shownPreview = '';
 
         const unsubscribe = subscribeToJob(activeJobId, (job: GenerationJob) => {
             const store = useCarouselStore.getState();
@@ -38,12 +40,24 @@ export const useJobWatcher = () => {
 
             if (job.status === 'queued' || job.status === 'running') {
                 store.setGenerating(true);
+                // A create job sends its first draft while it keeps polishing: show it
+                // (read-only) unless the user has opened another carousel meanwhile.
+                if (job.type === 'create' && job.resultSummary && job.resultSummary !== shownPreview && store.activeCarouselId === null) {
+                    try {
+                        const pv = JSON.parse(job.resultSummary)?.preview;
+                        if (pv && Array.isArray(pv.slides) && pv.slides.length && (!pv.templateId || pv.templateId === store.selectedTemplate)) {
+                            shownPreview = job.resultSummary;
+                            store.showDraftPreview(pv.slides, pv.theme);
+                        }
+                    } catch { /* not a preview */ }
+                }
                 return;
             }
 
             const runningMsg = store.chatMessages.find(m => m.running);
 
             if (job.status === 'error') {
+                if (job.type === 'create') store.clearDraftPreview();
                 store.setError(job.error || 'Generation failed.');
                 if (runningMsg) {
                     store.updateChatMessage(runningMsg.id, {
@@ -71,14 +85,16 @@ export const useJobWatcher = () => {
                     if (job.resultSummary) reply = job.resultSummary;
                 }
 
-                // A guardrail refusal: show the friendly reply, load/alter nothing.
+                // A guardrail refusal: show the friendly reply, drop any draft, load nothing.
+                if (refused) store.clearDraftPreview();
                 if (!refused && job.carouselId && store.activeCarouselId === null) {
                     getCarouselById(job.carouselId).then(({ data }) => {
                         if (!data) return;
                         const s = useCarouselStore.getState();
-                        s.setActiveCarouselId(data.$id);
-                        s.setSlides(data.slides as any);
-                        s.setTheme(data.theme);
+                        // The user may have opened another carousel while this loaded.
+                        if (s.activeCarouselId !== null) return;
+                        // One update: the draft becomes the saved deck without an autosave in between.
+                        s.applyFinalDeck(data.$id, data.slides as any, data.theme);
                     });
                 }
                 if (runningMsg) {
@@ -94,6 +110,14 @@ export const useJobWatcher = () => {
                     const result = JSON.parse(job.resultSummary || '{}');
                     if (store.activeCarouselId === job.carouselId) {
                         if (Array.isArray(result.slides)) store.setSlides(result.slides);
+                        else if (result.reload && job.carouselId) {
+                            // Too large to ship in the job result: read the saved deck.
+                            const id = job.carouselId;
+                            getCarouselById(id).then(({ data }) => {
+                                const s = useCarouselStore.getState();
+                                if (data && s.activeCarouselId === id) s.setSlides(data.slides as any);
+                            });
+                        }
                         if (Array.isArray(result.designActions)) {
                             for (const act of result.designActions) {
                                 switch (act.action) {
@@ -102,6 +126,7 @@ export const useJobWatcher = () => {
                                     case 'set_preset': store.setPresetId(act.value); store.setBrandMode('preset'); break;
                                     case 'set_pattern': store.setPattern(parseInt(act.value, 10) || 1); break;
                                     case 'set_signature_position': store.setSignaturePosition(act.value); break;
+                                    case 'set_brand_mode': store.setBrandMode(act.value); break;
                                 }
                             }
                         }
@@ -112,6 +137,7 @@ export const useJobWatcher = () => {
                             events: markEventsDone(runningMsg.events),
                             text: result.reply || 'Done.',
                             tokenUsage: result.tokenUsage,
+                            undoable: result.undoable === true,
                         });
                     }
                 } catch {

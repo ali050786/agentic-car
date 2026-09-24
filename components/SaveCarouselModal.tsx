@@ -10,7 +10,8 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { createCarousel } from '../services/carouselService';
-import { appToDbTemplate, type AppTemplateType } from '../utils/templateConverter';
+import { appToDbTemplate, stampTheme, type AppTemplateType } from '../utils/templateConverter';
+import { compactDesigns } from '../core/design/canvas';
 import { X, Save, Lock, Globe, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface SaveCarouselModalProps {
@@ -68,8 +69,8 @@ export const SaveCarouselModal: React.FC<SaveCarouselModalProps> = ({
       user.$id,
       title.trim(),
       dbTemplateType,  // Use converted template type
-      theme,
-      slides,
+      stampTheme(theme, templateType),
+      compactDesigns(slides as any[]),
       isPublic,
       'preset',  // brandMode
       presetId,  // Save the active preset ID

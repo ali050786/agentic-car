@@ -9,12 +9,44 @@ import { BrandingConfig, CarouselFormat } from '../types';
  *
  * data-signature marks the card so the on-canvas position picker can anchor to it.
  */
+const CANVAS_WIDTH = 1080;
+const CARD_WIDTH = 470;
+const CARD_HEIGHT = 92;
+
+/** Where the signature card sits on the 1080-wide canvas (canvas units). */
+export const signatureRect = (
+  position: BrandingConfig['position'] | undefined,
+  format: CarouselFormat = 'portrait',
+  templateId?: string
+): { x: number; y: number; w: number; h: number; right: boolean } => {
+  // Left-aligned cards line up with each template's content left edge.
+  const defaultX = templateId === 'template-3' ? 80
+    : templateId === 'template-4' ? 100
+    : templateId === 'template-1' ? (format === 'square' ? 80 : 90)
+    : templateId === 'template-5' ? (format === 'square' ? 84 : 96)
+    : 150;
+
+  // T4 has a tighter 100px margin, so the card sits lower to balance the layout.
+  const bottomLeftY = format === 'square'
+    ? (templateId === 'template-4' ? 880 : 860)
+    : (templateId === 'template-4' ? 1160 : 1120);
+  const topY = format === 'square' ? 85 : 120;
+
+  switch (position) {
+    case 'top-left': return { x: defaultX, y: topY, w: CARD_WIDTH, h: CARD_HEIGHT, right: false };
+    case 'top-right': return { x: CANVAS_WIDTH - defaultX - CARD_WIDTH, y: topY, w: CARD_WIDTH, h: CARD_HEIGHT, right: true };
+    default: return { x: defaultX, y: bottomLeftY, w: CARD_WIDTH, h: CARD_HEIGHT, right: false };
+  }
+};
+
 export const generateSignatureCard = (
   data: BrandingConfig,
-  fontFamily: 'Lato' | 'Roboto',
+  fontFamily: string,
   format: CarouselFormat = 'portrait',
   _uniqueId: string = '',
-  templateId?: string
+  templateId?: string,
+  /** Literal colors (Canvas slides pick them per slide); defaults to the theme variables. */
+  colors?: { name: string; title: string }
 ): string => {
   const escapeXml = (unsafe: string) =>
     (unsafe || '').replace(/[<>&'"]/g, (c) => {
@@ -28,33 +60,11 @@ export const generateSignatureCard = (
       return c;
     });
 
-  const CANVAS_WIDTH = 1080;
-  const CARD_WIDTH = 470;
-  const CARD_HEIGHT = 92;
   const AVATAR = 88;
+  const pos = signatureRect(data.position, format, templateId);
 
-  // Left-aligned cards line up with each template's content left edge.
-  const defaultX = templateId === 'template-3' ? 80
-    : templateId === 'template-4' ? 100
-    : templateId === 'template-1' ? (format === 'square' ? 80 : 90)
-    : 150;
-
-  // T4 has a tighter 100px margin, so the card sits lower to balance the layout.
-  const bottomLeftY = format === 'square'
-    ? (templateId === 'template-4' ? 880 : 860)
-    : (templateId === 'template-4' ? 1160 : 1120);
-  const topY = format === 'square' ? 85 : 120;
-
-  const positions = {
-    'bottom-left': { x: defaultX, y: bottomLeftY, right: false },
-    'top-left': { x: defaultX, y: topY, right: false },
-    'top-right': { x: CANVAS_WIDTH - defaultX - CARD_WIDTH, y: topY, right: true },
-  } as const;
-
-  const pos = positions[data.position] || positions['bottom-left'];
-
-  const nameStyle = `font-family: '${fontFamily}', sans-serif; font-weight: 500; font-size: 28px; color: var(--text-highlight); line-height: 1.2; outline: none;`;
-  const titleStyle = `font-family: '${fontFamily}', sans-serif; font-weight: 400; font-size: 24px; color: var(--text-default); line-height: 1.2; outline: none;`;
+  const nameStyle = `font-family: '${fontFamily}', sans-serif; font-weight: 500; font-size: 28px; color: ${colors?.name || 'var(--text-highlight)'}; line-height: 1.2; outline: none;`;
+  const titleStyle = `font-family: '${fontFamily}', sans-serif; font-weight: 400; font-size: 24px; color: ${colors?.title || 'var(--text-default)'}; line-height: 1.2; outline: none;`;
   const avatarImg = `<img src="${escapeXml(data.imageUrl)}" style="width: ${AVATAR}px; height: ${AVATAR}px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" />`;
   const textCol = `
         <div style="display: flex; flex-direction: column; min-width: 0; ${pos.right ? 'align-items: flex-end; text-align: right;' : ''}">
@@ -63,7 +73,7 @@ export const generateSignatureCard = (
         </div>`;
 
   return `
-    <foreignObject x="${pos.x}" y="${pos.y}" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" data-signature="true">
+    <foreignObject x="${pos.x}" y="${pos.y}" width="${pos.w}" height="${pos.h}" data-signature="true">
       <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: center; gap: 20px; height: 100%; width: 100%; ${pos.right ? 'flex-direction: row-reverse; justify-content: flex-start;' : ''}">
         ${avatarImg}
         ${textCol}

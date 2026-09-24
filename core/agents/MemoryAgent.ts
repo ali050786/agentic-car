@@ -57,7 +57,7 @@ export const MemoryAgent = {
         Return ONLY the updated summary text.
       `;
 
-      const result = await generateContentFromAgent(prompt, COMPACT_SCHEMA);
+      const result = await generateContentFromAgent(prompt, COMPACT_SCHEMA, { role: 'fast', label: 'memory.compact' });
       const summary = typeof result?.summary === 'string' ? result.summary.trim() : '';
 
       if (!summary) {
@@ -91,7 +91,7 @@ export const MemoryAgent = {
         - pastDecisions: Durable decisions or topic preferences made during generation.
       `;
 
-      const result = await generateContentFromAgent(prompt, DISTILL_SCHEMA);
+      const result = await generateContentFromAgent(prompt, DISTILL_SCHEMA, { role: 'fast', label: 'memory.distill' });
       return {
         brandRules: Array.isArray(result?.brandRules) ? result.brandRules : [],
         bannedWords: Array.isArray(result?.bannedWords) ? result.bannedWords : [],

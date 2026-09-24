@@ -170,10 +170,13 @@ ${sourceContent.substring(0, 1500)}
 
 TASK:
 ${isFirstTurn ? `
-This is Turn 1 (Intent Clarification). Your goal is to gather more details from the user to align on intent before writing the carousel.
-You MUST set "intentClear": false.
-Write a short, friendly "clarifyingMessage" and produce 1-2 "questionGroups" with clickable chip options. Max 4 chips per group.
-Do NOT populate the "brief" object.
+This is Turn 1. Decide whether you can write a good brief now, or whether a wrong guess would produce the wrong carousel.
+Every question costs the user a round trip, so ask ONLY when it's genuinely ambiguous:
+  (a) the subject is one broad word or phrase with no angle, audience or purpose (e.g. "marketing", "AI", "health"), or
+  (b) it could mean very different things (e.g. "Python": the language or the snake; "Mercury": the planet or the element), or
+  (c) the user explicitly asks you to check with them first.
+Otherwise set "intentClear": true and populate "brief", choosing sensible defaults for anything unstated.
+If (and only if) it's ambiguous: set "intentClear": false, write a short, friendly "clarifyingMessage" and 1-2 "questionGroups" with clickable chip options (max 4 chips per group). Ask about what changes the carousel most: the angle and the audience.
 ` : `
 This is Turn 2 (Brief Generation). The user has provided clarifications to your questions. Your goal is to generate the complete Creative Brief.
 You MUST set "intentClear": true.
@@ -181,7 +184,7 @@ Populate the "brief" object using the user's initial input and their clarificati
 `}
 
 ━━━ DECISION RULES ━━━
-1. Turn 1 always sets "intentClear": false to ask clarifying questions. Turn 2 always sets "intentClear": true to generate the brief.
+1. Turn 1 asks questions only when the request is genuinely ambiguous (see TASK). Turn 2 always sets "intentClear": true and generates the brief.
 2. NEVER default to LinkedIn/professional framing. Factual topics like science,
    history, and nature default to EDUCATIONAL unless the user signals otherwise.
 3. STYLE REFERENCES — set "styleReference" ONLY when the user EXPLICITLY names a
@@ -259,6 +262,23 @@ Return JSON matching the schema exactly.
 `;
 
 // ---------------------------------------------------------------------------
+// Ambiguity check (code, not model)
+// ---------------------------------------------------------------------------
+
+/**
+ * True when the request carries enough signal to brief without asking:
+ * real source material, or a prompt with a subject plus some angle/audience.
+ * Short, bare subjects ("AI", "marketing tips") fall through to the model.
+ */
+export const isSpecificRequest = (userInput: string, sourceContent?: string): boolean => {
+    if ((sourceContent || '').trim().length >= 300) return true;
+    const words = (userInput || '').replace(/https?:\/\/\S+/g, ' ').split(/\s+/).filter((w) => /\p{L}{2,}/u.test(w));
+    if (words.length >= 9) return true;
+    const signal = /\b(for|to|about|why|how|what|explain|teach|vs\.?|versus|guide|tips|steps|story|mistakes|lessons|myths?|beginners?|kids?|students?|founders?|designers?|developers?|marketers?|managers?)\b/i;
+    return words.length >= 5 && signal.test(userInput);
+};
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -287,7 +307,7 @@ export const CreativeDirectorAgent = {
         const prompt = buildAnalysisPrompt(userInput, sourceContent, true);
 
         try {
-            const result = await generateContentFromAgent(prompt, INTENT_ANALYSIS_SCHEMA);
+            const result = await generateContentFromAgent(prompt, INTENT_ANALYSIS_SCHEMA, { role: 'planner', label: 'creativeDirector.analyze' });
 
             if (result.intentClear && result.brief) {
                 const brief = applyIntentGuards(userInput, result.brief as CreativeBrief);
@@ -296,6 +316,14 @@ export const CreativeDirectorAgent = {
                     brief.suggestedSlideCount = Math.max(2, Math.min(20, brief.suggestedSlideCount));
                 }
                 console.log('🎬 [CreativeDirectorAgent] Intent clear →', brief.contentType, brief.contentStrategy.approachMode, `${brief.suggestedSlideCount} slides`);
+                return { ready: true, brief };
+            }
+
+            // Code-level check: a specific request (enough words, or real source
+            // material) never needs a clarifying round trip, whatever the model says.
+            if (!result.intentClear && isSpecificRequest(userInput, sourceContent)) {
+                console.log('🎬 [CreativeDirectorAgent] Model wanted to ask, but the request is specific → briefing directly');
+                const brief = await CreativeDirectorAgent.synthesiseBrief(userInput, 'No extra answers. Use sensible defaults for anything unstated.', sourceContent);
                 return { ready: true, brief };
             }
 
@@ -351,7 +379,7 @@ export const CreativeDirectorAgent = {
         const prompt = buildAnalysisPrompt(combinedInput, sourceContent, false);
 
         try {
-            const result = await generateContentFromAgent(prompt, INTENT_ANALYSIS_SCHEMA);
+            const result = await generateContentFromAgent(prompt, INTENT_ANALYSIS_SCHEMA, { role: 'planner', label: 'creativeDirector.answers' });
             if (result.brief) return applyIntentGuards(combinedInput, result.brief as CreativeBrief);
         } catch (err) {
             console.error('[CreativeDirectorAgent] Synthesis failed, using neutral fallback:', err);

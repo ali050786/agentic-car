@@ -7,7 +7,8 @@ import { exportAllSlidesToPdf } from './utils/pdfExportAll';
 import { exportSlideToJpg } from './utils/jpgExporter';
 import { UserMenu } from './components/UserMenu';
 import { updateCarouselContent, Carousel } from './services/carouselService';
-import { dbToAppTemplate } from './utils/templateConverter';
+import { resolveAppTemplate } from './utils/templateConverter';
+import { ensureDeckDesigns } from './components/artifact/canvasControls';
 import { resolveTheme } from './utils/brandUtils';
 import { getPresetById } from './config/colorPresets';
 import { useAutoSave } from './hooks/useAutoSave';
@@ -37,6 +38,32 @@ import { loadChat } from './services/chatService';
 import { Toast } from './components/Toast';
 import { useToast } from './hooks/useToast';
 import { AuthModal } from './components/AuthModal';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Library, MessageSquare, GalleryHorizontalEnd } from 'lucide-react';
+import { LogoMark } from './components/landing/primitives';
+import './components/landing/landing.css';
+import './components/studio/studio.css';
+
+type MobileTab = 'library' | 'chat' | 'preview';
+
+const MOBILE_TABS: { id: MobileTab; label: string; icon: React.ElementType }[] = [
+  { id: 'library', label: 'Library', icon: Library },
+  { id: 'chat', label: 'Chat', icon: MessageSquare },
+  { id: 'preview', label: 'Preview', icon: GalleryHorizontalEnd },
+];
+
+/** Branded full-screen loader (auth bootstrap). */
+const StudioLoader: React.FC<{ label?: string }> = ({ label = 'Warming up the studio' }) => (
+  <div className="lp st grid place-items-center">
+    <div className="st-ambient" />
+    <div className="relative flex flex-col items-center gap-5">
+      <motion.div animate={{ rotate: [0, -6, 6, 0], scale: [1, 1.08, 1] }} transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}>
+        <LogoMark size={46} />
+      </motion.div>
+      <span className="lp-shimmer text-[13px] tracking-wide">{label}</span>
+    </div>
+  </div>
+);
 
 // Main carousel generator (protected)
 const CarouselGenerator: React.FC = () => {
@@ -105,6 +132,15 @@ const CarouselGenerator: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Mobile: one panel at a time, switched by the bottom tab bar
+  const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
+  const [previewUnseen, setPreviewUnseen] = useState(false);
+  const prevSlideCount = useRef(slides.length);
+  useEffect(() => {
+    if (prevSlideCount.current === 0 && slides.length > 0) setPreviewUnseen(true);
+    prevSlideCount.current = slides.length;
+  }, [slides.length]);
+
   // Share Modal state (moved here from the retired My Carousels dashboard)
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [carouselToShare, setCarouselToShare] = useState<Carousel | null>(null);
@@ -130,7 +166,7 @@ const CarouselGenerator: React.FC = () => {
     setEditingCarousel(carousel);
     setActiveCarouselId(carousel.$id);
     setTopic(carousel.title || '');
-    setTemplate(dbToAppTemplate(carousel.templateType));
+    setTemplate(resolveAppTemplate(carousel.templateType, carousel.theme));
     setSlides(carousel.slides as any);
 
     // Restore brand mode and preset if saved
@@ -235,6 +271,14 @@ const CarouselGenerator: React.FC = () => {
     }
   }, [selectedTemplate, brandMode, presetId, brandKit, globalBrandKit, slides.length, isGenerating]);
 
+  // The Canvas: a deck switched to it (or loaded without layouts) gets
+  // deck-aware library layouts right away; "Redesign with AI" refines them.
+  useEffect(() => {
+    if (selectedTemplate !== 'template-5' || isGenerating || !slides.length) return;
+    const designed = ensureDeckDesigns(slides as any[], topic);
+    if (designed) setSlides(designed as any);
+  }, [selectedTemplate, isGenerating, slides, topic, setSlides]);
+
   // Reactive Visual Asset Repair: Fix missing icons/doodles on template switch
   useEffect(() => {
     if (hasSlides && !isGenerating) {
@@ -245,7 +289,7 @@ const CarouselGenerator: React.FC = () => {
   // Chat-driven creation: the first chat message dispatches a background job
   // (hooks/useJobWatcher.ts, mounted below, applies the result once it's done)
   // instead of running the agent pipeline in this tab.
-  const handleFirstPrompt = async (text: string, creativeBrief?: import('./types').CreativeBrief, userMessage?: string) => {
+  const handleFirstPrompt = async (text: string, creativeBrief?: import('./types').CreativeBrief, userMessage?: string, options?: { briefInWorker?: boolean }) => {
 
     setTopic(text.length > 80 ? text.slice(0, 77) + '…' : text);
 
@@ -271,6 +315,7 @@ const CarouselGenerator: React.FC = () => {
         selectedPattern: state.selectedPattern,
         patternOpacity: state.patternOpacity,
         creativeBrief,
+        briefInWorker: !creativeBrief && !!options?.briefInWorker,
       },
 
     });
@@ -316,7 +361,10 @@ const CarouselGenerator: React.FC = () => {
 
   const handleDownload = async () => {
     // Export current/selected slide as JPG
-    const slideIndex = selectedSlideIndex ?? 0; // Default to first slide if none selected
+    // The stage can browse independently of the selection (arrow keys), so
+    // prefer the slide actually on stage; fall back to the selection.
+    const stageAttr = document.querySelector('[data-stage-index]')?.getAttribute('data-stage-index');
+    const slideIndex = stageAttr != null ? Number(stageAttr) : (selectedSlideIndex ?? 0);
 
     // Query the specific slide preview container
     const slideContainers = document.querySelectorAll('.svg-preview-container');
@@ -430,7 +478,9 @@ const CarouselGenerator: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-neutral-950 relative">
+    <div className="lp st relative">
+      <div className="st-ambient" />
+
       {/* Floating Top Bar */}
       <FloatingTopBar
         slidesCount={slides.length}
@@ -440,14 +490,14 @@ const CarouselGenerator: React.FC = () => {
         onDownloadPdf={handleDownloadAllPdf}
         isExportingPdf={isExportingPdf}
         onOpenAuthModal={() => {
-          setAuthModalMessage('Sign in to access all features');
+          setAuthModalMessage('Sign in to save your carousels and pick up where you left off');
           setAuthMode('login');
           setAuthModalOpen(true);
         }}
       />
 
-      {/* History + Chat + Artifact split (chat is the control plane, the carousel is the hero) */}
-      <main className="pt-12 h-screen flex bg-neutral-950">
+      {/* Library + Chat + Stage as floating panels (chat is the control plane, the carousel is the hero) */}
+      <main className="relative z-10 h-[100dvh] pt-16 px-2 pb-[76px] md:pb-2 flex gap-2">
         <CarouselHistorySidebar
           isOpen={historyOpen}
           onToggle={() => setHistoryOpen(o => !o)}
@@ -460,18 +510,68 @@ const CarouselGenerator: React.FC = () => {
             setShareModalOpen(true);
           }}
         />
-        <div className="w-full md:w-[400px] md:min-w-[400px] h-full">
-          <ChatPanel
-            onFirstPrompt={handleFirstPrompt}
-          />
-        </div>
-        <div className="hidden md:flex flex-1 min-w-0">
+        {mobileTab === 'library' && (
+          <div className="md:hidden flex-1 min-w-0">
+            <CarouselHistorySidebar
+              fullWidth
+              isOpen
+              onToggle={() => {}}
+              userId={user?.$id ?? null}
+              saveStatus={saveStatus}
+              onSelectCarousel={(c) => { handleLoadCarousel(c); setMobileTab('preview'); }}
+              onNewCarousel={() => { handleNewCarousel(); setMobileTab('chat'); }}
+              onShare={(carousel) => {
+                setCarouselToShare(carousel);
+                setShareModalOpen(true);
+              }}
+            />
+          </div>
+        )}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+          className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} md:flex w-full md:w-[380px] lg:w-[420px] md:min-w-[380px] h-full min-h-0`}
+        >
+          <ChatPanel onFirstPrompt={handleFirstPrompt} />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.12 }}
+          className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 min-w-0 h-full min-h-0`}
+        >
           <ArtifactPanel
             onOpenBrandEditor={handleOpenBrandEditor}
             onShowToast={showToast}
           />
-        </div>
+        </motion.div>
       </main>
+
+      {/* Mobile tab bar */}
+      <nav className="md:hidden fixed bottom-2 inset-x-2 z-50 st-panel rounded-2xl p-1.5 grid grid-cols-3 gap-1" aria-label="Studio sections">
+        {MOBILE_TABS.map(t => {
+          const on = mobileTab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => { setMobileTab(t.id); if (t.id === 'preview') setPreviewUnseen(false); }}
+              className={`relative flex flex-col items-center justify-center gap-1 h-12 rounded-xl text-[11px] font-medium transition-colors ${on ? 'text-white' : 'text-white/45'}`}
+              aria-current={on ? 'page' : undefined}
+            >
+              {on && <motion.span layoutId="mobile-tab" className="absolute inset-0 rounded-xl bg-white/[0.08] ring-1 ring-white/10" transition={{ type: 'spring', stiffness: 420, damping: 32 }} />}
+              <t.icon size={17} className="relative" />
+              <span className="relative">{t.label}</span>
+              <AnimatePresence>
+                {t.id === 'preview' && previewUnseen && !on && (
+                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="absolute top-2 right-[calc(50%-18px)] w-2 h-2 rounded-full bg-violet-400 ring-2 ring-[#0c0c14]" />
+                )}
+              </AnimatePresence>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Share Modal */}
       {carouselToShare && (
@@ -521,14 +621,7 @@ const App: React.FC = () => {
 
   // Show loading state while auth is initializing
   if (!initialized || authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-neutral-950">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-          <p className="text-white/60 text-sm">Initializing...</p>
-        </div>
-      </div>
-    );
+    return <StudioLoader />;
   }
 
   return (

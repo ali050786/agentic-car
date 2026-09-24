@@ -6,6 +6,8 @@ export interface ToastMessage {
     id: string;
     message: string;
     type: ToastType;
+    /** ms until auto-dismiss; 0 = persistent. Used for the countdown bar. */
+    duration?: number;
 }
 
 export const useToast = () => {
@@ -13,7 +15,7 @@ export const useToast = () => {
 
     const showToast = useCallback((message: string, type: ToastType = 'info', duration = 3000) => {
         const id = Date.now().toString() + Math.random().toString(36);
-        const toast: ToastMessage = { id, message, type };
+        const toast: ToastMessage = { id, message, type, duration };
 
         setToasts((prev) => [...prev, toast]);
 

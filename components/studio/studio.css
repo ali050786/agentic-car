@@ -1,0 +1,166 @@
+/* ==========================================================================
+   Agentic Carousel — studio (/app) styles
+   Builds on the landing tokens in components/landing/landing.css (.lp scope).
+   Studio-only pieces live under .st so nothing leaks into slide SVGs.
+   ========================================================================== */
+
+.st {
+  --st-panel: rgba(14, 14, 22, 0.72);
+  --st-panel-solid: #0c0c14;
+  --st-raise: rgba(255, 255, 255, 0.045);
+  --st-raise-2: rgba(255, 255, 255, 0.075);
+  --st-ring: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --st-focus: 0 0 0 1px rgba(155, 107, 255, 0.55), 0 0 0 4px rgba(155, 107, 255, 0.14);
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Ambient backdrop: soft prism glow + fine grid behind the whole studio. */
+.st-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(40% 35% at 78% -5%, rgba(155, 107, 255, 0.16), transparent 70%),
+    radial-gradient(35% 30% at 10% 0%, rgba(62, 230, 245, 0.08), transparent 70%),
+    radial-gradient(50% 40% at 60% 110%, rgba(79, 140, 255, 0.08), transparent 70%),
+    var(--lp-bg);
+}
+
+/* Panels */
+.st-panel {
+  background: var(--st-panel);
+  border: 1px solid var(--lp-line);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.05) inset, 0 20px 60px -30px rgba(0, 0, 0, 0.8);
+}
+
+.st-popover {
+  background: linear-gradient(180deg, #16161f, #111119);
+  border: 1px solid var(--lp-line-2);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.06) inset, 0 24px 70px -20px rgba(0, 0, 0, 0.85), 0 8px 20px -10px rgba(0, 0, 0, 0.6);
+}
+
+/* Canvas: dotted drafting surface for the stage. */
+.st-canvas {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.075) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: -11px -11px;
+}
+
+/* Thin scrollbars */
+.st-scroll { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.12) transparent; }
+.st-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.st-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
+.st-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); background-clip: content-box; border: 2px solid transparent; }
+
+/* Keyboard hint */
+.st-kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 5px;
+  font-family: var(--lp-mono);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom-width: 2px;
+}
+
+/* Focus ring for keyboard users */
+.st :focus-visible { outline: none; box-shadow: var(--st-focus); border-radius: 10px; }
+
+/* Range sliders */
+.st-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+  --fill: 50%;
+}
+.st-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #4f8cff, #9b6bff) 0 / var(--fill) 100% no-repeat, rgba(255, 255, 255, 0.1);
+}
+.st-range::-moz-range-track { height: 4px; border-radius: 99px; background: rgba(255, 255, 255, 0.1); }
+.st-range::-moz-range-progress { height: 4px; border-radius: 99px; background: linear-gradient(90deg, #4f8cff, #9b6bff); }
+.st-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 99px;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(155, 107, 255, 0.18), 0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s var(--lp-ease), box-shadow 0.2s;
+}
+.st-range:hover::-webkit-slider-thumb { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(155, 107, 255, 0.22), 0 2px 6px rgba(0, 0, 0, 0.5); }
+.st-range:active::-webkit-slider-thumb { transform: scale(0.95); }
+.st-range::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 99px; background: #fff; box-shadow: 0 0 0 4px rgba(155, 107, 255, 0.18); }
+
+/* Tooltip (CSS-only, zero JS): <span data-tip="Label"> */
+.st-tip { position: relative; }
+.st-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translate(-50%, -4px) scale(0.96);
+  padding: 5px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: #fff;
+  background: rgba(20, 20, 32, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s, transform 0.25s var(--lp-ease);
+  transition-delay: 0s;
+  z-index: 80;
+}
+.st-tip[data-tip-pos='top']::after { top: auto; bottom: calc(100% + 8px); transform: translate(-50%, 4px) scale(0.96); }
+.st-tip[data-tip-pos='right']::after { left: calc(100% + 8px); top: 50%; transform: translate(-4px, -50%) scale(0.96); }
+.st-tip:hover::after, .st-tip:focus-visible::after { opacity: 1; transform: translate(-50%, 0) scale(1); transition-delay: 0.35s; }
+.st-tip[data-tip-pos='right']:hover::after { transform: translate(0, -50%) scale(1); }
+
+/* The slide stage SVG fits its box */
+.st .artifact-svg-fit svg { max-width: 100%; max-height: 100%; width: auto; height: auto; }
+.st .artifact-thumb svg { width: 100%; height: 100%; display: block; }
+
+/* Progress bar sheen */
+.st-sheen { position: relative; overflow: hidden; }
+.st-sheen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: translateX(-100%);
+  animation: st-sheen 1.6s ease-in-out infinite;
+}
+@keyframes st-sheen { to { transform: translateX(100%); } }
+
+/* Skeleton shimmer for generating cards */
+.st-skeleton {
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0.03) 30%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.03) 70%);
+  background-size: 250% 100%;
+  animation: st-skel 1.8s ease-in-out infinite;
+}
+@keyframes st-skel { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* Contenteditable affordances on the stage (overrides the index.html defaults with the studio palette) */
+.st .artifact-svg-fit [data-edit-field]:hover { background: rgba(155, 107, 255, 0.12); box-shadow: 0 0 0 1px rgba(155, 107, 255, 0.4); }
+.st .artifact-svg-fit [data-edit-field]:focus { background: rgba(155, 107, 255, 0.14); box-shadow: 0 0 0 2px rgba(155, 107, 255, 0.9); }

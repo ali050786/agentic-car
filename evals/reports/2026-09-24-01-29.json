@@ -1,0 +1,2822 @@
+[
+  {
+    "id": "kids-rain",
+    "topic": "Explain how rain forms, for 8 year olds",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 49859,
+        "slides": [
+          {
+            "id": "template-1-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Rain starts with a puddle!",
+              "preHeader": "DID YOU KNOW?",
+              "body": "When the sun warms up puddles, rivers, and oceans, the water turns into tiny invisible bits called vapor and floats up into the sky.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "puddle"
+            },
+            "visual": {
+              "icon": "Lightbulb",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Water turns into vapor",
+              "preHeader": "STEP 1: EVAPORATION",
+              "body": "The sun heats the water. It becomes invisible vapor and rises up. This is called evaporation.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "vapor"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of battery power, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-2",
+            "blockType": "body",
+            "slots": {
+              "headline": "Vapor makes clouds",
+              "preHeader": "STEP 2: CONDENSATION",
+              "body": "Up high, the air is cold. The vapor turns back into tiny water drops that stick together to make clouds. That’s condensation!",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "clouds"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of api connector, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-3",
+            "blockType": "list",
+            "slots": {
+              "headline": "Rain falls down",
+              "preHeader": "STEP 3: PRECIPITATION",
+              "body": "",
+              "listItems": [
+                "Cloud drops grow: They bump and join.",
+                "Drops get heavy: Too big to stay.",
+                "Down they fall: That’s rain!"
+              ],
+              "footer": "",
+              "accentPhrase": "rain"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of ab testing split, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "The water cycle!",
+              "preHeader": "THE WATER CYCLE",
+              "body": "The rain falls and makes puddles. Then the sun comes out and starts the whole trip again. Round and round it goes.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "cycle"
+            },
+            "visual": {
+              "icon": "Star",
+              "doodlePrompt": "precise editorial spot illustration of ai ethics, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-5",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Rain is a journey!",
+              "preHeader": "REMEMBER",
+              "body": "Next time it rains, you’re seeing water’s amazing journey!",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "journey"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of autonomous vehicle, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 14141,
+        "costUsd": 0.0024,
+        "llmCalls": 6,
+        "retries": 1,
+        "llmMs": 50906,
+        "hedges": 0,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.PLAN",
+            "start": 246,
+            "ms": 2143,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.plan",
+            "start": 247,
+            "ms": 2142,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 997
+          },
+          {
+            "kind": "step",
+            "name": "StrategistAgent.generateViralAngle",
+            "start": 2389,
+            "ms": 2207,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "strategist",
+            "start": 2392,
+            "ms": 2201,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 899
+          },
+          {
+            "kind": "step",
+            "name": "TemplateAgent.generate",
+            "start": 4601,
+            "ms": 41587,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "template.generate",
+            "start": 4631,
+            "ms": 41556,
+            "ok": true,
+            "role": "writer",
+            "attempts": 2,
+            "reasoningTokens": 3842,
+            "firstTokenMs": 1022
+          },
+          {
+            "kind": "step",
+            "name": "ProofreaderAgent.proofread",
+            "start": 46190,
+            "ms": 2039,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 46198,
+            "ms": 2031,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 701
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 46200,
+            "ms": 1351,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 701
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.REFLECT_1",
+            "start": 48232,
+            "ms": 1626,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.reflect",
+            "start": 48233,
+            "ms": 1625,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 944
+          }
+        ],
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 1,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 19
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 9,
+          "specificity": 8,
+          "clarity": 10,
+          "audienceFit": 10,
+          "accuracy": 10,
+          "expectations": 10,
+          "overall": 9,
+          "notes": "The cover hook is strong but could be more visually intriguing for 8-year-olds. The flow is excellent, but the list slide could use a more playful visual to match the tone."
+        }
+      }
+    }
+  },
+  {
+    "id": "howto-interview",
+    "topic": "How to prepare for a system design interview in 2 weeks",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 40311,
+        "slides": [
+          {
+            "id": "template-4-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Assess your baseline first",
+              "preHeader": "2-WEEK PREP PLAN",
+              "body": "Take a practice problem cold to identify your weak areas. This sets your personalized study path.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Assess your baseline"
+            },
+            "visual": {
+              "icon": "Target"
+            }
+          },
+          {
+            "id": "template-4-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Master the 9 core concepts of system design",
+              "preHeader": "CORE CONCEPTS",
+              "body": "Caching, load balancing, CAP theorem, databases, queues, CDNs, proxies, consensus, and API design. These are the building blocks for any system.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "9 core concepts"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-4-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "Learn the RESHADED framework",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "Req & Est: Scope and scale.",
+                "Storage & HLD: Data stores and architecture.",
+                "API & Data Model: Interfaces and schema.",
+                "Eval & Discussion: Trade-offs and follow-ups."
+              ],
+              "footer": "",
+              "accentPhrase": "RESHADED framework"
+            },
+            "visual": {
+              "icon": "MapPin"
+            }
+          },
+          {
+            "id": "template-4-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Practice 5 high-frequency design problems",
+              "preHeader": "PRACTICE PROBLEMS",
+              "body": "Work through URL shortener, chat system, news feed, rate limiter, and distributed key-value store. Apply RESHADED to each.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "high-frequency design problems"
+            },
+            "visual": {
+              "icon": "Rocket"
+            }
+          },
+          {
+            "id": "template-4-slide-4",
+            "blockType": "list",
+            "slots": {
+              "headline": "Do 3 mock interviews with feedback",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "Peer mock: Schedule with a colleague.",
+                "Platform: Use Pramp or similar service.",
+                "Feedback: Focus on trade-off explanations."
+              ],
+              "footer": "",
+              "accentPhrase": "3 mock interviews"
+            },
+            "visual": {
+              "icon": "MessageSquare"
+            }
+          },
+          {
+            "id": "template-4-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "Refine your communication on trade-offs",
+              "preHeader": "COMMUNICATION",
+              "body": "Explain why you chose one approach over another. Justify decisions and handle follow-up questions concisely. This makes or breaks the interview.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "your communication on trade-offs"
+            },
+            "visual": {
+              "icon": "Users"
+            }
+          },
+          {
+            "id": "template-4-slide-6",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Review notes and trust your prep",
+              "preHeader": "FINAL STEP",
+              "body": "Skim your notes, sleep well, and trust your preparation. You’ve done the work.",
+              "listItems": [],
+              "footer": "Follow for more →",
+              "accentPhrase": "trust your prep"
+            },
+            "visual": {
+              "icon": "CheckCircle"
+            }
+          }
+        ],
+        "tokens": 14240,
+        "costUsd": 0.00218,
+        "llmCalls": 7,
+        "retries": 2,
+        "llmMs": 37074,
+        "hedges": 0,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.PLAN",
+            "start": 3,
+            "ms": 2114,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.plan",
+            "start": 5,
+            "ms": 2112,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 966
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.analyzeInputNeeds",
+            "start": 2117,
+            "ms": 1345,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.analyze",
+            "start": 2118,
+            "ms": 1344,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 696
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.performResearch",
+            "start": 3462,
+            "ms": 5242,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "StrategistAgent.generateViralAngle",
+            "start": 8704,
+            "ms": 3923,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "strategist",
+            "start": 8705,
+            "ms": 3921,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 1789
+          },
+          {
+            "kind": "step",
+            "name": "TemplateAgent.generate",
+            "start": 12628,
+            "ms": 23484,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "template.generate",
+            "start": 12630,
+            "ms": 23481,
+            "ok": true,
+            "role": "writer",
+            "attempts": 2,
+            "reasoningTokens": 1422,
+            "firstTokenMs": 943
+          },
+          {
+            "kind": "step",
+            "name": "ProofreaderAgent.proofread",
+            "start": 36112,
+            "ms": 2561,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 36115,
+            "ms": 2023,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 696
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 36116,
+            "ms": 2557,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 713
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.REFLECT_1",
+            "start": 38673,
+            "ms": 1637,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.reflect",
+            "start": 38674,
+            "ms": 1636,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 1004
+          }
+        ],
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 35
+        },
+        "extra": {},
+        "judge": {
+          "hook": 6,
+          "flow": 7,
+          "specificity": 8,
+          "clarity": 8,
+          "audienceFit": 9,
+          "accuracy": 9,
+          "expectations": 7,
+          "overall": 7,
+          "notes": "The deck is solid and specific, but the hook is weak—'Assess your baseline first' is generic and doesn't create urgency. The flow is logical but the ending is abrupt; a stronger call-to-action or summary would improve it."
+        }
+      }
+    }
+  },
+  {
+    "id": "linkedin-pitch",
+    "topic": "LinkedIn hot take: why most startup pitch decks fail",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 62283,
+        "slides": [
+          {
+            "id": "template-1-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Your problem slide is the only one that matters",
+              "preHeader": "THE PITCH DECK MYTH",
+              "body": "Founders obsess over market size and team. Investors decide in 30 seconds based on slide 2. If your problem isn’t visceral, you’re dead.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "problem slide"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of analytics dashboard, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "You’re solving a problem that doesn’t exist",
+              "preHeader": "THE REALITY CHECK",
+              "body": "Founders fall in love with their solution before validating the problem. They build features for a job no one is hiring for. The result: a deck full of impressive slides that don’t matter.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "problem that doesn't exist"
+            },
+            "visual": {
+              "icon": "Lightbulb",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "Investors decide in 30 seconds",
+              "preHeader": "THE 30-SECOND TEST",
+              "body": "",
+              "listItems": [
+                "First: Logo tagline – skip if weak.",
+                "Second: Problem slide – decide here.",
+                "Third: Solution slide – only if problem hurts."
+              ],
+              "footer": "",
+              "accentPhrase": "30 seconds"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of ab testing split, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Pain must be physical, emotional, or financial",
+              "preHeader": "WHAT MAKES A PROBLEM VISCERAL?",
+              "body": "A good problem statement makes the reader nod and wince. It quantifies the cost of inaction. If it doesn’t hurt, it’s not a problem worth funding.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "pain"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of ai ethics, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-4",
+            "blockType": "list",
+            "slots": {
+              "headline": "Make it hurt or go home",
+              "preHeader": "THREE COMPONENTS OF A KILLER PROBLEM SLIDE",
+              "body": "",
+              "listItems": [
+                "Before: Describe the current painful state.",
+                "After: Show the desired outcome.",
+                "Cost: Quantify the cost of inaction."
+              ],
+              "footer": "",
+              "accentPhrase": "hurt or go home"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of accessibility focus, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "Don’t confuse symptoms with root causes",
+              "preHeader": "COMMON MISTAKE",
+              "body": "Your customer might say they need faster software. But the real problem is they are losing deals because their lead response time is 24 hours. Dig deeper.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "root causes"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of api connector, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-6",
+            "blockType": "body",
+            "slots": {
+              "headline": "Slack: ‘Team communication is chaos’",
+              "preHeader": "EXAMPLE THAT WORKS",
+              "body": "They didn’t say ‘we have a better chat app.’ They said ‘email is broken, instant messaging is fragmented, and no one knows where the decision was made.’ That’s visceral.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "chaos"
+            },
+            "visual": {
+              "icon": "Star",
+              "doodlePrompt": "precise editorial spot illustration of api handshake, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-7",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Problem first, everything else second",
+              "preHeader": "FINAL THOUGHT",
+              "body": "Your deck’s job is to make the investor feel the pain before you show the cure.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Problem first"
+            },
+            "visual": {
+              "icon": "Award",
+              "doodlePrompt": "precise editorial spot illustration of autonomous vehicle, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 17046,
+        "costUsd": 0.00293,
+        "llmCalls": 7,
+        "retries": 2,
+        "llmMs": 59694,
+        "hedges": 0,
+        "timeline": [
+          {
+            "kind": "llm",
+            "name": "v1.plan",
+            "start": 2,
+            "ms": 2083,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 964
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.PLAN",
+            "start": 2,
+            "ms": 2083,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.analyzeInputNeeds",
+            "start": 2085,
+            "ms": 1304,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.analyze",
+            "start": 2086,
+            "ms": 1303,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 672
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.performResearch",
+            "start": 3389,
+            "ms": 4679,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "StrategistAgent.generateViralAngle",
+            "start": 8068,
+            "ms": 2505,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "strategist",
+            "start": 8069,
+            "ms": 2504,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 1278
+          },
+          {
+            "kind": "step",
+            "name": "TemplateAgent.generate",
+            "start": 10575,
+            "ms": 46528,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "template.generate",
+            "start": 10576,
+            "ms": 46525,
+            "ok": true,
+            "role": "writer",
+            "attempts": 2,
+            "reasoningTokens": 3909,
+            "firstTokenMs": 1039
+          },
+          {
+            "kind": "step",
+            "name": "ProofreaderAgent.proofread",
+            "start": 57104,
+            "ms": 3445,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 57106,
+            "ms": 3443,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 693
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 57107,
+            "ms": 2104,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 674
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.REFLECT_1",
+            "start": 60550,
+            "ms": 1733,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.reflect",
+            "start": 60551,
+            "ms": 1732,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 1036
+          }
+        ],
+        "checks": {
+          "slides": 8,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 2,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 38
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 7,
+          "specificity": 7,
+          "clarity": 8,
+          "audienceFit": 9,
+          "accuracy": 10,
+          "expectations": 8,
+          "overall": 8,
+          "notes": "The hook is strong but could be sharper—'Your problem slide is the only one that matters' is good but slightly generic. The flow is logical but slide 2 repeats the problem without adding new insight; consider merging or cutting. Specificity is solid with the Slack example, but more concrete founder stories would elevate it."
+        }
+      }
+    }
+  },
+  {
+    "id": "factcheck-brain",
+    "topic": "Is it true we only use 10% of our brains? Fact-check it",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 53235,
+        "slides": [
+          {
+            "id": "template-1-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "You Use Way More Than 10%",
+              "preHeader": "NEUROSCIENCE FACT CHECK",
+              "body": "The myth that we only use a tenth of our brains has been repeated for decades. But modern imaging shows it’s completely false. Let’s trace the origin and the real science.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "10%"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of ab testing split, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Where the Myth Came From",
+              "preHeader": "THE ORIGIN STORY",
+              "body": "The 10% myth traces back to William James and Boris Sidis’ early 1900s work on mental energy. Later misinterpretations claimed most of the brain is unused, but that’s not what they meant. James said we have untapped potential — not dormant tissue.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "origin"
+            },
+            "visual": {
+              "icon": "Lightbulb",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "Hard Evidence Against the Myth",
+              "preHeader": "WHAT SCANS ACTUALLY SHOW",
+              "body": "",
+              "listItems": [
+                "fMRI: Activity lights up across the entire brain, not just 10%.",
+                "PET scans: Glucose metabolism occurs in all regions.",
+                "EEG: No silent areas — every part is electrically active."
+              ],
+              "footer": "",
+              "accentPhrase": "evidence"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of analytics dashboard, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Your Brain is Always Active",
+              "preHeader": "A SUBTLE NUANCE",
+              "body": "We use virtually all parts of the brain, but not all at once. Different tasks activate different networks — like a city where different neighborhoods light up for different purposes. The key: no part remains idle all the time.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "active"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of accessibility focus, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-4",
+            "blockType": "list",
+            "slots": {
+              "headline": "Why 100% Would Be Dangerous",
+              "preHeader": "WHY MORE ISN’T BETTER",
+              "body": "",
+              "listItems": [
+                "Seizures: uncontrolled firing of all neurons at once.",
+                "Energy cost: brain already uses 20% of your oxygen.",
+                "Evolution: efficiency favors selective activation."
+              ],
+              "footer": "",
+              "accentPhrase": "dangerous"
+            },
+            "visual": {
+              "icon": "TrendingDown",
+              "doodlePrompt": "precise editorial spot illustration of ai ethics, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-5",
+            "blockType": "closing",
+            "slots": {
+              "headline": "The Truth: You Use All of It",
+              "preHeader": "TAKEAWAY",
+              "body": "The 10% myth is false. Using your entire brain would be a disaster. Trust your whole mind — it’s already online.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "all"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of binary rain, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 15771,
+        "costUsd": 0.00253,
+        "llmCalls": 7,
+        "retries": 2,
+        "llmMs": 48502,
+        "hedges": 0,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.PLAN",
+            "start": 2,
+            "ms": 1816,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.plan",
+            "start": 3,
+            "ms": 1815,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 945
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.analyzeInputNeeds",
+            "start": 1818,
+            "ms": 1273,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.analyze",
+            "start": 1819,
+            "ms": 1272,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 676
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.performResearch",
+            "start": 3092,
+            "ms": 6258,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "StrategistAgent.generateViralAngle",
+            "start": 9350,
+            "ms": 4491,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "strategist",
+            "start": 9352,
+            "ms": 4488,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 3066
+          },
+          {
+            "kind": "step",
+            "name": "TemplateAgent.generate",
+            "start": 13842,
+            "ms": 33923,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "template.generate",
+            "start": 13844,
+            "ms": 33919,
+            "ok": true,
+            "role": "writer",
+            "attempts": 2,
+            "reasoningTokens": 2820,
+            "firstTokenMs": 1033
+          },
+          {
+            "kind": "step",
+            "name": "ProofreaderAgent.proofread",
+            "start": 47767,
+            "ms": 3922,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 47771,
+            "ms": 3918,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 1001
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 47772,
+            "ms": 1546,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1000
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.REFLECT_1",
+            "start": 51690,
+            "ms": 1545,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.reflect",
+            "start": 51691,
+            "ms": 1544,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 970
+          }
+        ],
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 2,
+          "missingRequired": 0,
+          "accentInvalid": 5,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 6,
+          "avgHeadline": 27
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 9,
+          "specificity": 9,
+          "clarity": 10,
+          "audienceFit": 9,
+          "accuracy": 10,
+          "expectations": 10,
+          "overall": 9,
+          "notes": "The hero slide could be more provocative to increase swipe rate; the origin story slide is slightly vague about the exact misinterpretation."
+        }
+      }
+    }
+  },
+  {
+    "id": "story-airbnb",
+    "topic": "The story of how Airbnb survived by selling cereal",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 35968,
+        "slides": [
+          {
+            "id": "template-3-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "When the Airbnb Dream Almost Died",
+              "preHeader": "THE ORIGIN STORY",
+              "body": "In 2008, Airbnb was flatlining. Maxed-out credit cards, eating cereal for every meal, and investors slamming doors. Brian and Joe were broke and desperate.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "almost died"
+            },
+            "visual": {
+              "icon": "TrendingDown",
+              "doodlePrompt": "precise editorial spot illustration of storm cloud, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Hot-Gluing 1,000 Cereal Boxes",
+              "preHeader": "THE DESPERATE IDEA",
+              "body": "They created limited-edition ‘Obama O’s’ and ‘Cap’n McCain’s’ cereal boxes. By hand. Each box hot-glued. They hauled them to the RNC and DNC, selling them for $40 a pop.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "hot-gluing"
+            },
+            "visual": {
+              "icon": "Package",
+              "doodlePrompt": "precise editorial spot illustration of coffee fuel, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-2",
+            "blockType": "body",
+            "slots": {
+              "headline": "How Cereal Saved a Startup",
+              "preHeader": "THE LIFELINE",
+              "body": "That cereal hustle raised $30,000. Not a lot for a tech startup, but it gave them just enough runway to keep the lights on and land a spot at Y Combinator.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "saved a startup"
+            },
+            "visual": {
+              "icon": "DollarSign",
+              "doodlePrompt": "precise editorial spot illustration of rainbow arc, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-3",
+            "blockType": "list",
+            "slots": {
+              "headline": "What the Cereal Box Taught Them",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "Creativity: Turning cereal into capital—no money? Make something.",
+                "Hustle: 1,000 boxes hand-glued in a tiny apartment, no sleep.",
+                "Timing: Cashing in on election fever—they spotted the moment."
+              ],
+              "footer": "",
+              "accentPhrase": "cereal into capital"
+            },
+            "visual": {
+              "icon": "Lightbulb",
+              "doodlePrompt": "precise editorial spot illustration of idea bulb, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "From Cereal to Y Combinator",
+              "preHeader": "THE BREAK",
+              "body": "With that $30k in hand, they got Paul Graham’s attention. YC gave them $20,000 for 6% equity. The rest? History.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "cereal to Y Combinator"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of launch rocket, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "A $100 Billion Lesson in Hustle",
+              "preHeader": "THE UNICORN",
+              "body": "That cereal box hustle turned into a $100+ billion company. Proof that when you’re out of options, resourcefulness beats a perfect plan every time.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "hustle"
+            },
+            "visual": {
+              "icon": "Award",
+              "doodlePrompt": "precise editorial spot illustration of mountain peak, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-6",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Keep Hustling, Find Your Cereal Box",
+              "preHeader": "TAKEAWAY",
+              "body": "When you’re out of options, creativity can turn a cereal box into a lifeline. And sometimes, that lifeline builds a unicorn.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Find Your Cereal Box"
+            },
+            "visual": {
+              "icon": "Sparkles",
+              "doodlePrompt": "precise editorial spot illustration of seed sprout, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 10920,
+        "costUsd": 0.00175,
+        "llmCalls": 7,
+        "retries": 2,
+        "llmMs": 31184,
+        "hedges": 0,
+        "timeline": [
+          {
+            "kind": "llm",
+            "name": "v1.plan",
+            "start": 2,
+            "ms": 2037,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 921
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.PLAN",
+            "start": 2,
+            "ms": 2037,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.analyzeInputNeeds",
+            "start": 2039,
+            "ms": 1755,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.analyze",
+            "start": 2041,
+            "ms": 1753,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 727
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.performResearch",
+            "start": 3794,
+            "ms": 7827,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "StrategistAgent.generateViralAngle",
+            "start": 11622,
+            "ms": 3061,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "strategist",
+            "start": 11624,
+            "ms": 3059,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 1077
+          },
+          {
+            "kind": "step",
+            "name": "TemplateAgent.generate",
+            "start": 14685,
+            "ms": 15863,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "template.generate",
+            "start": 14686,
+            "ms": 15862,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 964,
+            "firstTokenMs": 925
+          },
+          {
+            "kind": "step",
+            "name": "ProofreaderAgent.proofread",
+            "start": 30548,
+            "ms": 3823,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 30550,
+            "ms": 3057,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 787
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 30550,
+            "ms": 3821,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 788
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.REFLECT_1",
+            "start": 34372,
+            "ms": 1596,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.reflect",
+            "start": 34373,
+            "ms": 1595,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 876
+          }
+        ],
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 3,
+          "missingRequired": 0,
+          "accentInvalid": 6,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 9,
+          "avgHeadline": 30
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 9,
+          "specificity": 9,
+          "clarity": 9,
+          "audienceFit": 9,
+          "accuracy": 10,
+          "expectations": 10,
+          "overall": 9,
+          "notes": "The deck is strong overall, but the hook could be punchier—consider a more provocative headline or visual cue on slide 1. Also, slide 4's list format slightly breaks the narrative flow; integrating those lessons into the story might feel more seamless."
+        }
+      }
+    }
+  },
+  {
+    "id": "fun-zoom",
+    "topic": "Funny carousel: the types of people in every Zoom meeting",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 59847,
+        "slides": [
+          {
+            "id": "template-3-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "5 Archetypes You’ve Met",
+              "preHeader": "ZOOM CALL BINGO",
+              "body": "From the sound-check martyr to the open-mouth chewer — we’ve all seen them. Which one are you?",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Archetypes"
+            },
+            "visual": {
+              "icon": "Lightbulb",
+              "doodlePrompt": "precise editorial spot illustration of accessibility focus, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "The ‘Hear Me’ Loop",
+              "preHeader": "THE AUDIO MARTYR",
+              "body": "They spend the first 10 minutes asking ‘Can you hear me?’ and then say ‘I think you’re frozen.’ Meanwhile, everyone else is fine.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "hear me"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-2",
+            "blockType": "body",
+            "slots": {
+              "headline": "Crunching on Mute",
+              "preHeader": "THE MUTE BUTTON GOURMET",
+              "body": "They confidently eat chips and slurp coffee, forgetting that mute only works for them. We all hear the crunch. But we’re too polite to say anything.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "crunch"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of binary rain, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-3",
+            "blockType": "list",
+            "slots": {
+              "headline": "More Zoom Legends",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "The Background Star: Pets, kids, or chaotic art.",
+                "The Serial Interrupter: ‘Sorry, go ahead’ ×10.",
+                "The Frozen Statue: Pixels stuck, moving like dial-up."
+              ],
+              "footer": "",
+              "accentPhrase": "Legends"
+            },
+            "visual": {
+              "icon": "Star",
+              "doodlePrompt": "precise editorial spot illustration of ai ethics, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "‘Sorry, Go Ahead’",
+              "preHeader": "THE SERIAL INTERRUPTER",
+              "body": "They talk over you, then apologize, then talk again. The meeting becomes a polite race to the finish line. No one wins.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "go ahead"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of api handshake, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-5",
+            "blockType": "closing",
+            "slots": {
+              "headline": "You’re Probably All of Them",
+              "preHeader": "SO, WHICH ONE?",
+              "body": "Some days you’re the martyr, other days you’re the gourmet. Embrace the chaos. And invest in a good mute button.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "All of Them"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of ab testing split, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 15593,
+        "costUsd": 0.00268,
+        "llmCalls": 6,
+        "retries": 3,
+        "llmMs": 62490,
+        "hedges": 0,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.PLAN",
+            "start": 1,
+            "ms": 1824,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.plan",
+            "start": 2,
+            "ms": 1823,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 880
+          },
+          {
+            "kind": "step",
+            "name": "StrategistAgent.generateViralAngle",
+            "start": 1825,
+            "ms": 1711,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "strategist",
+            "start": 1826,
+            "ms": 1710,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 932
+          },
+          {
+            "kind": "llm",
+            "name": "template.generate",
+            "start": 3537,
+            "ms": 51303,
+            "ok": true,
+            "role": "writer",
+            "attempts": 2,
+            "reasoningTokens": 4490,
+            "firstTokenMs": 964
+          },
+          {
+            "kind": "step",
+            "name": "TemplateAgent.generate",
+            "start": 3537,
+            "ms": 51304,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "ProofreaderAgent.proofread",
+            "start": 54841,
+            "ms": 3516,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 54844,
+            "ms": 3513,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 685
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 54845,
+            "ms": 2654,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 728
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.REFLECT_1",
+            "start": 58358,
+            "ms": 1489,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.reflect",
+            "start": 58360,
+            "ms": 1487,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 893
+          }
+        ],
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 3,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 20
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 7,
+          "specificity": 9,
+          "clarity": 9,
+          "audienceFit": 9,
+          "accuracy": 10,
+          "expectations": 9,
+          "overall": 8,
+          "notes": "Slide 4 (list) breaks the one-archetype-per-slide rule, mixing three archetypes into one slide. Slide 5 repeats the Serial Interrupter from Slide 4, causing redundancy."
+        }
+      }
+    }
+  },
+  {
+    "id": "source-4day",
+    "topic": "Turn this article into a carousel about the UK four-day week trial",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 47779,
+        "slides": [
+          {
+            "id": "template-1-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "92% of companies kept the four-day week",
+              "preHeader": "UK FOUR-DAY WEEK TRIAL RESULTS",
+              "body": "In 2022, 61 UK companies tested a four-day week with no pay cut. 92% continued. Here’s what the data says.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "four-day week"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Productivity held steady or improved",
+              "preHeader": "KEY FINDINGS",
+              "body": "The biggest success factor wasn’t the extra day off but redesigning work: cutting low-value meetings and processes.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "held steady"
+            },
+            "visual": {
+              "icon": "TrendingUp",
+              "doodlePrompt": "precise editorial spot illustration of analytics dashboard, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "Turnover and sick leave dropped",
+              "preHeader": "MEASURED OUTCOMES",
+              "body": "",
+              "listItems": [
+                "Turnover: Reduced significantly.",
+                "Sick leave: Decreased markedly.",
+                "Revenue: No negative impact."
+              ],
+              "footer": "",
+              "accentPhrase": "dropped"
+            },
+            "visual": {
+              "icon": "TrendingDown",
+              "doodlePrompt": "precise editorial spot illustration of api handshake, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Work redesign, not extra day",
+              "preHeader": "CRITICAL SUCCESS FACTOR",
+              "body": "Companies that cut low-value meetings and processes saw the best results. The schedule change alone wasn’t enough.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Work redesign"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of ab testing split, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-4",
+            "blockType": "list",
+            "slots": {
+              "headline": "Cut low-value meetings, processes",
+              "preHeader": "REDESIGN ELEMENTS",
+              "body": "",
+              "listItems": [
+                "Meetings: Eliminate unnecessary gatherings.",
+                "Processes: Streamline workflows.",
+                "Culture: Focus on output over hours."
+              ],
+              "footer": "",
+              "accentPhrase": "low-value"
+            },
+            "visual": {
+              "icon": "Lightbulb",
+              "doodlePrompt": "precise editorial spot illustration of battery power, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "Burnout decreased, retention increased",
+              "preHeader": "EMPLOYEE IMPACT",
+              "body": "Employees reported lower stress and higher job satisfaction. The four-day week, when redesigned, improved well-being.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "retention increased"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of ai ethics, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-6",
+            "blockType": "closing",
+            "slots": {
+              "headline": "It’s not a schedule swap, it’s a redesign",
+              "preHeader": "KEY TAKEAWAY",
+              "body": "Evidence shows reduced turnover and sick leave without revenue loss.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "redesign"
+            },
+            "visual": {
+              "icon": "Award",
+              "doodlePrompt": "precise editorial spot illustration of accessibility focus, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 14406,
+        "costUsd": 0.00238,
+        "llmCalls": 6,
+        "retries": 1,
+        "llmMs": 49597,
+        "hedges": 0,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.PLAN",
+            "start": 3,
+            "ms": 2044,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.plan",
+            "start": 4,
+            "ms": 2043,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 1111
+          },
+          {
+            "kind": "step",
+            "name": "StrategistAgent.generateViralAngle",
+            "start": 2047,
+            "ms": 2147,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "strategist",
+            "start": 2048,
+            "ms": 2146,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 995
+          },
+          {
+            "kind": "step",
+            "name": "TemplateAgent.generate",
+            "start": 4195,
+            "ms": 39548,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "template.generate",
+            "start": 4196,
+            "ms": 39546,
+            "ok": true,
+            "role": "writer",
+            "attempts": 2,
+            "reasoningTokens": 3240,
+            "firstTokenMs": 933
+          },
+          {
+            "kind": "step",
+            "name": "ProofreaderAgent.proofread",
+            "start": 43744,
+            "ms": 2299,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 43746,
+            "ms": 2297,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 955
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 43747,
+            "ms": 1830,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 885
+          },
+          {
+            "kind": "llm",
+            "name": "v1.reflect",
+            "start": 46044,
+            "ms": 1735,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 1033
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.REFLECT_1",
+            "start": 46044,
+            "ms": 1735,
+            "ok": true
+          }
+        ],
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 2,
+          "avgHeadline": 35
+        },
+        "extra": {},
+        "judge": {
+          "hook": 6,
+          "flow": 5,
+          "specificity": 4,
+          "clarity": 6,
+          "audienceFit": 7,
+          "accuracy": 4,
+          "expectations": 4,
+          "overall": 5,
+          "notes": "Specificity is weak: slides 3 and 5 use vague terms like 'reduced significantly' and 'streamline workflows' instead of the article's exact numbers (57% fewer leavers, 71% less burnout). Accuracy suffers because slide 3 omits the precise turnover and sick leave figures, and slide 4 repeats the same idea as slide 2, creating repetition. The deck also misses the caveats (volunteer bias, short trial, customer-facing struggles) required by the brief."
+        }
+      }
+    }
+  },
+  {
+    "id": "es-sleep",
+    "topic": "Crea un carrusel sobre hábitos de sueño para estudiantes universitarios",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 44745,
+        "slides": [
+          {
+            "id": "template-4-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Dormir bien es tu superpoder académico",
+              "preHeader": "SUEÑO Y ESTUDIO",
+              "body": "No es un lujo, es la base para estudiar mejor y sentirte equilibrado. Menos de 8 horas afecta tu memoria y concentración.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "superpoder académico"
+            },
+            "visual": {
+              "icon": "Lightbulb",
+              "doodlePrompt": "precise editorial spot illustration of moon crescent, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Más del 70% de estudiantes duerme menos de 8 horas",
+              "preHeader": "REALIDAD UNIVERSITARIA",
+              "body": "El 26% sufre insomnio. Establecer un horario fijo de sueño, incluso los fines de semana, es el primer paso para romper ese ciclo.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "duerme menos de 8 horas"
+            },
+            "visual": {
+              "icon": "TrendingDown",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "Apaga todo antes de dormir",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "Cafeína: evítala al menos 1 hora antes.",
+                "Alcohol: altera el sueño profundo.",
+                "Pantallas: nada de celular 1 hora antes."
+              ],
+              "footer": "",
+              "accentPhrase": "Apaga todo"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of hamburger menu, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Ambiente oscuro, fresco y silencioso",
+              "preHeader": "TU CUEVA DEL SUEÑO",
+              "body": "Cierra cortinas, baja la temperatura y usa tapones si es necesario. Tu cerebro necesita señales claras de que es hora de descansar.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "oscuro, fresco y silencioso"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of cozy house, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-4",
+            "blockType": "list",
+            "slots": {
+              "headline": "Relájate y muévete",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "Respiración profunda: 4-7-8 antes de acostarte.",
+                "Meditación: 5 minutos para calmar la mente.",
+                "Ejercicio: hazlo regularmente, pero no justo antes de dormir."
+              ],
+              "footer": "",
+              "accentPhrase": "Relájate y muévete"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of beating heart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-5",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Pide ayuda si lo necesitas",
+              "preHeader": "SIGUE ADELANTE",
+              "body": "Si el insomnio persiste, busca apoyo profesional en tu universidad. Dormir bien no es un lujo, es una herramienta poderosa.",
+              "listItems": [],
+              "footer": "Sigue para más tips →",
+              "accentPhrase": "Pide ayuda"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of school bag, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 14047,
+        "costUsd": 0.00211,
+        "llmCalls": 7,
+        "retries": 1,
+        "llmMs": 38337,
+        "hedges": 0,
+        "timeline": [
+          {
+            "kind": "llm",
+            "name": "v1.plan",
+            "start": 2,
+            "ms": 1874,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 1005
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.PLAN",
+            "start": 2,
+            "ms": 1874,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.analyzeInputNeeds",
+            "start": 1877,
+            "ms": 1281,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.analyze",
+            "start": 1878,
+            "ms": 1280,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 738
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.performResearch",
+            "start": 3158,
+            "ms": 7753,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "StrategistAgent.generateViralAngle",
+            "start": 10911,
+            "ms": 3073,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "strategist",
+            "start": 10915,
+            "ms": 3069,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 1152
+          },
+          {
+            "kind": "step",
+            "name": "TemplateAgent.generate",
+            "start": 13985,
+            "ms": 26736,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "template.generate",
+            "start": 13986,
+            "ms": 26734,
+            "ok": true,
+            "role": "writer",
+            "attempts": 2,
+            "reasoningTokens": 1740,
+            "firstTokenMs": 916
+          },
+          {
+            "kind": "step",
+            "name": "ProofreaderAgent.proofread",
+            "start": 40722,
+            "ms": 2390,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 40724,
+            "ms": 1361,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 734
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 40724,
+            "ms": 2388,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 734
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.REFLECT_1",
+            "start": 43112,
+            "ms": 1632,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.reflect",
+            "start": 43113,
+            "ms": 1631,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 913
+          }
+        ],
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 2,
+          "avgHeadline": 32
+        },
+        "extra": {},
+        "judge": {
+          "hook": 7,
+          "flow": 8,
+          "specificity": 7,
+          "clarity": 9,
+          "audienceFit": 8,
+          "accuracy": 5,
+          "expectations": 8,
+          "overall": 7,
+          "notes": "The deck is clear and practical, but accuracy is hurt by the invented statistic 'más del 70% de estudiantes duerme menos de 8 horas' and 'el 26% sufre insomnio' without a source. Also, the tip 'evita cafeína al menos 1 hora antes' is too weak; it should be 6+ hours."
+        }
+      }
+    }
+  },
+  {
+    "id": "opinion-remote",
+    "topic": "Remote work is better for deep work than offices. Argue it with nuance",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 28839,
+        "slides": [
+          {
+            "id": "template-4-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Remote work boosts deep work—but it’s complicated",
+              "preHeader": "DEEP WORK & REMOTE",
+              "body": "Offices steal 23 minutes per interruption. Remote gives that back—yet not everyone thrives alone. The real story is flexibility.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "it’s complicated"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of neural network, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Open offices cost 23 minutes per distraction",
+              "preHeader": "THE COST OF INTERRUPTION",
+              "body": "Research shows that after a single interruption, it takes an average of 23 minutes to regain full focus. Open office layouts amplify this, making deep work nearly impossible for those without private space.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "23 minutes per distraction"
+            },
+            "visual": {
+              "icon": "Clock",
+              "doodlePrompt": "precise editorial spot illustration of coffee fuel, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "The remote productivity boost",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "Average gain: 13% across studies.",
+                "Range: 5% to 40% depending on role.",
+                "Driven by: fewer interruptions, longer focus blocks."
+              ],
+              "footer": "",
+              "accentPhrase": "remote productivity boost"
+            },
+            "visual": {
+              "icon": "TrendingUp",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Hybrid models balance focus and collaboration",
+              "preHeader": "HYBRID AS THE SWEET SPOT",
+              "body": "The best evidence points to hybrid: 2-3 days remote for deep work, plus in-office days for spontaneous collaboration. It’s not about either/or—it’s about matching the mode to the task.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "balance focus and collaboration"
+            },
+            "visual": {
+              "icon": "Users",
+              "doodlePrompt": "precise editorial spot illustration of puzzle logic, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-4",
+            "blockType": "list",
+            "slots": {
+              "headline": "It depends on job and person",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "Job type: Individual contributors benefit most.",
+                "Personality: Autonomy seekers thrive.",
+                "Skill: Remote requires strong self-management."
+              ],
+              "footer": "",
+              "accentPhrase": "depends on job and person"
+            },
+            "visual": {
+              "icon": "Award",
+              "doodlePrompt": "precise editorial spot illustration of user persona card, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "Flexibility, not location, drives performance",
+              "preHeader": "THE REAL KEY: FLEXIBILITY",
+              "body": "Mandating full return or full remote ignores reality. The key is giving teams autonomy to choose—based on the work, not the calendar. That’s where deep work and collaboration can coexist.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Flexibility, not location"
+            },
+            "visual": {
+              "icon": "Compass",
+              "doodlePrompt": "precise editorial spot illustration of kanban board, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-6",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Rethink where deep work happens",
+              "preHeader": "YOUR MOVE",
+              "body": "Stop debating remote vs. office. Start designing work around focus. Flexibility is the lever—pull it wisely.",
+              "listItems": [],
+              "footer": "Follow for more →",
+              "accentPhrase": "where deep work happens"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of launch rocket, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 9641,
+        "costUsd": 0.00156,
+        "llmCalls": 7,
+        "retries": 2,
+        "llmMs": 25375,
+        "hedges": 0,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.PLAN",
+            "start": 1,
+            "ms": 2070,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.plan",
+            "start": 2,
+            "ms": 2069,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 905
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.analyzeInputNeeds",
+            "start": 2071,
+            "ms": 1811,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.analyze",
+            "start": 2072,
+            "ms": 1810,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 954
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.performResearch",
+            "start": 3882,
+            "ms": 6094,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "strategist",
+            "start": 9976,
+            "ms": 2758,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 1377
+          },
+          {
+            "kind": "step",
+            "name": "StrategistAgent.generateViralAngle",
+            "start": 9976,
+            "ms": 2758,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "TemplateAgent.generate",
+            "start": 12735,
+            "ms": 11097,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "template.generate",
+            "start": 12736,
+            "ms": 11094,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 385,
+            "firstTokenMs": 1110
+          },
+          {
+            "kind": "step",
+            "name": "ProofreaderAgent.proofread",
+            "start": 23832,
+            "ms": 3385,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 23834,
+            "ms": 2642,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 744
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 23834,
+            "ms": 3383,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 745
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.REFLECT_1",
+            "start": 27217,
+            "ms": 1621,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.reflect",
+            "start": 27219,
+            "ms": 1619,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 930
+          }
+        ],
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 3,
+          "avgHeadline": 39
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 7,
+          "specificity": 7,
+          "clarity": 8,
+          "audienceFit": 8,
+          "accuracy": 6,
+          "expectations": 7,
+          "overall": 7,
+          "notes": "The '23 minutes per interruption' statistic is widely cited but originates from a 2005 study by Gloria Mark, which is often misrepresented as an average recovery time; the actual finding was about task switching cost, not a universal figure. Additionally, the '13% average gain' for remote productivity lacks a cited source, making it feel invented. Both weaken accuracy and credibility for a knowledgeable audience."
+        }
+      }
+    }
+  },
+  {
+    "id": "deep-transformers",
+    "topic": "A 12 slide deep dive on how transformer models work",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 65854,
+        "slides": [
+          {
+            "id": "template-1-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Transformers Are Not Magic",
+              "preHeader": "DEEP DIVE INTO TRANSFORMERS",
+              "body": "Build intuition from self-attention to parallel processing — the architecture behind modern AI breakthroughs.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Not Magic"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of ai ethics, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Sequential Processing Bottleneck",
+              "preHeader": "THE PROBLEM THEY SOLVED",
+              "body": "Recurrent networks process tokens one by one, making training slow and limiting long-range dependencies. Transformers changed that.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Bottleneck"
+            },
+            "visual": {
+              "icon": "TrendingDown",
+              "doodlePrompt": "precise editorial spot illustration of battery power, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "Self-Attention",
+              "preHeader": "CORE INNOVATION",
+              "body": "",
+              "listItems": [
+                "Attention: Learns which words matter.",
+                "Parallel: Processes all tokens simultaneously.",
+                "Scalable: Handles long sequences efficiently."
+              ],
+              "footer": "",
+              "accentPhrase": "Self-Attention"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of binary rain, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Queries, Keys, Values",
+              "preHeader": "HOW IT COMPUTES",
+              "body": "Each token creates query, key, and value vectors. Attention scores are dot products of Q and K, normalized with softmax to weight values.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Attention Scores"
+            },
+            "visual": {
+              "icon": "Star",
+              "doodlePrompt": "precise editorial spot illustration of api connector, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "Multi-Head Attention",
+              "preHeader": "ENHANCING CAPACITY",
+              "body": "Multiple heads with separate QKV projections capture different relationships. Outputs are concatenated and projected — key to model performance.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Multiple Heads"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of analytics dashboard, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-5",
+            "blockType": "list",
+            "slots": {
+              "headline": "Positional Encoding",
+              "preHeader": "POSITIONAL INFORMATION",
+              "body": "",
+              "listItems": [
+                "Need: Attention has no sequence order.",
+                "Solution: Add sinusoidal waves to embeddings.",
+                "Result: Model knows word positions."
+              ],
+              "footer": "",
+              "accentPhrase": "Positional"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of ab testing split, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-6",
+            "blockType": "body",
+            "slots": {
+              "headline": "Encoder and Decoder",
+              "preHeader": "ENCODER-DECODER",
+              "body": "Encoder processes input sequence; decoder generates output using cross-attention to encoder’s states. Stacked for depth.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Encoder-Decoder"
+            },
+            "visual": {
+              "icon": "Star",
+              "doodlePrompt": "precise editorial spot illustration of api handshake, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-7",
+            "blockType": "body",
+            "slots": {
+              "headline": "Transformer Block",
+              "preHeader": "INSIDE A BLOCK",
+              "body": "Each layer: self-attention, residual connection, layer norm; then feed-forward network, residual, norm. Stacked N times for deep models.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Block"
+            },
+            "visual": {
+              "icon": "Lightbulb",
+              "doodlePrompt": "precise editorial spot illustration of autonomous vehicle, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-8",
+            "blockType": "list",
+            "slots": {
+              "headline": "Language Modeling",
+              "preHeader": "TRAINING OBJECTIVE",
+              "body": "",
+              "listItems": [
+                "Task: Predict masked tokens or next word.",
+                "Loss: Cross-entropy between prediction and true token.",
+                "Data: Massive text corpora (Wikipedia, books)"
+              ],
+              "footer": "",
+              "accentPhrase": "Training"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-9",
+            "blockType": "body",
+            "slots": {
+              "headline": "Transformers in Vision and Science",
+              "preHeader": "BEYOND TEXT",
+              "body": "ViT treats images as patch sequences; AlphaFold uses transformers for protein structure. They generalize beyond NLP.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Beyond NLP"
+            },
+            "visual": {
+              "icon": "Award",
+              "doodlePrompt": "precise editorial spot illustration of binary rain, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-10",
+            "blockType": "list",
+            "slots": {
+              "headline": "Parallel Processing Unleashed",
+              "preHeader": "WHY IT MATTERS",
+              "body": "",
+              "listItems": [
+                "Efficiency: Enables massive GPU/TPU parallelism.",
+                "Performance: State-of-the-art across domains.",
+                "Scalability: Allows training of huge models like GPT."
+              ],
+              "footer": "",
+              "accentPhrase": "Breakthrough"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of accessibility focus, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-11",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Transformers Are an Architecture, Not a Mystery",
+              "preHeader": "FINAL TAKEAWAY",
+              "body": "Understanding self-attention is the key to modern AI.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Not a Mystery"
+            },
+            "visual": {
+              "icon": "Lightbulb",
+              "doodlePrompt": "precise editorial spot illustration of ai ethics, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 19220,
+        "costUsd": 0.00319,
+        "llmCalls": 8,
+        "retries": 3,
+        "llmMs": 64316,
+        "hedges": 0,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.PLAN",
+            "start": 3,
+            "ms": 2432,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.plan",
+            "start": 4,
+            "ms": 2431,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 994
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.analyzeInputNeeds",
+            "start": 2435,
+            "ms": 1365,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.analyze",
+            "start": 2436,
+            "ms": 1364,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 712
+          },
+          {
+            "kind": "step",
+            "name": "ResearchAgent.performResearch",
+            "start": 3800,
+            "ms": 6214,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "strategist",
+            "start": 10014,
+            "ms": 2229,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 1327
+          },
+          {
+            "kind": "step",
+            "name": "StrategistAgent.generateViralAngle",
+            "start": 10014,
+            "ms": 2229,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "TemplateAgent.generate",
+            "start": 12244,
+            "ms": 48671,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "template.generate",
+            "start": 12245,
+            "ms": 48669,
+            "ok": true,
+            "role": "writer",
+            "attempts": 2,
+            "reasoningTokens": 3588,
+            "firstTokenMs": 962
+          },
+          {
+            "kind": "step",
+            "name": "ProofreaderAgent.proofread",
+            "start": 60916,
+            "ms": 3072,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 60918,
+            "ms": 3070,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 805
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 60919,
+            "ms": 1677,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 804
+          },
+          {
+            "kind": "llm",
+            "name": "proofreader",
+            "start": 60919,
+            "ms": 3012,
+            "ok": true,
+            "role": "fast",
+            "attempts": 2,
+            "firstTokenMs": 804
+          },
+          {
+            "kind": "step",
+            "name": "CarouselPlanner.REFLECT_1",
+            "start": 63989,
+            "ms": 1865,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "v1.reflect",
+            "start": 63990,
+            "ms": 1864,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 953
+          }
+        ],
+        "checks": {
+          "slides": 12,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 6,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 25
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 9,
+          "specificity": 7,
+          "clarity": 9,
+          "audienceFit": 8,
+          "accuracy": 10,
+          "expectations": 10,
+          "overall": 8,
+          "notes": "The deck is strong overall but lacks concrete examples or analogies to build intuition for absolute beginners (e.g., a simple sentence walkthrough for attention). Slide 3's list items are too generic; 'Learns which words matter' could be more specific."
+        }
+      }
+    }
+  }
+]

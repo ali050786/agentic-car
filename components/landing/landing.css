@@ -1,0 +1,273 @@
+/* ==========================================================================
+   Agentic Carousel — landing page styles
+   Scoped under .lp so nothing leaks into the app shell.
+   ========================================================================== */
+
+.lp {
+  --lp-bg: #06060a;
+  --lp-bg-2: #0b0b12;
+  --lp-surface: rgba(255, 255, 255, 0.035);
+  --lp-surface-2: rgba(255, 255, 255, 0.06);
+  --lp-line: rgba(255, 255, 255, 0.08);
+  --lp-line-2: rgba(255, 255, 255, 0.14);
+  --lp-text: #f4f4f7;
+  --lp-muted: #9a9aab;
+  --lp-dim: #62627a;
+  --lp-blue: #4f8cff;
+  --lp-violet: #9b6bff;
+  --lp-cyan: #3ee6f5;
+  --lp-coral: #ff7a8a;
+  --lp-lime: #b6f36a;
+  --lp-prism: linear-gradient(100deg, #3ee6f5 0%, #4f8cff 30%, #9b6bff 62%, #ff7a8a 100%);
+  --lp-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --lp-serif: 'Instrument Serif', 'Fraunces', Georgia, serif;
+  --lp-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --lp-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --lp-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  background: var(--lp-bg);
+  color: var(--lp-text);
+  font-family: var(--lp-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+.lp ::selection { background: rgba(79, 140, 255, 0.35); color: #fff; }
+
+.lp-display { font-family: var(--lp-display); letter-spacing: -0.035em; }
+.lp-serif { font-family: var(--lp-serif); font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
+.lp-mono { font-family: var(--lp-mono); }
+
+.lp-prism-text {
+  background: var(--lp-prism);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: lp-prism-pan 8s ease-in-out infinite alternate;
+}
+
+@keyframes lp-prism-pan {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+
+.lp-eyebrow {
+  font-family: var(--lp-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lp-muted);
+}
+
+/* Grain overlay: keeps the big dark planes from banding. */
+.lp-grain::after {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: lp-grain 7s steps(8) infinite;
+}
+
+@keyframes lp-grain {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -1%); }
+  80% { transform: translate(3%, 3%); }
+}
+
+/* Faint blueprint grid with a radial fade. */
+.lp-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 20%, transparent 75%);
+}
+
+/* Glass surfaces */
+.lp-glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--lp-line);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.06) inset, 0 30px 80px -30px rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+/* Animated conic border — used on the prompt composer and primary CTA surfaces. */
+@property --lp-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.lp-conic {
+  position: relative;
+  isolation: isolate;
+}
+.lp-conic::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--lp-angle), rgba(62, 230, 245, 0.0), rgba(62, 230, 245, 0.9), rgba(79, 140, 255, 0.9), rgba(155, 107, 255, 0.9), rgba(255, 122, 138, 0.9), rgba(62, 230, 245, 0.0) 60%, rgba(62, 230, 245, 0.0));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: lp-spin 6s linear infinite;
+  z-index: -1;
+  opacity: 0.75;
+  transition: opacity 0.4s var(--lp-ease);
+}
+.lp-conic:focus-within::before,
+.lp-conic:hover::before { opacity: 1; }
+.lp-conic::after {
+  content: '';
+  position: absolute;
+  inset: 10% 5% -30% 5%;
+  border-radius: inherit;
+  background: conic-gradient(from var(--lp-angle), transparent, rgba(79, 140, 255, 0.35), rgba(155, 107, 255, 0.3), rgba(255, 122, 138, 0.25), transparent 70%);
+  filter: blur(40px);
+  animation: lp-spin 6s linear infinite;
+  z-index: -2;
+  opacity: 0.55;
+}
+
+@keyframes lp-spin { to { --lp-angle: 360deg; } }
+
+/* Primary button */
+.lp-btn-primary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  color: #07070b;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4) inset, 0 10px 30px -10px rgba(79, 140, 255, 0.6);
+  transition: box-shadow 0.35s var(--lp-ease), transform 0.35s var(--lp-ease);
+  overflow: hidden;
+}
+.lp-btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(79, 140, 255, 0.35) 45%, rgba(155, 107, 255, 0.35) 55%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.9s var(--lp-ease);
+}
+.lp-btn-primary:hover::after { transform: translateX(120%); }
+.lp-btn-primary:hover { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6) inset, 0 18px 50px -12px rgba(155, 107, 255, 0.75); }
+
+.lp-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  color: var(--lp-text);
+  border: 1px solid var(--lp-line-2);
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.3s, border-color 0.3s;
+}
+.lp-btn-ghost:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.28); }
+
+/* Spotlight cards — the border + wash follow the cursor (set via CSS vars from JS). */
+.lp-spot {
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--lp-line);
+  overflow: hidden;
+  isolation: isolate;
+}
+.lp-spot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(420px circle at var(--mx) var(--my), rgba(155, 107, 255, 0.75), rgba(79, 140, 255, 0.35) 30%, transparent 60%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+  z-index: 2;
+  pointer-events: none;
+}
+.lp-spot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(500px circle at var(--mx) var(--my), rgba(79, 140, 255, 0.08), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  z-index: -1;
+  pointer-events: none;
+}
+.lp-spot:hover::before,
+.lp-spot:hover::after { opacity: 1; }
+
+/* Live slide wrapper: makes injected SVGs fill their box. */
+.lp-slide svg { width: 100%; height: 100%; display: block; }
+
+.lp-slide-frame {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 12px 24px -12px rgba(0, 0, 0, 0.6);
+  background: #0b0b12;
+}
+
+/* Marquee */
+.lp-marquee { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.lp-marquee-track { display: flex; width: max-content; animation: lp-marquee var(--lp-marquee-dur, 60s) linear infinite; }
+.lp-marquee-track.reverse { animation-direction: reverse; }
+.lp-marquee:hover .lp-marquee-track { animation-play-state: paused; }
+@keyframes lp-marquee { to { transform: translateX(-50%); } }
+
+/* Pulsing status dot */
+.lp-dot { position: relative; width: 8px; height: 8px; border-radius: 999px; background: var(--lp-lime); }
+.lp-dot::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: inherit; animation: lp-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; }
+@keyframes lp-ping { 75%, 100% { transform: scale(2.6); opacity: 0; } }
+
+/* Blinking caret for typewriters */
+.lp-caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -0.15em; background: var(--lp-cyan); animation: lp-blink 1s steps(2) infinite; }
+@keyframes lp-blink { 50% { opacity: 0; } }
+
+/* Shimmer line for "thinking" states */
+.lp-shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0%, #fff 45%, rgba(255, 255, 255, 0.35) 70%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: lp-shimmer 1.6s linear infinite;
+}
+@keyframes lp-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+/* Hand-drawn stroke reveal */
+.lp-draw path, .lp-draw line, .lp-draw circle, .lp-draw polyline { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lp-draw 2.4s var(--lp-ease) forwards; }
+@keyframes lp-draw { to { stroke-dashoffset: 0; } }
+
+.lp-scrollbar-none::-webkit-scrollbar { display: none; }
+.lp-scrollbar-none { scrollbar-width: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp *, .lp *::before, .lp *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .lp-marquee-track { animation: none; }
+  .lp-draw path, .lp-draw line, .lp-draw circle, .lp-draw polyline { stroke-dashoffset: 0; }
+}

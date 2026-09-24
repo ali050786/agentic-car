@@ -95,7 +95,7 @@ export const ArtDirectorAgent = {
     `;
 
         console.log('🎨 [ArtDirectorAgent] Writing image prompts for', slides.length, 'slides...');
-        const result = await generateContentFromAgent(prompt, PROMPT_SCHEMA);
+        const result = await generateContentFromAgent(prompt, PROMPT_SCHEMA, { role: 'creative', label: 'artDirector' });
 
         const entries: { slideIndex: number; subject: string }[] = Array.isArray(result?.prompts)
             ? result.prompts

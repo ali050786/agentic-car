@@ -8,7 +8,11 @@
     "server": "tsx watch server.ts",
     "worker": "tsx watch worker/index.ts",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:agents": "tsx tests/v2/test-llm-runtime.ts && tsx tests/v2/test-create-v2.ts && tsx tests/v2/test-edit-v2.ts && tsx tests/v2/test-design-v2.ts && tsx tests/v2/test-accuracy.ts && tsx tests/v2/test-speed.ts",
+    "test:canvas": "tsx tests/canvas/test-canvas.ts",
+    "eval": "tsx evals/run.ts",
+    "setup:versions": "tsx scripts/setupCarouselVersions.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.1",

@@ -7,6 +7,7 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useAnimate } from 'framer-motion';
 import { useShallow } from 'zustand/react/shallow';
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -16,12 +17,23 @@ import { exportSlideToJpg } from '../../utils/jpgExporter';
 import { exportSlideToPdf } from '../../utils/pdfExporter';
 import { exportCarouselToHtml } from '../../utils/htmlExporter';
 import { ArtifactSettingsPanel } from './ArtifactSettingsPanel';
-import { Copy, FileText, Image, Settings2, CheckCircle, Loader2, Edit3, Code2 } from 'lucide-react';
+import { Copy, FileText, Image as ImageIcon, Edit3, Code2, Check, ChevronLeft, ChevronRight, SlidersHorizontal, PenTool, MousePointerClick, Sparkles } from 'lucide-react';
+import { DrawCheck, EASE, IconButton, Kbd, PHASE_COLOR, SPRING, Segmented, Spinner, phaseLabel, phaseOf } from '../studio/ui';
+import { useCanvasFit } from '../studio/useCanvasFit';
+import { splitKey } from '../../core/design/canvas/render';
 
 const TEMPLATE_NAMES: Record<string, string> = {
+    'template-5': 'The Canvas',
     'template-1': 'The Truth',
     'template-3': 'The Sketch',
     'template-4': 'The Statement',
+};
+
+/** Text of an editable region as the user wrote it (not as CSS displays it, e.g. uppercased). */
+const editedText = (el: HTMLElement): string => {
+    const upper = typeof window !== 'undefined' && window.getComputedStyle(el).textTransform === 'uppercase';
+    const raw = upper ? (el.textContent ?? '') : (el.innerText ?? el.textContent ?? '');
+    return raw.replace(/\u00a0/g, ' ').trim();
 };
 
 const SIG_POSITIONS = [
@@ -53,7 +65,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         patternOpacity, patternScale, patternSpacing, brandKit, signaturePosition, setSignaturePosition,
         selectedSlideIndex, selectedSlideIndices, toggleSlideSelection, setSelectedSlideIndex, setSelectedSlideIndices,
         updateSlide, setBrandKit,
-        isGenerating, generationStatus, generationProgress, pendingDoodleSlides,
+        isGenerating, generationStatus, generationProgress, pendingDoodleSlides, draftPreview,
     } = useCarouselStore(useShallow(s => ({
         slides: s.slides,
         theme: s.theme,
@@ -79,17 +91,26 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         generationStatus: s.generationStatus,
         generationProgress: s.generationProgress,
         pendingDoodleSlides: s.pendingDoodleSlides,
+        draftPreview: s.draftPreview,
     })));
     const { globalBrandKit } = useAuthStore();
 
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [busyAction, setBusyAction] = useState<string | null>(null);
+    const [doneAction, setDoneAction] = useState<string | null>(null);
+    // What's on stage is decoupled from what's *selected*: arrows/keys browse
+    // slides without scoping the chat; selecting a thumbnail does both.
+    const [viewIndex, setViewIndex] = useState(0);
+    const [direction, setDirection] = useState(0);
+    useEffect(() => {
+        if (selectedSlideIndex !== null) setViewIndex(selectedSlideIndex);
+    }, [selectedSlideIndex]);
     const stageRef = useRef<HTMLDivElement | null>(null);
     // On-canvas signature position picker, anchored to the signature card on hover.
     const [sigCtrl, setSigCtrl] = useState({ show: false, left: 0, top: 0, above: true });
     const sigHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const currentIndex = selectedSlideIndex !== null && selectedSlideIndex < slides.length ? selectedSlideIndex : 0;
+    const currentIndex = Math.min(Math.max(viewIndex, 0), Math.max(slides.length - 1, 0));
     const currentSlide = slides[currentIndex];
 
     // Thumbnail selection, desktop-standard:
@@ -97,6 +118,8 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     // - ⌘/Ctrl/Alt   → add/remove that slide from the multi-select set
     // - Shift        → select the contiguous range from the primary slide to here
     const handleThumbClick = (e: React.MouseEvent, i: number) => {
+        setDirection(i >= currentIndex ? 1 : -1);
+        setViewIndex(i);
         const additive = e.metaKey || e.ctrlKey || e.altKey;
         if (additive) {
             toggleSlideSelection(i);
@@ -124,11 +147,11 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     // worth redoing on renders where none of these inputs changed.
     const stageSvg = useMemo(() => {
         if (!currentSlide) return '';
-        return injectContentIntoSvg(selectedTemplate, currentSlide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `stage-${currentIndex}`, currentIndex + 1);
-    }, [selectedTemplate, currentSlide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, currentIndex]);
+        return injectContentIntoSvg(selectedTemplate, currentSlide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `stage-${currentIndex}`, currentIndex + 1, slides.length);
+    }, [selectedTemplate, currentSlide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, currentIndex, slides.length]);
 
     const thumbSvgs = useMemo(
-        () => slides.map((slide, i) => injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `thumb-${i}`, i + 1)),
+        () => slides.map((slide, i) => injectContentIntoSvg(selectedTemplate, slide, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing, `thumb-${i}`, i + 1, slides.length)),
         [slides, selectedTemplate, theme, effectiveBranding, selectedFormat, selectedPattern, patternOpacity, patternScale, patternSpacing]
     );
 
@@ -150,7 +173,16 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         const root = stageRef.current;
         if (!root) return;
 
+        // Only write back when the user actually typed in this slide. Without
+        // this guard the cleanup flush (run on every stage re-render) re-read
+        // rendered decorations as content, e.g. the quote block's "— " prefix,
+        // and fed an update loop ("— — — author…").
+        let dirty = false;
+        const onInput = () => { dirty = true; };
+
         const flushAll = () => {
+            if (!dirty) return;
+            dirty = false;
             const { slides, currentIndex, brandKit } = editCtxRef.current;
             const slide = slides[currentIndex] as any;
             if (!slide) return;
@@ -161,12 +193,37 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
             let listItems = (slide.slots?.listItems || slide.listItems) ? [...(slide.slots?.listItems || slide.listItems)] : undefined;
             let listChanged = false;
 
+            // Canvas slides show "Key: detail" texts (list items, split sides) as two
+            // editable parts; collect both halves, then write the joined text back.
+            const parts = new Map<string, { field: string; index: number | null; key?: string; value?: string }>();
+            let extrasPatch: Record<string, string> | null = null;
+
             root.querySelectorAll<HTMLElement>('[data-edit-field]').forEach((el) => {
                 const field = el.getAttribute('data-edit-field')!;
-                const text = (el.innerText ?? el.textContent ?? '').replace(/ /g, ' ').trim();
+                let text = editedText(el);
+                if (field === 'quoteAuthor') text = text.replace(/^[—–-]\s*/, '');
+                const part = el.getAttribute('data-edit-part') as 'key' | 'value' | null;
+                const idxAttr = el.getAttribute('data-edit-index');
+                if (part) {
+                    const k = `${field}#${idxAttr ?? ''}`;
+                    const entry = parts.get(k) || { field, index: idxAttr !== null ? Number(idxAttr) : null };
+                    entry[part] = text;
+                    parts.set(k, entry);
+                    return;
+                }
+                if (field.startsWith('x.')) {
+                    const key = field.slice(2);
+                    const cur = (currentSlots.extras || {})[key] ?? '';
+                    if (cur !== text) {
+                        extrasPatch = { ...(extrasPatch || currentSlots.extras || {}) };
+                        if (text) extrasPatch[key] = text;
+                        else delete extrasPatch[key];
+                    }
+                    return;
+                }
                 if (field === 'listItem') {
                     if (!listItems) return;
-                    const idx = Number(el.getAttribute('data-edit-index'));
+                    const idx = Number(idxAttr);
                     const cur = listItems[idx];
                     const curText = typeof cur === 'object' && cur !== null ? (cur.bullet || '') : String(cur ?? '');
                     if (text !== curText) {
@@ -185,6 +242,28 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
                     }
                 }
             });
+
+            const join = (key: string, value: string) => (key.trim() ? `${key.trim()}: ${value.trim()}` : value.trim());
+            parts.forEach((e) => {
+                if (e.field === 'listItem') {
+                    if (!listItems || e.index === null || !(e.index in listItems)) return;
+                    const cur = listItems[e.index];
+                    if (typeof cur === 'object' && cur !== null) {
+                        const next = { ...cur, bullet: e.key ?? cur.bullet, description: e.value ?? cur.description };
+                        if (next.bullet !== cur.bullet || next.description !== cur.description) { listItems[e.index] = next; listChanged = true; }
+                    } else {
+                        const old = splitKey(String(cur ?? ''));
+                        const next = join(e.key ?? old.key, e.value ?? old.value);
+                        if (next !== String(cur ?? '')) { listItems[e.index] = next; listChanged = true; }
+                    }
+                } else {
+                    const cur = String(currentSlots[e.field] ?? slide[e.field] ?? '');
+                    const old = splitKey(cur);
+                    const next = join(e.key ?? old.key, e.value ?? old.value);
+                    if (next !== cur) { patch[e.field] = next; slotsPatch[e.field] = next; }
+                }
+            });
+            if (extrasPatch) slotsPatch.extras = extrasPatch;
             if (listChanged) {
                 patch.listItems = listItems;
                 slotsPatch.listItems = listItems;
@@ -218,9 +297,11 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
 
         root.addEventListener('keydown', onKeyDown);
         root.addEventListener('focusout', onFocusOut);
+        root.addEventListener('input', onInput);
         return () => {
             root.removeEventListener('keydown', onKeyDown);
             root.removeEventListener('focusout', onFocusOut);
+            root.removeEventListener('input', onInput);
             flushAll(); // safety net for slide switch / unmount while focused
         };
         // Re-bind whenever the stage (re)renders so the listeners are guaranteed
@@ -264,6 +345,8 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         setBusyAction(name);
         try {
             await fn();
+            setDoneAction(name);
+            setTimeout(() => setDoneAction(d => (d === name ? null : d)), 1600);
         } catch (e) {
             console.error(`[Artifact] ${name} failed:`, e);
             onShowToast?.(`${name} failed. Try again.`, 'error');
@@ -306,192 +389,478 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
         onShowToast?.('Carousel exported as standalone HTML', 'success');
     });
 
+    // ── Stage motion + keyboard browsing (presentation only) ─────────────────
+    const [stageScope, animateStage] = useAnimate();
+    const didMountStage = useRef(false);
+    useEffect(() => {
+        if (!stageScope.current) return;
+        if (!didMountStage.current) { didMountStage.current = true; return; }
+        animateStage(stageScope.current, { opacity: [0, 1], x: [direction * 26, 0], scale: [0.985, 1] }, { duration: 0.42, ease: [0.16, 1, 0.3, 1] });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentIndex]);
+
+    const go = (delta: number) => {
+        if (slides.length < 2) return;
+        const next = (currentIndex + delta + slides.length) % slides.length;
+        setDirection(delta);
+        setViewIndex(next);
+    };
+
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            const t = e.target as HTMLElement | null;
+            if (t && t.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]')) return;
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
+            if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+            else if (e.key === 'Escape' && selectedSlideIndices.length > 0) setSelectedSlideIndices([]);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    });
+
+    // Keep the current thumbnail in view as you browse.
+    const stripRef = useRef<HTMLDivElement | null>(null);
+
+    // The Canvas sizes text to its slide in the browser: fit after every render.
+    const isCanvas = selectedTemplate === 'template-5';
+    useCanvasFit(stageRef, [stageSvg], isCanvas);
+    useCanvasFit(stripRef, [thumbSvgs], isCanvas);
+    useEffect(() => {
+        const el = stripRef.current?.querySelector<HTMLElement>(`[data-thumb="${currentIndex}"]`);
+        el?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    }, [currentIndex]);
+
+    const glow = theme?.textHighlight || '#9b6bff';
+    // A draft from a running create job is read-only until the final deck replaces it.
+    const editable = selectedTemplate !== 'template-1' && !draftPreview;
+
     // Empty state: generation progress or a quiet canvas
     if (slides.length === 0) {
         return (
-            <div className="flex-1 h-full flex items-center justify-center bg-neutral-950">
-                {isGenerating ? (
-                    <div className="text-center max-w-sm px-6">
-                        <div className="w-10 h-10 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-5" />
-                        <p className="text-white text-sm font-medium mb-1">{generationStatus}</p>
-                        <div className="h-1 bg-white/10 rounded-full mt-4 overflow-hidden">
-                            <div className="h-full bg-blue-500 rounded-full transition-all duration-500" style={{ width: `${generationProgress}%` }} />
-                        </div>
-                    </div>
-                ) : (
-                    <div className="text-center text-neutral-600">
-                        <div className="w-40 h-52 border border-dashed border-white/10 rounded-xl mx-auto mb-4 flex items-center justify-center">
-                            <span className="text-3xl opacity-40">✦</span>
-                        </div>
-                        <p className="text-xs">Your carousel will appear here</p>
-                    </div>
-                )}
+            <div className="st-panel rounded-2xl flex-1 h-full flex items-center justify-center relative overflow-hidden st-canvas">
+                <AnimatePresence mode="wait">
+                    {isGenerating ? (
+                        <GeneratingStage key="gen" status={generationStatus} progress={generationProgress} />
+                    ) : (
+                        <IdleStage key="idle" />
+                    )}
+                </AnimatePresence>
             </div>
         );
     }
 
-    return (
-        <div className="flex-1 h-full flex flex-col bg-neutral-950 relative min-w-0">
-            <style>{`
-                .artifact-svg-fit svg { max-width: 100%; max-height: 100%; width: auto; height: auto; }
-                .artifact-thumb svg { width: 100%; height: 100%; }
-            `}</style>
+    const exportActions = [
+        { name: 'Figma copy', tip: 'Copy SVG for Figma', icon: <Copy size={15} />, run: handleCopyFigma },
+        { name: 'JPG export', tip: 'Slide as JPG', icon: <ImageIcon size={15} />, run: handleJpg },
+        { name: 'PDF export', tip: 'Slide as PDF', icon: <FileText size={15} />, run: handlePdf },
+        { name: 'HTML export', tip: 'Whole carousel as HTML', icon: <Code2 size={15} />, run: handleHtml },
+    ];
 
-            {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/10">
-                <span className="text-sm font-medium text-white truncate flex-1">{topic || 'Untitled carousel'}</span>
-                
-                {/* Aspect Ratio Toggle */}
-                <div className="flex bg-neutral-900 border border-white/10 rounded-full p-0.5 mr-1">
-                    <button
-                        onClick={() => setFormat('portrait')}
-                        title="Portrait Mode (4:5)"
-                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${
-                            selectedFormat === 'portrait'
-                                ? 'bg-white text-black shadow-sm'
-                                : 'text-neutral-400 hover:text-white'
-                        }`}
+    return (
+        <div className="st-panel rounded-2xl flex-1 h-full flex flex-col relative min-w-0 overflow-hidden">
+            {/* Toolbar */}
+            <div className="flex items-center gap-2 pl-4 pr-2 h-12 border-b border-white/[0.06] shrink-0">
+                <div className="min-w-0 flex-1 flex items-center gap-2">
+                    <span className="text-[13px] font-medium text-white truncate">{topic || 'Untitled carousel'}</span>
+                    <motion.button
+                        key={selectedTemplate}
+                        initial={{ opacity: 0, scale: 0.85 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={SPRING}
+                        onClick={() => setSettingsOpen(true)}
+                        className="settings-trigger-btn hidden xl:flex items-center gap-1.5 rounded-full border border-white/10 pl-1.5 pr-2.5 py-0.5 text-[11px] text-white/55 hover:text-white hover:border-white/25 transition-colors shrink-0"
                     >
-                        4:5
-                    </button>
-                    <button
-                        onClick={() => setFormat('square')}
-                        title="Square Mode (1:1)"
-                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${
-                            selectedFormat === 'square'
-                                ? 'bg-white text-black shadow-sm'
-                                : 'text-neutral-400 hover:text-white'
-                        }`}
-                    >
-                        1:1
-                    </button>
+                        <span className="w-3 h-3 rounded-full" style={{ background: `conic-gradient(${glow} 0 50%, ${theme?.background || '#222'} 0 100%)` }} />
+                        {TEMPLATE_NAMES[selectedTemplate] || 'Style'}
+                    </motion.button>
                 </div>
 
-                <button
+                <Segmented
+                    id="format"
+                    size="xs"
+                    value={selectedFormat}
+                    onChange={(v) => setFormat(v)}
+                    options={[
+                        { value: 'portrait', label: '4:5', title: 'Portrait (4:5)' },
+                        { value: 'square', label: '1:1', title: 'Square (1:1)' },
+                    ]}
+                />
+
+                <motion.button
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setSettingsOpen(!settingsOpen)}
-                    className="settings-trigger-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/15 text-xs text-neutral-300 hover:border-white/30 hover:text-white transition-colors"
+                    aria-expanded={settingsOpen}
+                    disabled={draftPreview}
+                    title={draftPreview ? 'Available when the carousel is finished' : undefined}
+                    className={`settings-trigger-btn flex items-center gap-1.5 h-8 px-3 rounded-full border text-[12px] transition-colors disabled:opacity-40 disabled:pointer-events-none ${settingsOpen ? 'bg-white text-black border-white' : 'border-white/12 text-white/75 hover:text-white hover:border-white/30'}`}
                 >
-                    <Settings2 size={12} />
-                    Settings
-                </button>
-                <div className="flex items-center gap-1">
-                    <button onClick={handleCopyFigma} disabled={!!busyAction} title="Copy SVG for Figma" aria-label="Copy SVG for Figma"
-                        className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40">
-                        {busyAction === 'Figma copy' ? <CheckCircle size={14} className="text-green-400" /> : <Copy size={14} />}
-                    </button>
-                    <button onClick={handleJpg} disabled={!!busyAction} title="Export slide as JPG" aria-label="Export slide as JPG"
-                        className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40">
-                        {busyAction === 'JPG export' ? <Loader2 size={14} className="animate-spin" /> : <Image size={14} />}
-                    </button>
-                    <button onClick={handlePdf} disabled={!!busyAction} title="Export slide as PDF" aria-label="Export slide as PDF"
-                        className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40">
-                        {busyAction === 'PDF export' ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
-                    </button>
-                    <button onClick={handleHtml} disabled={!!busyAction} title="Export carousel as standalone HTML" aria-label="Export carousel as standalone HTML"
-                        className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40">
-                        {busyAction === 'HTML export' ? <Loader2 size={14} className="animate-spin" /> : <Code2 size={14} />}
-                    </button>
+                    <motion.span animate={{ rotate: settingsOpen ? 90 : 0 }} transition={SPRING} className="flex"><SlidersHorizontal size={13} /></motion.span>
+                    <span className="hidden lg:inline">Design</span>
+                </motion.button>
+
+                <span className="w-px h-5 bg-white/10 mx-0.5" />
+
+                <div className="flex items-center">
+                    {exportActions.map(a => (
+                        <IconButton key={a.name} tip={draftPreview ? 'Available when the carousel is finished' : a.tip} onClick={a.run} disabled={draftPreview || (!!busyAction && busyAction !== a.name)}>
+                            <AnimatePresence mode="wait" initial={false}>
+                                <motion.span
+                                    key={busyAction === a.name ? 'busy' : doneAction === a.name ? 'done' : 'idle'}
+                                    initial={{ opacity: 0, scale: 0.5, rotate: -30 }}
+                                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                    exit={{ opacity: 0, scale: 0.5 }}
+                                    transition={SPRING}
+                                    className="flex"
+                                >
+                                    {busyAction === a.name ? <Spinner size={14} /> : doneAction === a.name ? <DrawCheck size={15} color="#6ee7b7" /> : a.icon}
+                                </motion.span>
+                            </AnimatePresence>
+                        </IconButton>
+                    ))}
                 </div>
             </div>
 
             {/* Stage */}
-            <div className="flex-1 flex items-center justify-center p-6 min-h-0 relative">
+            <motion.div
+                className="group/stage flex-1 flex items-center justify-center p-6 md:p-8 min-h-0 relative st-canvas overflow-hidden touch-pan-y"
+                data-stage-index={currentIndex}
+                onPanEnd={(e, info) => {
+                    // Swipe to browse on touch screens (mouse drags are left alone for text editing).
+                    if ((e as PointerEvent).pointerType !== 'touch') return;
+                    if (Math.abs(info.offset.x) > 50 && Math.abs(info.offset.x) > Math.abs(info.offset.y)) go(info.offset.x < 0 ? 1 : -1);
+                }}
+            >
+                {/* Theme-tinted glow behind the slide */}
+                <motion.div
+                    className="absolute left-1/2 top-1/2 w-[70%] h-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[90px] pointer-events-none"
+                    animate={{ backgroundColor: glow, opacity: 0.22 }}
+                    transition={{ duration: 0.8 }}
+                />
+
                 <div className="relative h-full flex items-center justify-center" style={{ aspectRatio: selectedFormat === 'square' ? '1 / 1' : '4 / 5', maxHeight: '100%' }}>
-                    <div
-                        ref={stageRef}
-                        className="artifact-svg-fit w-full h-full flex items-center justify-center rounded-xl overflow-hidden border border-white/10 shadow-2xl"
-                        dangerouslySetInnerHTML={{ __html: stageSvg }}
-                    />
-                    {pendingDoodleSlides.includes(currentIndex) && (
-                        <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-black/70 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5">
-                            <span className="w-3 h-3 border-2 border-blue-400/40 border-t-blue-400 rounded-full animate-spin" />
-                            <span className="text-[11px] text-white/90">Sketching image…</span>
-                        </div>
-                    )}
-                    {/* Slide indicator (content is edited directly on the canvas) */}
-                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm border border-white/15 rounded-lg px-2.5 py-1">
-                        <span className="text-[10px] text-neutral-400">slide {currentIndex + 1}</span>
+                    <div ref={stageScope} className="w-full h-full">
+                        <div
+                            ref={stageRef}
+                            aria-busy={draftPreview || undefined}
+                            className={`artifact-svg-fit w-full h-full flex items-center justify-center rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9),0_16px_32px_-16px_rgba(0,0,0,0.7)] ${draftPreview ? 'pointer-events-none select-none' : ''}`}
+                            dangerouslySetInnerHTML={{ __html: stageSvg }}
+                        />
                     </div>
 
-                    {/* Signature position picker (appears on signature hover) */}
-                    {sigCtrl.show && (
-                        <div
-                            className="absolute z-20 flex items-center gap-1 bg-neutral-900/95 backdrop-blur-sm border border-white/15 rounded-lg p-1 shadow-xl whitespace-nowrap"
-                            style={{
-                                left: sigCtrl.left,
-                                top: sigCtrl.top,
-                                transform: `translate(-50%, ${sigCtrl.above ? 'calc(-100% - 8px)' : '8px'})`,
-                            }}
-                            onMouseEnter={() => { if (sigHideTimer.current) clearTimeout(sigHideTimer.current); }}
-                            onMouseLeave={() => setSigCtrl((c) => ({ ...c, show: false }))}
-                        >
-                            {SIG_POSITIONS.map((opt) => (
-                                <button
-                                    key={opt.id}
-                                    onClick={() => setSignaturePosition(opt.id)}
-                                    title={opt.label}
-                                    aria-label={opt.label}
-                                    className={`p-1.5 rounded-md transition-colors ${signaturePosition === opt.id
-                                        ? 'bg-blue-500/30 text-blue-300'
-                                        : 'text-neutral-400 hover:text-white hover:bg-white/10'}`}
-                                >
-                                    <PositionIcon corner={opt.id} />
-                                </button>
-                            ))}
-                            <div className="w-[1px] h-4 bg-white/10 mx-1 flex-shrink-0" />
-                            <button
-                                onClick={onOpenBrandEditor}
-                                title="Edit brand signature details"
-                                aria-label="Edit brand signature details"
-                                className="px-2 py-1 rounded-md text-[11px] font-medium text-neutral-300 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer"
+                    {/* Draft from a running create job: what's still happening, and that it's not editable yet */}
+                    <AnimatePresence>
+                        {draftPreview && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -6 }}
+                                transition={SPRING}
+                                className="absolute top-2.5 inset-x-3 z-10 flex justify-center"
+                                role="status"
+                                title="This is a draft. Editing opens when the editor is done."
                             >
-                                <Edit3 size={11} className="text-neutral-400" />
-                                <span>Edit Signature</span>
-                            </button>
+                              <div className="relative max-w-[min(100%,calc(100vw-64px))] min-w-0 flex items-center gap-2 rounded-full bg-black/70 backdrop-blur-md border border-white/10 pl-2.5 pr-3 h-7 overflow-hidden">
+                                <span className="relative flex w-1.5 h-1.5 shrink-0">
+                                    <span className="absolute inset-0 rounded-full bg-violet-400 animate-ping opacity-60" />
+                                    <span className="relative w-1.5 h-1.5 rounded-full bg-violet-400" />
+                                </span>
+                                <span className="text-[11px] font-medium text-white shrink-0">Draft</span>
+                                <span className="text-white/25 shrink-0">·</span>
+                                <span className="lp-shimmer text-[11px] truncate min-w-0">{(generationStatus || 'Polishing').replace(/^(PLAN|EXECUTE|REFLECT):\s*/, '').replace(/\.\.\.$/, '…')}</span>
+                                <motion.span
+                                    className="absolute left-0 bottom-0 h-[2px] bg-violet-400/80"
+                                    animate={{ width: `${Math.max(8, Math.min(100, generationProgress || 0))}%` }}
+                                    transition={{ duration: 0.6 }}
+                                />
+                              </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <AnimatePresence>
+                        {pendingDoodleSlides.includes(currentIndex) && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                                transition={SPRING}
+                                className="absolute bottom-3 right-3 flex items-center gap-2 st-popover rounded-full pl-2.5 pr-3 py-1.5"
+                            >
+                                <motion.span animate={{ rotate: [0, -18, 12, 0], y: [0, -1, 1, 0] }} transition={{ duration: 1, repeat: Infinity }} className="flex"><PenTool size={12} className="text-rose-300" /></motion.span>
+                                <span className="lp-shimmer text-[11.5px]">Sketching the doodle…</span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Slide counter */}
+                    <div className="absolute -top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(100%+10px)] flex items-center gap-1 lp-mono text-[11px] text-white/45 tabular-nums">
+                        <span className="relative inline-flex overflow-hidden h-[15px] w-[16px] justify-end">
+                            <AnimatePresence mode="popLayout" initial={false}>
+                                <motion.span key={currentIndex} initial={{ y: direction >= 0 ? 14 : -14, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: direction >= 0 ? -14 : 14, opacity: 0 }} transition={SPRING} className="text-white">
+                                    {String(currentIndex + 1).padStart(2, '0')}
+                                </motion.span>
+                            </AnimatePresence>
+                        </span>
+                        <span>/ {String(slides.length).padStart(2, '0')}</span>
+                    </div>
+
+                    {editable && (
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 px-2.5 py-1 text-[10.5px] text-white/70 opacity-0 -translate-y-1 group-hover/stage:opacity-100 group-hover/stage:translate-y-0 transition-all duration-300 pointer-events-none">
+                            <MousePointerClick size={11} /> Click any text to edit
                         </div>
                     )}
+
+                    {/* Signature position picker (appears on signature hover) */}
+                    <AnimatePresence>
+                        {sigCtrl.show && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.12 } }}
+                                transition={SPRING}
+                                className="absolute z-20 flex items-center gap-1 st-popover rounded-xl p-1 whitespace-nowrap"
+                                style={{
+                                    left: sigCtrl.left,
+                                    top: sigCtrl.top,
+                                    x: '-50%',
+                                    y: sigCtrl.above ? 'calc(-100% - 8px)' : '8px',
+                                }}
+                                onMouseEnter={() => { if (sigHideTimer.current) clearTimeout(sigHideTimer.current); }}
+                                onMouseLeave={() => setSigCtrl((c) => ({ ...c, show: false }))}
+                            >
+                                {SIG_POSITIONS.map((opt) => (
+                                    <button
+                                        key={opt.id}
+                                        onClick={() => setSignaturePosition(opt.id)}
+                                        title={opt.label}
+                                        aria-label={opt.label}
+                                        className={`relative p-1.5 rounded-lg transition-colors ${signaturePosition === opt.id ? 'text-white' : 'text-white/45 hover:text-white hover:bg-white/10'}`}
+                                    >
+                                        {signaturePosition === opt.id && <motion.span layoutId="sig-pos" className="absolute inset-0 rounded-lg bg-violet-400/25 ring-1 ring-violet-300/40" transition={SPRING} />}
+                                        <span className="relative"><PositionIcon corner={opt.id} /></span>
+                                    </button>
+                                ))}
+                                <div className="w-px h-4 bg-white/10 mx-1 shrink-0" />
+                                <button
+                                    onClick={onOpenBrandEditor}
+                                    className="px-2 py-1 rounded-lg text-[11px] font-medium text-white/75 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1"
+                                >
+                                    <Edit3 size={11} /> Edit signature
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Prev / next */}
+                {slides.length > 1 && (
+                    <>
+                        <NavArrow side="left" onClick={() => go(-1)} />
+                        <NavArrow side="right" onClick={() => go(1)} />
+                    </>
+                )}
+            </motion.div>
+
+            {/* Filmstrip — click to (de)select; ⌘/Alt-click to select several; ←/→ to browse */}
+            <div className="shrink-0 border-t border-white/[0.06] flex items-center gap-3 pl-4 pr-3 py-3">
+                <div
+                    ref={stripRef}
+                    className="flex-1 min-w-0 flex items-end gap-2.5 overflow-x-auto lp-scrollbar-none py-1.5 px-0.5"
+                    onWheel={(e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY; }}
+                >
+                    {slides.map((slide, i) => {
+                        const thumbSvg = thumbSvgs[i];
+                        const isSelected = selectedSlideIndices.includes(i);
+                        const isShown = i === currentIndex;
+                        return (
+                            <motion.button
+                                key={i}
+                                data-thumb={i}
+                                initial={{ opacity: 0, y: 14, scale: 0.9 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ delay: Math.min(i, 10) * 0.04, ...SPRING }}
+                                whileHover={{ y: -4 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={(e) => handleThumbClick(e, i)}
+                                title={`Slide ${i + 1} — click to select · ⌘/Alt-click to select several`}
+                                aria-pressed={isSelected}
+                                aria-current={isShown ? 'true' : undefined}
+                                className="relative shrink-0 flex flex-col items-center gap-1.5"
+                            >
+                                <span
+                                    className={`relative block rounded-lg overflow-hidden transition-[box-shadow,opacity] duration-300 ${isSelected
+                                        ? 'ring-2 ring-violet-400 shadow-[0_0_24px_-4px_rgba(155,107,255,0.7)]'
+                                        : isShown
+                                            ? 'ring-1 ring-white/50'
+                                            : 'ring-1 ring-white/10 opacity-55 hover:opacity-100'
+                                        }`}
+                                    style={{ width: selectedFormat === 'square' ? 60 : 50, height: 60 }}
+                                >
+                                    <span className="artifact-thumb svg-preview-container block w-full h-full pointer-events-none" dangerouslySetInnerHTML={{ __html: thumbSvg }} />
+                                    <AnimatePresence>
+                                        {isSelected && (
+                                            <motion.span
+                                                initial={{ scale: 0, rotate: -45 }}
+                                                animate={{ scale: 1, rotate: 0 }}
+                                                exit={{ scale: 0 }}
+                                                transition={{ type: 'spring', stiffness: 520, damping: 20 }}
+                                                className="absolute top-1 right-1 grid place-items-center w-4 h-4 rounded-full bg-violet-400 text-black shadow-[0_1px_4px_rgba(0,0,0,0.6)]"
+                                            >
+                                                <Check size={10} strokeWidth={3.5} />
+                                            </motion.span>
+                                        )}
+                                    </AnimatePresence>
+                                </span>
+                                <span className={`lp-mono text-[9.5px] tabular-nums transition-colors ${isShown ? 'text-white' : 'text-white/30'}`}>{String(i + 1).padStart(2, '0')}</span>
+                                {isShown && <motion.span layoutId="thumb-current" className="absolute -bottom-1.5 w-4 h-[2px] rounded-full bg-white" transition={SPRING} />}
+                            </motion.button>
+                        );
+                    })}
+                </div>
+                <div className="shrink-0 text-right pl-2 border-l border-white/[0.06]">
+                    <div className="lp-mono text-[10.5px] text-white/60 tabular-nums">{slides.length} slides</div>
+                    <AnimatePresence mode="wait" initial={false}>
+                        <motion.div key={selectedSlideIndices.length} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="text-[10.5px] text-white/35">
+                            {selectedSlideIndices.length > 0 ? <span className="text-violet-300">{selectedSlideIndices.length} selected · Esc</span> : <span className="hidden lg:inline">← → to browse</span>}
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
             </div>
 
-            {/* Thumbnail strip — tap to (de)select; multiple can be selected to scope edits */}
-            <div className="flex items-center gap-2 px-4 py-3 border-t border-white/10 overflow-x-auto">
-                {slides.map((slide, i) => {
-                    const thumbSvg = thumbSvgs[i];
-                    const isSelected = selectedSlideIndices.includes(i);
-                    const isShown = i === currentIndex;
-                    return (
-                        <button
-                            key={i}
-                            onClick={(e) => handleThumbClick(e, i)}
-                            title={`Slide ${i + 1} — click to select · ⌘/Alt-click to select multiple`}
-                            aria-pressed={isSelected}
-                            className={`relative flex-shrink-0 rounded-md overflow-hidden transition-all ${isSelected
-                                ? 'ring-2 ring-blue-500'
-                                : isShown
-                                    ? 'ring-1 ring-white/40 opacity-90 hover:opacity-100'
-                                    : 'ring-1 ring-white/10 opacity-60 hover:opacity-100'
-                                }`}
-                            style={{ width: selectedFormat === 'square' ? 52 : 44, height: 52 }}
-                        >
-                            <div className="artifact-thumb svg-preview-container w-full h-full pointer-events-none" dangerouslySetInnerHTML={{ __html: thumbSvg }} />
-                            {isSelected && (
-                                <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
-                                    <CheckCircle size={10} strokeWidth={3} />
-                                </span>
-                            )}
-                        </button>
-                    );
-                })}
-                <span className="text-[11px] text-neutral-500 ml-auto flex-shrink-0 pl-3">
-                    {slides.length} slides{selectedSlideIndices.length > 0 ? ` · ${selectedSlideIndices.length} selected` : ''}
-                </span>
+            <AnimatePresence>
+                {settingsOpen && (
+                    <ArtifactSettingsPanel
+                        isOpen={settingsOpen}
+                        onClose={() => setSettingsOpen(false)}
+                        onOpenBrandEditor={onOpenBrandEditor}
+                        stageIndex={currentIndex}
+                    />
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+/* ------------------------------------------------------------------ */
+
+const NavArrow: React.FC<{ side: 'left' | 'right'; onClick: () => void }> = ({ side, onClick }) => (
+    <motion.button
+        type="button"
+        onClick={onClick}
+        whileHover={{ scale: 1.08, x: side === 'left' ? -2 : 2 }}
+        whileTap={{ scale: 0.9 }}
+        aria-label={side === 'left' ? 'Previous slide' : 'Next slide'}
+        className={`absolute top-1/2 -translate-y-1/2 ${side === 'left' ? 'left-3' : 'right-3'} grid place-items-center w-10 h-10 rounded-full st-popover text-white/70 hover:text-white opacity-0 group-hover/stage:opacity-100 focus-visible:opacity-100 transition-opacity duration-300`}
+    >
+        {side === 'left' ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+    </motion.button>
+);
+
+const IdleStage: React.FC = () => (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center px-6">
+        <div className="relative mx-auto mb-8 w-[170px] h-[215px]">
+            {[0, 1, 2].map(k => (
+                <motion.div
+                    key={k}
+                    className="absolute inset-0 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] backdrop-blur-sm"
+                    initial={{ rotate: 0, x: 0, opacity: 0 }}
+                    animate={{ rotate: (k - 1) * 9, x: (k - 1) * 26, y: [0, k === 1 ? -8 : -4, 0], opacity: 1 }}
+                    transition={{ rotate: { delay: 0.15 + k * 0.08, type: 'spring', stiffness: 200, damping: 18 }, x: { delay: 0.15 + k * 0.08, type: 'spring', stiffness: 200, damping: 18 }, opacity: { delay: 0.1 + k * 0.08 }, y: { duration: 5 + k, repeat: Infinity, ease: 'easeInOut' } }}
+                    style={{ zIndex: k === 1 ? 2 : 1 }}
+                >
+                    {k === 1 && (
+                        <div className="absolute inset-0 p-5 flex flex-col justify-end gap-2">
+                            <div className="h-2 w-10 rounded-full bg-white/10" />
+                            <div className="h-3.5 w-full rounded-full bg-white/[0.12]" />
+                            <div className="h-3.5 w-3/4 rounded-full bg-white/[0.12]" />
+                            <div className="h-2 w-2/3 rounded-full bg-white/[0.07] mt-1" />
+                        </div>
+                    )}
+                </motion.div>
+            ))}
+            <motion.span className="absolute -top-3 -right-4 text-2xl" animate={{ rotate: [0, 15, -10, 0], scale: [1, 1.15, 1] }} transition={{ duration: 3, repeat: Infinity }}>
+                <Sparkles className="text-violet-300" size={22} />
+            </motion.span>
+        </div>
+        <h3 className="lp-display text-[22px] font-semibold text-white">Your carousel lands here</h3>
+        <p className="mt-2 text-[13px] text-white/45 max-w-xs mx-auto leading-relaxed">
+            Describe it in the chat. Agents research, write and design it, then you refine it by talking.
+        </p>
+        <div className="mt-5 inline-flex items-center gap-1.5 text-[11px] text-white/35">Press <Kbd>/</Kbd> to start typing</div>
+    </motion.div>
+);
+
+const PHASE_STEPS = ['PLAN', 'EXECUTE', 'REFLECT', 'SKETCH', 'DELIVER'] as const;
+
+const GeneratingStage: React.FC<{ status: string; progress: number }> = ({ status, progress }) => {
+    const phase = phaseOf(status);
+    const color = PHASE_COLOR[phase];
+    const activeIdx = PHASE_STEPS.indexOf(phase as typeof PHASE_STEPS[number]);
+    return (
+        <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} transition={{ duration: 0.5, ease: EASE }} className="text-center px-6 w-full max-w-md">
+            <motion.div className="absolute left-1/2 top-1/2 w-[420px] h-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[110px] pointer-events-none" animate={{ backgroundColor: color, opacity: 0.18 }} transition={{ duration: 1 }} />
+            {/* Deck being assembled */}
+            <div className="relative mx-auto mb-10 w-[180px] h-[228px]">
+                {[0, 1, 2, 3].map(k => (
+                    <motion.div
+                        key={k}
+                        className="absolute inset-0 rounded-2xl ring-1 ring-white/10 overflow-hidden bg-[#12121c]"
+                        animate={{
+                            rotate: [(k - 1.5) * 7, (k - 1.5) * 9, (k - 1.5) * 7],
+                            x: [(k - 1.5) * 18, (k - 1.5) * 24, (k - 1.5) * 18],
+                            y: [0, -6, 0],
+                        }}
+                        transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', delay: k * 0.15 }}
+                        style={{ zIndex: k }}
+                    >
+                        <div className="absolute inset-0 st-skeleton" />
+                        <div className="absolute inset-0 p-5 flex flex-col justify-end gap-2">
+                            <div className="h-2 w-10 rounded-full" style={{ background: `${color}55` }} />
+                            <div className="h-3 w-full rounded-full bg-white/10" />
+                            <div className="h-3 w-2/3 rounded-full bg-white/10" />
+                        </div>
+                    </motion.div>
+                ))}
+                {/* orbiting spark */}
+                <motion.div className="absolute inset-[-28px]" animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: 'linear' }} style={{ zIndex: 10 }}>
+                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full" style={{ background: color, boxShadow: `0 0 16px 4px ${color}` }} />
+                </motion.div>
             </div>
 
-            <ArtifactSettingsPanel
-                isOpen={settingsOpen}
-                onClose={() => setSettingsOpen(false)}
-                onOpenBrandEditor={onOpenBrandEditor}
-            />
-        </div>
+            <div className="flex items-center justify-center gap-1.5 mb-4">
+                {PHASE_STEPS.map((p, i) => {
+                    const on = i === activeIdx;
+                    const past = activeIdx > i;
+                    return (
+                        <motion.span
+                            key={p}
+                            layout
+                            className="lp-mono text-[9.5px] tracking-[0.14em] rounded-full px-2 py-1 border"
+                            animate={{
+                                color: on ? PHASE_COLOR[p] : past ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.25)',
+                                borderColor: on ? `${PHASE_COLOR[p]}88` : 'rgba(255,255,255,0.08)',
+                                backgroundColor: on ? `${PHASE_COLOR[p]}18` : 'rgba(0,0,0,0)',
+                            }}
+                        >
+                            {past ? '✓ ' : ''}{p}
+                        </motion.span>
+                    );
+                })}
+            </div>
+
+            <AnimatePresence mode="wait">
+                <motion.p key={status} initial={{ opacity: 0, y: 8, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -8, filter: 'blur(4px)' }} transition={{ duration: 0.35 }} className="lp-shimmer text-[15px] font-medium">
+                    {phaseLabel(status) || 'Spinning up the agents'}
+                </motion.p>
+            </AnimatePresence>
+            <div className="mt-5 h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+                <motion.div className="h-full rounded-full st-sheen" style={{ background: `linear-gradient(90deg, ${color}88, ${color})` }} animate={{ width: `${Math.max(4, progress || 0)}%` }} transition={{ duration: 0.8, ease: EASE }} />
+            </div>
+            <div className="mt-2.5 flex justify-between lp-mono text-[10.5px] text-white/35">
+                <span>You can close this tab</span>
+                <span className="tabular-nums">{Math.round(progress || 0)}%</span>
+            </div>
+        </motion.div>
     );
 };

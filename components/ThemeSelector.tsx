@@ -1,151 +1,168 @@
 /**
- * Theme Selector Component
- * 
- * Allows users to select between Curated Presets and Custom Brand,
- * rendered in a highly visual and premium design.
- * 
+ * Theme Selector — curated palettes or your custom brand kit.
+ *
  * Location: src/components/ThemeSelector.tsx
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useCarouselStore } from '../store/useCarouselStore';
 import { PRESETS } from '../config/colorPresets';
-import { Globe, Palette, Edit3, UserCircle } from 'lucide-react';
+import { PenTool, UserCircle, ArrowLeft, Sparkles } from 'lucide-react';
+import { SPRING } from './studio/ui';
 
 interface ThemeSelectorProps {
     onOpenBrandEditor?: () => void;
 }
 
+const Swatch: React.FC<{ seeds: { primary: string; secondary: string; background: string; text: string }; size?: number }> = ({ seeds, size = 30 }) => (
+    <span
+        className="block rounded-full ring-1 ring-white/15 shadow-[inset_0_0_0_2px_rgba(0,0,0,0.25)]"
+        style={{ width: size, height: size, background: `conic-gradient(from 200deg, ${seeds.primary} 0 30%, ${seeds.secondary} 0 50%, ${seeds.text} 0 62%, ${seeds.background} 0 100%)` }}
+    />
+);
+
 export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ onOpenBrandEditor }) => {
     const { brandMode, setBrandMode, presetId, setPresetId, selectedTemplate, brandKit } = useCarouselStore();
+    const [hovered, setHovered] = useState<string | null>(null);
 
     const isTemplate3 = selectedTemplate === 'template-3';
+    const available = isTemplate3 ? PRESETS.filter(p => p.id.endsWith('-light')) : PRESETS;
+    const dark = available.filter(p => !p.id.endsWith('-light'));
+    const light = available.filter(p => p.id.endsWith('-light'));
+    const current = PRESETS.find(p => p.id === presetId);
+    const labelId = hovered || (brandMode === 'preset' ? presetId : null);
+    const label = PRESETS.find(p => p.id === labelId);
 
-    // Filter presets for Template-3 (only light themes)
-    const availablePresets = isTemplate3
-        ? PRESETS.filter(p => p.id.endsWith('-light'))
-        : PRESETS;
-
-    return (
-        <div className="flex flex-col gap-3 w-full">
-            {/* Compact Preset Selector Grid (All color themes visible in one view) */}
-            <div className="grid grid-cols-3 gap-1.5">
-                {availablePresets.map((preset) => {
+    const renderGroup = (title: string, list: typeof PRESETS) => list.length > 0 && (
+        <div>
+            <div className="lp-mono text-[10px] uppercase tracking-[0.16em] text-white/35 mb-2">{title}</div>
+            <div className="grid grid-cols-7 gap-1.5">
+                {list.map((preset, k) => {
                     const isActive = brandMode === 'preset' && presetId === preset.id;
                     return (
-                        <button
+                        <motion.button
                             key={preset.id}
                             type="button"
-                            onClick={() => {
-                                setBrandMode('preset');
-                                setPresetId(preset.id);
-                            }}
-                            className={`relative group p-3 rounded-xl border flex items-center justify-center transition-all ${
-                                isActive
-                                    ? 'border-blue-500/80 bg-blue-500/10 shadow-[0_0_8px_rgba(59,130,246,0.15)]'
-                                    : 'border-white/5 bg-black/25 hover:border-white/15 hover:bg-black/45'
-                            }`}
+                            initial={{ opacity: 0, scale: 0.6 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: k * 0.025, ...SPRING }}
+                            whileHover={{ scale: 1.14, y: -2 }}
+                            whileTap={{ scale: 0.9 }}
+                            onMouseEnter={() => setHovered(preset.id)}
+                            onMouseLeave={() => setHovered(null)}
+                            onFocus={() => setHovered(preset.id)}
+                            onBlur={() => setHovered(null)}
+                            onClick={() => { setBrandMode('preset'); setPresetId(preset.id); }}
+                            aria-label={preset.name}
+                            aria-pressed={isActive}
+                            className="relative grid place-items-center w-9 h-9 rounded-full"
                         >
-                            <div className="flex -space-x-1.5 justify-center">
-                                <span className="w-5 h-5 rounded-full border-2 border-neutral-950 shadow-sm transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: preset.seeds.primary }} />
-                                <span className="w-5 h-5 rounded-full border-2 border-neutral-950 shadow-sm transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: preset.seeds.secondary }} />
-                                <span className="w-5 h-5 rounded-full border-2 border-neutral-950 shadow-sm transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: preset.seeds.background }} />
-                                <span className="w-5 h-5 rounded-full border-2 border-neutral-950 shadow-sm transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: preset.seeds.text }} />
-                            </div>
-
-                            {/* Tooltip */}
-                            <div className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-neutral-950 border border-white/10 text-[9px] font-bold text-white rounded-lg opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150 shadow-[0_4px_12px_rgba(0,0,0,0.5)] z-50 whitespace-nowrap">
-                                {preset.name}
-                            </div>
-                        </button>
+                            {isActive && <motion.span layoutId="preset-ring" className="absolute inset-0 rounded-full ring-2 ring-white" transition={SPRING} />}
+                            <Swatch seeds={preset.seeds} size={28} />
+                        </motion.button>
                     );
                 })}
             </div>
+        </div>
+    );
 
-            {/* Custom Brand Branding at the bottom instead of toggle */}
-            {brandMode === 'preset' ? (
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                    <button
+    return (
+        <div className="flex flex-col gap-4 w-full">
+            {/* Live label for the hovered / active palette */}
+            <div className="h-10 flex items-center gap-3 rounded-xl bg-black/25 border border-white/[0.06] px-3">
+                <AnimatePresence mode="wait" initial={false}>
+                    <motion.div key={brandMode === 'custom' && !hovered ? 'custom' : (label?.id || 'none')} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }} className="flex items-center gap-2.5 min-w-0">
+                        {brandMode === 'custom' && !hovered ? (
+                            <>
+                                <Sparkles size={14} className="text-violet-300" />
+                                <span className="text-[12.5px] text-white">Custom brand kit</span>
+                            </>
+                        ) : label ? (
+                            <>
+                                <Swatch seeds={label.seeds} size={18} />
+                                <span className="text-[12.5px] text-white">{label.name}</span>
+                                <span className="text-[11px] text-white/35 truncate">{label.description?.split(' - ')[1]}</span>
+                            </>
+                        ) : (
+                            <span className="text-[12px] text-white/40">Pick a palette</span>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+            </div>
+
+            {renderGroup('Dark', dark)}
+            {renderGroup('Light', light)}
+
+            {/* Custom brand kit */}
+            <AnimatePresence mode="wait" initial={false}>
+                {brandMode === 'preset' ? (
+                    <motion.button
+                        key="apply"
                         type="button"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => setBrandMode('custom')}
-                        className="text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                        className="group w-full flex items-center gap-3 rounded-xl border border-dashed border-white/15 hover:border-violet-300/50 hover:bg-violet-400/[0.05] px-3.5 py-3 text-left transition-colors"
                     >
-                        <Edit3 size={11} />
-                        Apply Custom Brand Kit
-                    </button>
-                    {onOpenBrandEditor && (
-                        <button
-                            type="button"
-                            onClick={onOpenBrandEditor}
-                            className="text-[10px] text-neutral-500 hover:text-neutral-300 transition-colors"
-                        >
-                            Setup Kit
-                        </button>
-                    )}
-                </div>
-            ) : (
-                <div className="pt-2 border-t border-white/5 space-y-2">
-                    <div className="p-2 rounded-lg border border-blue-500/20 bg-blue-500/5 flex items-center justify-between">
-                        <div className="flex items-center gap-2 min-w-0">
-                            {brandKit.identity.imageUrl ? (
-                                <img
-                                    src={brandKit.identity.imageUrl}
-                                    alt=""
-                                    className="w-6.5 h-6.5 rounded-full border border-white/10 object-cover flex-shrink-0"
-                                />
-                            ) : (
-                                <div className="w-6.5 h-6.5 rounded-full bg-blue-500/15 border border-blue-500/35 flex items-center justify-center text-blue-400 text-[10px] font-bold flex-shrink-0">
-                                    {brandKit.identity.name ? brandKit.identity.name.charAt(0).toUpperCase() : 'U'}
+                        <span className="flex -space-x-1.5">
+                            {[brandKit.colors.primary, brandKit.colors.secondary, brandKit.colors.background].map((c, i) => (
+                                <span key={i} className="w-4 h-4 rounded-full ring-2 ring-[#12121c] transition-transform duration-300 group-hover:translate-x-0.5" style={{ background: c, transitionDelay: `${i * 40}ms` }} />
+                            ))}
+                        </span>
+                        <span className="flex-1">
+                            <span className="block text-[12.5px] font-medium text-white">Use my brand kit</span>
+                            <span className="block text-[11px] text-white/40">Your colors instead of a preset{current ? ` (now: ${current.name})` : ''}</span>
+                        </span>
+                    </motion.button>
+                ) : (
+                    <motion.div key="custom" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="space-y-2">
+                        <div className="relative rounded-xl p-[1px] bg-gradient-to-r from-cyan-300/50 via-violet-400/50 to-rose-300/50">
+                            <div className="rounded-[11px] bg-[#12121c] p-3 flex items-center gap-3">
+                                {brandKit.identity.imageUrl ? (
+                                    <img src={brandKit.identity.imageUrl} alt="" className="w-8 h-8 rounded-full object-cover ring-1 ring-white/15 shrink-0" />
+                                ) : (
+                                    <span className="grid place-items-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 text-[12px] font-semibold text-white shrink-0">
+                                        {brandKit.identity.name ? brandKit.identity.name.charAt(0).toUpperCase() : 'U'}
+                                    </span>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-[12.5px] font-medium text-white truncate">{brandKit.identity.name || 'Untitled brand'}</div>
+                                    <div className="text-[11px] text-emerald-300/80">Custom kit active</div>
                                 </div>
-                            )}
-                            <div className="min-w-0">
-                                <div className="text-[10px] font-bold text-white truncate">
-                                    {brandKit.identity.name || 'Untitled Brand'}
-                                </div>
-                                <div className="text-[9px] text-neutral-400 truncate">
-                                    Custom Identity Active
-                                </div>
+                                <span className="flex -space-x-1">
+                                    {[brandKit.colors.primary, brandKit.colors.secondary, brandKit.colors.background, brandKit.colors.text].map((c, i) => (
+                                        <span key={i} className="w-3 h-3 rounded-full ring-2 ring-[#12121c]" style={{ background: c }} />
+                                    ))}
+                                </span>
                             </div>
                         </div>
-                        <div className="flex -space-x-1.5 flex-shrink-0 ml-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full border border-neutral-950 shadow-sm" style={{ backgroundColor: brandKit.colors.primary }} />
-                            <span className="w-2.5 h-2.5 rounded-full border border-neutral-950 shadow-sm" style={{ backgroundColor: brandKit.colors.secondary }} />
-                            <span className="w-2.5 h-2.5 rounded-full border border-neutral-950 shadow-sm" style={{ backgroundColor: brandKit.colors.background }} />
-                            <span className="w-2.5 h-2.5 rounded-full border border-neutral-950 shadow-sm" style={{ backgroundColor: brandKit.colors.text }} />
-                        </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[10px]">
-                        <button
-                            type="button"
-                            onClick={() => setBrandMode('preset')}
-                            className="font-bold text-neutral-400 hover:text-white transition-colors"
-                        >
-                            ← Switch back to Presets
-                        </button>
-                        {onOpenBrandEditor && (
-                            <button
-                                type="button"
-                                onClick={onOpenBrandEditor}
-                                className="font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-                            >
-                                <UserCircle size={12} />
-                                Edit Brand Kit
+                        <div className="flex items-center justify-between text-[11.5px]">
+                            <button type="button" onClick={() => setBrandMode('preset')} className="group flex items-center gap-1 text-white/50 hover:text-white transition-colors">
+                                <ArrowLeft size={12} className="transition-transform group-hover:-translate-x-0.5" /> Back to presets
                             </button>
-                        )}
-                    </div>
-                </div>
-            )}
+                            {onOpenBrandEditor && (
+                                <button type="button" onClick={onOpenBrandEditor} className="flex items-center gap-1 text-violet-300 hover:text-violet-200 transition-colors">
+                                    <UserCircle size={12} /> Edit kit
+                                </button>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            {/* Disclaimer at the bottom */}
-            {isTemplate3 && (
-                <div className="mt-1.5 p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-start gap-1.5 animate-in fade-in slide-in-from-bottom-1 duration-300">
-                    <Globe className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-[9px] text-blue-300 leading-relaxed font-medium">
-                        "The Sketch" template is optimized for light themes only to preserve its hand-drawn aesthetic.
-                    </p>
-                </div>
-            )}
+            <AnimatePresence>
+                {isTemplate3 && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                        <div className="flex items-start gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] p-2.5">
+                            <PenTool size={13} className="text-rose-300 mt-0.5 shrink-0" />
+                            <p className="text-[11px] leading-relaxed text-white/55">The Sketch uses light palettes only, so the pencil doodles stay crisp.</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

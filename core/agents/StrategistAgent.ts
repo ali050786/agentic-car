@@ -94,7 +94,7 @@ Return a JSON object with:
 
         try {
             console.log(`[StrategistAgent] Generating strategy (mode: ${approachMode})...`);
-            const result = await generateContentFromAgent(systemPrompt, STRATEGIST_SCHEMA);
+            const result = await generateContentFromAgent(systemPrompt, STRATEGIST_SCHEMA, { role: 'planner', label: 'strategist' });
 
             const data = result.viralAngle || result;
 

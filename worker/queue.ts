@@ -34,11 +34,13 @@ const runNext = () => {
             await handler!(job);
         } catch (err: any) {
             console.error(`[queue] Job ${jobId} failed:`, err);
-            const isCancel = err?.message === 'Cancelled by user';
+            // A stopped job can surface as "Cancelled by user" (progress check) or as
+            // "Cancelled: job stopped before <step>" (a model call refused to start).
+            const isCancel = /^cancelled/i.test(String(err?.message || ''));
             await updateJob(jobId, {
                 status: 'error',
                 statusMessage: isCancel ? 'Cancelled.' : 'Error generating carousel.',
-                error: err?.message || String(err)
+                error: isCancel ? 'Cancelled by user' : (err?.message || String(err))
             }).catch(() => {});
         } finally {
             active--;

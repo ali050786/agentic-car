@@ -139,6 +139,6 @@ async function getVisualAssetsForSlides(slides: any[]) {
     required: ['results']
   };
 
-  const result = await generateContentFromAgent(prompt, schema);
+  const result = await generateContentFromAgent(prompt, schema, { role: 'planner', label: 'main' });
   return result.results;
 }

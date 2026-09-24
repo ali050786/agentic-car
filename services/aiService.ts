@@ -6,7 +6,19 @@
  * Sends the authenticated user's session so the server can verify the request.
  * The platform is free — there are no usage limits.
  */
-export const generateContentFromAgent = async (prompt: string | { systemPrompt?: string; prompt: string }, responseSchema: any) => {
+export interface AgentCallOptions {
+    /** What the call is for (fast | planner | writer | creative | critic). Decides model + temperature. */
+    role?: 'fast' | 'planner' | 'writer' | 'creative' | 'critic';
+    /** Short label for logs and traces. */
+    label?: string;
+    temperature?: number;
+}
+
+export const generateContentFromAgent = async (
+    prompt: string | { systemPrompt?: string; prompt: string },
+    responseSchema: any,
+    options: AgentCallOptions = {},
+) => {
     // core/agents/*.ts run unmodified in the background worker (Node), where
     // there is no browser and no Zustand store to read model/BYOK state from.
     // Delegate to the Node-side gateway, which gets that context via
@@ -14,7 +26,7 @@ export const generateContentFromAgent = async (prompt: string | { systemPrompt?:
     // browser-only store modules below are never loaded under Node.
     if (typeof window === 'undefined') {
         const { generateContentFromAgentServer } = await import('../core/llm/agentGateway');
-        return generateContentFromAgentServer(prompt, responseSchema);
+        return generateContentFromAgentServer(prompt, responseSchema, options);
     }
 
     try {
@@ -45,7 +57,7 @@ export const generateContentFromAgent = async (prompt: string | { systemPrompt?:
         const res = await fetch('/api/generate', {
             method: 'POST',
             headers,
-            body: JSON.stringify({ prompt, responseSchema, selectedModel })
+            body: JSON.stringify({ prompt, responseSchema, selectedModel, role: options.role, label: options.label })
         });
 
         if (!res.ok) {

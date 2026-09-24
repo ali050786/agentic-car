@@ -42,3 +42,6 @@ build
 collected_code.md
 trace-*.json
 
+
+# Canvas preview output
+tests/canvas/out

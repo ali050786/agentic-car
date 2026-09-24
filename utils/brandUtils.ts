@@ -85,6 +85,22 @@ export const resolveTheme = (
     const brightness = colord(seeds.background).brightness();
     let isDark = brightness < 0.5;
 
+    // The Canvas (template-5): preset semantics kept as-is (text / primary /
+    // secondary), since its renderer derives every color role from them and
+    // repairs contrast itself. `designMode` marks Canvas decks in storage.
+    if (template === 'template-5') {
+        const background = isDark ? colord(seeds.background).darken(0.2).toHex() : seeds.background;
+        return {
+            textDefault: seeds.text,
+            textHighlight: seeds.primary,
+            background,
+            background2: seeds.secondary,
+            patternColor: calculatePatternColor(background),
+            patternOpacity: calculatePatternOpacity(background),
+            designMode: 'canvas',
+        };
+    }
+
     // T3: Force light mode regardless of seeds
     if (template === 'template-3' && isDark) {
         isDark = false;

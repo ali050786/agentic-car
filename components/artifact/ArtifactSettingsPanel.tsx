@@ -13,26 +13,213 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { ThemeSelector } from '../ThemeSelector';
 import { getPatternName } from '../../utils/patternGenerator';
-import { 
-    X, User, Maximize2, Palette, Grid
-} from 'lucide-react';
+import { User, Palette, Grid, LayoutTemplate, Shuffle, Wand2, Droplet } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CloseButton, EASE, SPRING, Segmented } from '../studio/ui';
+import { DIRECTION_PRESETS, FONT_PAIRS, FONT_PAIR_IDS } from '../../core/design/canvas/tokens';
+import { DIRECTIONS, type Direction, type FontPairId, type MarkStyle } from '../../core/design/canvas/types';
+import { canInvert, currentDeckStyle, isInverted, patchDeckStyle, restyleDeck, shuffleSlide, toggleInvert } from './canvasControls';
+
+/** Sends a message through the chat composer (ChatPanel listens for this). */
+export const sendToChat = (text: string) => window.dispatchEvent(new CustomEvent('studio:chat-send', { detail: { text } }));
+
+const MARKS: { id: MarkStyle; label: string }[] = [
+    { id: 'color', label: 'Color' },
+    { id: 'highlight', label: 'Marker' },
+    { id: 'underline', label: 'Underline' },
+    { id: 'serif', label: 'Serif' },
+    { id: 'box', label: 'Block' },
+    { id: 'none', label: 'None' },
+];
+
+/**
+ * The Canvas (template-5) controls: the deck's look, type, corners and accent,
+ * plus per-slide layout shuffling, a color-moment toggle and AI redesign.
+ */
+const LayoutControls: React.FC<{ stageIndex: number }> = ({ stageIndex }) => {
+    const slides = useCarouselStore((s) => s.slides) as any[];
+    const setSlides = useCarouselStore((s) => s.setSlides);
+    const updateSlide = useCarouselStore((s) => s.updateSlide);
+    const topic = useCarouselStore((s) => s.topic);
+    const isGenerating = useCarouselStore((s) => s.isGenerating);
+    const [ask, setAsk] = useState('');
+    const style = currentDeckStyle(slides, topic);
+    const i = Math.min(Math.max(stageIndex, 0), Math.max(slides.length - 1, 0));
+    const slide = slides[i];
+
+    const sectionTitle = (t: string, hint?: string) => (
+        <div className="flex items-baseline justify-between mb-1.5">
+            <span className="text-[11.5px] font-medium text-white/70">{t}</span>
+            {hint && <span className="text-[10.5px] text-white/35">{hint}</span>}
+        </div>
+    );
+
+    return (
+        <div className="space-y-4">
+            <div>
+                {sectionTitle('Look', 'instant layouts')}
+                <div className="grid grid-cols-4 gap-1.5">
+                    {DIRECTIONS.map((d: Direction) => {
+                        const on = style.direction === d;
+                        return (
+                            <motion.button
+                                key={d}
+                                type="button"
+                                whileHover={{ y: -2 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setSlides(restyleDeck(slides, d, topic) as any)}
+                                data-tip={DIRECTION_PRESETS[d].blurb}
+                                data-tip-pos="top"
+                                aria-pressed={on}
+                                className={`st-tip relative rounded-xl border px-1 py-2 text-[11px] font-medium transition-colors ${on ? 'border-violet-300/60 text-white' : 'border-white/[0.07] bg-black/25 text-white/55 hover:text-white hover:border-white/20'}`}
+                            >
+                                {on && <motion.span layoutId="look-active" className="absolute inset-0 rounded-xl bg-violet-400/15" transition={SPRING} />}
+                                <span className="relative">{DIRECTION_PRESETS[d].label}</span>
+                            </motion.button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div>
+                {sectionTitle('Type')}
+                <select
+                    value={style.fonts}
+                    onChange={(e) => setSlides(patchDeckStyle(slides, { fonts: e.target.value as FontPairId }, topic) as any)}
+                    className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[12px] text-white outline-none focus:border-violet-300/50"
+                    aria-label="Font pairing"
+                >
+                    {FONT_PAIR_IDS.map((f) => (
+                        <option key={f} value={f} className="bg-[#14141c]">{FONT_PAIRS[f].label} · {FONT_PAIRS[f].display.family} + {FONT_PAIRS[f].body.family}</option>
+                    ))}
+                </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    {sectionTitle('Corners')}
+                    <Segmented
+                        id="canvas-corners"
+                        size="xs"
+                        value={style.radius}
+                        onChange={(v) => setSlides(patchDeckStyle(slides, { radius: v as any }, topic) as any)}
+                        options={[{ value: 'none', label: '0' }, { value: 'sm', label: 'S' }, { value: 'md', label: 'M' }, { value: 'lg', label: 'L' }]}
+                    />
+                </div>
+                <div>
+                    {sectionTitle('Headings')}
+                    <Segmented
+                        id="canvas-case"
+                        size="xs"
+                        value={style.headingCase}
+                        onChange={(v) => setSlides(patchDeckStyle(slides, { headingCase: v as any }, topic) as any)}
+                        options={[{ value: 'none', label: 'Aa' }, { value: 'upper', label: 'AA' }]}
+                    />
+                </div>
+            </div>
+
+            <div>
+                {sectionTitle('Key phrase')}
+                <div className="grid grid-cols-6 gap-1">
+                    {MARKS.map((m) => {
+                        const on = style.mark === m.id;
+                        return (
+                            <button
+                                key={m.id}
+                                type="button"
+                                onClick={() => setSlides(patchDeckStyle(slides, { mark: m.id }, topic) as any)}
+                                aria-pressed={on}
+                                className={`rounded-lg border py-1.5 text-[10.5px] transition-colors ${on ? 'border-violet-300/60 bg-violet-400/15 text-white' : 'border-white/[0.07] bg-black/25 text-white/50 hover:text-white'}`}
+                            >
+                                {m.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/[0.06] bg-black/20 p-3 space-y-2.5">
+                {sectionTitle(`Slide ${i + 1}`)}
+                <div className="grid grid-cols-2 gap-2">
+                    <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.96 }}
+                        disabled={!slide}
+                        onClick={() => slide && updateSlide(i, shuffleSlide(slide, i, style) as any)}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2 text-[11.5px] text-white/80 hover:text-white hover:bg-white/[0.08] transition-colors"
+                    >
+                        <Shuffle size={12} /> Shuffle layout
+                    </motion.button>
+                    <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.96 }}
+                        disabled={!slide || !canInvert(slide)}
+                        onClick={() => slide && updateSlide(i, toggleInvert(slide, i, style) as any)}
+                        aria-pressed={isInverted(slide)}
+                        className={`flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-[11.5px] transition-colors disabled:opacity-40 ${isInverted(slide) ? 'border-violet-300/60 bg-violet-400/15 text-white' : 'border-white/10 bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08]'}`}
+                    >
+                        <Droplet size={12} /> Color fill
+                    </motion.button>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <input
+                        value={ask}
+                        onChange={(e) => setAsk(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !isGenerating) {
+                                sendToChat(`Redesign slide ${i + 1} (keep the words)${ask.trim() ? `: ${ask.trim()}` : ''}`);
+                                setAsk('');
+                            }
+                        }}
+                        placeholder="e.g. make the number huge"
+                        className="flex-1 min-w-0 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[11.5px] text-white placeholder-white/30 outline-none focus:border-violet-300/50"
+                    />
+                    <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.95 }}
+                        disabled={isGenerating}
+                        onClick={() => { sendToChat(`Redesign slide ${i + 1} (keep the words)${ask.trim() ? `: ${ask.trim()}` : ''}`); setAsk(''); }}
+                        className="shrink-0 flex items-center gap-1 rounded-xl bg-white text-black px-2.5 py-2 text-[11.5px] font-medium disabled:opacity-40"
+                    >
+                        <Wand2 size={12} /> Redesign
+                    </motion.button>
+                </div>
+                <button
+                    type="button"
+                    disabled={isGenerating}
+                    onClick={() => sendToChat('Redesign every slide with fresh layouts (keep the words)')}
+                    className="w-full text-[11px] text-white/45 hover:text-white/80 transition-colors disabled:opacity-40"
+                >
+                    Redesign every slide with AI
+                </button>
+            </div>
+        </div>
+    );
+};
 
 interface ArtifactSettingsPanelProps {
     isOpen: boolean;
     onClose: () => void;
     onOpenBrandEditor: () => void;
+    /** The slide on stage (for per-slide Canvas controls). */
+    stageIndex?: number;
 }
 
-export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ isOpen, onClose, onOpenBrandEditor }) => {
+export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ isOpen, onClose, onOpenBrandEditor, stageIndex = 0 }) => {
     const {
         selectedPattern, setPattern,
         patternOpacity, setPatternOpacity,
         patternScale, setPatternScale,
         patternSpacing, setPatternSpacing,
         signaturePosition, setSignaturePosition,
+        selectedTemplate,
     } = useCarouselStore();
+    const isCanvas = selectedTemplate === 'template-5';
 
-    const [activeTab, setActiveTab] = useState<'style' | 'pattern'>('style');
+    const [activeTab, setActiveTab] = useState<'layout' | 'style' | 'pattern' | 'signature'>(isCanvas ? 'layout' : 'style');
+    useEffect(() => {
+        if (!isCanvas && activeTab === 'layout') setActiveTab('style');
+    }, [isCanvas, activeTab]);
     const panelRef = useRef<HTMLDivElement | null>(null);
 
     // Close settings panel when clicking outside
@@ -61,7 +248,7 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
         switch (id) {
             case 1: // Diagonal Lines (/)
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" fill="none">
                         <line x1="0" y1="24" x2="24" y2="0" stroke="currentColor" strokeWidth="1.5" />
                         <line x1="-6" y1="18" x2="18" y2="-6" stroke="currentColor" strokeWidth="1.5" />
                         <line x1="6" y1="30" x2="30" y2="6" stroke="currentColor" strokeWidth="1.5" />
@@ -69,7 +256,7 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
                 );
             case 2: // Diagonal Lines (\)
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" fill="none">
                         <line x1="0" y1="0" x2="24" y2="24" stroke="currentColor" strokeWidth="1.5" />
                         <line x1="-6" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="1.5" />
                         <line x1="18" y1="-6" x2="30" y2="6" stroke="currentColor" strokeWidth="1.5" />
@@ -77,14 +264,14 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
                 );
             case 3: // Cross-hatch
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" fill="none">
                         <line x1="0" y1="24" x2="24" y2="0" stroke="currentColor" strokeWidth="1.2" />
                         <line x1="0" y1="0" x2="24" y2="24" stroke="currentColor" strokeWidth="1.2" />
                     </svg>
                 );
             case 4: // Dots
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" fill="currentColor">
                         <circle cx="6" cy="6" r="1.5" />
                         <circle cx="18" cy="6" r="1.5" />
                         <circle cx="6" cy="18" r="1.5" />
@@ -94,7 +281,7 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
                 );
             case 5: // Squares
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" fill="currentColor">
                         <rect x="5" y="5" width="4" height="4" rx="0.5" />
                         <rect x="15" y="5" width="4" height="4" rx="0.5" />
                         <rect x="5" y="15" width="4" height="4" rx="0.5" />
@@ -103,21 +290,21 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
                 );
             case 6: // Plus Signs
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
                         <path d="M12,4 L12,10 M9,7 L15,7" />
                         <path d="M12,14 L12,20 M9,17 L15,17" />
                     </svg>
                 );
             case 7: // X Pattern
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
                         <path d="M5,5 L11,11 M11,5 L5,11" />
                         <path d="M13,13 L19,19 M19,13 L13,19" />
                     </svg>
                 );
             case 8: // Horizontal Stripes
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
                         <line x1="0" y1="6" x2="24" y2="6" />
                         <line x1="0" y1="12" x2="24" y2="12" />
                         <line x1="0" y1="18" x2="24" y2="18" />
@@ -125,7 +312,7 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
                 );
             case 9: // Vertical Stripes
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
                         <line x1="6" y1="0" x2="6" y2="24" />
                         <line x1="12" y1="0" x2="12" y2="24" />
                         <line x1="18" y1="0" x2="18" y2="24" />
@@ -133,21 +320,21 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
                 );
             case 10: // Triangles
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" fill="currentColor">
                         <polygon points="6,4 10,11 2,11" />
                         <polygon points="18,13 22,20 14,20" />
                     </svg>
                 );
             case 11: // Hexagons
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.2" fill="none">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.2" fill="none">
                         <polygon points="12,2 18,5 18,12 12,15 6,12 6,5" />
                         <polygon points="12,13 18,16 18,22 12,25 6,22 6,16" />
                     </svg>
                 );
             case 12: // Waves
                 return (
-                    <svg className="w-5 h-5 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
+                    <svg className="w-5 h-5 " viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
                         <path d="M0,8 Q6,4 12,8 T24,8" />
                         <path d="M0,16 Q6,12 12,16 T24,16" />
                     </svg>
@@ -157,141 +344,161 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
         }
     };
 
+    const TABS = [
+        ...(isCanvas ? [{ id: 'layout' as const, label: 'Layout', icon: LayoutTemplate }] : []),
+        { id: 'style' as const, label: 'Palette', icon: Palette },
+        { id: 'pattern' as const, label: 'Pattern', icon: Grid },
+        { id: 'signature' as const, label: 'Signature', icon: User },
+    ];
+
+    const sliders = [
+        { label: 'Opacity', min: 0, max: 0.5, step: 0.05, value: patternOpacity, set: setPatternOpacity, fmt: (v: number) => `${Math.round(v * 100)}%` },
+        { label: 'Scale', min: 0.5, max: 2, step: 0.1, value: patternScale, set: setPatternScale, fmt: (v: number) => `${v.toFixed(1)}×` },
+        { label: 'Spacing', min: 0.5, max: 4, step: 0.1, value: patternSpacing, set: setPatternSpacing, fmt: (v: number) => `${v.toFixed(1)}×` },
+    ];
+
     return (
-        <div 
+        <motion.div
             ref={panelRef}
-            className="absolute top-[52px] right-4 w-80 bg-neutral-950/95 border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-40 overflow-y-auto max-h-[calc(100vh-140px)] backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col scrollbar-none"
+            initial={{ opacity: 0, scale: 0.94, y: -8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: -6, transition: { duration: 0.15 } }}
+            transition={SPRING}
+            style={{ transformOrigin: 'top right' }}
+            className="absolute top-14 right-3 w-[340px] max-w-[calc(100%-24px)] st-popover rounded-[20px] z-40 overflow-hidden max-h-[calc(100%-72px)] flex flex-col"
+            role="dialog"
+            aria-label="Design settings"
         >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-neutral-950/40">
-                <span className="text-xs font-semibold text-white/90 tracking-wide">Design Settings</span>
-                <button onClick={onClose} aria-label="Close settings" className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-white/5 transition-all">
-                    <X size={14} />
-                </button>
+            <div className="flex items-center justify-between pl-4 pr-2 pt-2.5 pb-1">
+                <span className="lp-display text-[15px] font-semibold text-white">Design</span>
+                <CloseButton onClick={onClose} label="Close design settings" />
             </div>
 
-            {/* Tab Swapper */}
-            <div className="flex border-b border-white/5 p-1 gap-1 bg-black/25">
-                <button 
-                    onClick={() => setActiveTab('style')} 
-                    className={`flex-1 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${
-                        activeTab === 'style' 
-                            ? 'text-white bg-white/5 border border-white/5 shadow-sm' 
-                            : 'text-neutral-500 hover:text-neutral-300'
-                    }`}
-                >
-                    <Palette size={10} />
-                    Style
-                </button>
-                <button 
-                    onClick={() => setActiveTab('pattern')} 
-                    className={`flex-1 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${
-                        activeTab === 'pattern' 
-                            ? 'text-white bg-white/5 border border-white/5 shadow-sm' 
-                            : 'text-neutral-500 hover:text-neutral-300'
-                    }`}
-                >
-                    <Grid size={10} />
-                    Pattern
-                </button>
+            <div className="px-3 pb-2">
+                <div className={`relative grid ${TABS.length === 4 ? 'grid-cols-4' : 'grid-cols-3'} gap-1 rounded-xl bg-black/35 border border-white/[0.06] p-1`}>
+                    {TABS.map(t => {
+                        const on = activeTab === t.id;
+                        return (
+                            <button
+                                key={t.id}
+                                type="button"
+                                onClick={() => setActiveTab(t.id)}
+                                className={`relative flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11.5px] font-medium transition-colors ${on ? 'text-white' : 'text-white/45 hover:text-white/80'}`}
+                            >
+                                {on && <motion.span layoutId="settings-tab" className="absolute inset-0 rounded-lg bg-white/[0.1] ring-1 ring-white/10" transition={SPRING} />}
+                                <t.icon size={12} className="relative" />
+                                <span className="relative">{t.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
-            {/* Content Area */}
-            <div className="p-4 flex-1">
-                {/* 1. Style Tab */}
-                {activeTab === 'style' && (
-                    <div className="animate-in fade-in duration-200">
-                        <ThemeSelector onOpenBrandEditor={onOpenBrandEditor} />
-                    </div>
-                )}
+            <div className="flex-1 overflow-y-auto st-scroll px-4 pb-4 pt-1">
+                <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6, transition: { duration: 0.1 } }}
+                        transition={{ duration: 0.25, ease: EASE }}
+                    >
+                        {activeTab === 'layout' && isCanvas && <LayoutControls stageIndex={stageIndex} />}
+                        {activeTab === 'style' && <ThemeSelector onOpenBrandEditor={onOpenBrandEditor} />}
 
-                {/* 3. Pattern Tab */}
-                {activeTab === 'pattern' && (
-                    <div className="space-y-3.5 animate-in fade-in duration-200">
-                        {/* Visual Patterns grid */}
-                        <div className="grid grid-cols-6 gap-1">
-                            {Array.from({ length: 12 }, (_, i) => i + 1).map(id => {
-                                const isActive = selectedPattern === id;
-                                return (
-                                    <button
-                                        key={id}
-                                        type="button"
-                                        onClick={() => setPattern(id)}
-                                        className={`h-9 rounded-lg border flex items-center justify-center transition-all group relative ${
-                                            isActive
-                                                ? 'border-blue-500/80 bg-blue-500/10 text-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.15)]'
-                                                : 'border-white/5 bg-black/25 text-neutral-500 hover:border-white/15 hover:bg-black/45'
-                                        }`}
-                                    >
-                                        {renderPatternPreview(id)}
-                                        {/* Custom CSS Hover Tooltip */}
-                                        <div className="absolute bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-neutral-900 border border-white/10 text-white text-[9px] font-medium px-2 py-0.5 rounded shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 scale-95 transition-all duration-150 origin-bottom whitespace-nowrap z-50">
-                                            {getPatternName(id)}
+                        {activeTab === 'pattern' && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-6 gap-1.5">
+                                    {Array.from({ length: 12 }, (_, i) => i + 1).map((id, k) => {
+                                        const isActive = selectedPattern === id;
+                                        return (
+                                            <motion.button
+                                                key={id}
+                                                type="button"
+                                                initial={{ opacity: 0, scale: 0.8 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ delay: k * 0.02, ...SPRING }}
+                                                whileHover={{ y: -2 }}
+                                                whileTap={{ scale: 0.9 }}
+                                                onClick={() => setPattern(id)}
+                                                data-tip={getPatternName(id)}
+                                                data-tip-pos="top"
+                                                aria-label={getPatternName(id)}
+                                                aria-pressed={isActive}
+                                                className={`st-tip relative h-11 rounded-xl border grid place-items-center group transition-colors ${isActive ? 'border-violet-300/60 text-white' : 'border-white/[0.07] bg-black/25 text-white/50 hover:border-white/20 hover:text-white'}`}
+                                            >
+                                                {isActive && <motion.span layoutId="pattern-active" className="absolute inset-0 rounded-xl bg-violet-400/15 shadow-[0_0_20px_-4px_rgba(155,107,255,0.6)]" transition={SPRING} />}
+                                                <span className="relative [&_svg]:text-current [&_svg]:opacity-90">{renderPatternPreview(id)}</span>
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="space-y-3 rounded-2xl border border-white/[0.06] bg-black/20 p-3.5">
+                                    {sliders.map(sl => (
+                                        <div key={sl.label}>
+                                            <div className="flex items-center justify-between mb-0.5">
+                                                <span className="text-[11.5px] text-white/55">{sl.label}</span>
+                                                <motion.span key={sl.fmt(sl.value)} initial={{ opacity: 0.4, y: -3 }} animate={{ opacity: 1, y: 0 }} className="lp-mono text-[11px] text-white tabular-nums">{sl.fmt(sl.value)}</motion.span>
+                                            </div>
+                                            <input
+                                                type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value}
+                                                onChange={e => sl.set(parseFloat(e.target.value))}
+                                                aria-label={`Pattern ${sl.label.toLowerCase()}`}
+                                                className="st-range"
+                                                style={{ ['--fill' as string]: `${((sl.value - sl.min) / (sl.max - sl.min)) * 100}%` }}
+                                            />
                                         </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* Sliders Container */}
-                        <div className="space-y-2.5 p-2 rounded-lg border border-white/5 bg-black/15">
-                            {/* Opacity */}
-                            <div className="flex items-center gap-3">
-                                <span className="w-12 text-[10px] font-semibold text-neutral-400">Opacity</span>
-                                <input
-                                    type="range" min="0" max="0.5" step="0.05" value={patternOpacity}
-                                    onChange={e => setPatternOpacity(parseFloat(e.target.value))}
-                                    className="flex-1 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                />
-                                <span className="w-9 text-right text-[10px] text-neutral-300 font-mono">{Math.round(patternOpacity * 100)}%</span>
+                                    ))}
+                                </div>
                             </div>
+                        )}
 
-                            {/* Scale */}
-                            <div className="flex items-center gap-3">
-                                <span className="w-12 text-[10px] font-semibold text-neutral-400">Scale</span>
-                                <input
-                                    type="range" min="0.5" max="2" step="0.1" value={patternScale}
-                                    onChange={e => setPatternScale(parseFloat(e.target.value))}
-                                    className="flex-1 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                />
-                                <span className="w-9 text-right text-[10px] text-neutral-300 font-mono">{patternScale.toFixed(1)}x</span>
+                        {activeTab === 'signature' && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-3 gap-2">
+                                    {([['top-left', 'Top left'], ['top-right', 'Top right'], ['bottom-left', 'Bottom left']] as const).map(([id, label]) => {
+                                        const on = signaturePosition === id;
+                                        return (
+                                            <motion.button
+                                                key={id}
+                                                type="button"
+                                                whileHover={{ y: -2 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => setSignaturePosition(id)}
+                                                aria-pressed={on}
+                                                className={`relative rounded-xl border p-2.5 flex flex-col items-center gap-2 transition-colors ${on ? 'border-violet-300/60 text-white' : 'border-white/[0.07] bg-black/25 text-white/50 hover:text-white hover:border-white/20'}`}
+                                            >
+                                                {on && <motion.span layoutId="sig-card" className="absolute inset-0 rounded-xl bg-violet-400/15" transition={SPRING} />}
+                                                <span className="relative block w-10 h-12 rounded-md border border-current/40 border-white/20">
+                                                    <motion.span
+                                                        layout
+                                                        className="absolute w-4 h-1.5 rounded-full bg-current"
+                                                        style={{ left: id.includes('right') ? 'auto' : 4, right: id.includes('right') ? 4 : 'auto', top: id.includes('top') ? 4 : 'auto', bottom: id.includes('bottom') ? 4 : 'auto' }}
+                                                    />
+                                                </span>
+                                                <span className="relative text-[11px] font-medium">{label}</span>
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+                                <motion.button
+                                    type="button"
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={onOpenBrandEditor}
+                                    className="w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-left hover:bg-white/[0.06] hover:border-white/20 transition-colors group"
+                                >
+                                    <span>
+                                        <span className="block text-[12.5px] font-medium text-white">Edit name, title & photo</span>
+                                        <span className="block text-[11px] text-white/40 mt-0.5">Applies to every carousel</span>
+                                    </span>
+                                    <User size={15} className="text-white/40 group-hover:text-white transition-colors" />
+                                </motion.button>
                             </div>
-
-                            {/* Spacing */}
-                            <div className="flex items-center gap-3">
-                                <span className="w-12 text-[10px] font-semibold text-neutral-400">Spacing</span>
-                                <input
-                                    type="range" min="0.5" max="4" step="0.1" value={patternSpacing}
-                                    onChange={e => setPatternSpacing(parseFloat(e.target.value))}
-                                    className="flex-1 h-1 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                />
-                                <span className="w-9 text-right text-[10px] text-neutral-300 font-mono">{patternSpacing.toFixed(1)}x</span>
-                            </div>
-                        </div>
-
-                        {/* Signature Placement */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Signature Position</label>
-                            <div className="bg-black/40 border border-white/5 rounded-xl p-0.5 flex gap-0.5">
-                                {([['bottom-left', 'Bottom L'], ['top-left', 'Top L'], ['top-right', 'Top R']] as const).map(([id, label]) => (
-                                    <button
-                                        key={id}
-                                        type="button"
-                                        onClick={() => setSignaturePosition(id)}
-                                        className={`flex-1 py-1.5 rounded-lg text-[9px] font-bold text-center transition-all ${
-                                            signaturePosition === id
-                                                ? 'bg-neutral-800 text-white border border-white/5 shadow-sm'
-                                                : 'text-neutral-400 hover:text-white'
-                                        }`}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                        )}
+                    </motion.div>
+                </AnimatePresence>
             </div>
-        </div>
+        </motion.div>
     );
 };

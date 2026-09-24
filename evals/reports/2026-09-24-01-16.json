@@ -1,0 +1,4293 @@
+[
+  {
+    "id": "kids-rain",
+    "topic": "Explain how rain forms, for 8 year olds",
+    "runs": {
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 50097,
+        "slides": [
+          {
+            "id": "template-1-s0-mueudriqc",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "SURPRISING TRUTH",
+            "headline": "Clouds are not fluffy cotton balls",
+            "body": "They are made of billions of tiny water drops – and that's where rain starts.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "fluffy cotton balls",
+            "icon": "Star",
+            "slots": {
+              "preHeader": "SURPRISING TRUTH",
+              "headline": "Clouds are not fluffy cotton balls",
+              "body": "They are made of billions of tiny water drops – and that's where rain starts.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "fluffy cotton balls"
+            },
+            "visual": {
+              "icon": "Star"
+            }
+          },
+          {
+            "id": "template-1-s1-mueudriqd",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "STEP 1: EVAPORATION",
+            "headline": "Water Vapor Rises",
+            "body": "The sun heats up water in oceans, lakes, and puddles. The water gets so warm it turns into an invisible gas called water vapor and floats up into the sky.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Water Vapor",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "STEP 1: EVAPORATION",
+              "headline": "Water Vapor Rises",
+              "body": "The sun heats up water in oceans, lakes, and puddles. The water gets so warm it turns into an invisible gas called water vapor and floats up into the sky.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Water Vapor"
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-1-s2-mueudriqe",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "WHAT HAPPENS AS VAPOR RISES",
+            "headline": "Three Things Happen",
+            "body": "",
+            "listItems": [
+              "The air gets colder.",
+              "The vapor sticks to tiny dust bits.",
+              "It turns back into tiny water drops, making a cloud."
+            ],
+            "footer": "",
+            "accentPhrase": "Three Things",
+            "icon": "CheckCircle",
+            "slots": {
+              "preHeader": "WHAT HAPPENS AS VAPOR RISES",
+              "headline": "Three Things Happen",
+              "body": "",
+              "listItems": [
+                "The air gets colder.",
+                "The vapor sticks to tiny dust bits.",
+                "It turns back into tiny water drops, making a cloud."
+              ],
+              "footer": "",
+              "accentPhrase": "Three Things"
+            },
+            "visual": {
+              "icon": "CheckCircle"
+            }
+          },
+          {
+            "id": "template-1-s3-mueudriqf",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "STEP 2: CONDENSATION",
+            "headline": "Drops Bump and Stick Together",
+            "body": "Those tiny water drops in the cloud bump into each other and stick together. They grow bigger and heavier, like a sponge soaking up more and more water.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Bump and Stick",
+            "icon": "Brain",
+            "slots": {
+              "preHeader": "STEP 2: CONDENSATION",
+              "headline": "Drops Bump and Stick Together",
+              "body": "Those tiny water drops in the cloud bump into each other and stick together. They grow bigger and heavier, like a sponge soaking up more and more water.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Bump and Stick"
+            },
+            "visual": {
+              "icon": "Brain"
+            }
+          },
+          {
+            "id": "template-1-s4-mueudriqg",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "MYTH VS FACT",
+            "headline": "Clouds: The Real Story",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Real Story",
+            "icon": "Lightbulb",
+            "slots": {
+              "preHeader": "MYTH VS FACT",
+              "headline": "Clouds: The Real Story",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Real Story",
+              "splitLeft": "Myth: Clouds are fluffy cotton balls in the sky.",
+              "splitRight": "Fact: Clouds are billions of tiny water drops or ice crystals."
+            },
+            "visual": {
+              "icon": "Lightbulb"
+            }
+          },
+          {
+            "id": "template-1-s5-mueudriqh",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "YOU'RE A RAIN DETECTIVE!",
+            "headline": "Rain's Big Adventure",
+            "body": "Next time it rains, remember: that drop was in a puddle, then a cloud, now here.",
+            "listItems": [],
+            "footer": "You're a rain detective!",
+            "accentPhrase": "Big Adventure",
+            "icon": "Award",
+            "slots": {
+              "preHeader": "YOU'RE A RAIN DETECTIVE!",
+              "headline": "Rain's Big Adventure",
+              "body": "Next time it rains, remember: that drop was in a puddle, then a cloud, now here.",
+              "listItems": [],
+              "footer": "You're a rain detective!",
+              "accentPhrase": "Big Adventure"
+            },
+            "visual": {
+              "icon": "Award"
+            }
+          }
+        ],
+        "tokens": 16260,
+        "costUsd": 0.00336,
+        "llmCalls": 7,
+        "retries": 1,
+        "llmMs": 71263,
+        "hedges": 0,
+        "firstPreviewMs": 45734,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "research.plan",
+            "start": 0,
+            "ms": 3169,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.plan",
+            "start": 1,
+            "ms": 3168,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 2752
+          },
+          {
+            "kind": "step",
+            "name": "outline",
+            "start": 3172,
+            "ms": 5610,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "outline",
+            "start": 3173,
+            "ms": 5609,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 1070
+          },
+          {
+            "kind": "step",
+            "name": "hooks",
+            "start": 8783,
+            "ms": 18874,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "writer",
+            "start": 8784,
+            "ms": 36944,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "hooks.generate",
+            "start": 8786,
+            "ms": 18869,
+            "ok": true,
+            "role": "creative",
+            "attempts": 1,
+            "reasoningTokens": 1730,
+            "firstTokenMs": 781
+          },
+          {
+            "kind": "llm",
+            "name": "writer.1-6",
+            "start": 8790,
+            "ms": 36937,
+            "ok": true,
+            "role": "writer",
+            "attempts": 2,
+            "reasoningTokens": 3708,
+            "firstTokenMs": 2276
+          },
+          {
+            "kind": "step",
+            "name": "tighten",
+            "start": 45730,
+            "ms": 0,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "proofread",
+            "start": 45734,
+            "ms": 1394,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "reflect",
+            "start": 45737,
+            "ms": 4357,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 45738,
+            "ms": 1390,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1325
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 45739,
+            "ms": 937,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 888
+          },
+          {
+            "kind": "llm",
+            "name": "critic",
+            "start": 45740,
+            "ms": 4353,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 886
+          },
+          {
+            "kind": "step",
+            "name": "tighten.final",
+            "start": 50094,
+            "ms": 0,
+            "ok": true
+          }
+        ],
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 1,
+          "richBlocksRendered": 1,
+          "numericClaims": 0,
+          "avgHeadline": 24
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.67,
+            "dimensions": {
+              "hook": 8,
+              "flow": 9,
+              "specificity": 7,
+              "clarity": 9,
+              "audienceFit": 9,
+              "accuracy": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 9.6,
+            "facts": 0,
+            "sources": 0,
+            "researched": false,
+            "revisedSlides": [],
+            "rejectedRevisions": 0,
+            "tightened": 0,
+            "forcedFits": 0,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 0,
+          "sources": [],
+          "hook": "Clouds are not fluffy cotton balls"
+        },
+        "judge": {
+          "hook": 8,
+          "flow": 9,
+          "specificity": 9,
+          "clarity": 10,
+          "audienceFit": 10,
+          "accuracy": 10,
+          "expectations": 10,
+          "overall": 9,
+          "notes": "The hook is strong but could be slightly more surprising for an 8-year-old. The flow is excellent, but the myth vs fact slide repeats earlier content slightly."
+        }
+      }
+    }
+  },
+  {
+    "id": "howto-interview",
+    "topic": "How to prepare for a system design interview in 2 weeks",
+    "runs": {
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 97521,
+        "slides": [
+          {
+            "id": "template-4-s0-mueufw3sy",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "REAL SUCCESS STORY",
+            "headline": "How one engineer landed nearly 15 offers",
+            "body": "By running a daily practice interview and improving over weeks.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "15 offers",
+            "icon": "Compass",
+            "slots": {
+              "preHeader": "REAL SUCCESS STORY",
+              "headline": "How one engineer landed nearly 15 offers",
+              "body": "By running a daily practice interview and improving over weeks.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "15 offers"
+            },
+            "visual": {
+              "icon": "Compass"
+            }
+          },
+          {
+            "id": "template-4-s1-mueufw3sz",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "WHY MEMORIZATION FAILS",
+            "headline": "Don't memorize reference designs—learn to compose building blocks.",
+            "body": "The most common failure mode is memorizing reference designs. Instead, learn to compose building blocks: distributed systems, microservices, APIs, cloud architecture, and system reliability. This makes you flexible.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "compose building blocks",
+            "icon": "Lightbulb",
+            "slots": {
+              "preHeader": "WHY MEMORIZATION FAILS",
+              "headline": "Don't memorize reference designs—learn to compose building blocks.",
+              "body": "The most common failure mode is memorizing reference designs. Instead, learn to compose building blocks: distributed systems, microservices, APIs, cloud architecture, and system reliability. This makes you flexible.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "compose building blocks"
+            },
+            "visual": {
+              "icon": "Lightbulb"
+            }
+          },
+          {
+            "id": "template-4-s2-mueufw3s10",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "DAYS 1-3: FUNDAMENTALS",
+            "headline": "Master fundamentals in 3 days",
+            "body": "",
+            "listItems": [
+              "Core topics: distributed systems, APIs, system reliability",
+              "Resource: ByteByteGo with 1000+ diagrams and animations",
+              "Architectures: 50+ real-world examples (Netflix, Uber, YouTube)"
+            ],
+            "footer": "",
+            "accentPhrase": "Master fundamentals",
+            "icon": "GraduationCap",
+            "slots": {
+              "preHeader": "DAYS 1-3: FUNDAMENTALS",
+              "headline": "Master fundamentals in 3 days",
+              "body": "",
+              "listItems": [
+                "Core topics: distributed systems, APIs, system reliability",
+                "Resource: ByteByteGo with 1000+ diagrams and animations",
+                "Architectures: 50+ real-world examples (Netflix, Uber, YouTube)"
+              ],
+              "footer": "",
+              "accentPhrase": "Master fundamentals"
+            },
+            "visual": {
+              "icon": "GraduationCap"
+            }
+          },
+          {
+            "id": "template-4-s3-mueufw3s11",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "DAILY PRACTICE WINS",
+            "headline": "Daily practice led to nearly 15 offers",
+            "body": "An Airbnb interviewer credited daily practice: ran an interview daily, analyzed results, and improved conversion rate. He received nearly 15",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Daily practice",
+            "icon": "TrendingUp",
+            "slots": {
+              "preHeader": "DAILY PRACTICE WINS",
+              "headline": "Daily practice led to nearly 15 offers",
+              "body": "An Airbnb interviewer credited daily practice: ran an interview daily, analyzed results, and improved conversion rate. He received nearly 15",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Daily practice",
+              "statNumber": "15",
+              "statLabel": "interview offers from daily practice"
+            },
+            "visual": {
+              "icon": "TrendingUp"
+            }
+          },
+          {
+            "id": "template-4-s4-mueufw3s12",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "DESIGN DEPTH",
+            "headline": "From vague to operationally credible",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "credible",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "DESIGN DEPTH",
+              "headline": "From vague to operationally credible",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "credible",
+              "splitLeft": "Before: Discussing high-level components without depth.",
+              "splitRight": "After: Discussing cost trade-offs (spot instances, caching vs recompute) and resilience."
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-4-s5-mueufw3s13",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "PRACTICE STRATEGY",
+            "headline": "Get AI feedback and simulate real pressure",
+            "body": "Use Bugfree.ai for AI feedback on your designs, and book a mock interview with DesignGurus.io ($239/session) to simulate real pressure. This combination helps you identify gaps and build confidence.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "simulate real pressure",
+            "icon": "Target",
+            "slots": {
+              "preHeader": "PRACTICE STRATEGY",
+              "headline": "Get AI feedback and simulate real pressure",
+              "body": "Use Bugfree.ai for AI feedback on your designs, and book a mock interview with DesignGurus.io ($239/session) to simulate real pressure. This combination helps you identify gaps and build confidence.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "simulate real pressure"
+            },
+            "visual": {
+              "icon": "Target"
+            }
+          },
+          {
+            "id": "template-4-s6-mueufw3s14",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "YOUR PLAN",
+            "headline": "Start today: focus on building blocks, not memory",
+            "body": "Your 2-week plan: 3 days fundamentals, then daily practice + 2 mock interviews. Use resources from this carousel to get started.",
+            "listItems": [],
+            "footer": "Start today",
+            "accentPhrase": "building blocks",
+            "icon": "Rocket",
+            "slots": {
+              "preHeader": "YOUR PLAN",
+              "headline": "Start today: focus on building blocks, not memory",
+              "body": "Your 2-week plan: 3 days fundamentals, then daily practice + 2 mock interviews. Use resources from this carousel to get started.",
+              "listItems": [],
+              "footer": "Start today",
+              "accentPhrase": "building blocks"
+            },
+            "visual": {
+              "icon": "Rocket"
+            }
+          }
+        ],
+        "tokens": 30550,
+        "costUsd": 0.0062,
+        "llmCalls": 12,
+        "retries": 0,
+        "llmMs": 134739,
+        "hedges": 0,
+        "firstPreviewMs": 67639,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "research.plan",
+            "start": 0,
+            "ms": 1431,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.plan",
+            "start": 2,
+            "ms": 1429,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 678
+          },
+          {
+            "kind": "step",
+            "name": "research.search",
+            "start": 1431,
+            "ms": 3119,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "research.facts",
+            "start": 4550,
+            "ms": 4882,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.facts",
+            "start": 4551,
+            "ms": 4881,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 923
+          },
+          {
+            "kind": "step",
+            "name": "outline",
+            "start": 9433,
+            "ms": 6301,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "outline",
+            "start": 9434,
+            "ms": 6300,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 871
+          },
+          {
+            "kind": "step",
+            "name": "hooks",
+            "start": 15734,
+            "ms": 18797,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "writer",
+            "start": 15735,
+            "ms": 49756,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "hooks.generate",
+            "start": 15736,
+            "ms": 18795,
+            "ok": true,
+            "role": "creative",
+            "attempts": 1,
+            "reasoningTokens": 1647,
+            "firstTokenMs": 918
+          },
+          {
+            "kind": "llm",
+            "name": "writer.1-4",
+            "start": 15736,
+            "ms": 49755,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 6095,
+            "firstTokenMs": 1033
+          },
+          {
+            "kind": "llm",
+            "name": "writer.5-7",
+            "start": 15737,
+            "ms": 18966,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 1625,
+            "firstTokenMs": 862
+          },
+          {
+            "kind": "step",
+            "name": "tighten",
+            "start": 65495,
+            "ms": 2143,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "tighten",
+            "start": 65496,
+            "ms": 2141,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1184
+          },
+          {
+            "kind": "step",
+            "name": "proofread",
+            "start": 67639,
+            "ms": 1380,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "reflect",
+            "start": 67640,
+            "ms": 29117,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 67641,
+            "ms": 1220,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 684
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 67641,
+            "ms": 1377,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 684
+          },
+          {
+            "kind": "llm",
+            "name": "critic",
+            "start": 67642,
+            "ms": 5733,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 908
+          },
+          {
+            "kind": "llm",
+            "name": "critic.revise",
+            "start": 73377,
+            "ms": 23380,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 2775,
+            "firstTokenMs": 916
+          },
+          {
+            "kind": "step",
+            "name": "tighten.final",
+            "start": 96757,
+            "ms": 0,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "proofread.revised",
+            "start": 96758,
+            "ms": 763,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 96759,
+            "ms": 762,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 704
+          }
+        ],
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 2,
+          "richBlocksRendered": 2,
+          "numericClaims": 2,
+          "avgHeadline": 43
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.57,
+            "dimensions": {
+              "hook": 8,
+              "flow": 7,
+              "specificity": 9,
+              "clarity": 8,
+              "audienceFit": 9,
+              "accuracy": 10,
+              "actionability": 9
+            },
+            "hookCandidates": 4,
+            "hookScore": 8.6,
+            "facts": 12,
+            "sources": 5,
+            "researched": true,
+            "revisedSlides": [
+              7
+            ],
+            "rejectedRevisions": 0,
+            "tightened": 0,
+            "forcedFits": 4,
+            "proofreadFixes": 1,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://www.tryexponent.com/blog/system-design-interview-guide",
+            "https://www.systemdesignhandbook.com/blog/how-to-crack-system-design-interviews-in-2026",
+            "https://www.youtube.com/watch?v=V5M925ZQEJU",
+            "https://medium.com/javarevisited/i-tried-40-software-design-courses-here-are-my-top-6-recommendations-for-2026-05759c06e4e7",
+            "https://medium.com/javarevisited/how-i-am-preparing-for-system-design-interview-in-2026-tips-and-resources-cf1427a5b36e"
+          ],
+          "hook": "How one engineer landed nearly 15 offers"
+        },
+        "judge": {
+          "hook": 6,
+          "flow": 5,
+          "specificity": 7,
+          "clarity": 6,
+          "audienceFit": 7,
+          "accuracy": 4,
+          "expectations": 5,
+          "overall": 6,
+          "notes": "The deck lacks a concrete day-by-day plan for the 2 weeks, relying on vague phases (Days 1-3) and generic advice. The repeated 'nearly 15 offers' claim feels invented and undermines credibility. The closing slide is weak, offering no actionable next steps beyond 'start today.'"
+        }
+      }
+    }
+  },
+  {
+    "id": "linkedin-pitch",
+    "topic": "LinkedIn hot take: why most startup pitch decks fail",
+    "runs": {
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 53636,
+        "slides": [
+          {
+            "id": "template-1-s0-mueuh3cn1m",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "INVESTOR REALITY",
+            "headline": "Product first? That's a mistake.",
+            "body": "The #1 reason pitch decks fail: they lead with the product, not the problem. Flip the order to win.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Product first",
+            "icon": "Clock",
+            "slots": {
+              "preHeader": "INVESTOR REALITY",
+              "headline": "Product first? That's a mistake.",
+              "body": "The #1 reason pitch decks fail: they lead with the product, not the problem. Flip the order to win.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Product first"
+            },
+            "visual": {
+              "icon": "Clock"
+            }
+          },
+          {
+            "id": "template-1-s1-mueuh3cn1n",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "THE ODDS",
+            "headline": "Only 1% of decks lead to funding",
+            "body": "Investors see over 1,000 decks per year. Your deck must earn every second of their attention.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "1%",
+            "icon": "TrendingDown",
+            "slots": {
+              "preHeader": "THE ODDS",
+              "headline": "Only 1% of decks lead to funding",
+              "body": "Investors see over 1,000 decks per year. Your deck must earn every second of their attention.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "1%",
+              "statNumber": "1%",
+              "statLabel": "of pitch decks lead to funding"
+            },
+            "visual": {
+              "icon": "TrendingDown"
+            }
+          },
+          {
+            "id": "template-1-s2-mueuh3cn1o",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "THE BIG SHIFT",
+            "headline": "First 3 slides carry 70% of attention",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "70% of attention",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "THE BIG SHIFT",
+              "headline": "First 3 slides carry 70% of attention",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "70% of attention",
+              "splitLeft": "Myth: Lead with your product.",
+              "splitRight": "Fact: Lead with the problem."
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-1-s3-mueuh3cn1p",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "WHY DECKS FAIL",
+            "headline": "Top 3 deck killers",
+            "body": "",
+            "listItems": [
+              "Clarity: 7+ bullet points per slide",
+              "Validation: No customer interview quotes",
+              "Model: Revenue projection without unit economics"
+            ],
+            "footer": "",
+            "accentPhrase": "Top 3 deck killers",
+            "icon": "AlertCircle",
+            "slots": {
+              "preHeader": "WHY DECKS FAIL",
+              "headline": "Top 3 deck killers",
+              "body": "",
+              "listItems": [
+                "Clarity: 7+ bullet points per slide",
+                "Validation: No customer interview quotes",
+                "Model: Revenue projection without unit economics"
+              ],
+              "footer": "",
+              "accentPhrase": "Top 3 deck killers"
+            },
+            "visual": {
+              "icon": "AlertCircle"
+            }
+          },
+          {
+            "id": "template-1-s4-mueuh3cn1q",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE OPPORTUNITY GAP",
+            "headline": "Make opportunity clear in first 3 slides",
+            "body": "Investors decide quickly. If the opportunity isn't clear in the first three slides, they stop reading. Use those slides to prove the problem is big, urgent, and real. Most decks fail because the opportunity is unclear or unproven.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "opportunity",
+            "icon": "Target",
+            "slots": {
+              "preHeader": "THE OPPORTUNITY GAP",
+              "headline": "Make opportunity clear in first 3 slides",
+              "body": "Investors decide quickly. If the opportunity isn't clear in the first three slides, they stop reading. Use those slides to prove the problem is big, urgent, and real. Most decks fail because the opportunity is unclear or unproven.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "opportunity"
+            },
+            "visual": {
+              "icon": "Target"
+            }
+          },
+          {
+            "id": "template-1-s5-mueuh3cn1r",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "THE TIME CRUNCH",
+            "headline": "After page one, each slide gets 15 seconds",
+            "body": "That's 15 seconds to prove your point—or lose them. Every word and visual must count. No filler, just compelling evidence this opportunity",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "15 seconds",
+            "icon": "Clock",
+            "slots": {
+              "preHeader": "THE TIME CRUNCH",
+              "headline": "After page one, each slide gets 15 seconds",
+              "body": "That's 15 seconds to prove your point—or lose them. Every word and visual must count. No filler, just compelling evidence this opportunity",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "15 seconds",
+              "statNumber": "15",
+              "statLabel": "seconds per slide"
+            },
+            "visual": {
+              "icon": "Clock"
+            }
+          },
+          {
+            "id": "template-1-s6-mueuh3cn1s",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "SMART STRUCTURE",
+            "headline": "Weave 'Why Now' into the story, not its own slide",
+            "body": "Resist the urge to add a separate 'Why Now' slide. Instead, weave it naturally into the problem, market, and competition slides. Keep the deck to 10–12 slides total. Every slide must earn its place.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Weave 'Why Now' into the story",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "SMART STRUCTURE",
+              "headline": "Weave 'Why Now' into the story, not its own slide",
+              "body": "Resist the urge to add a separate 'Why Now' slide. Instead, weave it naturally into the problem, market, and competition slides. Keep the deck to 10–12 slides total. Every slide must earn its place.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Weave 'Why Now' into the story"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s7-mueuh3cn1t",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "YOUR NEXT STEP",
+            "headline": "Earn the meeting, don't explain everything",
+            "body": "Lead with the problem, prove the opportunity, and send a PDF.",
+            "listItems": [],
+            "footer": "Rewrite first 3 slides.",
+            "accentPhrase": "Earn the meeting",
+            "icon": "Rocket",
+            "slots": {
+              "preHeader": "YOUR NEXT STEP",
+              "headline": "Earn the meeting, don't explain everything",
+              "body": "Lead with the problem, prove the opportunity, and send a PDF.",
+              "listItems": [],
+              "footer": "Rewrite first 3 slides.",
+              "accentPhrase": "Earn the meeting"
+            },
+            "visual": {
+              "icon": "Rocket"
+            }
+          }
+        ],
+        "tokens": 23403,
+        "costUsd": 0.00435,
+        "llmCalls": 12,
+        "retries": 0,
+        "llmMs": 87584,
+        "hedges": 0,
+        "firstPreviewMs": 42116,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "research.plan",
+            "start": 0,
+            "ms": 1419,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.plan",
+            "start": 1,
+            "ms": 1418,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 759
+          },
+          {
+            "kind": "step",
+            "name": "research.search",
+            "start": 1419,
+            "ms": 3087,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "research.facts",
+            "start": 4506,
+            "ms": 4134,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.facts",
+            "start": 4507,
+            "ms": 4133,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 961
+          },
+          {
+            "kind": "step",
+            "name": "outline",
+            "start": 8641,
+            "ms": 6263,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "outline",
+            "start": 8643,
+            "ms": 6261,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 923
+          },
+          {
+            "kind": "step",
+            "name": "hooks",
+            "start": 14904,
+            "ms": 18884,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "writer",
+            "start": 14906,
+            "ms": 25561,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "hooks.generate",
+            "start": 14907,
+            "ms": 18881,
+            "ok": true,
+            "role": "creative",
+            "attempts": 1,
+            "reasoningTokens": 1646,
+            "firstTokenMs": 699
+          },
+          {
+            "kind": "llm",
+            "name": "writer.5-8",
+            "start": 14908,
+            "ms": 15680,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 1481,
+            "firstTokenMs": 925
+          },
+          {
+            "kind": "llm",
+            "name": "writer.1-4",
+            "start": 14908,
+            "ms": 25559,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 2292,
+            "firstTokenMs": 2539
+          },
+          {
+            "kind": "step",
+            "name": "tighten",
+            "start": 40468,
+            "ms": 1648,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "tighten",
+            "start": 40469,
+            "ms": 1646,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1046
+          },
+          {
+            "kind": "step",
+            "name": "proofread",
+            "start": 42116,
+            "ms": 1420,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "reflect",
+            "start": 42118,
+            "ms": 10334,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 42119,
+            "ms": 1079,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 726
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 42119,
+            "ms": 1416,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1326
+          },
+          {
+            "kind": "llm",
+            "name": "critic",
+            "start": 42120,
+            "ms": 6288,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 882
+          },
+          {
+            "kind": "llm",
+            "name": "critic.revise",
+            "start": 48409,
+            "ms": 4043,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 280,
+            "firstTokenMs": 991
+          },
+          {
+            "kind": "step",
+            "name": "tighten.final",
+            "start": 52453,
+            "ms": 0,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "proofread.revised",
+            "start": 52453,
+            "ms": 1181,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 52454,
+            "ms": 1180,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1118
+          }
+        ],
+        "checks": {
+          "slides": 8,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 3,
+          "richBlocksRendered": 3,
+          "numericClaims": 4,
+          "avgHeadline": 37
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 7.86,
+            "dimensions": {
+              "hook": 8,
+              "flow": 7,
+              "specificity": 6,
+              "clarity": 8,
+              "audienceFit": 9,
+              "accuracy": 10,
+              "actionability": 7
+            },
+            "hookCandidates": 4,
+            "hookScore": 8.6,
+            "facts": 12,
+            "sources": 5,
+            "researched": true,
+            "revisedSlides": [
+              4
+            ],
+            "rejectedRevisions": 0,
+            "tightened": 2,
+            "forcedFits": 1,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://waveup.com/blog/pitch-deck-mistakes-and-how-to-avoid-them",
+            "https://www.presentations.ai/blog/pitch-deck-statistics",
+            "https://www.etaya.in/blogs/why-most-pitch-decks-fail",
+            "https://preuve.ai/blog/startup-pitch-deck-guide",
+            "https://www.reddit.com/r/startups/comments/1pylg24/ive_seen_hundreds_of_pitch_decks_this_year_and"
+          ],
+          "hook": "Product first? That's a mistake."
+        },
+        "judge": {
+          "hook": 8,
+          "flow": 7,
+          "specificity": 6,
+          "clarity": 8,
+          "audienceFit": 9,
+          "accuracy": 5,
+          "expectations": 7,
+          "overall": 7,
+          "notes": "The hook is strong and contrarian, but the deck relies on an invented statistic (1% of decks lead to funding) which hurts accuracy. The flow is logical but the 'Why Now' slide advice feels slightly generic. Specificity is decent but could use more concrete examples or real investor quotes."
+        }
+      }
+    }
+  },
+  {
+    "id": "factcheck-brain",
+    "topic": "Is it true we only use 10% of our brains? Fact-check it",
+    "runs": {
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 46661,
+        "slides": [
+          {
+            "id": "template-1-s0-mueui4yx26",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "SHOCKING FACT",
+            "headline": "Using 100% of your brain would cause a seizure",
+            "body": "Neurologist John Henley says over a day you use 100% of the brain. But all at once? That's dangerous.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "cause a seizure",
+            "icon": "Brain",
+            "slots": {
+              "preHeader": "SHOCKING FACT",
+              "headline": "Using 100% of your brain would cause a seizure",
+              "body": "Neurologist John Henley says over a day you use 100% of the brain. But all at once? That's dangerous.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "cause a seizure"
+            },
+            "visual": {
+              "icon": "Brain"
+            }
+          },
+          {
+            "id": "template-1-s1-mueui4yx27",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "SCIENTIFIC REALITY",
+            "headline": "No Evidence for the 10% Figure",
+            "body": "No study has ever shown we use only 10% of our brain. That number is not scientific data.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "10% Figure",
+            "icon": "AlertCircle",
+            "slots": {
+              "preHeader": "SCIENTIFIC REALITY",
+              "headline": "No Evidence for the 10% Figure",
+              "body": "No study has ever shown we use only 10% of our brain. That number is not scientific data.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "10% Figure",
+              "statNumber": "10%",
+              "statLabel": "of brain usage? No study proves it."
+            },
+            "visual": {
+              "icon": "AlertCircle"
+            }
+          },
+          {
+            "id": "template-1-s2-mueui4yx28",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "WHAT THE SCANS REVEAL",
+            "headline": "Brain Imaging Shows Near-Constant Activity",
+            "body": "fMRI and PET scans demonstrate that many areas of the brain remain active even during simple tasks. Most of the brain is in use most of the time, even when resting or sleeping.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Near-Constant Activity",
+            "icon": "Microscope",
+            "slots": {
+              "preHeader": "WHAT THE SCANS REVEAL",
+              "headline": "Brain Imaging Shows Near-Constant Activity",
+              "body": "fMRI and PET scans demonstrate that many areas of the brain remain active even during simple tasks. Most of the brain is in use most of the time, even when resting or sleeping.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Near-Constant Activity"
+            },
+            "visual": {
+              "icon": "Microscope"
+            }
+          },
+          {
+            "id": "template-1-s3-mueui4yx29",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "NEUROLOGIST WEIGHS IN",
+            "headline": "Expert Confirms: Whole Brain Is Active",
+            "body": "Neurologist Barry Gordon at Johns Hopkins School of Medicine states: 'We use virtually every part of the brain, and (most of) the brain is active almost all the time.'",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Whole Brain Is Active",
+            "icon": "Star",
+            "slots": {
+              "preHeader": "NEUROLOGIST WEIGHS IN",
+              "headline": "Expert Confirms: Whole Brain Is Active",
+              "body": "Neurologist Barry Gordon at Johns Hopkins School of Medicine states: 'We use virtually every part of the brain, and (most of) the brain is active almost all the time.'",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Whole Brain Is Active"
+            },
+            "visual": {
+              "icon": "Star"
+            }
+          },
+          {
+            "id": "template-1-s4-mueui4yx2a",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "THE REAL STORY",
+            "headline": "Myth vs Reality of Brain Usage",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Myth vs Reality",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "THE REAL STORY",
+              "headline": "Myth vs Reality of Brain Usage",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Myth vs Reality",
+              "splitLeft": "Myth: We only use 10% of our brain.",
+              "splitRight": "Fact: Over a day you use 100% of the brain; using all at once could trigger a seizure."
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s5-mueui4yx2b",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "TAKEAWAY",
+            "headline": "The 10% Myth Is False",
+            "body": "Your brain is nearly always active. Share this fact and help bust the myth.",
+            "listItems": [],
+            "footer": "Share to educate others.",
+            "accentPhrase": "Myth Is False",
+            "icon": "CheckCircle",
+            "slots": {
+              "preHeader": "TAKEAWAY",
+              "headline": "The 10% Myth Is False",
+              "body": "Your brain is nearly always active. Share this fact and help bust the myth.",
+              "listItems": [],
+              "footer": "Share to educate others.",
+              "accentPhrase": "Myth Is False"
+            },
+            "visual": {
+              "icon": "CheckCircle"
+            }
+          }
+        ],
+        "tokens": 17082,
+        "costUsd": 0.00322,
+        "llmCalls": 8,
+        "retries": 0,
+        "llmMs": 61567,
+        "hedges": 0,
+        "firstPreviewMs": 41009,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "research.plan",
+            "start": 0,
+            "ms": 1715,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.plan",
+            "start": 1,
+            "ms": 1714,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 734
+          },
+          {
+            "kind": "step",
+            "name": "research.search",
+            "start": 1715,
+            "ms": 3909,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "research.facts",
+            "start": 5624,
+            "ms": 4282,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.facts",
+            "start": 5625,
+            "ms": 4281,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 878
+          },
+          {
+            "kind": "step",
+            "name": "outline",
+            "start": 9907,
+            "ms": 4798,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "outline",
+            "start": 9909,
+            "ms": 4795,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 964
+          },
+          {
+            "kind": "step",
+            "name": "hooks",
+            "start": 14705,
+            "ms": 13900,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "writer",
+            "start": 14706,
+            "ms": 26303,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "hooks.generate",
+            "start": 14707,
+            "ms": 13897,
+            "ok": true,
+            "role": "creative",
+            "attempts": 1,
+            "reasoningTokens": 1017,
+            "firstTokenMs": 2130
+          },
+          {
+            "kind": "llm",
+            "name": "writer.1-6",
+            "start": 14708,
+            "ms": 26301,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 2652,
+            "firstTokenMs": 876
+          },
+          {
+            "kind": "step",
+            "name": "tighten",
+            "start": 41009,
+            "ms": 0,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "proofread",
+            "start": 41009,
+            "ms": 3978,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "reflect",
+            "start": 41012,
+            "ms": 5648,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 41013,
+            "ms": 959,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 893
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 41013,
+            "ms": 3974,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 880
+          },
+          {
+            "kind": "llm",
+            "name": "critic",
+            "start": 41014,
+            "ms": 5646,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 1089
+          },
+          {
+            "kind": "step",
+            "name": "tighten.final",
+            "start": 46660,
+            "ms": 0,
+            "ok": true
+          }
+        ],
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 2,
+          "richBlocksRendered": 2,
+          "numericClaims": 6,
+          "avgHeadline": 35
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.5,
+            "dimensions": {
+              "hook": 8,
+              "flow": 7,
+              "specificity": 9,
+              "clarity": 9,
+              "audienceFit": 8,
+              "accuracy": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 8.8,
+            "facts": 12,
+            "sources": 4,
+            "researched": true,
+            "revisedSlides": [],
+            "rejectedRevisions": 0,
+            "tightened": 0,
+            "forcedFits": 0,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://www.psychologytoday.com/us/blog/common-sense-science/202505/beyond-the-myth-that-we-use-only-10-percent-of-our-brains",
+            "https://www.medicalnewstoday.com/articles/321060",
+            "https://speechneurolab.ca/en/mythe-ou-realite-nous-nutilisons-que-10-de-notre-cerveau",
+            "https://en.wikipedia.org/wiki/Ten-percent-of-the-brain_myth"
+          ],
+          "hook": "Using 100% of your brain would cause a seizure"
+        },
+        "judge": {
+          "hook": 7,
+          "flow": 8,
+          "specificity": 8,
+          "clarity": 9,
+          "audienceFit": 8,
+          "accuracy": 9,
+          "expectations": 9,
+          "overall": 8,
+          "notes": "The hero slide's claim that using 100% of the brain would cause a seizure is not directly supported by the cited neurologist's statement and could mislead; the deck could be tightened by removing the 'shocking' preHeader tone to better match the analytical voice."
+        }
+      }
+    }
+  },
+  {
+    "id": "story-airbnb",
+    "topic": "The story of how Airbnb survived by selling cereal",
+    "runs": {
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 37260,
+        "slides": [
+          {
+            "id": "template-3-s0-mueuiz8s2q",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "WAIT, WHAT?",
+            "headline": "Airbnb sold $40 cereal boxes in 2008",
+            "body": "Obama O's and Cap'n McCain's raised $30k for a failing startup and kept it alive.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "$40 cereal boxes",
+            "icon": "Package",
+            "slots": {
+              "preHeader": "WAIT, WHAT?",
+              "headline": "Airbnb sold $40 cereal boxes in 2008",
+              "body": "Obama O's and Cap'n McCain's raised $30k for a failing startup and kept it alive.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "$40 cereal boxes"
+            },
+            "visual": {
+              "icon": "Package"
+            }
+          },
+          {
+            "id": "template-3-s1-mueuiz8s2r",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE 2008 CRISIS",
+            "headline": "Broke, rejected, and $40,000 in debt",
+            "body": "In 2008, Airbnb (then AirBed & Breakfast) had almost no revenue, the founders were $40,000 in debt, and fundraising meetings kept ending in rejection.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Broke, rejected",
+            "icon": "TrendingDown",
+            "slots": {
+              "preHeader": "THE 2008 CRISIS",
+              "headline": "Broke, rejected, and $40,000 in debt",
+              "body": "In 2008, Airbnb (then AirBed & Breakfast) had almost no revenue, the founders were $40,000 in debt, and fundraising meetings kept ending in rejection.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Broke, rejected"
+            },
+            "visual": {
+              "icon": "TrendingDown"
+            }
+          },
+          {
+            "id": "template-3-s2-mueuiz8s2s",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "A WILD LAST RESORT",
+            "headline": "Their only option left: cereal",
+            "body": "With most options exhausted, the founders came up with a wild idea: sell limited-edition election-themed cereal boxes.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "cereal",
+            "icon": "Lightbulb",
+            "slots": {
+              "preHeader": "A WILD LAST RESORT",
+              "headline": "Their only option left: cereal",
+              "body": "With most options exhausted, the founders came up with a wild idea: sell limited-edition election-themed cereal boxes.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "cereal"
+            },
+            "visual": {
+              "icon": "Lightbulb"
+            }
+          },
+          {
+            "id": "template-3-s3-mueuiz8s2t",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "THE CEREAL HUSTLE DETAILS",
+            "headline": "1,000 boxes at $40 each",
+            "body": "",
+            "listItems": [
+              "Sold: About 1,000 boxes",
+              "Donated: 5% of profits to campaigns",
+              "Bought by: Celebrities like Perez Hilton and Katy Perry"
+            ],
+            "footer": "",
+            "accentPhrase": "1,000 boxes",
+            "icon": "DollarSign",
+            "slots": {
+              "preHeader": "THE CEREAL HUSTLE DETAILS",
+              "headline": "1,000 boxes at $40 each",
+              "body": "",
+              "listItems": [
+                "Sold: About 1,000 boxes",
+                "Donated: 5% of profits to campaigns",
+                "Bought by: Celebrities like Perez Hilton and Katy Perry"
+              ],
+              "footer": "",
+              "accentPhrase": "1,000 boxes"
+            },
+            "visual": {
+              "icon": "DollarSign"
+            }
+          },
+          {
+            "id": "template-3-s4-mueuiz8s2u",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "THE IMPACT",
+            "headline": "Three grand from cereal kept the dream alive",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "kept the dream alive",
+            "icon": "DollarSign",
+            "slots": {
+              "preHeader": "THE IMPACT",
+              "headline": "Three grand from cereal kept the dream alive",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "kept the dream alive",
+              "statNumber": "$30,000",
+              "statLabel": "raised from selling Obama O's and Cap'n McCain's boxes"
+            },
+            "visual": {
+              "icon": "DollarSign"
+            }
+          },
+          {
+            "id": "template-3-s5-mueuiz8s2v",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE TURNAROUND",
+            "headline": "That cash bought time to reach Y Combinator",
+            "body": "The $30,000 gave Airbnb financial runway until early 2009, when founders got into Y Combinator. Without that cereal money, the startup might not have lasted to find investors who finally said yes.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "bought",
+            "icon": "Rocket",
+            "slots": {
+              "preHeader": "THE TURNAROUND",
+              "headline": "That cash bought time to reach Y Combinator",
+              "body": "The $30,000 gave Airbnb financial runway until early 2009, when founders got into Y Combinator. Without that cereal money, the startup might not have lasted to find investors who finally said yes.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "bought"
+            },
+            "visual": {
+              "icon": "Rocket"
+            }
+          },
+          {
+            "id": "template-3-s6-mueuiz8s2w",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "THE TAKEAWAY",
+            "headline": "Sometimes the absurd idea keeps you alive",
+            "body": "Airbnb's cereal hustle wasn't a business strategy—it was a desperate, creative act that worked. Next time you're stuck",
+            "listItems": [],
+            "footer": "Keep hustling",
+            "accentPhrase": "absurd idea",
+            "icon": "Sparkles",
+            "slots": {
+              "preHeader": "THE TAKEAWAY",
+              "headline": "Sometimes the absurd idea keeps you alive",
+              "body": "Airbnb's cereal hustle wasn't a business strategy—it was a desperate, creative act that worked. Next time you're stuck",
+              "listItems": [],
+              "footer": "Keep hustling",
+              "accentPhrase": "absurd idea"
+            },
+            "visual": {
+              "icon": "Sparkles"
+            }
+          }
+        ],
+        "tokens": 15694,
+        "costUsd": 0.00272,
+        "llmCalls": 10,
+        "retries": 0,
+        "llmMs": 49136,
+        "hedges": 0,
+        "firstPreviewMs": 31259,
+        "timeline": [
+          {
+            "kind": "llm",
+            "name": "research.plan",
+            "start": 0,
+            "ms": 2029,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 740
+          },
+          {
+            "kind": "step",
+            "name": "research.plan",
+            "start": 0,
+            "ms": 2029,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "research.search",
+            "start": 2029,
+            "ms": 4345,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "research.facts",
+            "start": 6374,
+            "ms": 3634,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.facts",
+            "start": 6375,
+            "ms": 3633,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 835
+          },
+          {
+            "kind": "step",
+            "name": "outline",
+            "start": 10009,
+            "ms": 5553,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "outline",
+            "start": 10010,
+            "ms": 5552,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 896
+          },
+          {
+            "kind": "step",
+            "name": "hooks",
+            "start": 15562,
+            "ms": 8314,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "writer",
+            "start": 15563,
+            "ms": 14021,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "hooks.generate",
+            "start": 15564,
+            "ms": 8311,
+            "ok": true,
+            "role": "creative",
+            "attempts": 1,
+            "reasoningTokens": 445,
+            "firstTokenMs": 688
+          },
+          {
+            "kind": "llm",
+            "name": "writer.5-7",
+            "start": 15565,
+            "ms": 3655,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 33,
+            "firstTokenMs": 1845
+          },
+          {
+            "kind": "llm",
+            "name": "writer.1-4",
+            "start": 15565,
+            "ms": 14018,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 998,
+            "firstTokenMs": 903
+          },
+          {
+            "kind": "step",
+            "name": "tighten",
+            "start": 29585,
+            "ms": 1674,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "tighten",
+            "start": 29586,
+            "ms": 1672,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 685
+          },
+          {
+            "kind": "step",
+            "name": "proofread",
+            "start": 31259,
+            "ms": 3522,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "reflect",
+            "start": 31261,
+            "ms": 5998,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 31262,
+            "ms": 750,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 712
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 31262,
+            "ms": 3519,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 3427
+          },
+          {
+            "kind": "llm",
+            "name": "critic",
+            "start": 31262,
+            "ms": 5997,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 2146
+          },
+          {
+            "kind": "step",
+            "name": "tighten.final",
+            "start": 37259,
+            "ms": 0,
+            "ok": true
+          }
+        ],
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 1,
+          "richBlocksRendered": 1,
+          "numericClaims": 10,
+          "avgHeadline": 36
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.88,
+            "dimensions": {
+              "hook": 9,
+              "flow": 8,
+              "specificity": 9,
+              "clarity": 9,
+              "audienceFit": 9,
+              "accuracy": 10,
+              "fun": 8,
+              "narrative": 9
+            },
+            "hookCandidates": 4,
+            "hookScore": 8.6,
+            "facts": 12,
+            "sources": 5,
+            "researched": true,
+            "revisedSlides": [],
+            "rejectedRevisions": 0,
+            "tightened": 3,
+            "forcedFits": 1,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://www.facebook.com/vethathiriyoga/posts/did-you-know-airbnb-was-so-broke-in-2008-they-sold-cereal-boxes-to-survivenobody/1382701313298764",
+            "https://timesofindia.indiatimes.com/world/us/airbnb-was-so-broke-in-2008-that-its-founders-sold-obama-and-mccain-cereal-boxes-just-to-keep-the-company-alive-long-enough-for-investors-to-notice/articleshow/132283487.cms",
+            "https://www.instagram.com/p/DXh3-F3Csgi?hl=en",
+            "https://finance.yahoo.com/news/airbnb-sold-30-000-obama-204034867.html",
+            "https://isaacjeffries.com/blog/2020/7/15/what-are-your-obama-os"
+          ],
+          "hook": "Airbnb sold $40 cereal boxes in 2008"
+        },
+        "judge": {
+          "hook": 8,
+          "flow": 8,
+          "specificity": 9,
+          "clarity": 9,
+          "audienceFit": 9,
+          "accuracy": 10,
+          "expectations": 10,
+          "overall": 9,
+          "notes": "The deck is strong overall, but the hook could be slightly punchier to immediately grab attention, and the flow could be tightened by merging slides 4 and 5 to reduce repetition of the $30k figure."
+        }
+      }
+    }
+  },
+  {
+    "id": "fun-zoom",
+    "topic": "Funny carousel: the types of people in every Zoom meeting",
+    "runs": {
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 47142,
+        "slides": [
+          {
+            "id": "template-3-s0-mueuk14z3a",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "THE ZOOM DRAMA",
+            "headline": "Who's hiding behind that muted mic?",
+            "body": "There's a secret reality show unfolding in every meeting. Are you one of the characters?",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "hiding behind that muted mic",
+            "icon": "Users",
+            "slots": {
+              "preHeader": "THE ZOOM DRAMA",
+              "headline": "Who's hiding behind that muted mic?",
+              "body": "There's a secret reality show unfolding in every meeting. Are you one of the characters?",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "hiding behind that muted mic"
+            },
+            "visual": {
+              "icon": "Users"
+            }
+          },
+          {
+            "id": "template-3-s1-mueuk14z3b",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "CHARACTER #1",
+            "headline": "The Mute Button Hero",
+            "body": "They unmute to whisper 'sorry, go ahead' to their cat, then vanish for 20 minutes. You know them. You might be them.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Mute Button Hero",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "CHARACTER #1",
+              "headline": "The Mute Button Hero",
+              "body": "They unmute to whisper 'sorry, go ahead' to their cat, then vanish for 20 minutes. You know them. You might be them.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Mute Button Hero"
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-3-s2-mueuk14z3c",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "MORE CAST MEMBERS",
+            "headline": "Three more meeting stars",
+            "body": "",
+            "listItems": [
+              "1. The Screen Sharer who can't find the right tab",
+              "2. The Nodding Bobblehead who never speaks",
+              "3. The 'Can Everyone See My Screen?' panicker"
+            ],
+            "footer": "",
+            "accentPhrase": "Three more meeting stars",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "MORE CAST MEMBERS",
+              "headline": "Three more meeting stars",
+              "body": "",
+              "listItems": [
+                "1. The Screen Sharer who can't find the right tab",
+                "2. The Nodding Bobblehead who never speaks",
+                "3. The 'Can Everyone See My Screen?' panicker"
+              ],
+              "footer": "",
+              "accentPhrase": "Three more meeting stars"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-3-s3-mueuk14z3d",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE UNIVERSAL CAST",
+            "headline": "The universal cast",
+            "body": "Every meeting has at least three of these characters. You're not imagining it — it's a law of remote work.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "universal cast",
+            "icon": "TrendingUp",
+            "slots": {
+              "preHeader": "THE UNIVERSAL CAST",
+              "headline": "The universal cast",
+              "body": "Every meeting has at least three of these characters. You're not imagining it — it's a law of remote work.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "universal cast"
+            },
+            "visual": {
+              "icon": "TrendingUp"
+            }
+          },
+          {
+            "id": "template-3-s4-mueuk14z3e",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "RELATABLE CONFESSION",
+            "headline": "The veteran remote worker's truth",
+            "body": "As one veteran remote worker put it: 'I've seen the inside of my coworker's kitchen more than my own family's. And I still don't know what they actually do.'",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "veteran remote worker",
+            "icon": "MessageSquare",
+            "slots": {
+              "preHeader": "RELATABLE CONFESSION",
+              "headline": "The veteran remote worker's truth",
+              "body": "As one veteran remote worker put it: 'I've seen the inside of my coworker's kitchen more than my own family's. And I still don't know what they actually do.'",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "veteran remote worker"
+            },
+            "visual": {
+              "icon": "MessageSquare"
+            }
+          },
+          {
+            "id": "template-3-s5-mueuk14z3f",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "YOUR NEW STRATEGY",
+            "headline": "Turn meetings into a game",
+            "body": "Next time you're in a Zoom, play bingo with these types. You'll stop counting the minutes and start laughing.",
+            "listItems": [],
+            "footer": "That's the real win.",
+            "accentPhrase": "game",
+            "icon": "Target",
+            "slots": {
+              "preHeader": "YOUR NEW STRATEGY",
+              "headline": "Turn meetings into a game",
+              "body": "Next time you're in a Zoom, play bingo with these types. You'll stop counting the minutes and start laughing.",
+              "listItems": [],
+              "footer": "That's the real win.",
+              "accentPhrase": "game"
+            },
+            "visual": {
+              "icon": "Target"
+            }
+          }
+        ],
+        "tokens": 13563,
+        "costUsd": 0.00283,
+        "llmCalls": 8,
+        "retries": 0,
+        "llmMs": 63641,
+        "hedges": 0,
+        "firstPreviewMs": 38521,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "research.plan",
+            "start": 0,
+            "ms": 0,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "outline",
+            "start": 0,
+            "ms": 6103,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "outline",
+            "start": 1,
+            "ms": 6102,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 876
+          },
+          {
+            "kind": "step",
+            "name": "hooks",
+            "start": 6103,
+            "ms": 14657,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "hooks.generate",
+            "start": 6104,
+            "ms": 14656,
+            "ok": true,
+            "role": "creative",
+            "attempts": 1,
+            "reasoningTokens": 1270,
+            "firstTokenMs": 771
+          },
+          {
+            "kind": "step",
+            "name": "writer",
+            "start": 6104,
+            "ms": 32416,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "writer.1-6",
+            "start": 6105,
+            "ms": 32415,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 3240,
+            "firstTokenMs": 963
+          },
+          {
+            "kind": "step",
+            "name": "tighten",
+            "start": 38520,
+            "ms": 0,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "proofread",
+            "start": 38521,
+            "ms": 1252,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "reflect",
+            "start": 38522,
+            "ms": 7907,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 38525,
+            "ms": 614,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 608
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 38526,
+            "ms": 1247,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1195
+          },
+          {
+            "kind": "llm",
+            "name": "critic",
+            "start": 38526,
+            "ms": 3769,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 2257
+          },
+          {
+            "kind": "llm",
+            "name": "critic.revise",
+            "start": 42300,
+            "ms": 4128,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 659,
+            "firstTokenMs": 1030
+          },
+          {
+            "kind": "step",
+            "name": "tighten.final",
+            "start": 46429,
+            "ms": 0,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "proofread.revised",
+            "start": 46430,
+            "ms": 711,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 46431,
+            "ms": 710,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 658
+          }
+        ],
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 26
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 7.67,
+            "dimensions": {
+              "hook": 8,
+              "flow": 7,
+              "specificity": 6,
+              "clarity": 8,
+              "audienceFit": 9,
+              "fun": 8
+            },
+            "hookCandidates": 4,
+            "hookScore": 8,
+            "facts": 0,
+            "sources": 0,
+            "researched": false,
+            "revisedSlides": [
+              4
+            ],
+            "rejectedRevisions": 0,
+            "tightened": 0,
+            "forcedFits": 0,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 0,
+          "sources": [],
+          "hook": "Who's hiding behind that muted mic?"
+        },
+        "judge": {
+          "hook": 7,
+          "flow": 6,
+          "specificity": 8,
+          "clarity": 7,
+          "audienceFit": 9,
+          "accuracy": 10,
+          "expectations": 7,
+          "overall": 7,
+          "notes": "The cover slide is decent but could be punchier to guarantee a swipe; the ending slide feels slightly generic and doesn't land a strong comedic payoff."
+        }
+      }
+    }
+  },
+  {
+    "id": "source-4day",
+    "topic": "Turn this article into a carousel about the UK four-day week trial",
+    "runs": {
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 45075,
+        "slides": [
+          {
+            "id": "template-1-s0-mueul1bi3u",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "FOUR-DAY WEEK REVENUE IMPACT",
+            "headline": "Revenue rose 35% over the prior year",
+            "body": "During the six-month trial, revenue grew 1.4% on average; year-on-year it jumped 35%.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "35%",
+            "icon": "BarChart",
+            "slots": {
+              "preHeader": "FOUR-DAY WEEK REVENUE IMPACT",
+              "headline": "Revenue rose 35% over the prior year",
+              "body": "During the six-month trial, revenue grew 1.4% on average; year-on-year it jumped 35%.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "35%"
+            },
+            "visual": {
+              "icon": "BarChart"
+            }
+          },
+          {
+            "id": "template-1-s1-mueul1bi3v",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "BUSINESS IMPACT",
+            "headline": "57% Drop in Staff Leaving",
+            "body": "The number of staff leaving fell by 57% and sick days dropped by about two-thirds.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "57% Drop",
+            "icon": "Heart",
+            "slots": {
+              "preHeader": "BUSINESS IMPACT",
+              "headline": "57% Drop in Staff Leaving",
+              "body": "The number of staff leaving fell by 57% and sick days dropped by about two-thirds.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "57% Drop",
+              "statNumber": "57%",
+              "statLabel": "Fewer staff left their jobs during the trial"
+            },
+            "visual": {
+              "icon": "Heart"
+            }
+          },
+          {
+            "id": "template-1-s2-mueul1bi3w",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "FINANCIAL IMPACT",
+            "headline": "Revenue Grew 35% Year-on-Year",
+            "body": "During the trial, revenue rose 1.4% on average across data-sharing companies. Compared to a year earlier, revenue grew 35%.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Revenue Grew 35%",
+            "icon": "TrendingUp",
+            "slots": {
+              "preHeader": "FINANCIAL IMPACT",
+              "headline": "Revenue Grew 35% Year-on-Year",
+              "body": "During the trial, revenue rose 1.4% on average across data-sharing companies. Compared to a year earlier, revenue grew 35%.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Revenue Grew 35%",
+              "statNumber": "35%",
+              "statLabel": "Revenue growth compared to same period a year earlier"
+            },
+            "visual": {
+              "icon": "TrendingUp"
+            }
+          },
+          {
+            "id": "template-1-s3-mueul1bi3x",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "IMPLEMENTATION",
+            "headline": "Three Implementation Models",
+            "body": "",
+            "listItems": [
+              "Friday closure: All staff off on Fridays.",
+              "Staggered days: Different teams off on different days.",
+              "Annualised average: 32-hour week averaged over the year."
+            ],
+            "footer": "",
+            "accentPhrase": "Three Implementation Models",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "IMPLEMENTATION",
+              "headline": "Three Implementation Models",
+              "body": "",
+              "listItems": [
+                "Friday closure: All staff off on Fridays.",
+                "Staggered days: Different teams off on different days.",
+                "Annualised average: 32-hour week averaged over the year."
+              ],
+              "footer": "",
+              "accentPhrase": "Three Implementation Models"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s4-mueul1bi3y",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "KEY SUCCESS FACTOR",
+            "headline": "Preparation and process redesign predicted success",
+            "body": "The organisers said the biggest predictor of success was cutting low-value meetings and redesigning processes before the trial started.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Preparation and process redesign",
+            "icon": "Settings",
+            "slots": {
+              "preHeader": "KEY SUCCESS FACTOR",
+              "headline": "Preparation and process redesign predicted success",
+              "body": "The organisers said the biggest predictor of success was cutting low-value meetings and redesigning processes before the trial started.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Preparation and process redesign"
+            },
+            "visual": {
+              "icon": "Settings"
+            }
+          },
+          {
+            "id": "template-1-s5-mueul1bi3z",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "CRITICAL PERSPECTIVE",
+            "headline": "Volunteer bias and operational hurdles",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "operational hurdles",
+            "icon": "AlertCircle",
+            "slots": {
+              "preHeader": "CRITICAL PERSPECTIVE",
+              "headline": "Volunteer bias and operational hurdles",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "operational hurdles",
+              "splitLeft": "Criticism: Companies volunteered, so likely better suited than average; trial was short.",
+              "splitRight": "Challenge: Customer-facing firms struggled with coverage and needed rota changes."
+            },
+            "visual": {
+              "icon": "AlertCircle"
+            }
+          },
+          {
+            "id": "template-1-s6-mueul1bi40",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "KEY TAKEAWAY",
+            "headline": "Preparation and context matter for success",
+            "body": "A four-day week works. Preparation and context matter. 56 of 61 continued.",
+            "listItems": [],
+            "footer": "Consider your context.",
+            "accentPhrase": "Preparation and context",
+            "icon": "Compass",
+            "slots": {
+              "preHeader": "KEY TAKEAWAY",
+              "headline": "Preparation and context matter for success",
+              "body": "A four-day week works. Preparation and context matter. 56 of 61 continued.",
+              "listItems": [],
+              "footer": "Consider your context.",
+              "accentPhrase": "Preparation and context"
+            },
+            "visual": {
+              "icon": "Compass"
+            }
+          }
+        ],
+        "tokens": 21139,
+        "costUsd": 0.00398,
+        "llmCalls": 10,
+        "retries": 0,
+        "llmMs": 80483,
+        "hedges": 0,
+        "firstPreviewMs": 43285,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "research.plan",
+            "start": 1,
+            "ms": 1944,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.plan",
+            "start": 2,
+            "ms": 1943,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 674
+          },
+          {
+            "kind": "step",
+            "name": "research.search",
+            "start": 1945,
+            "ms": 4706,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "research.facts",
+            "start": 6651,
+            "ms": 4645,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.facts",
+            "start": 6652,
+            "ms": 4644,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1649
+          },
+          {
+            "kind": "step",
+            "name": "outline",
+            "start": 11297,
+            "ms": 5087,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "outline",
+            "start": 11298,
+            "ms": 5086,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 929
+          },
+          {
+            "kind": "step",
+            "name": "hooks",
+            "start": 16384,
+            "ms": 16437,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "writer",
+            "start": 16385,
+            "ms": 25450,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "hooks.generate",
+            "start": 16386,
+            "ms": 16435,
+            "ok": true,
+            "role": "creative",
+            "attempts": 1,
+            "reasoningTokens": 1329,
+            "firstTokenMs": 719
+          },
+          {
+            "kind": "llm",
+            "name": "writer.1-4",
+            "start": 16386,
+            "ms": 22128,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 2327,
+            "firstTokenMs": 902
+          },
+          {
+            "kind": "llm",
+            "name": "writer.5-7",
+            "start": 16387,
+            "ms": 25447,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 2730,
+            "firstTokenMs": 957
+          },
+          {
+            "kind": "step",
+            "name": "tighten",
+            "start": 41835,
+            "ms": 1450,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "tighten",
+            "start": 41837,
+            "ms": 1448,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 972
+          },
+          {
+            "kind": "step",
+            "name": "proofread",
+            "start": 43285,
+            "ms": 805,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "reflect",
+            "start": 43286,
+            "ms": 1789,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 43291,
+            "ms": 771,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 695
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 43292,
+            "ms": 798,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 723
+          },
+          {
+            "kind": "llm",
+            "name": "critic",
+            "start": 43292,
+            "ms": 1783,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 957
+          },
+          {
+            "kind": "step",
+            "name": "tighten.final",
+            "start": 45075,
+            "ms": 0,
+            "ok": true
+          }
+        ],
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 3,
+          "richBlocksRendered": 3,
+          "numericClaims": 10,
+          "avgHeadline": 35
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 9,
+            "dimensions": {
+              "hook": 8,
+              "flow": 9,
+              "specificity": 9,
+              "clarity": 9,
+              "audienceFit": 9,
+              "accuracy": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 9.2,
+            "facts": 12,
+            "sources": 0,
+            "researched": true,
+            "revisedSlides": [],
+            "rejectedRevisions": 0,
+            "tightened": 2,
+            "forcedFits": 0,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [],
+          "hook": "Revenue rose 35% over the prior year"
+        },
+        "judge": {
+          "hook": 7,
+          "flow": 8,
+          "specificity": 9,
+          "clarity": 8,
+          "audienceFit": 8,
+          "accuracy": 10,
+          "expectations": 9,
+          "overall": 8,
+          "notes": "The hero slide uses a year-on-year comparison that could mislead without context; the deck repeats the revenue stat across slides 1 and 3, creating redundancy."
+        }
+      }
+    }
+  },
+  {
+    "id": "es-sleep",
+    "topic": "Crea un carrusel sobre hábitos de sueño para estudiantes universitarios",
+    "runs": {
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 37289,
+        "slides": [
+          {
+            "id": "template-4-s0-mueulvl34d",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "SOLUCIÓN FÁCIL",
+            "headline": "Duerme mejor esta noche con un solo cambio en tu rutina",
+            "body": "Ajusta tu hora de acostarte 30 minutos y verás la diferencia en tu energía mañana.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "un solo cambio",
+            "icon": "Moon",
+            "slots": {
+              "preHeader": "SOLUCIÓN FÁCIL",
+              "headline": "Duerme mejor esta noche con un solo cambio en tu rutina",
+              "body": "Ajusta tu hora de acostarte 30 minutos y verás la diferencia en tu energía mañana.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "un solo cambio"
+            },
+            "visual": {
+              "icon": "Moon"
+            }
+          },
+          {
+            "id": "template-4-s1-mueulvl34e",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "EL PROBLEMA ES REAL",
+            "headline": "La mayoría de universitarios duerme mal",
+            "body": "No es tu culpa: el ritmo universitario lo dificulta. Pero hay pasos que sí puedes controlar para cambiar esta cifra.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "duerme mal",
+            "icon": "AlertCircle",
+            "slots": {
+              "preHeader": "EL PROBLEMA ES REAL",
+              "headline": "La mayoría de universitarios duerme mal",
+              "body": "No es tu culpa: el ritmo universitario lo dificulta. Pero hay pasos que sí puedes controlar para cambiar esta cifra.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "duerme mal",
+              "statNumber": "70%",
+              "statLabel": "de universitarios reportan sueño insuficiente"
+            },
+            "visual": {
+              "icon": "AlertCircle"
+            }
+          },
+          {
+            "id": "template-4-s2-mueulvl34f",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "PASO 1",
+            "headline": "Horario fijo: tu cerebro ama la rutina",
+            "body": "",
+            "listItems": [
+              "Acuéstate: misma hora cada noche",
+              "Levántate: misma hora cada mañana",
+              "Fines de semana: mantén el horario",
+              "Consistencia: clave para dormir mejor"
+            ],
+            "footer": "",
+            "accentPhrase": "Horario fijo",
+            "icon": "Clock",
+            "slots": {
+              "preHeader": "PASO 1",
+              "headline": "Horario fijo: tu cerebro ama la rutina",
+              "body": "",
+              "listItems": [
+                "Acuéstate: misma hora cada noche",
+                "Levántate: misma hora cada mañana",
+                "Fines de semana: mantén el horario",
+                "Consistencia: clave para dormir mejor"
+              ],
+              "footer": "",
+              "accentPhrase": "Horario fijo"
+            },
+            "visual": {
+              "icon": "Clock"
+            }
+          },
+          {
+            "id": "template-4-s3-mueulvl34g",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "PASO 2",
+            "headline": "Apaga las pantallas antes de dormir",
+            "body": "La luz azul de tu móvil o laptop engaña a tu cerebro y retrasa el sueño. Apaga las pantallas 30-60 minutos antes de acostarte. Usa ese tiempo para leer, estirar o relajarte.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Apaga las pantallas",
+            "icon": "Moon",
+            "slots": {
+              "preHeader": "PASO 2",
+              "headline": "Apaga las pantallas antes de dormir",
+              "body": "La luz azul de tu móvil o laptop engaña a tu cerebro y retrasa el sueño. Apaga las pantallas 30-60 minutos antes de acostarte. Usa ese tiempo para leer, estirar o relajarte.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Apaga las pantallas"
+            },
+            "visual": {
+              "icon": "Moon"
+            }
+          },
+          {
+            "id": "template-4-s4-mueulvl34h",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "PASO 3",
+            "headline": "Ejercicio: mito vs realidad",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Ejercicio",
+            "icon": "Bike",
+            "slots": {
+              "preHeader": "PASO 3",
+              "headline": "Ejercicio: mito vs realidad",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Ejercicio",
+              "splitLeft": "Mito: si hago ejercicio de noche no duermo.",
+              "splitRight": "Realidad: el ejercicio regular mejora tu sueño; solo evítalo 2 horas antes."
+            },
+            "visual": {
+              "icon": "Bike"
+            }
+          },
+          {
+            "id": "template-4-s5-mueulvl34i",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "TU PRÓXIMO PASO",
+            "headline": "Empieza con un solo paso esta noche",
+            "body": "Dormir 7-9 horas (lo que recomiendan los expertos) te ayuda a rendir mejor y sentirte bien. Tu cuerpo y tus notas te lo agradecerán.",
+            "listItems": [],
+            "footer": "Síguenos para más",
+            "accentPhrase": "un solo paso",
+            "icon": "CheckCircle",
+            "slots": {
+              "preHeader": "TU PRÓXIMO PASO",
+              "headline": "Empieza con un solo paso esta noche",
+              "body": "Dormir 7-9 horas (lo que recomiendan los expertos) te ayuda a rendir mejor y sentirte bien. Tu cuerpo y tus notas te lo agradecerán.",
+              "listItems": [],
+              "footer": "Síguenos para más",
+              "accentPhrase": "un solo paso"
+            },
+            "visual": {
+              "icon": "CheckCircle"
+            }
+          }
+        ],
+        "tokens": 14218,
+        "costUsd": 0.00245,
+        "llmCalls": 8,
+        "retries": 0,
+        "llmMs": 37863,
+        "hedges": 0,
+        "firstPreviewMs": 33193,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "research.plan",
+            "start": 0,
+            "ms": 1648,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.plan",
+            "start": 1,
+            "ms": 1647,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 776
+          },
+          {
+            "kind": "step",
+            "name": "research.search",
+            "start": 1648,
+            "ms": 5007,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "research.facts",
+            "start": 6655,
+            "ms": 4485,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.facts",
+            "start": 6656,
+            "ms": 4484,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1534
+          },
+          {
+            "kind": "step",
+            "name": "outline",
+            "start": 11141,
+            "ms": 5698,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "outline",
+            "start": 11142,
+            "ms": 5697,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 883
+          },
+          {
+            "kind": "step",
+            "name": "hooks",
+            "start": 16839,
+            "ms": 16354,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "hooks.generate",
+            "start": 16841,
+            "ms": 16352,
+            "ok": true,
+            "role": "creative",
+            "attempts": 1,
+            "reasoningTokens": 1409,
+            "firstTokenMs": 769
+          },
+          {
+            "kind": "step",
+            "name": "writer",
+            "start": 16841,
+            "ms": 3757,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "writer.1-6",
+            "start": 16842,
+            "ms": 3756,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 10,
+            "firstTokenMs": 1065
+          },
+          {
+            "kind": "step",
+            "name": "tighten",
+            "start": 33193,
+            "ms": 0,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "proofread",
+            "start": 33193,
+            "ms": 956,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "reflect",
+            "start": 33195,
+            "ms": 4093,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 33196,
+            "ms": 883,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 689
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 33196,
+            "ms": 953,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 890
+          },
+          {
+            "kind": "llm",
+            "name": "critic",
+            "start": 33197,
+            "ms": 4091,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 914
+          },
+          {
+            "kind": "step",
+            "name": "tighten.final",
+            "start": 37288,
+            "ms": 0,
+            "ok": true
+          }
+        ],
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 2,
+          "richBlocksRendered": 2,
+          "numericClaims": 1,
+          "avgHeadline": 38
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.71,
+            "dimensions": {
+              "hook": 8,
+              "flow": 9,
+              "specificity": 7,
+              "clarity": 9,
+              "audienceFit": 9,
+              "accuracy": 10,
+              "actionability": 9
+            },
+            "hookCandidates": 4,
+            "hookScore": 8.4,
+            "facts": 12,
+            "sources": 7,
+            "researched": true,
+            "revisedSlides": [],
+            "rejectedRevisions": 0,
+            "tightened": 0,
+            "forcedFits": 0,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://onetwenty.com/blog/sleep-deprivation-college-students-statistics",
+            "https://research.com/education/sleep-and-academic-performance-statistics",
+            "https://news.web.baylor.edu/news/story/2026/college-students-are-getting-less-restful-sleep-they-did-20-years-ago",
+            "https://www.cdc.gov/pcd/issues/2022/22_0060.htm",
+            "https://nootropicsdepot.com/statistics/sleep-deprivation-statistics-americans",
+            "https://www.sleepmeeting.org/poor-sleep-health-in-adolescence-linked-to-hospitalization-and-worse-health-in-young-adulthood",
+            "https://www.healthline.com/health/sleep-hygiene"
+          ],
+          "hook": "Duerme mejor esta noche con un solo cambio en tu rutina"
+        },
+        "judge": {
+          "hook": 7,
+          "flow": 8,
+          "specificity": 7,
+          "clarity": 8,
+          "audienceFit": 8,
+          "accuracy": 6,
+          "expectations": 7,
+          "overall": 7,
+          "notes": "The 70% statistic on slide 2 appears invented, which hurts accuracy. The cover is solid but could be more intriguing for students."
+        }
+      }
+    }
+  },
+  {
+    "id": "opinion-remote",
+    "topic": "Remote work is better for deep work than offices. Argue it with nuance",
+    "runs": {
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 51839,
+        "slides": [
+          {
+            "id": "template-4-s0-mueun0uu4y",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "FOCUS CRISIS",
+            "headline": "Your focused work sessions last just 13 minutes",
+            "body": "The average knowledge worker loses nearly 4 hours daily to interruptions. Remote work changes that.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "13 minutes",
+            "icon": "Brain",
+            "slots": {
+              "preHeader": "FOCUS CRISIS",
+              "headline": "Your focused work sessions last just 13 minutes",
+              "body": "The average knowledge worker loses nearly 4 hours daily to interruptions. Remote work changes that.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "13 minutes"
+            },
+            "visual": {
+              "icon": "Brain"
+            }
+          },
+          {
+            "id": "template-4-s1-mueun0uu4z",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "THE ATTENTION CRISIS",
+            "headline": "Interruptions steal nearly half the day",
+            "body": "The average knowledge worker loses nearly 4 hours daily to interruptions and task-switching, costing $650 billion annually.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "nearly half the day",
+            "icon": "Clock",
+            "slots": {
+              "preHeader": "THE ATTENTION CRISIS",
+              "headline": "Interruptions steal nearly half the day",
+              "body": "The average knowledge worker loses nearly 4 hours daily to interruptions and task-switching, costing $650 billion annually.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "nearly half the day",
+              "statNumber": "4 hours",
+              "statLabel": "lost to interruptions and task-switching daily"
+            },
+            "visual": {
+              "icon": "Clock"
+            }
+          },
+          {
+            "id": "template-4-s2-mueun0uu50",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "OPEN OFFICE FLAWS",
+            "headline": "Noise levels in open offices exceed the threshold for focused work",
+            "body": "Open-plan office noise routinely reaches 60–65 decibels, well above the 55 dB threshold for concentrated intellectual work.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Noise levels",
+            "icon": "AlertCircle",
+            "slots": {
+              "preHeader": "OPEN OFFICE FLAWS",
+              "headline": "Noise levels in open offices exceed the threshold for focused work",
+              "body": "Open-plan office noise routinely reaches 60–65 decibels, well above the 55 dB threshold for concentrated intellectual work.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Noise levels"
+            },
+            "visual": {
+              "icon": "AlertCircle"
+            }
+          },
+          {
+            "id": "template-4-s3-mueun0uu51",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "REMOTE WORK WINS",
+            "headline": "Three key measures of deep work edge",
+            "body": "",
+            "listItems": [
+              "Deep work tools: 51% of time",
+              "Code commits: 35% more per day",
+              "Daily deep focus: 3h36m, 29% improvement"
+            ],
+            "footer": "",
+            "accentPhrase": "deep",
+            "icon": "TrendingUp",
+            "slots": {
+              "preHeader": "REMOTE WORK WINS",
+              "headline": "Three key measures of deep work edge",
+              "body": "",
+              "listItems": [
+                "Deep work tools: 51% of time",
+                "Code commits: 35% more per day",
+                "Daily deep focus: 3h36m, 29% improvement"
+              ],
+              "footer": "",
+              "accentPhrase": "deep"
+            },
+            "visual": {
+              "icon": "TrendingUp"
+            }
+          },
+          {
+            "id": "template-4-s4-mueun0uu52",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "MYTH VS. REALITY",
+            "headline": "Only 39% of work time is deep focus",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Only 39%",
+            "icon": "AlertCircle",
+            "slots": {
+              "preHeader": "MYTH VS. REALITY",
+              "headline": "Only 39% of work time is deep focus",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Only 39%",
+              "splitLeft": "Myth: Open offices keep teams aligned and productive.",
+              "splitRight": "Reality: Only 39% of tracked time is deep focus; average session lasts 13 minutes."
+            },
+            "visual": {
+              "icon": "AlertCircle"
+            }
+          },
+          {
+            "id": "template-4-s5-mueun0uu53",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "CREDIBLE EVIDENCE",
+            "headline": "Stanford economist confirms remote productivity gains",
+            "body": "Nicholas Bloom found a 13% productivity boost among remote call center employees, rising to 22% when workers chose their location. This large-scale study confirms remote work enables better deep work.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "remote productivity gains",
+            "icon": "GraduationCap",
+            "slots": {
+              "preHeader": "CREDIBLE EVIDENCE",
+              "headline": "Stanford economist confirms remote productivity gains",
+              "body": "Nicholas Bloom found a 13% productivity boost among remote call center employees, rising to 22% when workers chose their location. This large-scale study confirms remote work enables better deep work.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "remote productivity gains"
+            },
+            "visual": {
+              "icon": "GraduationCap"
+            }
+          },
+          {
+            "id": "template-4-s6-mueun0uu54",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "THE TAKEAWAY",
+            "headline": "Let the evidence guide your policies",
+            "body": "Consistent data shows remote work enables more deep work. McKinsey found no clear winner among models, yet evidence favors remote.",
+            "listItems": [],
+            "footer": "Follow for more",
+            "accentPhrase": "evidence guide",
+            "icon": "BarChart",
+            "slots": {
+              "preHeader": "THE TAKEAWAY",
+              "headline": "Let the evidence guide your policies",
+              "body": "Consistent data shows remote work enables more deep work. McKinsey found no clear winner among models, yet evidence favors remote.",
+              "listItems": [],
+              "footer": "Follow for more",
+              "accentPhrase": "evidence guide"
+            },
+            "visual": {
+              "icon": "BarChart"
+            }
+          }
+        ],
+        "tokens": 21892,
+        "costUsd": 0.00403,
+        "llmCalls": 12,
+        "retries": 0,
+        "llmMs": 73255,
+        "hedges": 0,
+        "firstPreviewMs": 36624,
+        "timeline": [
+          {
+            "kind": "llm",
+            "name": "research.plan",
+            "start": 1,
+            "ms": 1568,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 716
+          },
+          {
+            "kind": "step",
+            "name": "research.plan",
+            "start": 1,
+            "ms": 1568,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "research.search",
+            "start": 1569,
+            "ms": 2995,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "research.facts",
+            "start": 4564,
+            "ms": 4519,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.facts",
+            "start": 4565,
+            "ms": 4518,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 915
+          },
+          {
+            "kind": "step",
+            "name": "outline",
+            "start": 9083,
+            "ms": 5653,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "outline",
+            "start": 9084,
+            "ms": 5652,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 901
+          },
+          {
+            "kind": "step",
+            "name": "hooks",
+            "start": 14736,
+            "ms": 16503,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "writer",
+            "start": 14737,
+            "ms": 20405,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "hooks.generate",
+            "start": 14739,
+            "ms": 16500,
+            "ok": true,
+            "role": "creative",
+            "attempts": 1,
+            "reasoningTokens": 1445,
+            "firstTokenMs": 797
+          },
+          {
+            "kind": "llm",
+            "name": "writer.1-4",
+            "start": 14739,
+            "ms": 20403,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 1983,
+            "firstTokenMs": 935
+          },
+          {
+            "kind": "llm",
+            "name": "writer.5-7",
+            "start": 14740,
+            "ms": 6368,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 220,
+            "firstTokenMs": 955
+          },
+          {
+            "kind": "step",
+            "name": "tighten",
+            "start": 35142,
+            "ms": 1481,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "tighten",
+            "start": 35145,
+            "ms": 1478,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 769
+          },
+          {
+            "kind": "step",
+            "name": "proofread",
+            "start": 36624,
+            "ms": 801,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "reflect",
+            "start": 36625,
+            "ms": 14370,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 36626,
+            "ms": 799,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 724
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 36627,
+            "ms": 762,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 724
+          },
+          {
+            "kind": "llm",
+            "name": "critic",
+            "start": 36627,
+            "ms": 3675,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 802
+          },
+          {
+            "kind": "llm",
+            "name": "critic.revise",
+            "start": 40304,
+            "ms": 10690,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 1073,
+            "firstTokenMs": 1039
+          },
+          {
+            "kind": "step",
+            "name": "tighten.final",
+            "start": 50995,
+            "ms": 0,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "proofread.revised",
+            "start": 50995,
+            "ms": 843,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 50996,
+            "ms": 842,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 837
+          }
+        ],
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 2,
+          "richBlocksRendered": 2,
+          "numericClaims": 7,
+          "avgHeadline": 45
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.17,
+            "dimensions": {
+              "hook": 8,
+              "flow": 7,
+              "specificity": 9,
+              "clarity": 8,
+              "audienceFit": 8,
+              "accuracy": 9
+            },
+            "hookCandidates": 4,
+            "hookScore": 9.4,
+            "facts": 12,
+            "sources": 8,
+            "researched": true,
+            "revisedSlides": [
+              7
+            ],
+            "rejectedRevisions": 0,
+            "tightened": 2,
+            "forcedFits": 1,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://www.webwork-tracker.com/blog/remote-work-study-2026",
+            "https://www.employee-monitoring.net/resources/remote-work-productivity-statistics-2026",
+            "https://emailanalytics.com/does-working-from-home-increase-productivity",
+            "https://www.makerstations.io/workplace-distraction-statistics",
+            "https://speakwiseapp.com/blog/deep-work-statistics",
+            "https://www.activtrak.com/solutions/productivity-management/workplace-productivity-statistics",
+            "https://speakwiseapp.com/blog/open-office-statistics",
+            "https://www.gable.to/blog/post/return-to-office"
+          ],
+          "hook": "Your focused work sessions last just 13 minutes"
+        },
+        "judge": {
+          "hook": 7,
+          "flow": 6,
+          "specificity": 8,
+          "clarity": 7,
+          "audienceFit": 8,
+          "accuracy": 5,
+          "expectations": 6,
+          "overall": 6,
+          "notes": "Two biggest problems: (1) Accuracy is low because the deck uses invented statistics (e.g., '51% of time' for deep work tools, '35% more code commits per day', '3h36m, 29% improvement') without citing real sources, violating the 'no fake data' requirement. (2) Flow suffers from repetition: slides 1 and 5 both mention '13 minutes' and '4 hours lost', and slides 2 and 5 repeat the '4 hours' stat, making the argument feel redundant rather than building."
+        }
+      }
+    }
+  },
+  {
+    "id": "deep-transformers",
+    "topic": "A 12 slide deep dive on how transformer models work",
+    "runs": {
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 39703,
+        "slides": [
+          {
+            "id": "template-1-s0-mueunxqv5t",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "TRANSFORMER ARCHITECTURE",
+            "headline": "The six components of every modern LLM",
+            "body": "From tokenizer to sampler: exactly how Claude, GPT-5.4, Gemini, and Llama are built.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "six components",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "TRANSFORMER ARCHITECTURE",
+              "headline": "The six components of every modern LLM",
+              "body": "From tokenizer to sampler: exactly how Claude, GPT-5.4, Gemini, and Llama are built.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "six components"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s1-mueunxqv5u",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "CORE DEFINITION",
+            "headline": "A neural network built on attention",
+            "body": "At its core, a Transformer is a neural network architecture that uses attention mechanisms to process sequential data, enabling it to capture relationships regardless of distance.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "built on attention",
+            "icon": "Brain",
+            "slots": {
+              "preHeader": "CORE DEFINITION",
+              "headline": "A neural network built on attention",
+              "body": "At its core, a Transformer is a neural network architecture that uses attention mechanisms to process sequential data, enabling it to capture relationships regardless of distance.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "built on attention"
+            },
+            "visual": {
+              "icon": "Brain"
+            }
+          },
+          {
+            "id": "template-1-s2-mueunxqv5v",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "ARCHITECTURE OVERVIEW",
+            "headline": "Six components, three stages",
+            "body": "",
+            "listItems": [
+              "Input processing: tokenizer and embedding layer map text to vectors",
+              "Core computation: positional encoding and transformer blocks (N layers)",
+              "Output generation: output head and sampler produce the final token"
+            ],
+            "footer": "",
+            "accentPhrase": "three stages",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "ARCHITECTURE OVERVIEW",
+              "headline": "Six components, three stages",
+              "body": "",
+              "listItems": [
+                "Input processing: tokenizer and embedding layer map text to vectors",
+                "Core computation: positional encoding and transformer blocks (N layers)",
+                "Output generation: output head and sampler produce the final token"
+              ],
+              "footer": "",
+              "accentPhrase": "three stages"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s3-mueunxqv5w",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "FIRST STAGE",
+            "headline": "From text to vectors",
+            "body": "The tokenizer splits text into tokens (words, subwords, or characters). Then the embedding layer maps each token to a dense vector representation, capturing semantic meaning.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "From text to vectors",
+            "icon": "Book",
+            "slots": {
+              "preHeader": "FIRST STAGE",
+              "headline": "From text to vectors",
+              "body": "The tokenizer splits text into tokens (words, subwords, or characters). Then the embedding layer maps each token to a dense vector representation, capturing semantic meaning.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "From text to vectors"
+            },
+            "visual": {
+              "icon": "Book"
+            }
+          },
+          {
+            "id": "template-1-s4-mueunxqv5x",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "POSITIONAL INFORMATION",
+            "headline": "Why order matters",
+            "body": "Attention mechanisms are permutation-invariant—they don't know position. Positional encoding injects token order information, allowing the model to understand sequence.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Why order matters",
+            "icon": "Compass",
+            "slots": {
+              "preHeader": "POSITIONAL INFORMATION",
+              "headline": "Why order matters",
+              "body": "Attention mechanisms are permutation-invariant—they don't know position. Positional encoding injects token order information, allowing the model to understand sequence.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Why order matters"
+            },
+            "visual": {
+              "icon": "Compass"
+            }
+          },
+          {
+            "id": "template-1-s5-mueunxqv5y",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "ATTENTION MECHANISM",
+            "headline": "The core mechanism: self-attention",
+            "body": "Self-attention computes relationships between every pair of tokens in the context. Using query, key, and value vectors, it determines relevance and produces context-aware representations.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "self-attention",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "ATTENTION MECHANISM",
+              "headline": "The core mechanism: self-attention",
+              "body": "Self-attention computes relationships between every pair of tokens in the context. Using query, key, and value vectors, it determines relevance and produces context-aware representations.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "self-attention"
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-1-s6-mueunxqv5z",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "COMPONENT 4: MULTI-HEAD ATTENTION",
+            "headline": "Multi-head attention runs parallel queries",
+            "body": "Instead of a single attention function, multi-head attention runs several in parallel. Each head learns to focus on different relationships—like syntax, semantics, or entity references—enabling richer context understanding.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "parallel queries",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "COMPONENT 4: MULTI-HEAD ATTENTION",
+              "headline": "Multi-head attention runs parallel queries",
+              "body": "Instead of a single attention function, multi-head attention runs several in parallel. Each head learns to focus on different relationships—like syntax, semantics, or entity references—enabling richer context understanding.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "parallel queries"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s7-mueunxqv60",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "KEY LIMITATION",
+            "headline": "Quadratic cost limits context length",
+            "body": "Classic self-attention's cost scales as O(n²) with sequence length n, making long contexts computationally prohibitive.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Quadratic cost",
+            "icon": "TrendingDown",
+            "slots": {
+              "preHeader": "KEY LIMITATION",
+              "headline": "Quadratic cost limits context length",
+              "body": "Classic self-attention's cost scales as O(n²) with sequence length n, making long contexts computationally prohibitive.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Quadratic cost",
+              "statNumber": "O(n²)",
+              "statLabel": "Growth factor of attention cost with sequence length"
+            },
+            "visual": {
+              "icon": "TrendingDown"
+            }
+          },
+          {
+            "id": "template-1-s8-mueunxqv61",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "SOLVING THE LIMITATION",
+            "headline": "Advances address structural limitations",
+            "body": "Every architectural advance in 2026—Mixture of Experts (MoE), RoPE scaling, linear attention approximations—is a specific answer to structural limitations like quadratic cost, memory bandwidth, or fixed context windows.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "structural limitations",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "SOLVING THE LIMITATION",
+              "headline": "Advances address structural limitations",
+              "body": "Every architectural advance in 2026—Mixture of Experts (MoE), RoPE scaling, linear attention approximations—is a specific answer to structural limitations like quadratic cost, memory bandwidth, or fixed context windows.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "structural limitations"
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-1-s9-mueunxqv62",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "MODERN IMPROVEMENTS",
+            "headline": "Three key advances in 2026",
+            "body": "",
+            "listItems": [
+              "Scalability: Mixture of Experts (MoE) enables efficient scaling.",
+              "Speed: FlashAttention-3 optimizes attention computation.",
+              "Context length: RoPE scaling extends usable sequence length."
+            ],
+            "footer": "",
+            "accentPhrase": "Three key advances",
+            "icon": "Rocket",
+            "slots": {
+              "preHeader": "MODERN IMPROVEMENTS",
+              "headline": "Three key advances in 2026",
+              "body": "",
+              "listItems": [
+                "Scalability: Mixture of Experts (MoE) enables efficient scaling.",
+                "Speed: FlashAttention-3 optimizes attention computation.",
+                "Context length: RoPE scaling extends usable sequence length."
+              ],
+              "footer": "",
+              "accentPhrase": "Three key advances"
+            },
+            "visual": {
+              "icon": "Rocket"
+            }
+          },
+          {
+            "id": "template-1-s10-mueunxqv63",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "WHY THIS MATTERS",
+            "headline": "Self-attention unlocks synthesis across context",
+            "body": "Understanding self-attention means understanding why frontier LLMs excel at synthesizing relevant information across long contexts—a key to their powerful reasoning abilities.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "across context",
+            "icon": "Brain",
+            "slots": {
+              "preHeader": "WHY THIS MATTERS",
+              "headline": "Self-attention unlocks synthesis across context",
+              "body": "Understanding self-attention means understanding why frontier LLMs excel at synthesizing relevant information across long contexts—a key to their powerful reasoning abilities.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "across context"
+            },
+            "visual": {
+              "icon": "Brain"
+            }
+          },
+          {
+            "id": "template-1-s11-mueunxqv64",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "YOUR TAKEAWAY",
+            "headline": "You now know the LLM blueprint",
+            "body": "Every modern LLM builds on these six components. Next time you read about a new",
+            "listItems": [],
+            "footer": "Next: Apply knowledge",
+            "accentPhrase": "the LLM blueprint",
+            "icon": "CheckCircle",
+            "slots": {
+              "preHeader": "YOUR TAKEAWAY",
+              "headline": "You now know the LLM blueprint",
+              "body": "Every modern LLM builds on these six components. Next time you read about a new",
+              "listItems": [],
+              "footer": "Next: Apply knowledge",
+              "accentPhrase": "the LLM blueprint"
+            },
+            "visual": {
+              "icon": "CheckCircle"
+            }
+          }
+        ],
+        "tokens": 19349,
+        "costUsd": 0.0034,
+        "llmCalls": 11,
+        "retries": 0,
+        "llmMs": 57358,
+        "hedges": 0,
+        "firstPreviewMs": 35700,
+        "timeline": [
+          {
+            "kind": "step",
+            "name": "research.plan",
+            "start": 0,
+            "ms": 1932,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.plan",
+            "start": 1,
+            "ms": 1931,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1019
+          },
+          {
+            "kind": "step",
+            "name": "research.search",
+            "start": 1932,
+            "ms": 5919,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "research.facts",
+            "start": 7852,
+            "ms": 4159,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "research.facts",
+            "start": 7853,
+            "ms": 4158,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 1275
+          },
+          {
+            "kind": "step",
+            "name": "outline",
+            "start": 12012,
+            "ms": 7646,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "outline",
+            "start": 12013,
+            "ms": 7645,
+            "ok": true,
+            "role": "planner",
+            "attempts": 1,
+            "firstTokenMs": 986
+          },
+          {
+            "kind": "step",
+            "name": "hooks",
+            "start": 19658,
+            "ms": 7099,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "writer",
+            "start": 19659,
+            "ms": 14968,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "hooks.generate",
+            "start": 19660,
+            "ms": 7097,
+            "ok": true,
+            "role": "creative",
+            "attempts": 1,
+            "reasoningTokens": 267,
+            "firstTokenMs": 687
+          },
+          {
+            "kind": "llm",
+            "name": "writer.1-6",
+            "start": 19661,
+            "ms": 14140,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 1150,
+            "firstTokenMs": 1199
+          },
+          {
+            "kind": "llm",
+            "name": "writer.7-12",
+            "start": 19661,
+            "ms": 14966,
+            "ok": true,
+            "role": "writer",
+            "attempts": 1,
+            "reasoningTokens": 987,
+            "firstTokenMs": 931
+          },
+          {
+            "kind": "step",
+            "name": "tighten",
+            "start": 34628,
+            "ms": 1071,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "tighten",
+            "start": 34629,
+            "ms": 1070,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 798
+          },
+          {
+            "kind": "step",
+            "name": "proofread",
+            "start": 35700,
+            "ms": 818,
+            "ok": true
+          },
+          {
+            "kind": "step",
+            "name": "reflect",
+            "start": 35702,
+            "ms": 4000,
+            "ok": true
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 35703,
+            "ms": 815,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 686
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 35704,
+            "ms": 752,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 693
+          },
+          {
+            "kind": "llm",
+            "name": "proofread",
+            "start": 35704,
+            "ms": 786,
+            "ok": true,
+            "role": "fast",
+            "attempts": 1,
+            "firstTokenMs": 723
+          },
+          {
+            "kind": "llm",
+            "name": "critic",
+            "start": 35704,
+            "ms": 3998,
+            "ok": true,
+            "role": "critic",
+            "attempts": 1,
+            "firstTokenMs": 1136
+          },
+          {
+            "kind": "step",
+            "name": "tighten.final",
+            "start": 39702,
+            "ms": 0,
+            "ok": true
+          }
+        ],
+        "checks": {
+          "slides": 12,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 1,
+          "richBlocksRendered": 1,
+          "numericClaims": 0,
+          "avgHeadline": 33
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.83,
+            "dimensions": {
+              "hook": 8,
+              "flow": 9,
+              "specificity": 8,
+              "clarity": 9,
+              "audienceFit": 9,
+              "accuracy": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 8.8,
+            "facts": 12,
+            "sources": 5,
+            "researched": true,
+            "revisedSlides": [],
+            "rejectedRevisions": 0,
+            "tightened": 1,
+            "forcedFits": 1,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://ranksquire.com/2026/04/13/llm-architecture-2026",
+            "https://www.explainx.ai/blog/what-is-transformer-architecture-attention-llm-guide-2026",
+            "https://medium.com/@angelosorte1/transformer-architectures-in-2026-foundations-code-and-practical-resources-88022b521369",
+            "https://dev.to/jintukumardas/transformer-architecture-in-2026-from-attention-to-mixture-of-experts-moe-3d46",
+            "https://www.buildfastwithai.com/blogs/attention-mechanism-llm-explained"
+          ],
+          "hook": "The six components of every modern LLM"
+        },
+        "judge": {
+          "hook": 7,
+          "flow": 8,
+          "specificity": 6,
+          "clarity": 8,
+          "audienceFit": 7,
+          "accuracy": 8,
+          "expectations": 7,
+          "overall": 7,
+          "notes": "Two biggest problems: (1) Slide 9's headline and body are too generic—'Advances address structural limitations' lacks concrete examples for the audience; (2) Slide 12's body cuts off mid-sentence ('Next: Apply knowledge' feels abrupt and incomplete for a closing slide)."
+        }
+      }
+    }
+  }
+]

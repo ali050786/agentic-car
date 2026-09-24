@@ -40,7 +40,8 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
         const chunks: Buffer[] = [];
         for await (const chunk of req) chunks.push(chunk as Buffer);
         const bodyStr = Buffer.concat(chunks).toString('utf-8');
-        const { prompt, selectedModel } = JSON.parse(bodyStr || '{}');
+        const { prompt, selectedModel, responseSchema, role, label } = JSON.parse(bodyStr || '{}');
+        const roleArg = ['fast', 'planner', 'writer', 'creative', 'critic'].includes(role) ? role : 'planner';
 
         // Parse headers for hybrid auth
         const userApiKey = req.headers['x-api-key'] as string | undefined;
@@ -54,7 +55,11 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
           result = await generateContent({
             prompt,
             selectedModel,
+            role: roleArg,
+            schema: responseSchema,
+            label,
             byok: { apiKey: userApiKey, provider: apiProvider },
+            systemKeys: { openrouter: apiProvider === 'openrouter' ? userApiKey : (process.env.OPENROUTER_API_KEY || env.OPENROUTER_API_KEY) },
           });
         } else {
           // BRANCH B: SYSTEM KEYS - No user key provided (platform is free)
@@ -72,6 +77,9 @@ const aiModelProxyPlugin = (env: Record<string, string>) => ({
           result = await generateContent({
             prompt,
             selectedModel,
+            role: roleArg,
+            schema: responseSchema,
+            label,
             byok: null,
             systemKeys: {
               anthropic: process.env.CLAUDE_API_KEY || env.CLAUDE_API_KEY,

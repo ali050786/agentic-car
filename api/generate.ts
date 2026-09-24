@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { generateContent } from '../core/llm/generateContent.js';
 import { verifySession } from '../lib/apiAuth.js';
 import { langfuse } from '../core/llm/langfuse.js';
+import { isModelRole } from '../core/llm/models.js';
 
 /**
  * Vercel Serverless Function: AI Model Proxy
@@ -17,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let userId = 'unknown';
     try {
-        const { prompt, selectedModel } = req.body;
+        const { prompt, selectedModel, responseSchema, role, label } = req.body;
 
         // Verify the session on the server (no usage limits — the platform is free)
         try {
@@ -45,6 +46,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const result = await generateContent({
             prompt,
             selectedModel,
+            role: isModelRole(role) ? role : 'planner',
+            schema: responseSchema,
+            label: typeof label === 'string' ? label.slice(0, 60) : undefined,
             systemKeys: {
                 anthropic: process.env.CLAUDE_API_KEY,
                 openrouter: process.env.OPENROUTER_API_KEY,

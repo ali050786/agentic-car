@@ -40,7 +40,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
 
     // Core carousel data
     topic: '',
-    selectedTemplate: 'template-1',
+    selectedTemplate: 'template-5',
     selectedModel: 'openrouter/deepseek-v4-flash',
     selectedFormat: 'portrait',
     selectedPattern: 1,
@@ -55,6 +55,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     chatSummary: '',
     chatSummarizedUpTo: 0,
     activeCarouselId: null,
+    draftPreview: false,
     activeJobId: null,
     error: null,
 
@@ -143,7 +144,11 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     setChatMessages: (chatMessages) => set({ chatMessages }),
     setChatSummary: (chatSummary) => set({ chatSummary }),
     setChatSummarizedUpTo: (chatSummarizedUpTo) => set({ chatSummarizedUpTo }),
-    setActiveCarouselId: (activeCarouselId) => set({ activeCarouselId }),
+    // Any switch of the active carousel ends a draft preview (it belonged to no carousel).
+    setActiveCarouselId: (activeCarouselId) => set({ activeCarouselId, draftPreview: false }),
+    showDraftPreview: (slides, theme) => set((state) => ({ slides, theme: theme ?? state.theme, draftPreview: true })),
+    applyFinalDeck: (activeCarouselId, slides, theme) => set({ activeCarouselId, slides, theme, draftPreview: false }),
+    clearDraftPreview: () => set((state) => (state.draftPreview ? { slides: [], draftPreview: false } : {})),
     setActiveJobId: (activeJobId) => set({ activeJobId }),
 
     setPendingDoodleSlides: (indices: number[]) => set({ pendingDoodleSlides: indices }),
@@ -251,7 +256,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     reset: () => {
         set({
             topic: '',
-            selectedTemplate: 'template-1',
+            selectedTemplate: 'template-5',
             selectedModel: 'openrouter/deepseek-v4-flash',
             selectedFormat: 'portrait',
             selectedPattern: 1,
@@ -266,6 +271,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
             chatSummary: '',
             chatSummarizedUpTo: 0,
             activeCarouselId: null,
+            draftPreview: false,
             activeJobId: null,
             error: null,
             inputMode: 'topic',

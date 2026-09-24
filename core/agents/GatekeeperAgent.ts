@@ -17,6 +17,7 @@
  */
 
 import { generateContentFromAgent } from '../../services/aiService';
+import { isCancel } from '../llm/cancel';
 
 export type GuardCategory =
     | 'ok'
@@ -139,12 +140,13 @@ const runClassify = async (topic: string, sourceContent?: string): Promise<{ isC
     const src = (sourceContent || '').slice(0, 2000);
     const prompt = `<topic>\n${t}\n</topic>${src ? `\n<source_content>\n${src}\n</source_content>` : ''}`;
     try {
-        const r: any = await generateContentFromAgent({ systemPrompt: CLASSIFY_SYSTEM, prompt }, CLASSIFY_SCHEMA);
+        const r: any = await generateContentFromAgent({ systemPrompt: CLASSIFY_SYSTEM, prompt }, CLASSIFY_SCHEMA, { role: 'fast', label: 'gatekeeper.classify' });
         return {
             isCarouselRequest: r?.isCarouselRequest !== false,
             unsafeCategory: typeof r?.unsafeCategory === 'string' ? r.unsafeCategory : 'none',
         };
     } catch (err) {
+        if (isCancel(err)) throw err;
         console.warn('[Gatekeeper] classify failed, failing open:', err);
         return null;
     }
@@ -209,8 +211,9 @@ export const moderateOutput = async (slideTexts: string[]): Promise<GateResult> 
 
     let r: any;
     try {
-        r = await generateContentFromAgent({ systemPrompt: MODERATE_SYSTEM, prompt: `<slides>\n${joined}\n</slides>` }, MODERATE_SCHEMA);
+        r = await generateContentFromAgent({ systemPrompt: MODERATE_SYSTEM, prompt: `<slides>\n${joined}\n</slides>` }, MODERATE_SCHEMA, { role: 'fast', label: 'gatekeeper.moderate' });
     } catch (err) {
+        if (isCancel(err)) throw err;
         console.warn('[Gatekeeper] moderateOutput failed, failing open:', err);
         return ALLOWED;
     }
@@ -228,7 +231,10 @@ export const slideTexts = (slides: any[]): string[] =>
         return [
             s?.preHeader, s?.headline, s?.body, s?.footer,
             slot.preHeader, slot.headline, slot.body, slot.footer,
+            slot.statNumber, slot.statLabel, slot.quoteAuthor, slot.splitLeft, slot.splitRight,
             ...(Array.isArray(list) ? list.map((li: any) => (typeof li === 'object' && li ? li.bullet : li)) : []),
+            // Canvas extras: short labels the design added (stickers, tags).
+            ...(slot.extras && typeof slot.extras === 'object' ? Object.values(slot.extras) : []),
         ].filter((v) => typeof v === 'string' && v.trim());
     });
 

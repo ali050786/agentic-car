@@ -1,22 +1,14 @@
 /**
- * Share Modal - Phase 6 (FIXED)
- * 
- * Modal for sharing carousels with links and embed codes.
- * 
+ * Share Modal — public link + embed code for a carousel.
+ *
  * Location: src/components/ShareModal.tsx
  */
 
 import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Carousel } from '../services/carouselService';
-import {
-  X,
-  Link as LinkIcon,
-  Code,
-  Copy,
-  CheckCircle,
-  ExternalLink,
-  AlertCircle
-} from 'lucide-react';
+import { Link as LinkIcon, Code, Copy, ExternalLink, Eye, Globe, Lock } from 'lucide-react';
+import { CloseButton, DrawCheck, Modal, SPRING } from './studio/ui';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -24,11 +16,22 @@ interface ShareModalProps {
   carousel: Carousel;
 }
 
-export const ShareModal: React.FC<ShareModalProps> = ({
-  isOpen,
-  onClose,
-  carousel,
-}) => {
+const CopyButton: React.FC<{ copied: boolean; onClick: () => void; compact?: boolean }> = ({ copied, onClick, compact }) => (
+  <motion.button
+    type="button"
+    whileTap={{ scale: 0.94 }}
+    onClick={onClick}
+    className={`shrink-0 flex items-center justify-center gap-1.5 rounded-xl font-semibold transition-colors ${compact ? 'h-8 px-3 text-[12px]' : 'h-10 px-4 text-[13px]'} ${copied ? 'bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-300/40' : 'bg-white text-black hover:bg-white/90'}`}
+  >
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.span key={copied ? 'y' : 'n'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }} className="flex items-center gap-1.5">
+        {copied ? <><DrawCheck size={14} color="#6ee7b7" /> Copied</> : <><Copy size={13} /> Copy</>}
+      </motion.span>
+    </AnimatePresence>
+  </motion.button>
+);
+
+export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, carousel }) => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
 
@@ -50,157 +53,66 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     }
   };
 
-  const openInNewTab = () => {
-    window.open(shareUrl, '_blank');
-  };
-
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-neutral-900 border border-white/10 rounded-xl max-w-2xl w-full shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <div>
-            <h2 className="text-xl font-bold text-white">Share Carousel</h2>
-            <p className="text-sm text-neutral-400 mt-1">{carousel.title}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-white/5 rounded-lg transition-colors"
-            title="Close Share Modal"
-            aria-label="Close Share Modal"
-          >
-            <X size={20} className="text-neutral-400" />
-          </button>
+    <Modal open={isOpen} onClose={onClose} className="max-w-lg" labelledBy="share-title">
+      <div className="flex items-start justify-between gap-4 p-6 pb-4">
+        <div className="min-w-0">
+          <div className="lp-mono text-[10.5px] uppercase tracking-[0.16em] text-white/40">Share</div>
+          <h2 id="share-title" className="lp-display mt-1.5 text-[22px] font-semibold text-white truncate">{carousel.title || 'Untitled carousel'}</h2>
         </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Public Status */}
-          {!carousel.isPublic && (
-            <div className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg">
-              <p className="text-sm text-yellow-200 flex items-center gap-2">
-                <AlertCircle size={16} />
-                This carousel is private. Make it public to share.
-              </p>
-            </div>
-          )}
-
-          {/* Share Link */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-neutral-300 mb-3">
-              <LinkIcon size={16} />
-              Share Link
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={shareUrl}
-                readOnly
-                className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-              />
-              <button
-                onClick={() => copyToClipboard(shareUrl, 'link')}
-                className={`px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${copiedLink
-                  ? 'bg-green-500/10 border border-green-500/50 text-green-400'
-                  : 'bg-blue-600 hover:bg-blue-500 text-white'
-                  }`}
-              >
-                {copiedLink ? (
-                  <>
-                    <CheckCircle size={16} />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy size={16} />
-                    Copy
-                  </>
-                )}
-              </button>
-              <button
-                onClick={openInNewTab}
-                className="px-4 py-3 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-lg transition-colors"
-                title="Open in new tab"
-                aria-label="Open in new tab"
-              >
-                <ExternalLink size={16} />
-              </button>
-            </div>
-            <p className="text-xs text-neutral-500 mt-2">
-              Anyone with this link can view your carousel
-            </p>
-          </div>
-
-          {/* Embed Code */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-neutral-300 mb-3">
-              <Code size={16} />
-              Embed Code
-            </label>
-            <div className="relative">
-              <textarea
-                value={embedCode}
-                readOnly
-                rows={4}
-                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-lg text-white text-xs font-mono focus:outline-none focus:border-blue-500 resize-none"
-              />
-              <button
-                onClick={() => copyToClipboard(embedCode, 'embed')}
-                className={`absolute top-3 right-3 px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-xs ${copiedEmbed
-                  ? 'bg-green-500/10 border border-green-500/50 text-green-400'
-                  : 'bg-blue-600 hover:bg-blue-500 text-white'
-                  }`}
-              >
-                {copiedEmbed ? (
-                  <>
-                    <CheckCircle size={14} />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy size={14} />
-                    Copy
-                  </>
-                )}
-              </button>
-            </div>
-            <p className="text-xs text-neutral-500 mt-2">
-              Paste this code into your website to embed the carousel
-            </p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-black/40 border border-white/10 rounded-lg">
-            <div>
-              <p className="text-xs text-neutral-400 mb-1">Total Views</p>
-              <p className="text-2xl font-bold text-white">{(carousel as any).views || 0}</p>
-            </div>
-            <div>
-              <p className="text-xs text-neutral-400 mb-1">Status</p>
-              <p className="text-sm font-medium text-white">
-                {carousel.isPublic ? (
-                  <span className="text-green-400">Public</span>
-                ) : (
-                  <span className="text-yellow-400">Private</span>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t border-white/10">
-          <button
-            onClick={onClose}
-            className="px-6 py-3 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-lg font-medium transition-colors"
-          >
-            Close
-          </button>
-        </div>
+        <CloseButton onClick={onClose} />
       </div>
-    </div>
+
+      <div className="px-6 pb-6 space-y-5">
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`flex items-center gap-3 rounded-2xl p-3.5 border ${carousel.isPublic ? 'border-emerald-300/20 bg-emerald-300/[0.05]' : 'border-amber-300/25 bg-amber-300/[0.06]'}`}
+        >
+          <span className={`grid place-items-center w-9 h-9 rounded-xl ${carousel.isPublic ? 'bg-emerald-300/15 text-emerald-200' : 'bg-amber-300/15 text-amber-200'}`}>
+            {carousel.isPublic ? <Globe size={16} /> : <Lock size={16} />}
+          </span>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-medium text-white">{carousel.isPublic ? 'Public' : 'Private'}</div>
+            <div className="text-[12px] text-white/50">{carousel.isPublic ? 'Anyone with the link can view it' : 'Make it public to share the link'}</div>
+          </div>
+          <div className="flex items-center gap-1.5 text-[12px] text-white/60 shrink-0">
+            <Eye size={13} /> <span className="tabular-nums">{(carousel as any).views || 0}</span>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <div className="flex items-center gap-2 text-[12px] font-medium text-white/60 mb-2"><LinkIcon size={13} /> Link</div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={shareUrl}
+              readOnly
+              onFocus={(e) => e.currentTarget.select()}
+              className="flex-1 min-w-0 h-10 rounded-xl bg-black/35 border border-white/10 px-3.5 text-[13px] text-white/85 lp-mono outline-none focus:border-violet-400/50"
+            />
+            <CopyButton copied={copiedLink} onClick={() => copyToClipboard(shareUrl, 'link')} />
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.94 }}
+              onClick={() => window.open(shareUrl, '_blank')}
+              aria-label="Open in new tab"
+              className="shrink-0 grid place-items-center w-10 h-10 rounded-xl border border-white/10 text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
+            >
+              <ExternalLink size={15} />
+            </motion.button>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-[12px] font-medium text-white/60"><Code size={13} /> Embed</div>
+            <CopyButton compact copied={copiedEmbed} onClick={() => copyToClipboard(embedCode, 'embed')} />
+          </div>
+          <pre className="rounded-xl bg-black/40 border border-white/10 p-3.5 text-[11.5px] leading-relaxed text-cyan-100/80 lp-mono whitespace-pre-wrap break-all">{embedCode}</pre>
+        </motion.div>
+      </div>
+    </Modal>
   );
 };
 

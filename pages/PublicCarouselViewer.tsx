@@ -7,11 +7,13 @@
  * Location: src/pages/PublicCarouselViewer.tsx
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getCarouselById } from '../services/carouselService';
 import { Carousel } from '../services/carouselService';
-import { getTemplateDisplayName } from '../utils/templateConverter';
+import { getTemplateDisplayName, resolveAppTemplate } from '../utils/templateConverter';
+import { injectContentIntoSvg } from '../utils/svgInjector';
+import { useCanvasFit } from '../components/studio/useCanvasFit';
 import {
   Layout,
   AlertCircle,
@@ -60,6 +62,28 @@ export const PublicCarouselViewer: React.FC = () => {
     setCarousel(data);
     setLoading(false);
   };
+
+  // Render the slide from its data (same engine as the studio), sized to the frame.
+  const templateId = resolveAppTemplate(carousel?.templateType, carousel?.theme);
+  const slideSvg = useMemo(() => {
+    const slide = carousel?.slides?.[currentSlide];
+    if (!carousel || !slide) return '';
+    const kit = (carousel as any).brandKit;
+    const branding = kit ? { enabled: !!kit.enabled, ...(kit.identity || {}), position: (carousel as any).signaturePosition || 'bottom-left' } : undefined;
+    try {
+      const svg = injectContentIntoSvg(
+        templateId, slide as any, carousel.theme as any, branding as any, (carousel as any).format || 'portrait',
+        (carousel as any).selectedPattern, (carousel as any).patternOpacity, undefined, undefined,
+        `pub-${currentSlide}`, currentSlide + 1, carousel.slides.length,
+      );
+      return svg.replace('<svg ', '<svg style="width:100%;height:100%;display:block" ');
+    } catch (err) {
+      console.error('[PublicCarouselViewer] render failed:', err);
+      return '';
+    }
+  }, [carousel, currentSlide, templateId]);
+  const slideRef = useRef<HTMLDivElement | null>(null);
+  useCanvasFit(slideRef, [slideSvg], templateId === 'template-5');
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -147,7 +171,7 @@ export const PublicCarouselViewer: React.FC = () => {
 
             <div className="flex items-center gap-3">
               <div className="hidden md:flex items-center gap-3 text-xs text-neutral-400 mr-4">
-                <span>{getTemplateLabel(carousel.templateType)}</span>
+                <span>{getTemplateLabel(templateId)}</span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <Calendar size={12} />
@@ -176,11 +200,15 @@ export const PublicCarouselViewer: React.FC = () => {
       < main className="flex-1 flex items-center justify-center p-6" >
         <div className="max-w-md w-full">
           {/* Slide Preview */}
-          <div className="aspect-[9/16] bg-neutral-900 rounded-2xl overflow-hidden shadow-2xl mb-6 relative">
-            {currentSlideData ? (
+          <div
+            className="bg-neutral-900 rounded-2xl overflow-hidden shadow-2xl mb-6 relative"
+            style={{ aspectRatio: (carousel as any).format === 'square' ? '1 / 1' : '4 / 5' }}
+          >
+            {currentSlideData && slideSvg ? (
               <div
+                ref={slideRef}
                 className="w-full h-full"
-                dangerouslySetInnerHTML={{ __html: currentSlideData.svg }}
+                dangerouslySetInnerHTML={{ __html: slideSvg }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

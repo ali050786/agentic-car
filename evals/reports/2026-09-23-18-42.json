@@ -1,0 +1,3901 @@
+[
+  {
+    "id": "kids-rain",
+    "topic": "Explain how rain forms, for 8 year olds",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 159180,
+        "slides": [
+          {
+            "id": "template-1-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Where Does Rain Come From?",
+              "preHeader": "THE WATER CYCLE ADVENTURE",
+              "body": "Rain starts when the sun warms up water from puddles, rivers, and oceans. The water turns into tiny invisible drops that float up into the sky.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Rain"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of battery power, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Water Becomes Invisible Drops",
+              "preHeader": "STEP 1: EVAPORATION",
+              "body": "The sun heats the water. It turns into tiny, invisible drops that float up. This is called evaporation.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Invisible"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of battery power, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "Drops Stick Together",
+              "preHeader": "STEP 2: CLOUD FORMATION",
+              "body": "",
+              "listItems": [
+                "Up in the sky: The drops get cold.",
+                "Stick together: They join to make clouds.",
+                "Clouds grow: More drops join."
+              ],
+              "footer": "",
+              "accentPhrase": "Stick Together"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of binary rain, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Clouds Get Too Heavy",
+              "preHeader": "STEP 3: RAIN FALLS",
+              "body": "When clouds have too many water drops, they can’t hold them anymore. The drops fall back down as rain!",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Too Heavy"
+            },
+            "visual": {
+              "icon": "TrendingDown",
+              "doodlePrompt": "precise editorial spot illustration of binary rain, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "The Water Cycle Never Stops",
+              "preHeader": "AND IT STARTS AGAIN",
+              "body": "After rain falls, the sun comes out and warms the water again. The adventure starts all over. It goes on forever!",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Never Stops"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-5",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Rain is a Never-Ending Adventure",
+              "preHeader": "THE BIG IDEA",
+              "body": "From ground to sky and back again.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Adventure"
+            },
+            "visual": {
+              "icon": "Star",
+              "doodlePrompt": "precise editorial spot illustration of binary rain, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 15018,
+        "costUsd": 0.00369,
+        "llmCalls": 6,
+        "retries": 2,
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 26
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 8,
+          "specificity": 8,
+          "clarity": 9,
+          "audienceFit": 9,
+          "accuracy": 10,
+          "expectations": 9,
+          "overall": 8,
+          "notes": "Two biggest problems: (1) The hook is good but not exceptional—the cover's headline 'Where Does Rain Come From?' is a classic question but lacks an emotional or surprising twist that would make an 8-year-old instantly want to swipe; a more playful or intriguing question like 'How Does Rain Get Born?' would boost engagement. (2) The flow is mostly logical, but Slide 5's body repeats the concept from Slide 1 slightly (sun warming water) without adding new specificity—consider a stronger visual or a quick fact like 'Raindrops can be as small as dust or as big as a pea' to reinforce the cycle without repetition. Overall, the deck is solid, accurate, and age-appropriate, but lacks a standout moment that would make it memorable."
+        }
+      },
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 256559,
+        "slides": [
+          {
+            "id": "template-1-s0-muegf7y67",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "CLOUD MYTH",
+            "headline": "Clouds are not soft cotton",
+            "body": "They are millions of tiny water drops and ice crystals!",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "not soft cotton",
+            "icon": "CloudRain",
+            "slots": {
+              "preHeader": "CLOUD MYTH",
+              "headline": "Clouds are not soft cotton",
+              "body": "They are millions of tiny water drops and ice crystals!",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "not soft cotton"
+            },
+            "visual": {
+              "icon": "CloudRain"
+            }
+          },
+          {
+            "id": "template-1-s1-muegf7y68",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE SUN STARTS IT",
+            "headline": "Water turns into invisible vapor",
+            "body": "The sun warms water in oceans, rivers, and puddles. The warmth turns water into invisible vapor that floats up to the sky.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "invisible vapor",
+            "icon": "Sun",
+            "slots": {
+              "preHeader": "THE SUN STARTS IT",
+              "headline": "Water turns into invisible vapor",
+              "body": "The sun warms water in oceans, rivers, and puddles. The warmth turns water into invisible vapor that floats up to the sky.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "invisible vapor"
+            },
+            "visual": {
+              "icon": "Sun"
+            }
+          },
+          {
+            "id": "template-1-s2-muegf7y69",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "THREE SIMPLE STEPS",
+            "headline": "The water cycle has three steps",
+            "body": "",
+            "listItems": [
+              "Evaporation: water goes up",
+              "Condensation: vapor becomes tiny drops",
+              "Precipitation: drops fall as rain"
+            ],
+            "footer": "",
+            "accentPhrase": "three steps",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "THREE SIMPLE STEPS",
+              "headline": "The water cycle has three steps",
+              "body": "",
+              "listItems": [
+                "Evaporation: water goes up",
+                "Condensation: vapor becomes tiny drops",
+                "Precipitation: drops fall as rain"
+              ],
+              "footer": "",
+              "accentPhrase": "three steps"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s3-muegf7y6a",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "CLOUDS LOOK FLUFFY",
+            "headline": "Why do clouds look fluffy?",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Why do clouds look fluffy",
+            "icon": "Cloud",
+            "slots": {
+              "preHeader": "CLOUDS LOOK FLUFFY",
+              "headline": "Why do clouds look fluffy?",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Why do clouds look fluffy",
+              "splitLeft": "Look: Clouds look like soft cotton balls in the sky.",
+              "splitRight": "Truth: They are made of tiny water drops and ice crystals. No cotton!"
+            },
+            "visual": {
+              "icon": "Cloud"
+            }
+          },
+          {
+            "id": "template-1-s4-muegf7y6b",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE CYCLE KEEPS GOING",
+            "headline": "Rain starts the journey again",
+            "body": "When rain falls, it fills rivers and oceans. Then the sun starts the whole journey again — over and over!",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "starts the journey again",
+            "icon": "Droplets",
+            "slots": {
+              "preHeader": "THE CYCLE KEEPS GOING",
+              "headline": "Rain starts the journey again",
+              "body": "When rain falls, it fills rivers and oceans. Then the sun starts the whole journey again — over and over!",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "starts the journey again"
+            },
+            "visual": {
+              "icon": "Droplets"
+            }
+          },
+          {
+            "id": "template-1-s5-muegf7y6c",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "YOU KNOW THE SECRET",
+            "headline": "Next time you see rain",
+            "body": "Know the secret: rain water's been on a long trip. Spot clouds forming?",
+            "listItems": [],
+            "footer": "Spot the clouds!",
+            "accentPhrase": "Next time you see rain",
+            "icon": "Star",
+            "slots": {
+              "preHeader": "YOU KNOW THE SECRET",
+              "headline": "Next time you see rain",
+              "body": "Know the secret: rain water's been on a long trip. Spot clouds forming?",
+              "listItems": [],
+              "footer": "Spot the clouds!",
+              "accentPhrase": "Next time you see rain"
+            },
+            "visual": {
+              "icon": "Star"
+            }
+          }
+        ],
+        "tokens": 20653,
+        "costUsd": 0.00295,
+        "llmCalls": 11,
+        "retries": 2,
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 1,
+          "richBlocksRendered": 1,
+          "numericClaims": 0,
+          "avgHeadline": 28
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.83,
+            "dimensions": {
+              "hook": 8,
+              "flow": 9,
+              "specificity": 7,
+              "clarity": 9,
+              "audienceFit": 10,
+              "accuracy": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 8.4,
+            "facts": 0,
+            "sources": 0,
+            "researched": false,
+            "revisedSlides": [
+              4
+            ],
+            "rejectedRevisions": 0,
+            "tightened": 1,
+            "forcedFits": 0,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 0,
+          "sources": [],
+          "hook": "Clouds are not soft cotton"
+        },
+        "judge": {
+          "hook": 8,
+          "flow": 6,
+          "specificity": 7,
+          "clarity": 8,
+          "audienceFit": 9,
+          "accuracy": 10,
+          "expectations": 10,
+          "overall": 7,
+          "notes": "Two biggest problems: 1) Repetition of the 'clouds are not cotton' myth in both slide 1 and slide 4, making the deck feel redundant. 2) Flow is disrupted because slide 3 introduces the three steps, then slide 4 goes back to a point already made on slide 1, breaking the logical progression from evaporation to condensation to precipitation and then the cycle continuing."
+        }
+      }
+    },
+    "pairwise": {
+      "winner": "v2",
+      "reason": "Carousel A hooks with a surprising myth-busting opener, uses vivid, age-appropriate language like 'invisible vapor' and 'fluffy,' and clearly separates the three steps of the water cycle without oversimplifying, making it more engaging and accurate for curious 8-year-olds."
+    }
+  },
+  {
+    "id": "howto-interview",
+    "topic": "How to prepare for a system design interview in 2 weeks",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 202080,
+        "slides": [
+          {
+            "id": "template-4-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Crush your interview with a structured plan",
+              "preHeader": "SYSTEM DESIGN IN 2 WEEKS",
+              "body": "Day 1–13: Master concepts, framework, and practice. Day 14: Rest. No fluff.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "structured plan"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of launch rocket, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Days 1–3: Master core distributed systems concepts",
+              "preHeader": "PHASE 1: FOUNDATION",
+              "body": "Focus on CAP theorem, sharding, caching, load balancing, and consistency models. No deep dives yet — just clear definitions and trade-offs.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "core distributed systems concepts"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of cpu chip, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-2",
+            "blockType": "body",
+            "slots": {
+              "headline": "Days 4–5: Learn a structured design framework",
+              "preHeader": "PHASE 2: FRAMEWORK",
+              "body": "Requirements → Estimation → Data Model → API → High-Level Design → Deep Dive → Bottlenecks. Use this order every time. It prevents missing steps.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "structured design framework"
+            },
+            "visual": {
+              "icon": "Layers",
+              "doodlePrompt": "precise editorial spot illustration of kanban board, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-3",
+            "blockType": "list",
+            "slots": {
+              "headline": "Days 6–8: Practice classic problems",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "URL Shortener: Master key generation and redirection.",
+                "Chat System: Handle real-time messaging and persistence.",
+                "Design Twitter: Scale feed generation and fanout."
+              ],
+              "footer": "",
+              "accentPhrase": "Practice classic problems"
+            },
+            "visual": {
+              "icon": "Book",
+              "doodlePrompt": "precise editorial spot illustration of code snippet, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "Days 9–10: Dive deep into company-specific designs",
+              "preHeader": "PHASE 4: SPECIALIZATION",
+              "body": "For fintech: payment system with idempotency and ledger. For social: news feed with push/pull hybrid. Tailor your deep dive to the role.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "company-specific designs"
+            },
+            "visual": {
+              "icon": "Briefcase",
+              "doodlePrompt": "precise editorial spot illustration of targeted ads, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "Days 11–13: Mock interviews with timed pressure",
+              "preHeader": "PHASE 5: PRESSURE TEST",
+              "body": "Record yourself. Review your flow. Cut rambling. You should be able to complete the full framework in 45 minutes. Adjust pacing.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Mock interviews with timed pressure"
+            },
+            "visual": {
+              "icon": "Clock",
+              "doodlePrompt": "precise editorial spot illustration of sprint timer, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-6",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Day 14: Review notes and rest",
+              "preHeader": "FINAL DAY",
+              "body": "Refresh your framework summary. Sleep well. You’ve put in the work — trust it.",
+              "listItems": [],
+              "footer": "Follow for more →",
+              "accentPhrase": "Review notes and rest"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of success state, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 12324,
+        "costUsd": 0.00169,
+        "llmCalls": 6,
+        "retries": 4,
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 43
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 9,
+          "specificity": 9,
+          "clarity": 9,
+          "audienceFit": 10,
+          "accuracy": 10,
+          "expectations": 9,
+          "overall": 9,
+          "notes": "The deck is strong but the hero slide's 'Day 14: Rest' could be more compelling as a hook; also, the list slide (Slide 4) could benefit from a brief rationale for each problem choice to increase specificity."
+        }
+      },
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 246936,
+        "slides": [
+          {
+            "id": "template-4-s0-muegf0iv0",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "THE INTERVIEW TRAP",
+            "headline": "Why your design is never perfect",
+            "body": "Interviewers judge your reasoning, not a single solution. Here's how to explain trade-offs.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "never perfect",
+            "icon": "Target",
+            "slots": {
+              "preHeader": "THE INTERVIEW TRAP",
+              "headline": "Why your design is never perfect",
+              "body": "Interviewers judge your reasoning, not a single solution. Here's how to explain trade-offs.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "never perfect"
+            },
+            "visual": {
+              "icon": "Target"
+            }
+          },
+          {
+            "id": "template-4-s1-muegf0iv1",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "WEEK 1, DAY 1-2",
+            "headline": "Master core concepts — scalability, load balancing, caching",
+            "body": "Understand how each component works and when to use it. For example, know the difference between a relational database and a NoSQL store, and when you'd choose one over the other. Learn the fundamentals of load balancing",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Master core concepts",
+            "icon": "Book",
+            "slots": {
+              "preHeader": "WEEK 1, DAY 1-2",
+              "headline": "Master core concepts — scalability, load balancing, caching",
+              "body": "Understand how each component works and when to use it. For example, know the difference between a relational database and a NoSQL store, and when you'd choose one over the other. Learn the fundamentals of load balancing",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Master core concepts"
+            },
+            "visual": {
+              "icon": "Book"
+            }
+          },
+          {
+            "id": "template-4-s2-muegf0iv2",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "WEEK 1, DAY 3-5",
+            "headline": "Solve 3 classic problems",
+            "body": "",
+            "listItems": [
+              "URL shortener: Focus on hashing, redirects, and data storage",
+              "Chat system: Handle real-time messaging, presence, and scaling",
+              "News feed: Manage ranking, fan-out, and storage"
+            ],
+            "footer": "",
+            "accentPhrase": "Solve 3 classic problems",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "WEEK 1, DAY 3-5",
+              "headline": "Solve 3 classic problems",
+              "body": "",
+              "listItems": [
+                "URL shortener: Focus on hashing, redirects, and data storage",
+                "Chat system: Handle real-time messaging, presence, and scaling",
+                "News feed: Manage ranking, fan-out, and storage"
+              ],
+              "footer": "",
+              "accentPhrase": "Solve 3 classic problems"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-4-s3-muegf0iv3",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "MYTH VS FACT",
+            "headline": "There is no single perfect design",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "There is no single perfect design",
+            "icon": "Brain",
+            "slots": {
+              "preHeader": "MYTH VS FACT",
+              "headline": "There is no single perfect design",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "There is no single perfect design",
+              "splitLeft": "Myth: There is one correct answer. Interviewers expect a specific solution.",
+              "splitRight": "Fact: They evaluate your reasoning. Explain why you chose one approach over another."
+            },
+            "visual": {
+              "icon": "Brain"
+            }
+          },
+          {
+            "id": "template-4-s4-muegf0iw4",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "WEEK 2, DAY 1-2",
+            "headline": "Simulate the interview environment",
+            "body": "Talk through your thought process aloud, draw diagrams on a whiteboard or paper, and practice handling follow-up questions calmly. The goal is to make the real interview feel like a routine trade-off conversation.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Simulate the interview environment",
+            "icon": "Users",
+            "slots": {
+              "preHeader": "WEEK 2, DAY 1-2",
+              "headline": "Simulate the interview environment",
+              "body": "Talk through your thought process aloud, draw diagrams on a whiteboard or paper, and practice handling follow-up questions calmly. The goal is to make the real interview feel like a routine trade-off conversation.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Simulate the interview environment"
+            },
+            "visual": {
+              "icon": "Users"
+            }
+          },
+          {
+            "id": "template-4-s5-muegf0iw5",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "WEEK 2, DAY 3-5",
+            "headline": "Run 3 full mock interviews",
+            "body": "",
+            "listItems": [
+              "Time management: Keep each problem to 45 minutes",
+              "Asking clarifying questions: Nail the requirements before designing",
+              "Explaining trade-offs: Clearly state why you chose one solution"
+            ],
+            "footer": "",
+            "accentPhrase": "Run 3 full mock interviews",
+            "icon": "Clock",
+            "slots": {
+              "preHeader": "WEEK 2, DAY 3-5",
+              "headline": "Run 3 full mock interviews",
+              "body": "",
+              "listItems": [
+                "Time management: Keep each problem to 45 minutes",
+                "Asking clarifying questions: Nail the requirements before designing",
+                "Explaining trade-offs: Clearly state why you chose one solution"
+              ],
+              "footer": "",
+              "accentPhrase": "Run 3 full mock interviews"
+            },
+            "visual": {
+              "icon": "Clock"
+            }
+          },
+          {
+            "id": "template-4-s6-muegf0iw6",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "YOU'RE READY",
+            "headline": "Stay consistent, walk in prepared",
+            "body": "You now have a clear 2-week plan. Focus on fundamentals, practice trade-offs, and simulate the real environment. Good luck!",
+            "listItems": [],
+            "footer": "Follow for more",
+            "accentPhrase": "Stay consistent",
+            "icon": "Award",
+            "slots": {
+              "preHeader": "YOU'RE READY",
+              "headline": "Stay consistent, walk in prepared",
+              "body": "You now have a clear 2-week plan. Focus on fundamentals, practice trade-offs, and simulate the real environment. Good luck!",
+              "listItems": [],
+              "footer": "Follow for more",
+              "accentPhrase": "Stay consistent"
+            },
+            "visual": {
+              "icon": "Award"
+            }
+          }
+        ],
+        "tokens": 19002,
+        "costUsd": 0.0038,
+        "llmCalls": 9,
+        "retries": 2,
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 1,
+          "richBlocksRendered": 1,
+          "numericClaims": 0,
+          "avgHeadline": 34
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8,
+            "dimensions": {
+              "hook": 8,
+              "flow": 7,
+              "specificity": 6,
+              "clarity": 8,
+              "audienceFit": 9,
+              "accuracy": 10,
+              "actionability": 8
+            },
+            "hookCandidates": 4,
+            "hookScore": 7.6,
+            "facts": 0,
+            "sources": 0,
+            "researched": false,
+            "revisedSlides": [],
+            "rejectedRevisions": 0,
+            "tightened": 1,
+            "forcedFits": 2,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 0,
+          "sources": [],
+          "hook": "Why your design is never perfect"
+        },
+        "judge": {
+          "hook": 4,
+          "flow": 6,
+          "specificity": 6,
+          "clarity": 7,
+          "audienceFit": 7,
+          "accuracy": 9,
+          "expectations": 4,
+          "overall": 5,
+          "notes": "The biggest problem is specificity: the plan is still too generic. It names classic problems and components but doesn't give concrete resources, exact exercises, or real day-by-day tasks someone can execute. The hook is weak: 'Why your design is never perfect' is abstract and doesn't create urgency for a two-week prep timeline. Flow is mostly logical, but Slide 4 feels like filler and repeats the hero's trade-off message instead of advancing the plan. The deck meets basic clarity and audience fit, but it fails the 'must be concrete and ordered' requirement — it reads like a checklist vague enough to apply to any interview."
+        }
+      }
+    },
+    "pairwise": {
+      "winner": "v1",
+      "reason": "Carousel A provides a concrete, day-by-day plan with specific concepts, a structured framework, and tailored practice, while Carousel B offers more generic advice without the same level of specificity and ordered steps."
+    }
+  },
+  {
+    "id": "linkedin-pitch",
+    "topic": "LinkedIn hot take: why most startup pitch decks fail",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 141059,
+        "slides": [
+          {
+            "id": "template-1-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Your team slide is killing your round",
+              "preHeader": "THE DECK MISTAKE KILLING YOUR FUNDRAISING",
+              "body": "Investors decide on the team before they read your market size. 80% of pitch decks fail before slide 5. The reason: buried team slide.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "team slide"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of analytics dashboard, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "This is why 80% of decks fail early",
+              "preHeader": "THE HIDDEN PATTERN IN REJECTED DECKS",
+              "body": "You open with market size, then product, then traction. Investors are thinking one thing: who is building this? If the team slide is buried or generic, they move on before your real work is seen.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "80%"
+            },
+            "visual": {
+              "icon": "TrendingDown",
+              "doodlePrompt": "precise editorial spot illustration of accessibility focus, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "Investors bet on teams, not ideas",
+              "preHeader": "WHAT INVESTORS ACTUALLY EVALUATE",
+              "body": "",
+              "listItems": [
+                "Pattern: Idea risk fades; execution risk stays.",
+                "Signal: Strong teams compound small bets.",
+                "Red flag: Hiding team means weak team."
+              ],
+              "footer": "",
+              "accentPhrase": "teams"
+            },
+            "visual": {
+              "icon": "Award",
+              "doodlePrompt": "precise editorial spot illustration of ab testing split, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Put your team slide on slide 2",
+              "preHeader": "THE SLIDE THAT ANSWERS THE REAL QUESTION",
+              "body": "You have limited attention. If your team is your unfair advantage, show it before the problem statement. Sequence is a statement of confidence. Slide 2 says: We can build this.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "slide 2"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of api connector, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-4",
+            "blockType": "list",
+            "slots": {
+              "headline": "Include proof, not just names",
+              "preHeader": "MAKE THE TEAM SLIDE WORK HARDER",
+              "body": "",
+              "listItems": [
+                "Founder-market fit: Why you, why this, why now.",
+                "Superpower: The unfair advantage you have.",
+                "Traction proof: Ship speed and real usage."
+              ],
+              "footer": "",
+              "accentPhrase": "proof"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of battery power, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "A team slide is a pattern-match test",
+              "preHeader": "AVOID THE GENERIC TEAM PAGE",
+              "body": "LinkedIn headshots and alma maters do not move capital. Investors pattern-match against relevant experience, scrappiness, and clarity. Show what you uniquely know that makes this problem yours.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "pattern-match"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of ai ethics, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-6",
+            "blockType": "list",
+            "slots": {
+              "headline": "Move it up, make it concrete",
+              "preHeader": "THE EXACT STRUCTURE",
+              "body": "",
+              "listItems": [
+                "Role: What each founder owns and has shipped.",
+                "Proof: Metrics, customers, or patents if relevant.",
+                "Edge: Why this team wins in 18 months."
+              ],
+              "footer": "",
+              "accentPhrase": "Move it"
+            },
+            "visual": {
+              "icon": "Star",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-7",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Don’t hide the reason they should invest",
+              "preHeader": "THE TAKEAWAY",
+              "body": "The team is the bet. Let investors see it first.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "reason"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of autonomous vehicle, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 27019,
+        "costUsd": 0.00367,
+        "llmCalls": 7,
+        "retries": 5,
+        "checks": {
+          "slides": 8,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 2,
+          "avgHeadline": 34
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 7,
+          "specificity": 6,
+          "clarity": 8,
+          "audienceFit": 9,
+          "accuracy": 2,
+          "expectations": 4,
+          "overall": 6,
+          "notes": "The invented 80% statistic is a credibility killer, especially since the brief explicitly forbids fake stats. Flow also repeats the same '80%' and 'buried team slide' point across slides 1 and 2, making the early sequence feel padded."
+        }
+      },
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 585989,
+        "slides": [
+          {
+            "id": "template-1-s0-muegma50j",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "PITCH DECK FIX",
+            "headline": "Fix the first 3 slides",
+            "body": "Most VCs decide in under 4 minutes. Here's how to win the first three slides.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "first 3 slides",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "PITCH DECK FIX",
+              "headline": "Fix the first 3 slides",
+              "body": "Most VCs decide in under 4 minutes. Here's how to win the first three slides.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "first 3 slides"
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-1-s1-muegma50k",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "ATTENTION DROPS FAST",
+            "headline": "The first slide gets 2x more attention than",
+            "body": "Each subsequent page averages just 15 seconds. You don't have time for a warm-up.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "2x",
+            "icon": "TrendingDown",
+            "slots": {
+              "preHeader": "ATTENTION DROPS FAST",
+              "headline": "The first slide gets 2x more attention than",
+              "body": "Each subsequent page averages just 15 seconds. You don't have time for a warm-up.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "2x",
+              "statNumber": "2x",
+              "statLabel": "more attention than any other slide"
+            },
+            "visual": {
+              "icon": "TrendingDown"
+            }
+          },
+          {
+            "id": "template-1-s2-muegma50l",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "MYTH VS. REALITY",
+            "headline": "Investors don't read every slide",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Investors",
+            "icon": "Book",
+            "slots": {
+              "preHeader": "MYTH VS. REALITY",
+              "headline": "Investors don't read every slide",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Investors",
+              "splitLeft": "Myth: Investors read every slide.",
+              "splitRight": "Fact: Only 58% of decks are read to the final slide."
+            },
+            "visual": {
+              "icon": "Book"
+            }
+          },
+          {
+            "id": "template-1-s3-muegma50m",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "COMMON MISTAKES",
+            "headline": "80% of weak decks share these five",
+            "body": "",
+            "listItems": [
+              "Weak opening: No hook in first 3 slides",
+              "Information overload: Too many slides dilute signal",
+              "Missing traction: No social proof or metrics"
+            ],
+            "footer": "",
+            "accentPhrase": "these five",
+            "icon": "AlertCircle",
+            "slots": {
+              "preHeader": "COMMON MISTAKES",
+              "headline": "80% of weak decks share these five",
+              "body": "",
+              "listItems": [
+                "Weak opening: No hook in first 3 slides",
+                "Information overload: Too many slides dilute signal",
+                "Missing traction: No social proof or metrics"
+              ],
+              "footer": "",
+              "accentPhrase": "these five"
+            },
+            "visual": {
+              "icon": "AlertCircle"
+            }
+          },
+          {
+            "id": "template-1-s4-muegma50n",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "DECK LENGTH MATTERS",
+            "headline": "The ideal deck is 12 slides, not 20",
+            "body": "For seed-to-Series B, 10–14 slides work, and the median funded deck is 12 slides. Every extra slide dilutes the signal. Forget the 20-page appendix.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "12 slides",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "DECK LENGTH MATTERS",
+              "headline": "The ideal deck is 12 slides, not 20",
+              "body": "For seed-to-Series B, 10–14 slides work, and the median funded deck is 12 slides. Every extra slide dilutes the signal. Forget the 20-page appendix.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "12 slides"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s5-muegma50o",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "URGENCY WINS",
+            "headline": "92% of successful decks have a 'why now'",
+            "body": "If you can't articulate urgency, you're invisible to investors. Make it part of your core story.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "92%",
+            "icon": "Clock",
+            "slots": {
+              "preHeader": "URGENCY WINS",
+              "headline": "92% of successful decks have a 'why now'",
+              "body": "If you can't articulate urgency, you're invisible to investors. Make it part of your core story.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "92%",
+              "statNumber": "92%",
+              "statLabel": "Of successful decks have a 'why now' slide"
+            },
+            "visual": {
+              "icon": "Clock"
+            }
+          },
+          {
+            "id": "template-1-s6-muegma50p",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "STAKES OF FAILURE",
+            "headline": "Your deck's job: raise before cash dies",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "before",
+            "icon": "BarChart",
+            "slots": {
+              "preHeader": "STAKES OF FAILURE",
+              "headline": "Your deck's job: raise before cash dies",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "before",
+              "splitLeft": "Running out of capital: 70% of failures",
+              "splitRight": "Poor product-market fit: 43% of failures"
+            },
+            "visual": {
+              "icon": "BarChart"
+            }
+          },
+          {
+            "id": "template-1-s7-muegma50q",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "TAKE ACTION",
+            "headline": "Fix these five mistakes, close rounds 70% faster",
+            "body": "Rebuild around the first 3 slides and a 'why now' slide. Keep it to 12 slides.",
+            "listItems": [],
+            "footer": "Your edge is your deck.",
+            "accentPhrase": "these five mistakes",
+            "icon": "Rocket",
+            "slots": {
+              "preHeader": "TAKE ACTION",
+              "headline": "Fix these five mistakes, close rounds 70% faster",
+              "body": "Rebuild around the first 3 slides and a 'why now' slide. Keep it to 12 slides.",
+              "listItems": [],
+              "footer": "Your edge is your deck.",
+              "accentPhrase": "these five mistakes"
+            },
+            "visual": {
+              "icon": "Rocket"
+            }
+          }
+        ],
+        "tokens": 46542,
+        "costUsd": 0.00933,
+        "llmCalls": 14,
+        "retries": 7,
+        "checks": {
+          "slides": 8,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 4,
+          "richBlocksRendered": 4,
+          "numericClaims": 6,
+          "avgHeadline": 37
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 9,
+            "dimensions": {
+              "hook": 9,
+              "flow": 9,
+              "specificity": 8,
+              "clarity": 8,
+              "audienceFit": 9,
+              "accuracy": 10,
+              "actionability": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 7.6,
+            "facts": 12,
+            "sources": 4,
+            "researched": true,
+            "revisedSlides": [
+              4,
+              7,
+              8
+            ],
+            "rejectedRevisions": 1,
+            "tightened": 1,
+            "forcedFits": 4,
+            "proofreadFixes": 1,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://www.presentations.ai/blog/pitch-deck-statistics",
+            "https://waveup.com/blog/pitch-deck-mistakes-and-how-to-avoid-them",
+            "https://preuve.ai/blog/startup-failure-statistics-2026",
+            "https://www.antler.co/blog/pre-seed-pitch-deck"
+          ],
+          "hook": "Fix the first 3 slides"
+        },
+        "judge": {
+          "hook": 7,
+          "flow": 6,
+          "specificity": 6,
+          "clarity": 8,
+          "audienceFit": 8,
+          "accuracy": 4,
+          "expectations": 5,
+          "overall": 6,
+          "notes": "The deck has a strong hook and clear structure, but it fails the accuracy test: the 58% stat on slide 3 and the 70%/43% failure stats on slide 7 are invented and unsourced, which undermines credibility for a LinkedIn audience. The flow is logical but repetitive (urgency and slide count appear multiple times), and the ending lacks a sharp, memorable takeaway beyond a generic call to action."
+        }
+      }
+    },
+    "pairwise": {
+      "winner": "v2",
+      "reason": "A meets the request for a sharp, specific hook about the first 3 slides and keeps each slide tightly focused on that promise with actionable stats and a clear takeaway, while B narrows to a single detail (team slide) that feels less universally resonant for early-stage founders."
+    }
+  },
+  {
+    "id": "factcheck-brain",
+    "topic": "Is it true we only use 10% of our brains? Fact-check it",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 393962,
+        "slides": [
+          {
+            "id": "template-1-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "You Already Use All of It",
+              "preHeader": "THE 10% BRAIN MYTH",
+              "body": "Neuroscience confirms: we use virtually all of our brain, all the time. The myth that we only use 10% is a relic of early 20th-century misinterpretations — not hidden potential.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "All of It"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of neural net, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "How the Myth Got Started",
+              "preHeader": "ORIGIN STORY",
+              "body": "In the early 1900s, psychologist William James speculated that we only use a fraction of our mental capacity. Later, self-help authors twisted that into the 10% claim. No actual brain study ever supported it.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Misinterpreted"
+            },
+            "visual": {
+              "icon": "Book",
+              "doodlePrompt": "precise editorial spot illustration of open book, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "Imaging Proves Full Use",
+              "preHeader": "THE EVIDENCE",
+              "body": "• PET scans show activity throughout the brain, even during sleep\n• fMRI scans detect blood flow changes across multiple regions during everyday tasks\n• No area of the brain is truly inactive — resting states still show coordinated activity\n• Brain disorders, not healthy inactivity, are what cause measurable dysfunction.",
+              "listItems": [
+                "PET scans: Glucose uptake is high across the whole brain, even during rest.",
+                "fMRI: Most regions show activity within minutes, not just 10%.",
+                "Lesion studies: Even small damage can cause significant deficits — no silent 90%."
+              ],
+              "footer": "",
+              "accentPhrase": "Full Use"
+            },
+            "visual": {
+              "icon": "Scan",
+              "doodlePrompt": "precise editorial spot illustration of predictive graph, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Why 10% Makes No Sense",
+              "preHeader": "ENERGY COSTS",
+              "body": "The brain consumes about 20% of your body’s energy. Evolution wouldn’t waste that on mostly unused tissue. If 90% were dormant, it would have been shrunken or repurposed long ago.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Energy Costs"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of energy cell, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "Why the Myth Won’t Die",
+              "preHeader": "POP CULTURE PERSISTENCE",
+              "body": "Movies like Lucy and self-help gurus keep the myth alive — it’s a compelling story: unlock hidden potential. But real neuroscience says you’re already running at full capacity.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Won’t Die"
+            },
+            "visual": {
+              "icon": "Film",
+              "doodlePrompt": "precise editorial spot illustration of film reel, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-5",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Your Brain Is Always On",
+              "preHeader": "THE TRUTH",
+              "body": "You already use your whole brain. The myth is a relic — not a key to superpowers.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Always On"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of success state, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 20311,
+        "costUsd": 0.00262,
+        "llmCalls": 9,
+        "retries": 6,
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 3,
+          "missingRequired": 0,
+          "accentInvalid": 2,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 7,
+          "avgHeadline": 23
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 9,
+          "specificity": 9,
+          "clarity": 9,
+          "audienceFit": 9,
+          "accuracy": 10,
+          "expectations": 10,
+          "overall": 9,
+          "notes": "Slide 3 has redundant content between body and listItems; the closing slide could be more memorable."
+        }
+      },
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 182633,
+        "slides": [
+          {
+            "id": "template-1-s0-muegjdmrd",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "FACT CHECK",
+            "headline": "Why do we think we use 10% of our brains?",
+            "body": "A myth that started from misinterpretation of early neuroscience, not from any evidence.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Why do we think",
+            "icon": "Brain",
+            "slots": {
+              "preHeader": "FACT CHECK",
+              "headline": "Why do we think we use 10% of our brains?",
+              "body": "A myth that started from misinterpretation of early neuroscience, not from any evidence.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Why do we think"
+            },
+            "visual": {
+              "icon": "Brain"
+            }
+          },
+          {
+            "id": "template-1-s1-muegjdmre",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "BRAIN MYTH ORIGINS",
+            "headline": "The myth began as a misinterpretation",
+            "body": "Researchers in the 19th and 20th centuries didn't know what most brain regions did—that doesn't mean they were idle. Modern imaging shows that even simple movements engage multiple areas at once.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "myth began",
+            "icon": "Book",
+            "slots": {
+              "preHeader": "BRAIN MYTH ORIGINS",
+              "headline": "The myth began as a misinterpretation",
+              "body": "Researchers in the 19th and 20th centuries didn't know what most brain regions did—that doesn't mean they were idle. Modern imaging shows that even simple movements engage multiple areas at once.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "myth began"
+            },
+            "visual": {
+              "icon": "Book"
+            }
+          },
+          {
+            "id": "template-1-s2-muegjdmrf",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "WHY IT STICKS",
+            "headline": "Why the myth survives",
+            "body": "",
+            "listItems": [
+              "Self-help books: promised hidden genius from unlocking the rest.",
+              "Movies: 'Lucy' and others made the myth exciting.",
+              "Hidden reserves: the idea appeals to our desire for untapped potential."
+            ],
+            "footer": "",
+            "accentPhrase": "myth survives",
+            "icon": "Sparkles",
+            "slots": {
+              "preHeader": "WHY IT STICKS",
+              "headline": "Why the myth survives",
+              "body": "",
+              "listItems": [
+                "Self-help books: promised hidden genius from unlocking the rest.",
+                "Movies: 'Lucy' and others made the myth exciting.",
+                "Hidden reserves: the idea appeals to our desire for untapped potential."
+              ],
+              "footer": "",
+              "accentPhrase": "myth survives"
+            },
+            "visual": {
+              "icon": "Sparkles"
+            }
+          },
+          {
+            "id": "template-1-s3-muegjdmrg",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "THE TRUTH",
+            "headline": "Myth vs. Fact",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Myth",
+            "icon": "CheckCircle",
+            "slots": {
+              "preHeader": "THE TRUTH",
+              "headline": "Myth vs. Fact",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Myth",
+              "splitLeft": "Myth: We have huge untapped brain power waiting to be activated.",
+              "splitRight": "Fact: The brain is energy-efficient. Even at rest, your default mode network is active."
+            },
+            "visual": {
+              "icon": "CheckCircle"
+            }
+          },
+          {
+            "id": "template-1-s4-muegjdmrh",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "BRAIN IN ACTION",
+            "headline": "A simple tap activates your whole brain",
+            "body": "Think of tapping your finger. MRI scans show areas for planning, coordination, sensation, and motor control all light up. No single '10%' zone does it alone. Your brain is a whole-team operation, not a few star players.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "whole brain",
+            "icon": "Brain",
+            "slots": {
+              "preHeader": "BRAIN IN ACTION",
+              "headline": "A simple tap activates your whole brain",
+              "body": "Think of tapping your finger. MRI scans show areas for planning, coordination, sensation, and motor control all light up. No single '10%' zone does it alone. Your brain is a whole-team operation, not a few star players.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "whole brain"
+            },
+            "visual": {
+              "icon": "Brain"
+            }
+          },
+          {
+            "id": "template-1-s5-muegjdmri",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "TAKEAWAY",
+            "headline": "Your brain is already fully engaged",
+            "body": "Instead of chasing hidden potential, learn how it actually works.",
+            "listItems": [],
+            "footer": "Question every brain myth",
+            "accentPhrase": "fully engaged",
+            "icon": "Compass",
+            "slots": {
+              "preHeader": "TAKEAWAY",
+              "headline": "Your brain is already fully engaged",
+              "body": "Instead of chasing hidden potential, learn how it actually works.",
+              "listItems": [],
+              "footer": "Question every brain myth",
+              "accentPhrase": "fully engaged"
+            },
+            "visual": {
+              "icon": "Compass"
+            }
+          }
+        ],
+        "tokens": 25298,
+        "costUsd": 0.00384,
+        "llmCalls": 9,
+        "retries": 2,
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 1,
+          "richBlocksRendered": 1,
+          "numericClaims": 2,
+          "avgHeadline": 31
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.5,
+            "dimensions": {
+              "hook": 8,
+              "flow": 9,
+              "specificity": 7,
+              "clarity": 9,
+              "audienceFit": 8,
+              "accuracy": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 8,
+            "facts": 0,
+            "sources": 0,
+            "researched": true,
+            "revisedSlides": [],
+            "rejectedRevisions": 0,
+            "tightened": 0,
+            "forcedFits": 0,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 0,
+          "sources": [],
+          "hook": "Why do we think we use 10% of our brains?"
+        },
+        "judge": {
+          "hook": 7,
+          "flow": 8,
+          "specificity": 6,
+          "clarity": 9,
+          "audienceFit": 8,
+          "accuracy": 9,
+          "expectations": 9,
+          "overall": 7,
+          "notes": "Cover slide is too generic; could start with a surprising stat or question to hook. Lacks specific study references (e.g., naming fMRI research) which weakens the evidence-based tone."
+        }
+      }
+    },
+    "pairwise": {
+      "winner": "v1",
+      "reason": "It opens with a direct, authoritative debunk, follows with clear origins and evidence, and logically closes—delivering exactly what curious readers want: a fast, accurate fact-check with no fluff; B is slower and less structured."
+    }
+  },
+  {
+    "id": "story-airbnb",
+    "topic": "The story of how Airbnb survived by selling cereal",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 80068,
+        "slides": [
+          {
+            "id": "template-3-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Airbnb sold cereal to stay alive",
+              "preHeader": "THE STARTUP SURVIVAL STORY",
+              "body": "In 2008, two founders drowning in credit card debt had zero traction, zero funding, and zero runway. So they did the only thing that made sense: they pivoted to breakfast.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "stay alive"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of seed sprout, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Debt, despair, and empty pockets",
+              "preHeader": "THE CRISIS",
+              "body": "Airbnb was going nowhere. No investors, no users, no money. The founders maxed out their credit cards and the bills were piling up. They needed cash fast — or the dream was over.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "debt"
+            },
+            "visual": {
+              "icon": "TrendingDown",
+              "doodlePrompt": "precise editorial spot illustration of storm cloud, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "The absurd pivot",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "Product: Custom cereal boxes.",
+                "Flavors: Obama O’s and Cap’n McCain’s.",
+                "Result: $30,000 raised."
+              ],
+              "footer": "",
+              "accentPhrase": "absurd pivot"
+            },
+            "visual": {
+              "icon": "Package",
+              "doodlePrompt": "precise editorial spot illustration of shopping cart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Hand-stuffing cereal into boxes",
+              "preHeader": "THE HUSTLE",
+              "body": "They bought store-brand cereal, printed flashy boxes, and spent hours stuffing and mailing them. Each box was a tiny, laughable work of desperation — but people actually bought them.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "laughable"
+            },
+            "visual": {
+              "icon": "DollarSign",
+              "doodlePrompt": "precise editorial spot illustration of pencil writing, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "Cereal catches the right eyes",
+              "preHeader": "THE BREAKTHROUGH",
+              "body": "That $30,000 didn’t just pay the bills — it made people in Silicon Valley sit up. Y Combinator noticed the scrappy hustle, and an angel investor came calling. The cereal kept Airbnb breathing.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "cereal"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of launch rocket, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "Survival sometimes looks silly",
+              "preHeader": "THE LESSON",
+              "body": "The founders didn’t have a grand plan. They just refused to die quietly. That willingness to do something ridiculous — that’s what turned a joke into a lifeline.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "silly"
+            },
+            "visual": {
+              "icon": "Heart",
+              "doodlePrompt": "precise editorial spot illustration of idea bulb, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-6",
+            "blockType": "closing",
+            "slots": {
+              "headline": "When the odds say quit, get weird",
+              "preHeader": "YOUR MOVE",
+              "body": "The next time your startup looks doomed, remember Obama O’s. A wild idea, a little cardboard, and a lot of nerve can be the spark that keeps you alive — and gets you noticed.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "get weird"
+            },
+            "visual": {
+              "icon": "Sparkles",
+              "doodlePrompt": "precise editorial spot illustration of rainbow arc, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 18295,
+        "costUsd": 0.00286,
+        "llmCalls": 7,
+        "retries": 3,
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 2,
+          "missingRequired": 0,
+          "accentInvalid": 3,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 2,
+          "avgHeadline": 29
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 9,
+          "specificity": 9,
+          "clarity": 9,
+          "audienceFit": 9,
+          "accuracy": 10,
+          "expectations": 10,
+          "overall": 9,
+          "notes": "The hook is strong but could be punchier; the flow is excellent but the closing slide could tie back more directly to the cereal story for maximum resonance."
+        }
+      },
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 744936,
+        "slides": [
+          {
+            "id": "template-3-s0-muegvftzr",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "DESPERATE MOVE",
+            "headline": "Brian Chesky hot-glued 1,000 cereal boxes",
+            "body": "When Airbnb was out of money, he hand-assembled each box to sell for $40 at the DNC.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "hot-glued",
+            "icon": "Package",
+            "slots": {
+              "preHeader": "DESPERATE MOVE",
+              "headline": "Brian Chesky hot-glued 1,000 cereal boxes",
+              "body": "When Airbnb was out of money, he hand-assembled each box to sell for $40 at the DNC.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "hot-glued"
+            },
+            "visual": {
+              "icon": "Package"
+            }
+          },
+          {
+            "id": "template-3-s1-muegvftzs",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE STAKES",
+            "headline": "Almost no users, no money, living off cereal",
+            "body": "In 2008, Airbnb had almost no users, no investor interest, and founders running out of money — literally living off cereal.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "living off cereal",
+            "icon": "TrendingDown",
+            "slots": {
+              "preHeader": "THE STAKES",
+              "headline": "Almost no users, no money, living off cereal",
+              "body": "In 2008, Airbnb had almost no users, no investor interest, and founders running out of money — literally living off cereal.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "living off cereal"
+            },
+            "visual": {
+              "icon": "TrendingDown"
+            }
+          },
+          {
+            "id": "template-3-s2-muegvftzt",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "THE WILD IDEA",
+            "headline": "Three odd ingredients",
+            "body": "",
+            "listItems": [
+              "Theme: Two election-themed cereals — Obama O's and Cap'n McCain's.",
+              "Quantity: Only 500 boxes of each, filled with real cereal.",
+              "Venue: Sold mostly at the 2008 Democratic National Convention."
+            ],
+            "footer": "",
+            "accentPhrase": "odd ingredients",
+            "icon": "Lightbulb",
+            "slots": {
+              "preHeader": "THE WILD IDEA",
+              "headline": "Three odd ingredients",
+              "body": "",
+              "listItems": [
+                "Theme: Two election-themed cereals — Obama O's and Cap'n McCain's.",
+                "Quantity: Only 500 boxes of each, filled with real cereal.",
+                "Venue: Sold mostly at the 2008 Democratic National Convention."
+              ],
+              "footer": "",
+              "accentPhrase": "odd ingredients"
+            },
+            "visual": {
+              "icon": "Lightbulb"
+            }
+          },
+          {
+            "id": "template-3-s3-muegvftzu",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "IT WORKED",
+            "headline": "A ridiculous stunt that actually worked",
+            "body": "Those 1,000 cereal boxes sold for $40 each — earning the founders $30,000.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "actually worked",
+            "icon": "DollarSign",
+            "slots": {
+              "preHeader": "IT WORKED",
+              "headline": "A ridiculous stunt that actually worked",
+              "body": "Those 1,000 cereal boxes sold for $40 each — earning the founders $30,000.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "actually worked",
+              "statNumber": "$30,000",
+              "statLabel": "Earned from 1,000 cereal boxes at $40 each"
+            },
+            "visual": {
+              "icon": "DollarSign"
+            }
+          },
+          {
+            "id": "template-3-s4-muegvftzv",
+            "variant": "body",
+            "blockType": "quote",
+            "preHeader": "",
+            "headline": "If you can sell a $4 cereal box for $40, you can convince people to stay in strangers' rooms.",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "cereal",
+            "icon": "MessageSquare",
+            "slots": {
+              "preHeader": "",
+              "headline": "If you can sell a $4 cereal box for $40, you can convince people to stay in strangers' rooms.",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "cereal",
+              "quoteAuthor": "Paul Graham"
+            },
+            "visual": {
+              "icon": "MessageSquare"
+            }
+          },
+          {
+            "id": "template-3-s5-muegvftzw",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "TURNING POINT",
+            "headline": "Cereal sales earned a spot at Y Combinator",
+            "body": "The $20,000 investment let the founders fly to New York, meet users, and push the site — and by March 2009, Airbnb had 10,000 users.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Y Combinator",
+            "icon": "Rocket",
+            "slots": {
+              "preHeader": "TURNING POINT",
+              "headline": "Cereal sales earned a spot at Y Combinator",
+              "body": "The $20,000 investment let the founders fly to New York, meet users, and push the site — and by March 2009, Airbnb had 10,000 users.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Y Combinator"
+            },
+            "visual": {
+              "icon": "Rocket"
+            }
+          },
+          {
+            "id": "template-3-s6-muegvftzx",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "THE PAYOFF",
+            "headline": "Sequoia Capital invested $600,000",
+            "body": "By April 2009, Sequoia invested $600,000. Takeaway: a startup's breakthrough can run through a novelty cereal aisle.",
+            "listItems": [],
+            "footer": "Stay scrappy.",
+            "accentPhrase": "Sequoia Capital",
+            "icon": "Award",
+            "slots": {
+              "preHeader": "THE PAYOFF",
+              "headline": "Sequoia Capital invested $600,000",
+              "body": "By April 2009, Sequoia invested $600,000. Takeaway: a startup's breakthrough can run through a novelty cereal aisle.",
+              "listItems": [],
+              "footer": "Stay scrappy.",
+              "accentPhrase": "Sequoia Capital"
+            },
+            "visual": {
+              "icon": "Award"
+            }
+          }
+        ],
+        "tokens": 82078,
+        "costUsd": 0.01455,
+        "llmCalls": 14,
+        "retries": 7,
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 2,
+          "richBlocksRendered": 2,
+          "numericClaims": 15,
+          "avgHeadline": 45
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 9.25,
+            "dimensions": {
+              "hook": 9,
+              "flow": 9,
+              "specificity": 10,
+              "clarity": 8,
+              "audienceFit": 10,
+              "accuracy": 10,
+              "fun": 8,
+              "narrative": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 9,
+            "facts": 12,
+            "sources": 7,
+            "researched": true,
+            "revisedSlides": [
+              5
+            ],
+            "rejectedRevisions": 0,
+            "tightened": 1,
+            "forcedFits": 1,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://timesofindia.indiatimes.com/world/us/airbnb-was-so-broke-in-2008-that-its-founders-sold-obama-and-mccain-cereal-boxes-just-to-keep-the-company-alive-long-enough-for-investors-to-notice/articleshow/132283487.cms",
+            "https://www.facebook.com/vethathiriyoga/posts/did-you-know-airbnb-was-so-broke-in-2008-they-sold-cereal-boxes-to-survivenobody/1382701313298764",
+            "https://www.instagram.com/reel/DYhunVwh7Wu",
+            "https://en.wikipedia.org/wiki/Airbnb",
+            "https://medium.com/@olga.shirokova/5-years-later-airbnb-2412f85b5209",
+            "https://finance.yahoo.com/small-business/articles/brian-chesky-once-hot-glued-113000059.html",
+            "https://news.crunchbase.com/venture/airbnb-ipo-origin-story-y-combinator"
+          ],
+          "hook": "Brian Chesky hot-glued 1,000 cereal boxes"
+        },
+        "judge": {
+          "hook": 9,
+          "flow": 8,
+          "specificity": 9,
+          "clarity": 8,
+          "audienceFit": 9,
+          "accuracy": 8,
+          "expectations": 8,
+          "overall": 8,
+          "notes": "The Paul Graham quote is presented as a verbatim citation, but it reads like a paraphrase and may not match an exact source; also, Slide 6 overstates causality by saying cereal sales 'earned a spot at Y Combinator' when the YC decision was based on the whole application/audacity of the founders, not the sales themselves."
+        }
+      }
+    },
+    "pairwise": {
+      "winner": "v2",
+      "reason": "Carousel A is tighter and more specific — it names Brian Chesky, the hot-glue, the exact $30k figure, and Paul Graham's insight — giving it a real story arc with memorable details that startup founders would appreciate. Carousel B is more generic and loses impact with vague phrases like 'the right eyes' and 'an angel investor.'"
+    }
+  },
+  {
+    "id": "fun-zoom",
+    "topic": "Funny carousel: the types of people in every Zoom meeting",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 159337,
+        "slides": [
+          {
+            "id": "template-3-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "7 Archetypes We All Secretly Are",
+              "preHeader": "ZOOM CALL PERSONALITY TEST?",
+              "body": "You’re not alone in your quirks. Let’s laugh at ourselves. (And hide from the one you don’t want to be.)",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Secretly Are"
+            },
+            "visual": {
+              "icon": "Lightbulb",
+              "doodlePrompt": "precise editorial spot illustration of accessibility focus, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-1",
+            "blockType": "list",
+            "slots": {
+              "headline": "The Usual Suspects",
+              "preHeader": "",
+              "body": "• The Mute Button Martyr • The Camera-Off Philosopher • The Background Bandit.",
+              "listItems": [
+                "The Mute Button Mime: Talks passionately... into silence.",
+                "The Background Star: Dog, kid, or delivery guy steal the show.",
+                "The Tech Tinkerer: ‘Can you hear me now? How about now?’"
+              ],
+              "footer": "",
+              "accentPhrase": "Usual Suspects"
+            },
+            "visual": {
+              "icon": "Star",
+              "doodlePrompt": "precise editorial spot illustration of api handshake, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "More Meeting Favorites",
+              "preHeader": "",
+              "body": "• The Nodding NPC • The ‘Can You See My Screen?’ Enthusiast • The Late Arrival with Excuses.",
+              "listItems": [
+                "The Silent Nodder: Camera on, mic off, soul elsewhere.",
+                "The Interrupter: ‘Sorry, just one thing—’ before you finish.",
+                "The Coffee Sipper: Every sip is a performance."
+              ],
+              "footer": "",
+              "accentPhrase": "Meeting Favorites"
+            },
+            "visual": {
+              "icon": "TrendingUp",
+              "doodlePrompt": "precise editorial spot illustration of binary rain, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "The Over-Sharer: TMI in 4K",
+              "preHeader": "THE VILLAIN",
+              "body": "From home renovation to health updates. We all know one. Please don’t be one.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Over-Sharer"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of ai ethics, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "We’ve All Been the Mute Mime",
+              "preHeader": "HONESTY CHECK",
+              "body": "Admit it. You’ve done the frustrated hand wave at a frozen screen. It’s a rite of passage.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Mute Mime"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of ab testing split, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-3-slide-5",
+            "blockType": "closing",
+            "slots": {
+              "headline": "It’s Okay to Be You on Zoom",
+              "preHeader": "EMBRACE YOUR ARCHETYPE",
+              "body": "Laugh at yourself. Forgive your coworkers. The mute button is your friend.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "It’s Okay"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of battery power, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 21112,
+        "costUsd": 0.00282,
+        "llmCalls": 8,
+        "retries": 4,
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 1,
+          "avgHeadline": 26
+        },
+        "extra": {},
+        "judge": {
+          "hook": 5,
+          "flow": 6,
+          "specificity": 7,
+          "clarity": 6,
+          "audienceFit": 8,
+          "accuracy": 10,
+          "expectations": 5,
+          "overall": 6,
+          "notes": "Two biggest problems: The cover slide is generic ('7 Archetypes We All Secretly Are' is overused and not funny) and the deck repetitively lists three similar archetypes across slides 2 and 3 (Mute Button Martyr/Mute Button Mime, Background Bandit/Background Star) breaking the one-archetype-per-slide rule, making the flow cluttered."
+        }
+      },
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 407146,
+        "slides": [
+          {
+            "id": "template-3-s0-muegvjnvy",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "A FIELD GUIDE TO YOUR CALLS",
+            "headline": "The Zoom meeting character list",
+            "body": "Spot the Never-Muter, the Ghost, and the Film Director before your next call ends.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "character list",
+            "icon": "Star",
+            "slots": {
+              "preHeader": "A FIELD GUIDE TO YOUR CALLS",
+              "headline": "The Zoom meeting character list",
+              "body": "Spot the Never-Muter, the Ghost, and the Film Director before your next call ends.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "character list"
+            },
+            "visual": {
+              "icon": "Star"
+            }
+          },
+          {
+            "id": "template-3-s1-muegvjnvz",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "FIRST UP:",
+            "headline": "The One Who Never Mutes",
+            "body": "They've never met a sneeze they didn't share. Your eardrums know them well.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Never Mutes",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "FIRST UP:",
+              "headline": "The One Who Never Mutes",
+              "body": "They've never met a sneeze they didn't share. Your eardrums know them well.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Never Mutes"
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-3-s2-muegvjnv10",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "ALSO SPOTTED:",
+            "headline": "Three more to watch for",
+            "body": "",
+            "listItems": [
+              "The Nodding Head: Hasn't spoken in 20 minutes",
+              "The Black Screen: Might be a ghost",
+              "The Film Director: Adjusts lighting mid-call"
+            ],
+            "footer": "",
+            "accentPhrase": "more to watch",
+            "icon": "Target",
+            "slots": {
+              "preHeader": "ALSO SPOTTED:",
+              "headline": "Three more to watch for",
+              "body": "",
+              "listItems": [
+                "The Nodding Head: Hasn't spoken in 20 minutes",
+                "The Black Screen: Might be a ghost",
+                "The Film Director: Adjusts lighting mid-call"
+              ],
+              "footer": "",
+              "accentPhrase": "more to watch"
+            },
+            "visual": {
+              "icon": "Target"
+            }
+          },
+          {
+            "id": "template-3-s3-muegvjnv11",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "NEXT UP:",
+            "headline": "The Background Noise Maker",
+            "body": "Their dog is barking, their kid is singing, and the blender is on. They're living their life — audibly. You'll hear them before you see them, and you'll never unhear them.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Background Noise Maker",
+            "icon": "TrendingUp",
+            "slots": {
+              "preHeader": "NEXT UP:",
+              "headline": "The Background Noise Maker",
+              "body": "Their dog is barking, their kid is singing, and the blender is on. They're living their life — audibly. You'll hear them before you see them, and you'll never unhear them.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Background Noise Maker"
+            },
+            "visual": {
+              "icon": "TrendingUp"
+            }
+          },
+          {
+            "id": "template-3-s4-muegvjnv12",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "CLASSIC MOVE:",
+            "headline": "The Screen Sharer",
+            "body": "'Can everyone see my screen?' — seconds before showing their browser history. We've all been there.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Screen Sharer",
+            "icon": "Lightbulb",
+            "slots": {
+              "preHeader": "CLASSIC MOVE:",
+              "headline": "The Screen Sharer",
+              "body": "'Can everyone see my screen?' — seconds before showing their browser history. We've all been there.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Screen Sharer"
+            },
+            "visual": {
+              "icon": "Lightbulb"
+            }
+          },
+          {
+            "id": "template-3-s5-muegvjnv13",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "YOUR NEXT MISSION:",
+            "headline": "Play Zoom Archetype Bingo",
+            "body": "Next meeting, play 'Zoom Archetype Bingo'. First to spot all five wins — no more boring meetings!",
+            "listItems": [],
+            "footer": "Bingo card not included.",
+            "accentPhrase": "Zoom Archetype Bingo",
+            "icon": "Award",
+            "slots": {
+              "preHeader": "YOUR NEXT MISSION:",
+              "headline": "Play Zoom Archetype Bingo",
+              "body": "Next meeting, play 'Zoom Archetype Bingo'. First to spot all five wins — no more boring meetings!",
+              "listItems": [],
+              "footer": "Bingo card not included.",
+              "accentPhrase": "Zoom Archetype Bingo"
+            },
+            "visual": {
+              "icon": "Award"
+            }
+          }
+        ],
+        "tokens": 49585,
+        "costUsd": 0.00801,
+        "llmCalls": 9,
+        "retries": 5,
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 24
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 0,
+            "dimensions": {},
+            "hookCandidates": 4,
+            "hookScore": 9.8,
+            "facts": 0,
+            "sources": 0,
+            "researched": false,
+            "revisedSlides": [
+              4,
+              6
+            ],
+            "rejectedRevisions": 0,
+            "tightened": 0,
+            "forcedFits": 0,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 0,
+          "sources": [],
+          "hook": "The Zoom meeting character list"
+        },
+        "judge": {
+          "hook": 9,
+          "flow": 6,
+          "specificity": 9,
+          "clarity": 8,
+          "audienceFit": 10,
+          "accuracy": 5,
+          "expectations": 4,
+          "overall": 7,
+          "notes": "Two biggest problems: 1) Slide 3 lists three archetypes, violating 'one archetype per slide'. 2) Closing slide says 'all five' but deck shows six archetypes."
+        }
+      }
+    },
+    "pairwise": {
+      "winner": "v2",
+      "reason": "B is sharper and more consistent: each archetype is instantly recognisable, the jokes land cleanly, and the flow from intro to bingo feels like a real field guide. A has fun titles, but the list slides don't match their own headers and multiple archetypes get crammed together, which hurts clarity and the comedic rhythm."
+    }
+  },
+  {
+    "id": "source-4day",
+    "topic": "Turn this article into a carousel about the UK four-day week trial",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 81083,
+        "slides": [
+          {
+            "id": "template-1-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "The UK Four-Day Week Trial: Results and Lessons",
+              "preHeader": "EVIDENCE-BASED POLICY",
+              "body": "In 2022, 61 UK companies and approximately 2,900 employees participated in a six-month four-day week trial without pay cuts. The outcomes were remarkable.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Four-Day Week Trial"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of launch rocket, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Resignations Fell 57%, Sick Days Down Two-Thirds",
+              "preHeader": "RETENTION AND WELL-BEING",
+              "body": "During the trial, resignations dropped by 57% and sick days fell by two-thirds. 71% of employees reported lower burnout levels.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Resignations Fell 57%"
+            },
+            "visual": {
+              "icon": "Heart",
+              "doodlePrompt": "precise editorial spot illustration of beating heart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-2",
+            "blockType": "list",
+            "slots": {
+              "headline": "Redesign, Not Compression",
+              "preHeader": "SUCCESS FACTORS",
+              "body": "",
+              "listItems": [
+                "Meetings: Low-value meetings were cut or shortened.",
+                "Processes: Work processes were redesigned for efficiency.",
+                "Culture: Focus shifted from hours to output."
+              ],
+              "footer": "",
+              "accentPhrase": "Not Compression"
+            },
+            "visual": {
+              "icon": "Settings",
+              "doodlePrompt": "precise editorial spot illustration of settings gear, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Revenue Rose 1.4% During the Trial (35% YoY)",
+              "preHeader": "BUSINESS IMPACT",
+              "body": "Despite the reduced workweek, company revenue increased by 1.4% over the six-month trial period. On a year-over-year basis, revenue growth was 35%.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Revenue Rose 1.4%"
+            },
+            "visual": {
+              "icon": "TrendingUp",
+              "doodlePrompt": "precise editorial spot illustration of predictive graph, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-4",
+            "blockType": "list",
+            "slots": {
+              "headline": "56 of 61 Companies Continued",
+              "preHeader": "ADOPTION",
+              "body": "",
+              "listItems": [
+                "After trial: 56 of 61 companies (92%) chose to continue the four-day week.",
+                "Reason: Significant improvements in employee well-being and retention.",
+                "Challenge: Not a one-size-fits-all solution; requires upfront restructuring."
+              ],
+              "footer": "",
+              "accentPhrase": "56 of 61"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of success state, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "Success Depends on Deliberate Restructuring",
+              "preHeader": "IMPORTANT CAVEATS",
+              "body": "The trial’s success was not automatic. It required organizations to redesign workflows, eliminate low-value meetings, and shift focus from hours to output before implementation.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Deliberate Restructuring"
+            },
+            "visual": {
+              "icon": "AlertCircle",
+              "doodlePrompt": "precise editorial spot illustration of puzzle logic, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-6",
+            "blockType": "closing",
+            "slots": {
+              "headline": "A Four-Day Week: Powerful but Not a Panacea",
+              "preHeader": "KEY TAKEAWAY",
+              "body": "When implemented with careful redesign, the four-day week can reduce burnout and resignations without sacrificing revenue.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Not a Panacea"
+            },
+            "visual": {
+              "icon": "Compass",
+              "doodlePrompt": "precise editorial spot illustration of compass rose, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 14813,
+        "costUsd": 0.00235,
+        "llmCalls": 6,
+        "retries": 1,
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 2,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 9,
+          "avgHeadline": 40
+        },
+        "extra": {},
+        "judge": {
+          "hook": 7,
+          "flow": 8,
+          "specificity": 9,
+          "clarity": 8,
+          "audienceFit": 8,
+          "accuracy": 10,
+          "expectations": 9,
+          "overall": 8,
+          "notes": "The hook is solid but could be more provocative for managers/HR leaders. Slide 3's list items are slightly generic; tie them more directly to the trial's findings (e.g., 'cut low-value meetings' is from the source, but 'culture' is vague)."
+        }
+      },
+      "v2": {
+        "pipeline": "v2",
+        "ok": false,
+        "error": "Empty response",
+        "ms": 250674,
+        "slides": [],
+        "tokens": 41844,
+        "costUsd": 0.00723,
+        "llmCalls": 6,
+        "retries": 3
+      }
+    }
+  },
+  {
+    "id": "es-sleep",
+    "topic": "Crea un carrusel sobre hábitos de sueño para estudiantes universitarios",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 73693,
+        "slides": [
+          {
+            "id": "template-4-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Duerme mejor, rinde más",
+              "preHeader": "DESCANSO INTELIGENTE",
+              "body": "Fijar un horario regular es el primer paso para un sueño de calidad.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Duerme mejor"
+            },
+            "visual": {
+              "icon": "Moon",
+              "doodlePrompt": "precise editorial spot illustration of moon crescent, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Fija un horario regular para dormir y despertar",
+              "preHeader": "PASO 1",
+              "body": "Incluso los fines de semana, mantener el mismo horario ayuda a tu reloj biológico.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "horario regular"
+            },
+            "visual": {
+              "icon": "Clock",
+              "doodlePrompt": "precise editorial spot illustration of calendar picker, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-2",
+            "blockType": "body",
+            "slots": {
+              "headline": "Apaga pantallas 30 minutos antes de dormir",
+              "preHeader": "PASO 2",
+              "body": "La luz azul de móviles y laptops inhibe la melatonina. Dale un descanso a tus ojos.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Apaga pantallas"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of dark mode toggle, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-3",
+            "blockType": "body",
+            "slots": {
+              "headline": "Evita cafeína y comidas pesadas desde la tarde",
+              "preHeader": "PASO 3",
+              "body": "La cafeína tarda horas en eliminarse. Opta por infusiones y cenas ligeras.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "evita cafeína"
+            },
+            "visual": {
+              "icon": "Apple",
+              "doodlePrompt": "precise editorial spot illustration of food apple, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-4",
+            "blockType": "list",
+            "slots": {
+              "headline": "Rutina y ambiente",
+              "preHeader": "",
+              "body": "• Crea un ritual relajante: lee, medita o escucha música suave.\n• Mantén tu habitación oscura, fresca y sin ruidos.\n• Usa la cama solo para dormir y reserva el espacio para descansar.",
+              "listItems": [
+                "Rutina relajante: lee, medita o escucha música suave.",
+                "Habitación oscura, fresca y sin ruidos.",
+                "Si no duermes, levántate y haz algo calmado."
+              ],
+              "footer": "",
+              "accentPhrase": "Rutina y ambiente"
+            },
+            "visual": {
+              "icon": "Book",
+              "doodlePrompt": "precise editorial spot illustration of open book, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-5",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Dormir bien es tu mejor aliado",
+              "preHeader": "RECUERDA",
+              "body": "Pequeños cambios en tu rutina pueden transformar tus noches y tus días. ¡Empieza hoy!",
+              "listItems": [],
+              "footer": "Sígueme para más tips",
+              "accentPhrase": "mejor aliado"
+            },
+            "visual": {
+              "icon": "Star",
+              "doodlePrompt": "precise editorial spot illustration of success state, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 17481,
+        "costUsd": 0.00192,
+        "llmCalls": 9,
+        "retries": 1,
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 1,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 34
+        },
+        "extra": {},
+        "judge": {
+          "hook": 7,
+          "flow": 8,
+          "specificity": 6,
+          "clarity": 8,
+          "audienceFit": 8,
+          "accuracy": 9,
+          "expectations": 8,
+          "overall": 7,
+          "notes": "The habits are practical and the tone fits students, but the cover hook is somewhat generic—'Duerme mejor, rinde más' doesn't strongly stand out. Also, slide 5 has an inconsistency: the body bullets and the listItems don't fully match, which could confuse the design or narration."
+        }
+      },
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 304411,
+        "slides": [
+          {
+            "id": "template-4-s0-mueh0qd114",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "VIDA UNIVERSITARIA",
+            "headline": "¿Tu cerebro te está saboteando en clase?",
+            "body": "El 74% de los universitarios pierde atención al dormir mal. Descubre cómo revertirlo en 4 pasos.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "saboteando",
+            "icon": "Moon",
+            "slots": {
+              "preHeader": "VIDA UNIVERSITARIA",
+              "headline": "¿Tu cerebro te está saboteando en clase?",
+              "body": "El 74% de los universitarios pierde atención al dormir mal. Descubre cómo revertirlo en 4 pasos.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "saboteando"
+            },
+            "visual": {
+              "icon": "Moon"
+            }
+          },
+          {
+            "id": "template-4-s1-mueh0qd115",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "PASO 1",
+            "headline": "Fija un horario de sueño constante",
+            "body": "Tu cerebro necesita rutina: acuéstate y levántate a la misma hora cada día. La mala calidad del sueño incrementa el cansancio emocional y reduce tu rendimiento académico.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "horario de sueño constante",
+            "icon": "Clock",
+            "slots": {
+              "preHeader": "PASO 1",
+              "headline": "Fija un horario de sueño constante",
+              "body": "Tu cerebro necesita rutina: acuéstate y levántate a la misma hora cada día. La mala calidad del sueño incrementa el cansancio emocional y reduce tu rendimiento académico.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "horario de sueño constante"
+            },
+            "visual": {
+              "icon": "Clock"
+            }
+          },
+          {
+            "id": "template-4-s2-mueh0qd116",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "PASO 2",
+            "headline": "Evita la cafeína al menos 4 horas antes",
+            "body": "",
+            "listItems": [
+              "Café: una taza cerca de la cama te mantiene alerta",
+              "Refrescos: la gaseosa interrumpe tu sueño profundo",
+              "Bebidas energéticas: evítalas si quieres descansar"
+            ],
+            "footer": "",
+            "accentPhrase": "Evita la cafeína",
+            "icon": "FlaskConical",
+            "slots": {
+              "preHeader": "PASO 2",
+              "headline": "Evita la cafeína al menos 4 horas antes",
+              "body": "",
+              "listItems": [
+                "Café: una taza cerca de la cama te mantiene alerta",
+                "Refrescos: la gaseosa interrumpe tu sueño profundo",
+                "Bebidas energéticas: evítalas si quieres descansar"
+              ],
+              "footer": "",
+              "accentPhrase": "Evita la cafeína"
+            },
+            "visual": {
+              "icon": "FlaskConical"
+            }
+          },
+          {
+            "id": "template-4-s3-mueh0qd117",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "PASO 3",
+            "headline": "Crea una rutina de relajación",
+            "body": "Relajarte antes de dormir protege tu memoria y te prepara para aprender mejor.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "rutina de relajación",
+            "icon": "Brain",
+            "slots": {
+              "preHeader": "PASO 3",
+              "headline": "Crea una rutina de relajación",
+              "body": "Relajarte antes de dormir protege tu memoria y te prepara para aprender mejor.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "rutina de relajación",
+              "statNumber": "60%",
+              "statLabel": "de universitarios sufre deterioro de memoria"
+            },
+            "visual": {
+              "icon": "Brain"
+            }
+          },
+          {
+            "id": "template-4-s4-mueh0qd118",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "PASO 4",
+            "headline": "Optimiza tu ambiente de sueño",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Optimiza tu ambiente",
+            "icon": "Home",
+            "slots": {
+              "preHeader": "PASO 4",
+              "headline": "Optimiza tu ambiente de sueño",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Optimiza tu ambiente",
+              "splitLeft": "Duermes mal: el 74% de los universitarios reporta disminución de atención en clase.",
+              "splitRight": "Duermes bien: tu mente enfocada y lista para aprender."
+            },
+            "visual": {
+              "icon": "Home"
+            }
+          },
+          {
+            "id": "template-4-s5-mueh0qd119",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "EMPIEZA HOY",
+            "headline": "Tu nota media lo refleja",
+            "body": "La relación positiva entre el sueño y la nota media se mantiene durante toda la carrera. Empieza esta noche con una hora fija para dormir.",
+            "listItems": [],
+            "footer": "Sueña y rinde mejor",
+            "accentPhrase": "refleja",
+            "icon": "Award",
+            "slots": {
+              "preHeader": "EMPIEZA HOY",
+              "headline": "Tu nota media lo refleja",
+              "body": "La relación positiva entre el sueño y la nota media se mantiene durante toda la carrera. Empieza esta noche con una hora fija para dormir.",
+              "listItems": [],
+              "footer": "Sueña y rinde mejor",
+              "accentPhrase": "refleja"
+            },
+            "visual": {
+              "icon": "Award"
+            }
+          }
+        ],
+        "tokens": 29280,
+        "costUsd": 0.0053,
+        "llmCalls": 11,
+        "retries": 1,
+        "checks": {
+          "slides": 6,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 2,
+          "richBlocksRendered": 2,
+          "numericClaims": 2,
+          "avgHeadline": 33
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 9.57,
+            "dimensions": {
+              "hook": 9,
+              "flow": 9,
+              "specificity": 9,
+              "clarity": 10,
+              "audienceFit": 10,
+              "accuracy": 10,
+              "actionability": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 8,
+            "facts": 7,
+            "sources": 5,
+            "researched": true,
+            "revisedSlides": [
+              5
+            ],
+            "rejectedRevisions": 0,
+            "tightened": 0,
+            "forcedFits": 0,
+            "proofreadFixes": 0,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 7,
+          "sources": [
+            "https://cienciayreflexion.org/index.php/Revista/article/view/995",
+            "https://baike.baidu.com/es/item/Libro%20Blanco%20Nacional%20de%20Calidad%20del%20Sue%C3%B1o%20de%20Estudiantes%20de%20Secundaria%20y%20Universitarios%202026/5135612",
+            "http://www.scielo.org.mx/scielo.php?script=sci_arttext&pid=S2007-74592026000100018",
+            "https://www.infobae.com/espana/2026/07/03/los-estudiantes-que-sacan-mejores-notas-son-los-que-mas-duermen-un-estudio-revela-como-cambia-el-sueno-de-los-universitarios-durante-la-carrera",
+            "http://scielo.isciii.es/scielo.php?script=sci_arttext&pid=S1699-695X2017000300170"
+          ],
+          "hook": "¿Tu cerebro te está saboteando en clase?"
+        },
+        "judge": {
+          "hook": 5,
+          "flow": 7,
+          "specificity": 6,
+          "clarity": 8,
+          "audienceFit": 8,
+          "accuracy": 2,
+          "expectations": 4,
+          "overall": 5,
+          "notes": "Two biggest problems: 1) Invented statistics (74% attention loss, 60% memory deterioration) violate the 'no invented statistics' requirement. 2) Closing slide introduces an unsupported claim about grade averages instead of reinforcing actionable steps."
+        }
+      }
+    },
+    "pairwise": {
+      "winner": "v1",
+      "reason": "Carousel B violates the 'no invented statistics' rule with unverified percentages (74% and 60%), while Carousel A offers practical, accurate advice without fabricated data, making it more trustworthy and suitable for university students."
+    }
+  },
+  {
+    "id": "opinion-remote",
+    "topic": "Remote work is better for deep work than offices. Argue it with nuance",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 218916,
+        "slides": [
+          {
+            "id": "template-4-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Remote work objectively boosts deep focus",
+              "preHeader": "THE REMOTE WORK DEBATE",
+              "body": "But that alone doesn’t settle the trade-off between solitude and collaboration.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "deep focus"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of neural net, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Remote workers spend 59% of their week on focused tasks",
+              "preHeader": "THE DATA",
+              "body": "That’s 10% more than office workers, with only 2.78 interruptions per day vs. 3.92.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "focused tasks"
+            },
+            "visual": {
+              "icon": "BarChart",
+              "doodlePrompt": "precise editorial spot illustration of analytics chart, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-2",
+            "blockType": "body",
+            "slots": {
+              "headline": "But deep work isn’t everything — collaboration suffers",
+              "preHeader": "THE TRADE-OFF",
+              "body": "Spontaneous innovation and team cohesion often decline when face-to-face interactions are missing.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "collaboration suffers"
+            },
+            "visual": {
+              "icon": "Users",
+              "doodlePrompt": "precise editorial spot illustration of global network, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-3",
+            "blockType": "list",
+            "slots": {
+              "headline": "The real trade-offs",
+              "preHeader": "",
+              "body": "",
+              "listItems": [
+                "Deep Work: 59% focused time vs 49% in office.",
+                "Interruptions: 2.78/day vs 3.92/day in office.",
+                "Collaboration: Spontaneous interactions drop significantly.",
+                "Culture: Requires intentional design to maintain."
+              ],
+              "footer": "",
+              "accentPhrase": "real trade-offs"
+            },
+            "visual": {
+              "icon": "Layers",
+              "doodlePrompt": "precise editorial spot illustration of decision tree, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "It’s not either/or — it’s about intentional design",
+              "preHeader": "THE FALSE DICHOTOMY",
+              "body": "Leaders who frame the debate as ‘remote vs office’ miss the point. The question is how to get the best of both.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "intentional design"
+            },
+            "visual": {
+              "icon": "Settings",
+              "doodlePrompt": "precise editorial spot illustration of puzzle logic, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "Build systems that preserve focus and foster connection",
+              "preHeader": "THE LEADER’S JOB",
+              "body": "This means asynchronous communication norms, regular structured collaboration, and culture rituals.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "preserve focus"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of kanban board, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-4-slide-6",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Judge remote work by outcomes, not ideology",
+              "preHeader": "FINAL THOUGHT",
+              "body": "Deep work is a clear win, but don’t ignore the collaboration cost. Design for both.",
+              "listItems": [],
+              "footer": "Follow for more insights →",
+              "accentPhrase": "outcomes, not ideology"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of success state, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 13349,
+        "costUsd": 0.00272,
+        "llmCalls": 7,
+        "retries": 3,
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 1,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 4,
+          "avgHeadline": 45
+        },
+        "extra": {},
+        "judge": {
+          "hook": 6,
+          "flow": 9,
+          "specificity": 8,
+          "clarity": 9,
+          "audienceFit": 10,
+          "accuracy": 8,
+          "expectations": 9,
+          "overall": 8.4,
+          "notes": "The hook is solid but slightly generic; a more provocative or surprising opener could boost swipe rate. The accuracy is strong, but the statistics feel slightly invented (the specific percentages lack a cited source), though they are plausible."
+        }
+      },
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 484192,
+        "slides": [
+          {
+            "id": "template-4-s0-mueh6dto1m",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "INTERRUPTION COST",
+            "headline": "One interruption steals 23 minutes",
+            "body": "Office workers face 275 interruptions daily, wiping out deep work windows.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "steals 23 minutes",
+            "icon": "AlertCircle",
+            "slots": {
+              "preHeader": "INTERRUPTION COST",
+              "headline": "One interruption steals 23 minutes",
+              "body": "Office workers face 275 interruptions daily, wiping out deep work windows.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "steals 23 minutes"
+            },
+            "visual": {
+              "icon": "AlertCircle"
+            }
+          },
+          {
+            "id": "template-4-s1-mueh6dto1n",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "THE FOCUS CRISIS",
+            "headline": "Deep focus is scarce in the office",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Deep focus is scarce",
+            "icon": "Clock",
+            "slots": {
+              "preHeader": "THE FOCUS CRISIS",
+              "headline": "Deep focus is scarce in the office",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Deep focus is scarce",
+              "statNumber": "2–3",
+              "statLabel": "hours of deep focus per day"
+            },
+            "visual": {
+              "icon": "Clock"
+            }
+          },
+          {
+            "id": "template-4-s2-mueh6dto1o",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE INTERRUPTION TAX",
+            "headline": "The cumulative cost of interruptions",
+            "body": "One interruption costs 23+ minutes to refocus. A few can destroy your deep work day. Remote work removes most of these disruptions.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "cumulative cost of interruptions",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "THE INTERRUPTION TAX",
+              "headline": "The cumulative cost of interruptions",
+              "body": "One interruption costs 23+ minutes to refocus. A few can destroy your deep work day. Remote work removes most of these disruptions.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "cumulative cost of interruptions"
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-4-s3-mueh6dto1p",
+            "variant": "list",
+            "blockType": "list",
+            "preHeader": "HOW REMOTE WORK HELPS",
+            "headline": "Three ways remote work protects deep",
+            "body": "",
+            "listItems": [
+              "Interruptions: 81% distracted in office, only 26% in remote.",
+              "Meetings: Team leads average 13/week, crowding out focus time.",
+              "Commute time: 72 min saved daily, 40% goes to productive work."
+            ],
+            "footer": "",
+            "accentPhrase": "Three ways",
+            "icon": "CheckCircle",
+            "slots": {
+              "preHeader": "HOW REMOTE WORK HELPS",
+              "headline": "Three ways remote work protects deep",
+              "body": "",
+              "listItems": [
+                "Interruptions: 81% distracted in office, only 26% in remote.",
+                "Meetings: Team leads average 13/week, crowding out focus time.",
+                "Commute time: 72 min saved daily, 40% goes to productive work."
+              ],
+              "footer": "",
+              "accentPhrase": "Three ways"
+            },
+            "visual": {
+              "icon": "CheckCircle"
+            }
+          },
+          {
+            "id": "template-4-s4-mueh6dto1q",
+            "variant": "body",
+            "blockType": "stat",
+            "preHeader": "BEYOND ANECDOTE",
+            "headline": "Remote work boosts productivity by 13%",
+            "body": "A study of 249 Ctrip employees found that remote workers were 13% more productive than their in-office counterparts.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "boosts productivity",
+            "icon": "TrendingUp",
+            "slots": {
+              "preHeader": "BEYOND ANECDOTE",
+              "headline": "Remote work boosts productivity by 13%",
+              "body": "A study of 249 Ctrip employees found that remote workers were 13% more productive than their in-office counterparts.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "boosts productivity",
+              "statNumber": "13%",
+              "statLabel": "productivity boost from Stanford randomized study"
+            },
+            "visual": {
+              "icon": "TrendingUp"
+            }
+          },
+          {
+            "id": "template-4-s5-mueh6dto1r",
+            "variant": "body",
+            "blockType": "split",
+            "preHeader": "THE TRUST GAP",
+            "headline": "Reality vs. Perception",
+            "body": "",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Reality vs. Perception",
+            "icon": "Users",
+            "slots": {
+              "preHeader": "THE TRUST GAP",
+              "headline": "Reality vs. Perception",
+              "body": "",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Reality vs. Perception",
+              "splitLeft": "Reality: 87% of remote workers say they are productive at home.",
+              "splitRight": "Perception: 85% of business leaders struggle to trust hybrid employee productivity."
+            },
+            "visual": {
+              "icon": "Users"
+            }
+          },
+          {
+            "id": "template-4-s6-mueh6dto1s",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "TAKE ACTION",
+            "headline": "Remote work is a deep work multiplier.",
+            "body": "If you lead a team, consider cutting meetings by 40%—it can raise productivity by 71%. Start by auditing your own calendar and interruption",
+            "listItems": [],
+            "footer": "Follow for more",
+            "accentPhrase": "deep work multiplier",
+            "icon": "Rocket",
+            "slots": {
+              "preHeader": "TAKE ACTION",
+              "headline": "Remote work is a deep work multiplier.",
+              "body": "If you lead a team, consider cutting meetings by 40%—it can raise productivity by 71%. Start by auditing your own calendar and interruption",
+              "listItems": [],
+              "footer": "Follow for more",
+              "accentPhrase": "deep work multiplier"
+            },
+            "visual": {
+              "icon": "Rocket"
+            }
+          }
+        ],
+        "tokens": 41661,
+        "costUsd": 0.00669,
+        "llmCalls": 13,
+        "retries": 7,
+        "checks": {
+          "slides": 7,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 3,
+          "richBlocksRendered": 3,
+          "numericClaims": 10,
+          "avgHeadline": 34
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.67,
+            "dimensions": {
+              "hook": 8,
+              "flow": 8,
+              "specificity": 9,
+              "clarity": 8,
+              "audienceFit": 9,
+              "accuracy": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 9,
+            "facts": 12,
+            "sources": 8,
+            "researched": true,
+            "revisedSlides": [
+              2,
+              3
+            ],
+            "rejectedRevisions": 0,
+            "tightened": 1,
+            "forcedFits": 3,
+            "proofreadFixes": 1,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://speakwiseapp.com/blog/deep-work-statistics",
+            "https://emailanalytics.com/15-working-from-home-productivity-statistics",
+            "https://speakwiseapp.com/blog/workplace-distraction-statistics",
+            "https://hubstaff.com/blog/how-much-deep-work-do-employees-really-get",
+            "https://www.breeze.pm/blog/remote-work-statistics",
+            "https://speakwiseapp.com/blog/remote-work-productivity-statistics",
+            "https://www.worktime.com/blog/statistics/remote-work-productivity-statistics-trends-data",
+            "https://www.makerstations.io/workplace-distraction-statistics"
+          ],
+          "hook": "One interruption steals 23 minutes"
+        },
+        "judge": {
+          "hook": 9,
+          "flow": 7,
+          "specificity": 9,
+          "clarity": 8,
+          "audienceFit": 9,
+          "accuracy": 4,
+          "expectations": 6,
+          "overall": 7,
+          "notes": "Two biggest problems: 1) Inflated numbers (275 interruptions daily is not supported by research; typical is much lower). 2) Repetition of the 23-minute refocus time across slides 1 and 3, which feels redundant."
+        }
+      }
+    },
+    "pairwise": {
+      "winner": "v1",
+      "reason": "B better matches the brief: it makes a clear argument for remote deep work while honestly acknowledging the collaboration trade-off and design challenges. A relies on questionable statistics like “275 interruptions daily” and lacks the requested nuance."
+    }
+  },
+  {
+    "id": "deep-transformers",
+    "topic": "A 12 slide deep dive on how transformer models work",
+    "runs": {
+      "v1": {
+        "pipeline": "v1",
+        "ok": true,
+        "ms": 224644,
+        "slides": [
+          {
+            "id": "template-1-slide-0",
+            "blockType": "hero",
+            "slots": {
+              "headline": "Parallel Attention Unlocks NLP’s Bottleneck",
+              "preHeader": "STEP BY STEP ARCHITECTURE",
+              "body": "The transformer replaced sequential processing with parallel attention. We’ll build your intuition from token to output.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "bottleneck"
+            },
+            "visual": {
+              "icon": "Brain",
+              "doodlePrompt": "precise editorial spot illustration of machine learning, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-1",
+            "blockType": "body",
+            "slots": {
+              "headline": "Token to Embedding: Words Become Vectors",
+              "preHeader": "INPUT PREPARATION",
+              "body": "Each input token is mapped to a dense vector in a high-dimensional space. These learned embeddings carry semantic meaning.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "dense vector"
+            },
+            "visual": {
+              "icon": "Layers",
+              "doodlePrompt": "precise editorial spot illustration of layer stack, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-2",
+            "blockType": "body",
+            "slots": {
+              "headline": "Positional Encoding: Injecting Sequence Information",
+              "preHeader": "ADDING ORDER",
+              "body": "Self-attention is permutation invariant, so we add sinusoidal signals to encode token positions. This preserves order without recurrence.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "sinusoidal signals"
+            },
+            "visual": {
+              "icon": "Clock",
+              "doodlePrompt": "precise editorial spot illustration of wifi signal, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-3",
+            "blockType": "list",
+            "slots": {
+              "headline": "Self-Attention in 3 Steps",
+              "preHeader": "CORE INNOVATION",
+              "body": "1. Create queries, keys, and values from each token embedding using learned weight matrices.\n2. Score every token pair by taking the dot product of query and key, then scale by the square root of the key dimension.\n3. Convert scores to weights with softmax and take the weighted sum of the values to produce each token’s contextual representation.",
+              "listItems": [
+                "Query: What am I looking for?",
+                "Key: What do I contain?",
+                "Value: What do I pass on?"
+              ],
+              "footer": "",
+              "accentPhrase": "Self-Attention"
+            },
+            "visual": {
+              "icon": "Target",
+              "doodlePrompt": "precise editorial spot illustration of search algorithm, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-4",
+            "blockType": "body",
+            "slots": {
+              "headline": "Dot Products and Scaling for Stability",
+              "preHeader": "ATTENTION SCORING",
+              "body": "Compute similarity between query and key via dot product. Scale by sqrt(d_k) to keep gradients stable and softmax well-behaved.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "scaling"
+            },
+            "visual": {
+              "icon": "BarChart",
+              "doodlePrompt": "precise editorial spot illustration of filter funnel, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-5",
+            "blockType": "body",
+            "slots": {
+              "headline": "Multi-Head Attention: Multiple Perspectives",
+              "preHeader": "PARALLEL FOCUS",
+              "body": "Instead of one attention, we use multiple heads. Each head learns different relational patterns, capturing diverse dependencies.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "multiple heads"
+            },
+            "visual": {
+              "icon": "Layers",
+              "doodlePrompt": "precise editorial spot illustration of neural net, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-6",
+            "blockType": "list",
+            "slots": {
+              "headline": "Stabilizing Deep Networks",
+              "preHeader": "RESIDUAL CONNECTIONS",
+              "body": "• Add the layer’s input to its output so gradients can flow around the transformation.\n• Prevent vanishing gradients in deep stacks by giving each sublayer a direct identity path.\n• Let the model learn which information to preserve while training remains stable.",
+              "listItems": [
+                "Residual: Add input back to output.",
+                "Layer Norm: Normalize across features.",
+                "Prevents vanishing gradients."
+              ],
+              "footer": "",
+              "accentPhrase": "residual connections"
+            },
+            "visual": {
+              "icon": "Shield",
+              "doodlePrompt": "precise editorial spot illustration of puzzle logic, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-7",
+            "blockType": "body",
+            "slots": {
+              "headline": "Feed-Forward Network: Non-Linear Projection",
+              "preHeader": "POSITION-WISE TRANSFORMATION",
+              "body": "Each token independently passes through two linear layers with ReLU. This expands the dimension then compresses it, adding non-linearity.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "non-linear"
+            },
+            "visual": {
+              "icon": "Zap",
+              "doodlePrompt": "precise editorial spot illustration of gpu cluster, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-8",
+            "blockType": "list",
+            "slots": {
+              "headline": "Stacked Encoder Layers",
+              "preHeader": "ENCODER ARCHITECTURE",
+              "body": "• Each encoder layer contains self-attention followed by a position-wise feed-forward network.\n• Add residual connections around both sublayers, then apply layer normalization.\n• Stack N identical layers so the model builds progressively richer representations.",
+              "listItems": [
+                "Each layer: Self-Attention + FFN.",
+                "N layers (e.g., 6 or 12)",
+                "Outputs contextualized token representations."
+              ],
+              "footer": "",
+              "accentPhrase": "stacked layers"
+            },
+            "visual": {
+              "icon": "Layers",
+              "doodlePrompt": "precise editorial spot illustration of layer stack, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-9",
+            "blockType": "body",
+            "slots": {
+              "headline": "Decoder: Autoregressive with Cross-Attention",
+              "preHeader": "GENERATING OUTPUT",
+              "body": "The decoder uses masked self-attention for left-to-right generation and cross-attention to attend to encoder outputs.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "cross-attention"
+            },
+            "visual": {
+              "icon": "MessageSquare",
+              "doodlePrompt": "precise editorial spot illustration of chatbot dialogue, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-10",
+            "blockType": "list",
+            "slots": {
+              "headline": "From Hidden States to Probabilities",
+              "preHeader": "FINAL LAYER",
+              "body": "• Pass the final encoder hidden state through a linear layer to produce raw logits for each token in the vocabulary.\n• Apply softmax to convert logits into a probability distribution over the vocabulary.\n• Select the token with the highest probability — or sample from the distribution — to generate the next output.",
+              "listItems": [
+                "Linear layer maps to vocab size.",
+                "Softmax produces probability distribution.",
+                "Greedy sampling or beam search."
+              ],
+              "footer": "",
+              "accentPhrase": "softmax"
+            },
+            "visual": {
+              "icon": "CheckCircle",
+              "doodlePrompt": "precise editorial spot illustration of success state, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          },
+          {
+            "id": "template-1-slide-11",
+            "blockType": "closing",
+            "slots": {
+              "headline": "Transformer Building Blocks: Intuition to Execution",
+              "preHeader": "YOU NOW UNDERSTAND",
+              "body": "You can now approach transformer papers and codebases with confidence.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "confidence"
+            },
+            "visual": {
+              "icon": "Rocket",
+              "doodlePrompt": "precise editorial spot illustration of launch rocket, accurate scientific or historical depiction, clean black ink line art, monochrome, detailed but minimal, magazine-quality, isolated on plain white background, no text, no abstract metaphors"
+            }
+          }
+        ],
+        "tokens": 32770,
+        "costUsd": 0.00712,
+        "llmCalls": 10,
+        "retries": 7,
+        "checks": {
+          "slides": 12,
+          "countOk": true,
+          "overLimit": 2,
+          "missingRequired": 0,
+          "accentInvalid": 11,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 0,
+          "avgHeadline": 38
+        },
+        "extra": {},
+        "judge": {
+          "hook": 8,
+          "flow": 9,
+          "specificity": 8,
+          "clarity": 9,
+          "audienceFit": 8,
+          "accuracy": 9,
+          "expectations": 10,
+          "overall": 9,
+          "notes": "1. Slide 4's list items partially redundantly repeat the body; could be streamlined for clarity. 2. The deck does not explicitly mention the training loss (e.g., cross-entropy) or the 'next-token prediction' objective by name, which is a minor gap for the stated requirement."
+        }
+      },
+      "v2": {
+        "pipeline": "v2",
+        "ok": true,
+        "ms": 438613,
+        "slides": [
+          {
+            "id": "template-1-s0-mueh5ri21a",
+            "variant": "hero",
+            "blockType": "hero",
+            "preHeader": "SELF-ATTENTION EXPLAINED",
+            "headline": "Why attention beats recurrence",
+            "body": "What makes the transformer layer compute every word's relation to every other word simultaneously?",
+            "listItems": [],
+            "footer": "Vaswani et al., 2017",
+            "accentPhrase": "beats recurrence",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "SELF-ATTENTION EXPLAINED",
+              "headline": "Why attention beats recurrence",
+              "body": "What makes the transformer layer compute every word's relation to every other word simultaneously?",
+              "listItems": [],
+              "footer": "Vaswani et al., 2017",
+              "accentPhrase": "beats recurrence"
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-1-s1-mueh5ri21b",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE ORIGIN",
+            "headline": "A 2017 paper changed AI forever",
+            "body": "The transformer was introduced in the 2017 paper “Attention Is All You Need” by Vaswani et al. It now has over 173,000 citations and made one core argument: attention can replace recurrence.",
+            "listItems": [],
+            "footer": "Attention Is All You Need (2017)",
+            "accentPhrase": "changed AI forever",
+            "icon": "Book",
+            "slots": {
+              "preHeader": "THE ORIGIN",
+              "headline": "A 2017 paper changed AI forever",
+              "body": "The transformer was introduced in the 2017 paper “Attention Is All You Need” by Vaswani et al. It now has over 173,000 citations and made one core argument: attention can replace recurrence.",
+              "listItems": [],
+              "footer": "Attention Is All You Need (2017)",
+              "accentPhrase": "changed AI forever"
+            },
+            "visual": {
+              "icon": "Book"
+            }
+          },
+          {
+            "id": "template-1-s2-mueh5ri21c",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE ARCHITECTURAL SHIFT",
+            "headline": "Process all tokens at once",
+            "body": "A recurrent network reads one token at a time; a transformer sees the entire input at once. By processing all tokens simultaneously, it enables massive parallelization and eliminates the vanishing gradient problem.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Process all tokens",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "THE ARCHITECTURAL SHIFT",
+              "headline": "Process all tokens at once",
+              "body": "A recurrent network reads one token at a time; a transformer sees the entire input at once. By processing all tokens simultaneously, it enables massive parallelization and eliminates the vanishing gradient problem.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Process all tokens"
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-1-s3-mueh5ri21d",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "INSIDE THE LAYER",
+            "headline": "Every word attends to every word",
+            "body": "Self-attention computes relationships between all elements of the input at once. In “the cat sat on the mat,” “sat” can be linked directly to “cat” without passing information from word to word.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Every word attends",
+            "icon": "Brain",
+            "slots": {
+              "preHeader": "INSIDE THE LAYER",
+              "headline": "Every word attends to every word",
+              "body": "Self-attention computes relationships between all elements of the input at once. In “the cat sat on the mat,” “sat” can be linked directly to “cat” without passing information from word to word.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Every word attends"
+            },
+            "visual": {
+              "icon": "Brain"
+            }
+          },
+          {
+            "id": "template-1-s4-mueh5ri21e",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "FROM ONE LAYER TO MANY",
+            "headline": "Stack layers of attention and feedforward",
+            "body": "Each transformer block contains self-attention followed by a feedforward network. Stacking these blocks lets the model build progressively more context-aware representations of each token.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Stack layers",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "FROM ONE LAYER TO MANY",
+              "headline": "Stack layers of attention and feedforward",
+              "body": "Each transformer block contains self-attention followed by a feedforward network. Stacking these blocks lets the model build progressively more context-aware representations of each token.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Stack layers"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s5-mueh5ri21f",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE ATTENTION MECHANISM",
+            "headline": "Multi-head attention broadens the view",
+            "body": "Instead of one attention matrix, transformers run several attention heads in parallel. Each head can learn a different kind of relationship, and the layer combines those views into a richer representation.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Multi-head attention",
+            "icon": "Telescope",
+            "slots": {
+              "preHeader": "THE ATTENTION MECHANISM",
+              "headline": "Multi-head attention broadens the view",
+              "body": "Instead of one attention matrix, transformers run several attention heads in parallel. Each head can learn a different kind of relationship, and the layer combines those views into a richer representation.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Multi-head attention"
+            },
+            "visual": {
+              "icon": "Telescope"
+            }
+          },
+          {
+            "id": "template-1-s6-mueh5ri21g",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "FROM INTUITION TO ARCHITECTURE",
+            "headline": "Attention is computed as a weighted sum",
+            "body": "Self-attention scores how relevant each token is to every other token, then uses those scores as weights to blend token representations. Higher-weight tokens dominate the updated representation, so the model can directly pull information.",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "weighted sum",
+            "slots": {
+              "preHeader": "FROM INTUITION TO ARCHITECTURE",
+              "headline": "Attention is computed as a weighted sum",
+              "body": "Self-attention scores how relevant each token is to every other token, then uses those scores as weights to blend token representations. Higher-weight tokens dominate the updated representation, so the model can directly pull information.",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "weighted sum"
+            },
+            "visual": {}
+          },
+          {
+            "id": "template-1-s7-mueh5ri21h",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "ONE LAYER IS NOT ENOUGH",
+            "headline": "Depth lets attention build abstraction",
+            "body": "A single attention layer captures direct word-to-word links. Stacked layers let later layers combine those links into higher-level structure: phrases, clauses, and roles like subject and object. Each layer refines the representation, so context grows",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "Depth lets attention build abstraction",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "ONE LAYER IS NOT ENOUGH",
+              "headline": "Depth lets attention build abstraction",
+              "body": "A single attention layer captures direct word-to-word links. Stacked layers let later layers combine those links into higher-level structure: phrases, clauses, and roles like subject and object. Each layer refines the representation, so context grows",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "Depth lets attention build abstraction"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s8-mueh5ri21i",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE EXACT SAME BUILDING BLOCK",
+            "headline": "Every transformer block is identical",
+            "body": "The transformer is composed of repeated identical blocks: multi-head self-attention followed by a feedforward network, with residual connections and layer normalization. Because each block has the same structure, the design is easy to scale—just",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "identical",
+            "icon": "Layers",
+            "slots": {
+              "preHeader": "THE EXACT SAME BUILDING BLOCK",
+              "headline": "Every transformer block is identical",
+              "body": "The transformer is composed of repeated identical blocks: multi-head self-attention followed by a feedforward network, with residual connections and layer normalization. Because each block has the same structure, the design is easy to scale—just",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "identical"
+            },
+            "visual": {
+              "icon": "Layers"
+            }
+          },
+          {
+            "id": "template-1-s9-mueh5ri21j",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "SCALING HITS A COMPUTE WALL",
+            "headline": "Bigger models cost more compute",
+            "body": "Training large transformers requires enormous compute. For example, DeepSeek-V3 used 2.788 million H800 GPU hours during training. That scale delivers strong performance, but it raises a practical question: how do we keep improving without linearly?",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "compute",
+            "icon": "Zap",
+            "slots": {
+              "preHeader": "SCALING HITS A COMPUTE WALL",
+              "headline": "Bigger models cost more compute",
+              "body": "Training large transformers requires enormous compute. For example, DeepSeek-V3 used 2.788 million H800 GPU hours during training. That scale delivers strong performance, but it raises a practical question: how do we keep improving without linearly?",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "compute"
+            },
+            "visual": {
+              "icon": "Zap"
+            }
+          },
+          {
+            "id": "template-1-s10-mueh5ri21k",
+            "variant": "body",
+            "blockType": "body",
+            "preHeader": "THE 2025 ANSWER",
+            "headline": "Mixture of experts keeps costs in check",
+            "body": "Mixture-of-Experts models activate only a subset of parameters per token. DeepSeek-V3 has 671B total parameters but activates only 37B per token, so each token uses a fraction of the network while the full model retains capacity. Over 60% of frontier",
+            "listItems": [],
+            "footer": "",
+            "accentPhrase": "keeps costs in check",
+            "slots": {
+              "preHeader": "THE 2025 ANSWER",
+              "headline": "Mixture of experts keeps costs in check",
+              "body": "Mixture-of-Experts models activate only a subset of parameters per token. DeepSeek-V3 has 671B total parameters but activates only 37B per token, so each token uses a fraction of the network while the full model retains capacity. Over 60% of frontier",
+              "listItems": [],
+              "footer": "",
+              "accentPhrase": "keeps costs in check"
+            },
+            "visual": {}
+          },
+          {
+            "id": "template-1-s11-mueh5ri21l",
+            "variant": "closing",
+            "blockType": "closing",
+            "preHeader": "YOUR NEXT STEP",
+            "headline": "The future is hybrid and efficient",
+            "body": "Transformer models are moving toward hybrid architectures and mixture-of-experts",
+            "listItems": [],
+            "footer": "Attention is all you",
+            "accentPhrase": "hybrid and efficient",
+            "icon": "Rocket",
+            "slots": {
+              "preHeader": "YOUR NEXT STEP",
+              "headline": "The future is hybrid and efficient",
+              "body": "Transformer models are moving toward hybrid architectures and mixture-of-experts",
+              "listItems": [],
+              "footer": "Attention is all you",
+              "accentPhrase": "hybrid and efficient"
+            },
+            "visual": {
+              "icon": "Rocket"
+            }
+          }
+        ],
+        "tokens": 67126,
+        "costUsd": 0.01108,
+        "llmCalls": 12,
+        "retries": 6,
+        "checks": {
+          "slides": 12,
+          "countOk": true,
+          "overLimit": 0,
+          "missingRequired": 0,
+          "accentInvalid": 0,
+          "duplicates": 0,
+          "emoji": 0,
+          "richBlocks": 0,
+          "richBlocksRendered": 0,
+          "numericClaims": 3,
+          "avgHeadline": 35
+        },
+        "extra": {
+          "stats": {
+            "pipeline": "v2",
+            "score": 8.5,
+            "dimensions": {
+              "hook": 8,
+              "flow": 7,
+              "specificity": 9,
+              "clarity": 8,
+              "audienceFit": 9,
+              "accuracy": 10
+            },
+            "hookCandidates": 4,
+            "hookScore": 7.6,
+            "facts": 12,
+            "sources": 4,
+            "researched": true,
+            "revisedSlides": [],
+            "rejectedRevisions": 0,
+            "tightened": 0,
+            "forcedFits": 7,
+            "proofreadFixes": 2,
+            "downgradedStats": 0,
+            "issuesRemaining": 0
+          },
+          "facts": 12,
+          "sources": [
+            "https://atlan.com/know/what-is-a-transformer-model",
+            "https://philippdubach.com/posts/the-last-architecture-designed-by-hand",
+            "https://futureagi.com/blog/evaluating-transformer-architectures-key-metrics-and-performance-benchmarks",
+            "https://sesamedisk.com/transformer-attention-mechanisms-2026"
+          ],
+          "hook": "Why attention beats recurrence"
+        },
+        "judge": {
+          "hook": 9,
+          "flow": 8,
+          "specificity": 9,
+          "clarity": 8,
+          "audienceFit": 6,
+          "accuracy": 8,
+          "expectations": 5,
+          "overall": 7,
+          "notes": "1) Fails to explicitly define tokens and embeddings, which are foundational for beginners. 2) Omits explanation of training objective (next-token prediction), a critical component for understanding how transformers learn."
+        }
+      }
+    },
+    "pairwise": {
+      "winner": "v1",
+      "reason": "Carousel A provides a precise, step-by-step breakdown of transformer internals (tokens, embeddings, attention, layers, training) in a logical order that exactly matches the request for developers new to ML, while Carousel B drifts into history and scaling costs, missing key required elements like next-token prediction and ending on a tangent about mixture-of-experts rather than a solid understanding."
+    }
+  }
+]

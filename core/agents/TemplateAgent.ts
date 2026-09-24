@@ -120,7 +120,7 @@ export const TemplateAgent = {
     `;
 
         console.log(`🤖 [TemplateAgent] Using config for: ${templateId}`);
-        const result = await generateContentFromAgent(prompt, config.schema);
+        const result = await generateContentFromAgent(prompt, config.schema, { role: 'writer', label: 'template.generate' });
 
         // 🔍 DEBUG: Log raw LLM response
         console.log(`🤖 [TemplateAgent] RAW LLM Response for ${templateId}:`, JSON.stringify(result, null, 2));

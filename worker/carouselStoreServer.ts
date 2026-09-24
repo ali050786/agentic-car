@@ -99,6 +99,7 @@ export const assertOwnsCarousel = async (carouselId: string, userId: string): Pr
 };
 
 import { TemplateId, CarouselFormat } from '../types';
+import { resolveAppTemplate } from '../utils/templateConverter';
 
 export interface LoadedCarousel {
     slides: SlideContent[];
@@ -106,6 +107,10 @@ export interface LoadedCarousel {
     templateId: TemplateId;
     format: CarouselFormat;
     presetId: string;
+    /** Design state that edits can change and undo must restore. */
+    selectedPattern?: number;
+    signaturePosition?: SignaturePosition;
+    brandMode?: BrandMode;
 }
 
 /**
@@ -126,17 +131,20 @@ export const loadCarouselServer = async (carouselId: string): Promise<LoadedCaro
         try { return JSON.parse(raw) as T; } catch { return fallback; }
     };
 
-    const rawTemplate: string = doc.templateType || 'template1';
-    const templateId = (rawTemplate.includes('-')
-        ? rawTemplate
-        : rawTemplate.replace(/^template(\d+)$/, 'template-$1')) as TemplateId;
+    const theme = parse<CarouselTheme>(doc.theme, {} as CarouselTheme);
+    // The Canvas is stored as template1 + theme.designMode (see utils/templateConverter.ts).
+    const templateId = resolveAppTemplate(doc.templateType || 'template1', theme) as TemplateId;
 
+    const branding = parse<any>(doc.branding, {});
     return {
         slides: parse<SlideContent[]>(doc.slides, []),
-        theme: parse<CarouselTheme>(doc.theme, {} as CarouselTheme),
+        theme,
         templateId,
         format: (doc.format === 'square' ? 'square' : 'portrait') as CarouselFormat,
         presetId: doc.presetId || '',
+        selectedPattern: typeof doc.selectedPattern === 'number' ? doc.selectedPattern : undefined,
+        signaturePosition: branding?.position || undefined,
+        brandMode: branding?.brandMode || undefined,
     };
 };
 

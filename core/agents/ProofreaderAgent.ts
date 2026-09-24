@@ -92,7 +92,7 @@ ${toneNote}
         ${JSON.stringify(inputForProofing)}
       `;
 
-            const result = await generateContentFromAgent(prompt, PROOFREAD_SCHEMA);
+            const result = await generateContentFromAgent(prompt, PROOFREAD_SCHEMA, { role: 'fast', label: 'proofreader', temperature: 0 });
             let corrected = result?.slides;
             
             // Normalize raw array responses

@@ -1,4 +1,4 @@
-export type TemplateId = 'template-1' | 'template-3' | 'template-4';
+export type TemplateId = 'template-1' | 'template-3' | 'template-4' | 'template-5';
 export type SlideVariant = 'hero' | 'body' | 'list' | 'cta' | 'closing';  // 'closing' is what LLM generates, 'cta' is template name
 export type AIModel = 'groq-llama' | 'claude-haiku';
 export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';
@@ -90,6 +90,8 @@ export interface SlideLayoutSlots {
   quoteAuthor?: string;
   splitLeft?: string;
   splitRight?: string;
+  /** Short extra labels a Canvas design shows (field `x.<key>`), editable like any text. */
+  extras?: Record<string, string>;
 }
 
 export interface SlideLayoutVisual {
@@ -104,6 +106,8 @@ export interface SlideLayout {
   slots: SlideLayoutSlots;
   styleOverrides?: Record<string, string>;
   visual?: SlideLayoutVisual;
+  /** Canvas (template-5) layout for this slide. Ignored by the classic templates. */
+  design?: import('./core/design/canvas/types').StoredDesign;
 }
 
 export interface StructuredMemory {
@@ -129,6 +133,9 @@ export interface CarouselTheme {
 
   // Customization flag (future use)
   customized?: boolean;
+
+  /** Set on Canvas (template-5) decks; stored with the theme so the deck reopens as Canvas. */
+  designMode?: 'canvas';
 }
 
 /**
@@ -154,6 +161,8 @@ export interface TokenUsage {
   completionTokens: number;
   totalTokens: number;
   cachedTokens: number;
+  /** Provider-reported cost in USD for the whole turn (when the provider returns it). */
+  costUsd?: number;
 }
 
 /**
@@ -185,6 +194,8 @@ export interface ChatMessage {
   };
   /** Total token usage information for this generation turn */
   tokenUsage?: TokenUsage;
+  /** The worker saved a snapshot before this turn's change, so "undo" can restore it. */
+  undoable?: boolean;
 }
 
 // ============================================================================
@@ -318,6 +329,11 @@ export interface CarouselState {
    * of a duplicate-carousel-creation bug and a carousel-switch race).
    */
   activeCarouselId: string | null;
+  /**
+   * The slides on screen are a draft the create job sent while it is still
+   * finishing the deck: read-only, never autosaved, replaced by the final deck.
+   */
+  draftPreview: boolean;
 
   /**
    * The background job (generation_jobs doc id) the currently-open carousel
@@ -398,6 +414,12 @@ export interface CarouselState {
   setChatSummary: (summary: string) => void;
   setChatSummarizedUpTo: (index: number) => void;
   setActiveCarouselId: (id: string | null) => void;
+  /** Shows a create job's draft slides while it finishes (see draftPreview). */
+  showDraftPreview: (slides: SlideContent[], theme?: CarouselTheme | null) => void;
+  /** Replaces a draft (or nothing) with the saved deck, in one update. */
+  applyFinalDeck: (id: string, slides: SlideContent[], theme: CarouselTheme) => void;
+  /** Drops a draft that will never become a deck (refused, failed). */
+  clearDraftPreview: () => void;
   setActiveJobId: (id: string | null) => void;
 
   // Multi-modal Input Actions

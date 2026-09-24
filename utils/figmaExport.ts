@@ -111,7 +111,16 @@ export const serializeStageForFigma = async (liveSvg: SVGSVGElement): Promise<st
         const opacity = parseFloat(cs.opacity);
         if (opacity === 0) return;
 
+        // Inline SVG inside the HTML (icons, arrows, charts, Canvas decorations):
+        // copy it as native vector content, mapped onto where the browser drew it.
+        if (el.namespaceURI === SVG_NS && el.tagName.toLowerCase() === 'svg') {
+            emitInlineSvg(el as SVGSVGElement, opacity, g);
+            return;
+        }
+
+        emitShadow(el, cs, opacity, g);
         emitBackground(el, cs, opacity, g);
+        emitBorder(el, cs, opacity, g);
 
         if (el.tagName === 'IMG') {
             emitImage(el as HTMLImageElement, cs, opacity, g);
@@ -128,6 +137,74 @@ export const serializeStageForFigma = async (liveSvg: SVGSVGElement): Promise<st
         }
     }
 
+    function emitInlineSvg(el: SVGSVGElement, opacity: number, g: Element) {
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) return;
+        const vbAttr = el.getAttribute('viewBox');
+        const vbp = vbAttr ? vbAttr.split(/[\s,]+/).map(Number) : [0, 0, r.width * scale, r.height * scale];
+        const [vx, vy, vw, vh] = vbp.length === 4 && vbp.every(Number.isFinite) ? vbp : [0, 0, r.width * scale, r.height * scale];
+        const sx = (r.width * scale) / (vw || 1);
+        const sy = (r.height * scale) / (vh || 1);
+        const wrap = document.createElementNS(SVG_NS, 'g');
+        wrap.setAttribute('transform', `translate(${toX(r.left)} ${toY(r.top)}) scale(${sx} ${sy}) translate(${-vx} ${-vy})`);
+        // Presentation attributes set on the <svg> itself (fill/stroke of lucide icons) apply to its children.
+        for (const a of ['fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin']) {
+            const v = el.getAttribute(a);
+            if (v) wrap.setAttribute(a, resolveVars(v, getComputedStyle(el)));
+        }
+        if (opacity < 1) wrap.setAttribute('opacity', String(opacity));
+        for (const c of Array.from(el.children)) {
+            const cc = cloneNative(c);
+            if (cc) wrap.appendChild(cc);
+        }
+        g.appendChild(wrap);
+    }
+
+    /** Hard (unblurred) box shadows, e.g. brutalist cards and buttons. */
+    function emitShadow(el: Element, cs: CSSStyleDeclaration, opacity: number, g: Element) {
+        const bs = cs.boxShadow;
+        if (!bs || bs === 'none') return;
+        const m = bs.match(/(rgba?\([^)]+\))\s+(-?[\d.]+)px\s+(-?[\d.]+)px\s+([\d.]+)px/);
+        if (!m || parseFloat(m[4]) > 0.5) return;
+        const col = parseColor(m[1]);
+        if (!col) return;
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) return;
+        const rect = document.createElementNS(SVG_NS, 'rect');
+        rect.setAttribute('x', String(toX(r.left) + parseFloat(m[2])));
+        rect.setAttribute('y', String(toY(r.top) + parseFloat(m[3])));
+        rect.setAttribute('width', String(r.width * scale));
+        rect.setAttribute('height', String(r.height * scale));
+        const radius = parseFloat(cs.borderTopLeftRadius) || 0;
+        if (radius) rect.setAttribute('rx', String(Math.min(radius, (r.height * scale) / 2)));
+        rect.setAttribute('fill', col.hex);
+        if (col.a * opacity < 1) rect.setAttribute('fill-opacity', String(col.a * opacity));
+        g.appendChild(rect);
+    }
+
+    function emitBorder(el: Element, cs: CSSStyleDeclaration, opacity: number, g: Element) {
+        const w = parseFloat(cs.borderTopWidth) || 0;
+        if (w <= 0 || cs.borderTopStyle === 'none') return;
+        const col = parseColor(cs.borderTopColor);
+        if (!col) return;
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) return;
+        const rect = document.createElementNS(SVG_NS, 'rect');
+        // Stroke is centred on the path: inset by half the width to sit inside the box like CSS borders.
+        rect.setAttribute('x', String(toX(r.left) + w / 2));
+        rect.setAttribute('y', String(toY(r.top) + w / 2));
+        rect.setAttribute('width', String(Math.max(0, r.width * scale - w)));
+        rect.setAttribute('height', String(Math.max(0, r.height * scale - w)));
+        const radius = parseFloat(cs.borderTopLeftRadius) || 0;
+        if (radius) rect.setAttribute('rx', String(Math.max(0, Math.min(radius, (r.height * scale) / 2) - w / 2)));
+        rect.setAttribute('fill', 'none');
+        rect.setAttribute('stroke', col.hex);
+        rect.setAttribute('stroke-width', String(w));
+        if (col.a * opacity < 1) rect.setAttribute('stroke-opacity', String(col.a * opacity));
+        g.appendChild(rect);
+    }
+
+    let gradSeq = 0;
     function emitBackground(el: Element, cs: CSSStyleDeclaration, opacity: number, g: Element) {
         const r = el.getBoundingClientRect();
         if (r.width <= 0 || r.height <= 0) return;
@@ -147,18 +224,52 @@ export const serializeStageForFigma = async (liveSvg: SVGSVGElement): Promise<st
             g.appendChild(rect);
         }
 
-        // Highlighter marker: the accent phrase uses a bottom-anchored gradient
-        // (transparent top, tinted lower band). Approximate it as a rect over the
-        // lower ~56% using the gradient's tint colour.
         const bgImg = cs.backgroundImage;
-        if (bgImg && bgImg.includes('gradient')) {
-            const cm = bgImg.match(/rgba?\([^)]+\)/);
-            const tint = cm ? parseColor(cm[0]) : null;
-            if (tint) {
-                const bandH = r.height * 0.56;
+        // A panel gradient (two opaque colours): a real <linearGradient> over the box.
+        if (bgImg && bgImg.includes('linear-gradient') && !/transparent|rgba\([^)]*,\s*0\)/.test(bgImg)) {
+            const cols = (bgImg.match(/rgba?\([^)]+\)/g) || []).map(parseColor).filter(Boolean) as { hex: string; a: number }[];
+            if (cols.length >= 2) {
+                const id = `fgrad-${++gradSeq}`;
+                const lg = document.createElementNS(SVG_NS, 'linearGradient');
+                lg.setAttribute('id', id);
+                lg.setAttribute('x1', '0'); lg.setAttribute('y1', '0'); lg.setAttribute('x2', '1'); lg.setAttribute('y2', '1');
+                cols.forEach((c, i) => {
+                    const stop = document.createElementNS(SVG_NS, 'stop');
+                    stop.setAttribute('offset', String(i / (cols.length - 1)));
+                    stop.setAttribute('stop-color', c.hex);
+                    if (c.a < 1) stop.setAttribute('stop-opacity', String(c.a));
+                    lg.appendChild(stop);
+                });
+                g.appendChild(lg);
                 const rect = document.createElementNS(SVG_NS, 'rect');
                 rect.setAttribute('x', String(toX(r.left)));
-                rect.setAttribute('y', String(toY(r.bottom - bandH)));
+                rect.setAttribute('y', String(toY(r.top)));
+                rect.setAttribute('width', String(r.width * scale));
+                rect.setAttribute('height', String(r.height * scale));
+                const radius = parseFloat(cs.borderTopLeftRadius) || 0;
+                if (radius) rect.setAttribute('rx', String(Math.min(radius, r.height / 2) * scale));
+                rect.setAttribute('fill', `url(#${id})`);
+                if (opacity < 1) rect.setAttribute('fill-opacity', String(opacity));
+                g.appendChild(rect);
+                return;
+            }
+        }
+
+        // Highlighter / underline marks: a tinted band between two transparent
+        // stops (e.g. "transparent 56%, tint 56%, tint 94%, transparent 94%").
+        // Draw the band where the stops put it (lower ~56% when unspecified).
+        if (bgImg && bgImg.includes('gradient')) {
+            const cm = bgImg.match(/rgba?\([^)]+\)/g)?.find((c) => !!parseColor(c));
+            const tint = cm ? parseColor(cm) : null;
+            if (tint) {
+                const pcts = (bgImg.match(/(\d+(?:\.\d+)?)%/g) || []).map((x) => parseFloat(x) / 100);
+                const from = pcts.length >= 2 ? pcts[0] : 0.44;
+                const to = pcts.length >= 3 ? pcts[pcts.length - 1] : 1;
+                const bandH = r.height * Math.max(0.02, to - from);
+                const bandTop = r.top + r.height * from;
+                const rect = document.createElementNS(SVG_NS, 'rect');
+                rect.setAttribute('x', String(toX(r.left)));
+                rect.setAttribute('y', String(toY(bandTop)));
                 rect.setAttribute('width', String(r.width * scale));
                 rect.setAttribute('height', String(bandH * scale));
                 rect.setAttribute('fill', tint.hex);
@@ -279,8 +390,16 @@ export const serializeStageForFigma = async (liveSvg: SVGSVGElement): Promise<st
             if (cs.fontStyle && cs.fontStyle !== 'normal') t.setAttribute('font-style', cs.fontStyle);
             if (letterSpacing) t.setAttribute('letter-spacing', String(letterSpacing));
             if (fill) t.setAttribute('fill', fill.hex);
+            else t.setAttribute('fill', 'none');
+            // Outlined numerals (-webkit-text-stroke with a transparent fill).
+            const strokeW = parseFloat((cs as any).webkitTextStrokeWidth || '0');
+            const strokeC = parseColor((cs as any).webkitTextStrokeColor || '');
+            if (strokeW > 0 && strokeC) {
+                t.setAttribute('stroke', strokeC.hex);
+                t.setAttribute('stroke-width', String(strokeW));
+            }
             const alpha = (fill ? fill.a : 1) * opacity;
-            if (alpha < 1) t.setAttribute('fill-opacity', String(alpha));
+            if (fill && alpha < 1) t.setAttribute('fill-opacity', String(alpha));
             t.textContent = str;
             g.appendChild(t);
         }

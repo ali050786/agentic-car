@@ -1,3 +1,4 @@
+import { appToDbTemplate } from '../../utils/templateConverter';
 import { ResearchAgent } from './ResearchAgent';
 import { StrategistAgent } from './StrategistAgent';
 import { TemplateAgent } from './TemplateAgent';
@@ -49,6 +50,8 @@ export interface CreateJobPayload {
   selectedPattern: number;
   patternOpacity: number;
   creativeBrief?: CreativeBrief;
+  /** No brief yet: the worker runs the Creative Director itself, alongside the gate and research (v2). */
+  briefInWorker?: boolean;
 
   // ── Turn context (Phase 6.2) ──────────────────────────────────────────────
   // Present on continuation turns. When `isEditTurn` is set and `existingSlides`
@@ -67,7 +70,7 @@ export interface CreateJobPayload {
   selectedSlideIndices?: number[];
   /** The persisted living brief (source of truth), injected into edit turns. */
   carouselBrief?: CarouselBrief;
-  /** Eval/testing only — skip the Appwrite persistence write. */
+  /** Eval/testing only: skip Appwrite writes (create + edit) and doodle generation. */
   dryRun?: boolean;
 }
 
@@ -118,7 +121,7 @@ export const CarouselPlanner = {
     progress,
     runAgentSpan,
     tokenTracker,
-  }: PlannerRunParams): Promise<{ carouselId: string; slides: SlideLayout[]; theme: CarouselTheme }> => {
+  }: PlannerRunParams): Promise<{ carouselId: string; slides: SlideLayout[]; theme: CarouselTheme; evidence?: string }> => {
     const workingMemory: string[] = [];
 
     // Continuation turn → edit flow (Phase 6.2). Additive: only taken when the
@@ -180,7 +183,7 @@ export const CarouselPlanner = {
     let plan: PlanResult;
     try {
       plan = await runAgentSpan('CarouselPlanner.PLAN', { topic: payload.topic }, () =>
-        generateContentFromAgent(planPrompt, planSchema)
+        generateContentFromAgent(planPrompt, planSchema, { role: 'planner', label: 'v1.plan' })
       );
     } catch (err) {
       console.warn('[CarouselPlanner] Plan step failed, using default plan:', err);
@@ -348,7 +351,7 @@ export const CarouselPlanner = {
         const reflectRes: ReflectResult = await runAgentSpan(
           `CarouselPlanner.REFLECT_${iteration}`,
           { slideCount: currentSlides.length },
-          () => generateContentFromAgent(reflectPrompt, reflectSchema)
+          () => generateContentFromAgent(reflectPrompt, reflectSchema, { role: 'critic', label: 'v1.reflect' })
         );
 
         workingMemory.push(`Reflect Pass ${iteration}: score ${reflectRes.score}/100. ${reflectRes.feedback}`);
@@ -426,7 +429,7 @@ export const CarouselPlanner = {
             await runAgentSpan(
               `CarouselPlanner.REVISE_${iteration}`,
               { flagged },
-              () => generateContentFromAgent(revisionPrompt, revisionSchema)
+              () => generateContentFromAgent(revisionPrompt, revisionSchema, { role: 'writer', label: 'v1.revise' })
             );
 
           for (const rev of revisionRes.revisions || []) {
@@ -460,7 +463,7 @@ export const CarouselPlanner = {
     // STEP 4: ART DIRECTOR & DOODLE GENERATION (Template 3)
     // =========================================================================
     const legacyForDoodle = currentSlides.map(layoutToSlide);
-    if (legacyForDoodle.length > 0 && payload.selectedTemplate === 'template-3') {
+    if (legacyForDoodle.length > 0 && payload.selectedTemplate === 'template-3' && !payload.dryRun) {
       await progress('Art Director: designing sketches...', 85);
       let fluxPrompts: string[];
       try {
@@ -530,10 +533,16 @@ export const CarouselPlanner = {
     await progress('Saving carousel & finalizing...', 95);
     const finalLegacySlides = currentSlides.map(layoutToSlide);
 
+    // Evals: build everything, persist nothing.
+    if (payload.dryRun) {
+      // `evidence`: the material the writer worked from, so the eval judge can tell sourced numbers from invented ones.
+      return { carouselId: 'dry-run', slides: currentSlides, theme: currentTheme, evidence: finalContent };
+    }
+
     const carouselId = await createCarouselServer({
       userId,
       title: payload.topic.length > 80 ? payload.topic.slice(0, 77) + '…' : payload.topic,
-      templateType: payload.selectedTemplate.replace('-', '') as any,
+      templateType: appToDbTemplate(payload.selectedTemplate),
       theme: currentTheme,
       slides: finalLegacySlides,
       brandMode: payload.brandMode,
@@ -760,7 +769,7 @@ Return JSON: { "slides": [ { "variant", "preHeader", "headline", "body", "listIt
   // an empty card). Dropping empties here lets the count-enforcement below refill.
   const nonEmpty = (s: SlideContent) => !!(s.headline?.trim() || s.body?.trim() || (s.listItems && s.listItems.length));
 
-  const result = await generateContentFromAgent(prompt, REGEN_SCHEMA);
+  const result = await generateContentFromAgent(prompt, REGEN_SCHEMA, { role: 'writer', label: 'v1.regenerate' });
   const raw: any[] = Array.isArray(result?.slides) ? result.slides : [];
   if (raw.length < 2) return null;
   let mapped = mapRaw(raw).filter(nonEmpty);
@@ -785,7 +794,7 @@ Write ${need} ADDITIONAL middle slides (variant "body" or "list") with NEW, spec
 
 Return JSON: { "slides": [ ${need} slides ] }`;
     try {
-      const more = await generateContentFromAgent(topPrompt, REGEN_SCHEMA);
+      const more = await generateContentFromAgent(topPrompt, REGEN_SCHEMA, { role: 'writer', label: 'v1.regenerate.more' });
       const moreMapped = mapRaw(Array.isArray(more?.slides) ? more.slides : [])
         .filter(s => s.variant !== 'hero' && s.variant !== 'closing' && nonEmpty(s))
         .slice(0, need);
@@ -892,7 +901,7 @@ Slide numbers are 1-based, exactly as the user sees them. "memoryNote": one sent
   let cls: any = {};
   try {
     cls = await runAgentSpan('CarouselPlanner.CLASSIFY', { messageLength: message.length }, () =>
-      generateContentFromAgent({ systemPrompt, prompt }, EDIT_CLASSIFY_SCHEMA)
+      generateContentFromAgent({ systemPrompt, prompt }, EDIT_CLASSIFY_SCHEMA, { role: 'planner', label: 'v1.classify' })
     );
   } catch (err) {
     console.warn('[CarouselPlanner] Edit classify failed, defaulting to answer:', err);

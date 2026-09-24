@@ -10,7 +10,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { X, Upload, Save } from 'lucide-react';
+import { Upload, Save, Trash2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CloseButton, Field, Modal, SPRING, Spinner, inputClass } from './studio/ui';
 import { BrandKit } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { storage, ID, config } from '../lib/appwriteClient';
@@ -107,196 +109,119 @@ export const BrandEditorPanel: React.FC<BrandEditorPanelProps> = ({
         }
     };
 
-    if (!isOpen) return null;
+    const initial = (brandKit.identity.name || 'U').charAt(0).toUpperCase();
 
     return (
-        <>
-            {/* Backdrop */}
-            <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-                onClick={onClose}
-            />
-
-            {/* Panel */}
-            <div className="fixed right-0 top-0 h-full w-[400px] bg-neutral-900 border-l border-white/10 shadow-2xl z-50 flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-white/10">
-                    <div>
-                        <h2 className="text-lg font-bold text-white">
-                            Edit Brand Identity
-                        </h2>
-                        <p className="text-xs text-neutral-400 mt-1">
-                            Changes apply to all your carousels
-                        </p>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                        title="Close Brand Editor"
-                        aria-label="Close Brand Editor"
-                    >
-                        <X className="w-5 h-5 text-neutral-400" />
-                    </button>
+        <Modal open={isOpen} onClose={onClose} variant="drawer" className="w-full max-w-[420px] flex flex-col" labelledBy="brand-title">
+            <div className="flex items-start justify-between gap-4 p-6 pb-4">
+                <div>
+                    <div className="lp-mono text-[10.5px] uppercase tracking-[0.16em] text-white/40">Brand kit</div>
+                    <h2 id="brand-title" className="lp-display mt-1.5 text-[22px] font-semibold text-white">Your signature</h2>
+                    <p className="text-[12.5px] text-white/45 mt-1">Shows on every slide. Changes apply to all your carousels.</p>
                 </div>
+                <CloseButton onClick={onClose} label="Close brand editor" />
+            </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {/* Brand Identity Section */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                            Brand Identity
-                        </h3>
-
-                        {/* Brand Name */}
-                        <div>
-                            <label className="block text-xs font-medium text-neutral-400 mb-2">
-                                Brand Name
-                            </label>
-                            <input
-                                type="text"
-                                value={brandKit.identity.name}
-                                onChange={(e) => setBrandKit({
-                                    ...brandKit,
-                                    identity: { ...brandKit.identity, name: e.target.value }
-                                })}
-                                placeholder="e.g. Acme Inc"
-                                className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                            />
-                        </div>
-
-                        {/* Brand Title */}
-                        <div>
-                            <label className="block text-xs font-medium text-neutral-400 mb-2">
-                                Brand Title
-                            </label>
-                            <input
-                                type="text"
-                                value={brandKit.identity.title}
-                                onChange={(e) => setBrandKit({
-                                    ...brandKit,
-                                    identity: { ...brandKit.identity, title: e.target.value }
-                                })}
-                                placeholder="e.g. Founder & CEO"
-                                className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                            />
-                        </div>
-
-                        {/* Brand Image Upload Widget */}
-                        <div>
-                            <label className="block text-xs font-medium text-neutral-400 mb-2">
-                                Brand Avatar
-                            </label>
-
-                            <div className="flex flex-col gap-3">
-                                {/* Hidden File Input */}
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                />
-
+            <div className="flex-1 overflow-y-auto st-scroll px-6 pb-6 space-y-6">
+                {/* Live preview of the signature card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15, ...SPRING }}
+                    className="relative rounded-2xl p-[1px] bg-gradient-to-br from-cyan-300/40 via-violet-400/40 to-rose-300/40"
+                >
+                    <div className="rounded-[15px] p-5 st-canvas" style={{ background: `radial-gradient(120% 120% at 0% 0%, ${brandKit.colors.primary}22, transparent 60%), #0e0e17` }}>
+                        <div className="lp-mono text-[10px] uppercase tracking-[0.16em] text-white/35 mb-4">Preview</div>
+                        <div className="flex items-center gap-3">
+                            <motion.div key={brandKit.identity.imageUrl || 'none'} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING} className="relative w-12 h-12 shrink-0">
                                 {brandKit.identity.imageUrl ? (
-                                    /* Image Preview State */
-                                    <div className="relative group w-24 h-24 mx-auto">
-                                        <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-white/30 transition-colors">
-                                            <img
-                                                src={brandKit.identity.imageUrl}
-                                                alt="Brand Avatar"
-                                                className="w-full h-full object-cover"
-                                                onError={(e) => {
-                                                    // Fallback if image fails to load
-                                                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(brandKit.identity.name)}&background=random`;
-                                                }}
-                                            />
-                                        </div>
-
-                                        {/* Overlay Actions */}
-                                        <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                            <button
-                                                onClick={() => fileInputRef.current?.click()}
-                                                disabled={isUploading}
-                                                className="p-1.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
-                                                title="Change Image"
-                                            >
-                                                <Upload className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => setBrandKit({
-                                                    ...brandKit,
-                                                    identity: { ...brandKit.identity, imageUrl: '' }
-                                                })}
-                                                className="p-1.5 bg-red-500/20 hover:bg-red-500/40 rounded-full text-red-400 transition-colors"
-                                                title="Remove Image"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        </div>
-
-                                        {isUploading && (
-                                            <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center z-10">
-                                                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <img
+                                        src={brandKit.identity.imageUrl}
+                                        alt=""
+                                        className="w-12 h-12 rounded-full object-cover ring-2 ring-white/15"
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
                                 ) : (
-                                    /* Upload Placeholder State */
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className={`
-                                            cursor-pointer group
-                                            w-full h-32 
-                                            border-2 border-dashed border-white/10 hover:border-blue-500/50
-                                            bg-black/20 hover:bg-blue-500/5
-                                            rounded-xl
-                                            flex flex-col items-center justify-center gap-3
-                                            transition-all duration-200
-                                            ${isUploading ? 'opacity-50 pointer-events-none' : ''}
-                                        `}
-                                    >
-                                        {isUploading ? (
-                                            <div className="w-6 h-6 border-2 border-white/30 border-t-blue-500 rounded-full animate-spin" />
-                                        ) : (
-                                            <>
-                                                <div className="p-3 rounded-full bg-white/5 group-hover:bg-blue-500/10 group-hover:text-blue-500 text-neutral-400 transition-colors">
-                                                    <Upload className="w-5 h-5" />
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className="text-xs font-medium text-neutral-300 group-hover:text-blue-400 transition-colors">
-                                                        Click to upload image
-                                                    </p>
-                                                    <p className="text-[10px] text-neutral-500 mt-1">
-                                                        SVG, PNG, JPG (max 2MB)
-                                                    </p>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
+                                    <span className="grid place-items-center w-12 h-12 rounded-full text-[18px] font-semibold text-white" style={{ background: `linear-gradient(135deg, ${brandKit.colors.primary}, ${brandKit.colors.secondary})` }}>{initial}</span>
                                 )}
+                            </motion.div>
+                            <div className="min-w-0">
+                                <div className="text-[15px] font-semibold truncate" style={{ color: brandKit.colors.primary }}>{brandKit.identity.name || 'Your name'}</div>
+                                <div className="text-[12.5px] text-white/70 truncate">{brandKit.identity.title || 'Your title'}</div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
-                {/* Footer */}
-                <div className="p-6 border-t border-white/10 flex gap-3">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 px-4 py-2.5 bg-black/40 border border-white/10 rounded-lg text-white font-medium hover:bg-white/5 transition-colors"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        className="flex-1 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-white font-medium transition-colors flex items-center justify-center gap-2"
-                    >
-                        <Save className="w-4 h-4" />
-                        Save Brand
-                    </button>
+                <div className="space-y-4">
+                    <Field label="Name">
+                        <input
+                            type="text"
+                            value={brandKit.identity.name}
+                            onChange={(e) => setBrandKit({ ...brandKit, identity: { ...brandKit.identity, name: e.target.value } })}
+                            placeholder="e.g. Acme Inc"
+                            className={inputClass()}
+                        />
+                    </Field>
+                    <Field label="Title">
+                        <input
+                            type="text"
+                            value={brandKit.identity.title}
+                            onChange={(e) => setBrandKit({ ...brandKit, identity: { ...brandKit.identity, title: e.target.value } })}
+                            placeholder="e.g. Founder & CEO"
+                            className={inputClass()}
+                        />
+                    </Field>
+
+                    <div>
+                        <span className="block text-[12px] font-medium text-white/60 mb-1.5">Photo</span>
+                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+                        <div className="flex items-center gap-3">
+                            <motion.button
+                                type="button"
+                                whileHover={{ y: -2 }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                                className="group flex-1 flex items-center gap-3 rounded-xl border border-dashed border-white/15 hover:border-violet-300/50 hover:bg-violet-400/[0.05] px-3.5 py-3 text-left transition-colors disabled:opacity-60"
+                            >
+                                <span className="grid place-items-center w-9 h-9 rounded-xl bg-white/[0.05] border border-white/10 text-white/70 group-hover:text-violet-200 transition-colors">
+                                    {isUploading ? <Spinner size={15} /> : <Upload size={15} />}
+                                </span>
+                                <span>
+                                    <span className="block text-[12.5px] font-medium text-white">{isUploading ? 'Uploading…' : brandKit.identity.imageUrl ? 'Replace photo' : 'Upload a photo'}</span>
+                                    <span className="block text-[11px] text-white/40">SVG, PNG or JPG · up to 2MB</span>
+                                </span>
+                            </motion.button>
+                            <AnimatePresence>
+                                {brandKit.identity.imageUrl && !isUploading && (
+                                    <motion.button
+                                        type="button"
+                                        initial={{ opacity: 0, scale: 0.6 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.6 }}
+                                        onClick={() => setBrandKit({ ...brandKit, identity: { ...brandKit.identity, imageUrl: '' } })}
+                                        aria-label="Remove photo"
+                                        className="grid place-items-center w-10 h-10 rounded-xl border border-rose-300/25 text-rose-300 hover:bg-rose-400/10 transition-colors"
+                                    >
+                                        <Trash2 size={15} />
+                                    </motion.button>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </>
+
+            <div className="p-5 border-t border-white/[0.07] flex gap-2.5">
+                <motion.button whileTap={{ scale: 0.97 }} onClick={onClose} className="flex-1 h-11 rounded-full border border-white/12 text-[13.5px] text-white/80 hover:text-white hover:bg-white/[0.05] transition-colors">
+                    Cancel
+                </motion.button>
+                <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} className="lp-btn-primary flex-1 h-11 justify-center text-[13.5px]">
+                    <Save size={15} /> Save brand
+                </motion.button>
+            </div>
+        </Modal>
     );
 };
 

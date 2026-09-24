@@ -33,7 +33,8 @@ export const ResearchAgent = {
 
         const result = await generateContentFromAgent(
             combinedPrompt,
-            ANALYSIS_SCHEMA
+            ANALYSIS_SCHEMA,
+            { role: 'fast', label: 'research.analyze' }
         );
 
         // Some models might wrap it

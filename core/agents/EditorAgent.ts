@@ -62,7 +62,7 @@ export const EditorAgent = {
 
         try {
             console.log(`[EditorAgent] Refining text with goal: ${goal}...`);
-            const result = await generateContentFromAgent(systemPrompt, REFINEMENT_SCHEMA);
+            const result = await generateContentFromAgent(systemPrompt, REFINEMENT_SCHEMA, { role: 'writer', label: 'editor.refine' });
 
             // Handle potential different return structures
             const refined = result.refinedText || result;
@@ -107,7 +107,7 @@ export const EditorAgent = {
 
         try {
             console.log('[EditorAgent] Generating headline alternatives...');
-            const result = await generateContentFromAgent(systemPrompt, HEADLINE_SCHEMA);
+            const result = await generateContentFromAgent(systemPrompt, HEADLINE_SCHEMA, { role: 'creative', label: 'editor.headlines' });
 
             const alternatives = result.alternatives || result;
 

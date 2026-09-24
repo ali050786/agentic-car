@@ -9,7 +9,9 @@
  */
 
 import { runEditTurn, CreateJobPayload } from '../../core/agents/CarouselPlanner';
-import { runWithAgentContext } from '../../core/llm/agentGateway';
+import { runWithAgentContext, summarizeMetrics, StepMetric } from '../../core/llm/agentGateway';
+import { runEditPipelineV2 } from '../../core/agents/v2/editPipeline';
+import { appwriteStore } from '../../core/agents/v2/persistence';
 import { langfuse } from '../../core/llm/langfuse';
 import { loadCarouselServer, assertOwnsCarousel, updateCarouselContentServer } from '../carouselStoreServer';
 import { loadThread, appendMessage, migrateThreadIfNeeded } from '../threadStoreServer';
@@ -23,6 +25,8 @@ export interface EditJobPayload {
     message: string;
     selectedSlideIndex: number | null;
     selectedSlideIndices?: number[];
+    /** Client-kept rolling summary of older turns (MemoryAgent.compactHistory). */
+    conversationSummary?: string;
 }
 
 export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
@@ -71,8 +75,11 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
         promptTokens: 0,
         completionTokens: 0,
         totalTokens: 0,
-        cachedTokens: 0
+        cachedTokens: 0,
+        costUsd: 0,
     };
+    const metrics: StepMetric[] = [];
+    const pipelineVersion = (process.env.PIPELINE_VERSION || 'v2').toLowerCase() === 'v1' ? 'v1' : 'v2';
 
     const trace = langfuse?.trace({
         name: 'edit-carousel',
@@ -80,7 +87,7 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
         metadata: {
             carouselId,
             message: payload.message,
-            selectedModel: 'openrouter/deepseek-v4-flash',
+            pipeline: pipelineVersion,
         }
     });
 
@@ -90,7 +97,62 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
         tokenTracker,
         langfuseTrace: trace,
         langfuseSpan: undefined as any,
+        metrics,
     };
+
+    if (pipelineVersion === 'v2') {
+        await runWithAgentContext(ctx, async () => {
+            await migrateThreadIfNeeded(carouselId, userId);
+            const result = await runEditPipelineV2({
+                carouselId,
+                userId,
+                message: payload.message,
+                selectedSlideIndices: payload.selectedSlideIndices?.length
+                    ? payload.selectedSlideIndices
+                    : (payload.selectedSlideIndex !== null && payload.selectedSlideIndex !== undefined ? [payload.selectedSlideIndex] : []),
+                conversationSummary: (payload.conversationSummary || '').slice(0, 2000),
+                store: appwriteStore(),
+                progress,
+            });
+            if (result.refused) {
+                await refuse(result.refused);
+                return;
+            }
+            const usage = { ...tokenTracker, costUsd: Number(tokenTracker.costUsd.toFixed(5)) };
+            const cleanEvents = events.map(e => ({ ...e, done: true }));
+            try {
+                await appendMessage(carouselId, userId, { id: `msg-${Date.now()}-u`, role: 'user', text: payload.message });
+                await appendMessage(carouselId, userId, { id: `msg-${Date.now()}-a`, role: 'assistant', text: result.reply, events: cleanEvents, tokenUsage: usage });
+            } catch (err) {
+                console.warn('[editCarouselJob] Failed to persist thread turn (non-fatal):', err);
+            }
+            const summary = summarizeMetrics(metrics);
+            trace?.update({ output: { intent: result.intent, actions: result.actions, changed: result.changedIndices, metrics: summary } });
+            // Canvas designs can make a deck large: past the job attribute's budget the
+            // client reloads the saved carousel instead of reading slides from here.
+            const inline = result.slidesChanged && JSON.stringify(result.slides).length <= 80_000;
+            await updateJob(job.$id, {
+                status: 'done',
+                statusMessage: 'Done!',
+                progress: 100,
+                resultSummary: JSON.stringify({
+                    reply: result.reply,
+                    pipeline: 'v2',
+                    intent: result.intent,
+                    actions: result.actions,
+                    slides: inline ? result.slides : undefined,
+                    reload: result.slidesChanged && !inline ? true : undefined,
+                    changedIndices: result.changedIndices,
+                    designActions: result.designActions,
+                    undoable: result.undoable,
+                    memoryNote: result.memoryNote,
+                    tokenUsage: usage,
+                    metrics: summary,
+                }),
+            });
+        });
+        return;
+    }
 
     await runWithAgentContext(
         ctx,

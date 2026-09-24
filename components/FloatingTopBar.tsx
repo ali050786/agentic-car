@@ -1,7 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Layout, Download, CheckCircle, Loader, AlertCircle, FileText, ChevronDown } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown, Download, FileText, CloudOff, UserRound } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
 import { UserMenu } from './UserMenu';
+import { useCarouselStore } from '../store/useCarouselStore';
+import { LogoMark } from './landing/primitives';
+import { DrawCheck, EASE, MenuItem, PHASE_COLOR, Popover, SPRING, Spinner, phaseLabel, phaseOf } from './studio/ui';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -15,6 +20,90 @@ interface FloatingTopBarProps {
     onOpenAuthModal: () => void;
 }
 
+/** Morphing save-state pill: saving → saved (check draws itself) → error. */
+const SaveBadge: React.FC<{ status: SaveStatus; hasUser: boolean; slidesCount: number; onOpenAuthModal: () => void }> = ({ status, hasUser, slidesCount, onOpenAuthModal }) => {
+    let key = 'none';
+    let node: React.ReactNode = null;
+    if (!hasUser) {
+        key = 'guest';
+        node = (
+            <button onClick={onOpenAuthModal} className="group flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-300/20 bg-amber-300/[0.06] pl-2 pr-2.5 h-7 text-[11.5px] text-amber-100/85 hover:bg-amber-300/[0.12] transition-colors">
+                <CloudOff size={12} className="text-amber-300" />
+                <span className="hidden sm:inline">Not saved · </span>
+                <span className="underline decoration-amber-300/40 underline-offset-2 group-hover:decoration-amber-300"><span className="sm:hidden">Sign in</span><span className="hidden sm:inline">Sign in to keep it</span></span>
+            </button>
+        );
+    } else if (slidesCount > 0 && status === 'saving') {
+        key = 'saving';
+        node = (
+            <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 h-7 text-[11.5px] text-white/60">
+                <Spinner size={11} /> Saving
+            </span>
+        );
+    } else if (slidesCount > 0 && status === 'saved') {
+        key = 'saved';
+        node = (
+            <span className="flex items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-300/[0.06] px-2.5 h-7 text-[11.5px] text-emerald-200/90">
+                <DrawCheck size={12} color="#6ee7b7" /> Saved
+            </span>
+        );
+    } else if (slidesCount > 0 && status === 'error') {
+        key = 'error';
+        node = (
+            <motion.span animate={{ x: [0, -3, 3, -2, 2, 0] }} transition={{ duration: 0.4 }} className="flex items-center gap-1.5 rounded-full border border-rose-300/25 bg-rose-400/[0.08] px-2.5 h-7 text-[11.5px] text-rose-200">
+                <CloudOff size={12} /> Save failed
+            </motion.span>
+        );
+    }
+    return (
+        <AnimatePresence mode="popLayout" initial={false}>
+            {node && (
+                <motion.div key={key} initial={{ opacity: 0, y: 6, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.9 }} transition={SPRING}>
+                    {node}
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+};
+
+/** Center-of-bar live agent status while a job runs. */
+const RunStatus: React.FC = () => {
+    const { isGenerating, generationStatus, generationProgress } = useCarouselStore(useShallow(s => ({
+        isGenerating: s.isGenerating, generationStatus: s.generationStatus, generationProgress: s.generationProgress,
+    })));
+    const phase = phaseOf(generationStatus);
+    const color = PHASE_COLOR[phase];
+    return (
+        <AnimatePresence>
+            {isGenerating && (
+                <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={SPRING}
+                    className="hidden lg:flex items-center gap-2.5 rounded-full border border-white/10 bg-black/40 pl-2.5 pr-3 h-8 max-w-[440px]"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <span className="relative flex w-2 h-2 shrink-0">
+                        <span className="absolute inset-0 rounded-full animate-ping opacity-60" style={{ background: color }} />
+                        <span className="relative w-2 h-2 rounded-full" style={{ background: color }} />
+                    </span>
+                    <span className="lp-mono text-[10px] tracking-[0.16em] shrink-0" style={{ color }}>{phase}</span>
+                    <AnimatePresence mode="wait" initial={false}>
+                        <motion.span key={generationStatus} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="lp-shimmer text-[12px] truncate">
+                            {phaseLabel(generationStatus) || 'Working'}
+                        </motion.span>
+                    </AnimatePresence>
+                    <span className="w-14 h-1 rounded-full bg-white/10 overflow-hidden shrink-0">
+                        <motion.span className="block h-full rounded-full" style={{ background: color }} animate={{ width: `${Math.max(6, generationProgress || 0)}%` }} transition={{ duration: 0.6, ease: EASE }} />
+                    </span>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+};
+
 export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
     slidesCount,
     hasUser,
@@ -26,161 +115,110 @@ export const FloatingTopBar: React.FC<FloatingTopBarProps> = ({
 }) => {
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
     const downloadDropdownRef = useRef<HTMLDivElement>(null);
+    const topic = useCarouselStore(s => s.topic);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (downloadDropdownRef.current && !downloadDropdownRef.current.contains(event.target as Node)) {
                 setShowDownloadDropdown(false);
             }
         };
-
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const renderAutoSaveStatus = () => {
-        if (!hasUser) {
-            return (
-                <div
-                    onClick={onOpenAuthModal}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800 border border-white/5 rounded-full text-neutral-400 text-xs cursor-pointer hover:bg-neutral-750 hover:text-white transition-all"
-                >
-                    <AlertCircle size={12} className="text-neutral-500" />
-                    <span className="text-[10px] font-semibold">Guest Mode</span>
-                </div>
-            );
-        }
-
-        if (slidesCount === 0) return null;
-
-        switch (saveStatus) {
-            case 'saving':
-                return (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-xs">
-                        <Loader size={12} className="animate-spin" />
-                        <span className="text-[10px] font-semibold">Saving...</span>
-                    </div>
-                );
-
-            case 'saved':
-                return (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-green-400 text-xs">
-                        <CheckCircle size={12} className="text-green-500" />
-                        <span className="text-[10px] font-semibold">Saved</span>
-                    </div>
-                );
-
-            case 'error':
-                return (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full text-orange-400 text-xs">
-                        <AlertCircle size={12} />
-                        <span className="text-[10px] font-semibold">Save Failed</span>
-                    </div>
-                );
-
-            default:
-                return null;
-        }
-    };
-
     return (
-        <header className="fixed top-0 left-0 right-0 h-12 bg-neutral-950/80 border-b border-white/5 z-50 flex items-center justify-between px-6 backdrop-blur-xl">
-            {/* Left: Logo */}
-            <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-all group">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-blue-500 rounded-full blur-[8px] opacity-35 group-hover:opacity-50 transition-opacity" />
-                    <div className="relative w-6.5 h-6.5 bg-neutral-900 border border-white/10 rounded-full flex items-center justify-center">
-                        <Layout className="w-3.5 h-3.5 text-blue-400 group-hover:text-blue-300 transition-colors" />
-                    </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <h1 className="text-xs font-bold text-white tracking-tight">AgenticCar</h1>
-                    <span className="text-[8px] font-bold bg-blue-500/10 border border-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full uppercase tracking-wider">AI</span>
-                </div>
-            </Link>
+        <motion.header
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, ease: EASE }}
+            className="fixed top-2 inset-x-2 h-12 z-50 st-panel rounded-2xl grid grid-cols-[1fr_auto_1fr] items-center px-2.5"
+        >
+            {/* Left: brand + breadcrumb */}
+            <div className="flex items-center gap-2.5 min-w-0">
+                <Link to="/" className="flex items-center gap-2 shrink-0 rounded-xl pl-1 pr-2 py-1 hover:bg-white/[0.05] transition-colors" aria-label="Back to home">
+                    <LogoMark size={26} />
+                    <span className="hidden sm:block lp-display text-[14px] font-semibold tracking-tight text-white">Agentic Carousel</span>
+                </Link>
+                <span className="hidden md:block text-white/15 text-lg font-light select-none">/</span>
+                <AnimatePresence mode="wait" initial={false}>
+                    <motion.span
+                        key={topic || 'new'}
+                        initial={{ opacity: 0, y: 6, filter: 'blur(4px)' }}
+                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, y: -6, filter: 'blur(4px)' }}
+                        transition={{ duration: 0.3, ease: EASE }}
+                        className="hidden md:block truncate text-[13px] text-white/60 min-w-0"
+                        title={topic || undefined}
+                    >
+                        {topic || 'Untitled carousel'}
+                    </motion.span>
+                </AnimatePresence>
+            </div>
 
-            {/* Right: Action Buttons */}
-            <div className="flex items-center gap-2.5">
-                {/* Auto-Save Status Badge (Generator Mode) */}
-                {renderAutoSaveStatus()}
+            {/* Center: live run status */}
+            <div className="flex justify-center"><RunStatus /></div>
 
-                {/* Download Dropdown Button */}
-                {slidesCount > 0 && (
-                    <div className="relative" ref={downloadDropdownRef}>
-                        <button
-                            onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
-                            title="Download Options"
-                            aria-label="Download Options"
-                            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-neutral-200 text-xs font-semibold text-black rounded-full transition-all shadow-sm"
+            {/* Right: save state, export, account */}
+            <div className="flex items-center justify-end gap-2">
+                <SaveBadge status={saveStatus} hasUser={hasUser} slidesCount={slidesCount} onOpenAuthModal={onOpenAuthModal} />
+
+                <AnimatePresence>
+                    {slidesCount > 0 && (
+                        <motion.div
+                            className="relative"
+                            ref={downloadDropdownRef}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={SPRING}
                         >
-                            <Download size={13} />
-                            <span className="hidden sm:inline">Download</span>
-                            <ChevronDown size={12} className={`transition-transform duration-200 ${showDownloadDropdown ? 'rotate-180' : ''}`} />
-                        </button>
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
+                                aria-label="Export options"
+                                aria-expanded={showDownloadDropdown}
+                                className="lp-btn-primary h-8 pl-3 pr-2.5 text-[12.5px]"
+                            >
+                                {isExportingPdf ? <Spinner size={13} /> : <Download size={13} />}
+                                <span className="hidden sm:inline">{isExportingPdf ? 'Exporting' : 'Export'}</span>
+                                <motion.span animate={{ rotate: showDownloadDropdown ? 180 : 0 }} transition={SPRING}><ChevronDown size={13} /></motion.span>
+                            </motion.button>
 
-                        {/* Dropdown Menu */}
-                        {showDownloadDropdown && (
-                            <div className="absolute top-full mt-2 right-0 w-52 bg-neutral-950/95 border border-white/10 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85)] z-50 overflow-hidden py-1 backdrop-blur-md">
-                                {/* Current Slide JPG Option */}
-                                <button
-                                    onClick={() => {
-                                        onDownload();
-                                        setShowDownloadDropdown(false);
-                                    }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/5 text-left text-xs text-white transition-colors"
-                                >
-                                    <Download size={13} className="text-blue-400" />
-                                    <div>
-                                        <div className="font-bold">Current Slide (JPG)</div>
-                                        <div className="text-[10px] text-neutral-400 mt-0.5">Download active slide as image</div>
-                                    </div>
-                                </button>
-
-                                {/* Divider */}
-                                <div className="border-t border-white/5" />
-
-                                {/* All Slides PDF Option */}
-                                {onDownloadPdf && (
-                                    <button
-                                        onClick={() => {
-                                            onDownloadPdf();
-                                            setShowDownloadDropdown(false);
-                                        }}
-                                        disabled={isExportingPdf}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed text-left text-xs text-white transition-colors"
-                                    >
-                                        {isExportingPdf ? (
-                                            <Loader size={13} className="text-red-400 animate-spin" />
-                                        ) : (
-                                            <FileText size={13} className="text-red-400" />
-                                        )}
-                                        <div>
-                                            <div className="font-bold">
-                                                {isExportingPdf ? 'Exporting...' : 'All Slides (PDF)'}
-                                            </div>
-                                            <div className="text-[10px] text-neutral-400 mt-0.5">
-                                                {isExportingPdf ? 'Please wait...' : 'Download all slides as PDF'}
-                                            </div>
-                                        </div>
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
+                            <Popover open={showDownloadDropdown} className="absolute top-full mt-2 right-0 w-64 p-1.5 z-50">
+                                <div className="px-3 pt-2 pb-1.5 lp-mono text-[10px] uppercase tracking-[0.16em] text-white/35">Export</div>
+                                <MenuItem
+                                    i={0}
+                                    icon={<FileText size={14} className="text-rose-300" />}
+                                    label={isExportingPdf ? 'Exporting PDF…' : 'Whole carousel · PDF'}
+                                    hint="LinkedIn-ready document post"
+                                    disabled={isExportingPdf}
+                                    onClick={() => { onDownloadPdf(); setShowDownloadDropdown(false); }}
+                                />
+                                <MenuItem
+                                    i={1}
+                                    icon={<Download size={14} className="text-cyan-300" />}
+                                    label="Current slide · JPG"
+                                    hint="High-res image of the slide on stage"
+                                    onClick={() => { onDownload(); setShowDownloadDropdown(false); }}
+                                />
+                            </Popover>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {hasUser ? (
                     <UserMenu />
                 ) : (
-                    <button
+                    <motion.button
+                        whileTap={{ scale: 0.95 }}
                         onClick={onOpenAuthModal}
-                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white rounded-full transition-all shadow-[0_4px_12px_rgba(59,130,246,0.2)]"
+                        className="hidden sm:flex items-center gap-1.5 whitespace-nowrap h-8 px-3 rounded-full border border-white/15 text-[12.5px] text-white/85 hover:bg-white/[0.07] hover:border-white/30 transition-colors"
                     >
-                        Sign Up
-                    </button>
+                        <UserRound size={13} /> Sign up
+                    </motion.button>
                 )}
             </div>
-        </header>
+        </motion.header>
     );
 };
