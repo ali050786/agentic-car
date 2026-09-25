@@ -40,7 +40,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
 
     // Core carousel data
     topic: '',
-    selectedTemplate: 'template-5',
+    selectedTemplate: 'template-1',
     selectedModel: 'openrouter/deepseek-v4-flash',
     selectedFormat: 'portrait',
     selectedPattern: 1,
@@ -54,6 +54,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     chatMessages: [],
     chatSummary: '',
     chatSummarizedUpTo: 0,
+    restoredTo: null,
     activeCarouselId: null,
     draftPreview: false,
     activeJobId: null,
@@ -140,10 +141,11 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     updateChatMessage: (id, patch) => set(state => ({
         chatMessages: state.chatMessages.map(m => m.id === id ? { ...m, ...patch } : m)
     })),
-    clearChat: () => set({ chatMessages: [], chatSummary: '', chatSummarizedUpTo: 0 }),
+    clearChat: () => set({ chatMessages: [], chatSummary: '', chatSummarizedUpTo: 0, restoredTo: null }),
     setChatMessages: (chatMessages) => set({ chatMessages }),
     setChatSummary: (chatSummary) => set({ chatSummary }),
     setChatSummarizedUpTo: (chatSummarizedUpTo) => set({ chatSummarizedUpTo }),
+    setRestoredTo: (restoredTo) => set({ restoredTo }),
     // Any switch of the active carousel ends a draft preview (it belonged to no carousel).
     setActiveCarouselId: (activeCarouselId) => set({ activeCarouselId, draftPreview: false }),
     showDraftPreview: (slides, theme) => set((state) => ({ slides, theme: theme ?? state.theme, draftPreview: true })),
@@ -256,7 +258,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     reset: () => {
         set({
             topic: '',
-            selectedTemplate: 'template-5',
+            selectedTemplate: 'template-1',
             selectedModel: 'openrouter/deepseek-v4-flash',
             selectedFormat: 'portrait',
             selectedPattern: 1,
@@ -270,6 +272,7 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
             chatMessages: [],
             chatSummary: '',
             chatSummarizedUpTo: 0,
+            restoredTo: null,
             activeCarouselId: null,
             draftPreview: false,
             activeJobId: null,

@@ -8,8 +8,7 @@
  */
 
 import type { BrandKit, BrandMode, CarouselBrief, CarouselFormat, CarouselTheme, ChatMessage, SignaturePosition, SlideContent, StructuredMemory, TemplateId } from '../../../types';
-import { appToDbTemplate, stampTheme } from '../../../utils/templateConverter';
-import { compactDesigns } from '../../design/canvas';
+import { appToDbTemplate, stampTheme, withoutLayouts } from '../../../utils/templateConverter';
 
 export interface LoadedDeck {
     slides: SlideContent[];
@@ -24,6 +23,8 @@ export interface LoadedDeck {
 
 export interface DeckSnapshot extends LoadedDeck {
     label: string;
+    /** 'point': the deck right after a reply (restore point). Unset: an older before-change snapshot. */
+    kind?: 'point';
     createdAt?: string;
 }
 
@@ -82,10 +83,16 @@ export interface PipelineStore {
     updateDeck(carouselId: string, updates: DeckUpdate): Promise<void>;
     appendMessage(carouselId: string, userId: string, msg: ChatMessage): Promise<void>;
     loadThread(carouselId: string): Promise<ChatMessage[]>;
+    /** Removes every message after `messageId` (the user restored to that reply and moved on). */
+    truncateThreadAfter(carouselId: string, messageId: string): Promise<number>;
+    /** Attaches a restore point to an existing message. */
+    setMessageVersion(carouselId: string, messageId: string, versionId: string): Promise<void>;
     saveBrief(carouselId: string, userId: string, brief: StoredBrief): Promise<void>;
     loadBrief(carouselId: string): Promise<StoredBrief | null>;
-    saveVersion(carouselId: string, userId: string, snap: DeckSnapshot): Promise<boolean>;
-    /** Newest snapshot without removing it (removed only after a successful restore). */
+    /** Saves a snapshot; returns its id (null if versions aren't available). */
+    saveVersion(carouselId: string, userId: string, snap: DeckSnapshot): Promise<string | null>;
+    getVersion(id: string): Promise<StoredSnapshot | null>;
+    /** Newest older-style (before-change) snapshot, for decks with no restore point yet. */
     peekVersion(carouselId: string): Promise<StoredSnapshot | null>;
     dropVersion(carouselId: string, id: string): Promise<void>;
     generateDoodle(prompt: string, aspectRatio: string, seed?: number): Promise<string>;
@@ -106,7 +113,7 @@ export const appwriteStore = (): PipelineStore => ({
         return createCarouselServer({
             ...input,
             theme: stampTheme(input.theme, input.templateId),
-            slides: compactDesigns(input.slides as any[]) as SlideContent[],
+            slides: withoutLayouts(input.slides as any[]) as SlideContent[],
             templateType: appToDbTemplate(input.templateId),
         });
     },
@@ -122,7 +129,7 @@ export const appwriteStore = (): PipelineStore => ({
         const { databasesServer, serverConfig } = await import('../../../lib/appwriteServer');
         const data: Record<string, unknown> = {};
         if (updates.theme) data.theme = JSON.stringify(updates.templateId ? stampTheme(updates.theme, updates.templateId) : updates.theme);
-        if (updates.slides) data.slides = JSON.stringify(compactDesigns(updates.slides as any[]));
+        if (updates.slides) data.slides = JSON.stringify(withoutLayouts(updates.slides as any[]));
         if (updates.templateId) data.templateType = appToDbTemplate(updates.templateId);
         if (updates.format) data.format = updates.format;
         if (updates.presetId !== undefined) data.presetId = updates.presetId;
@@ -137,6 +144,14 @@ export const appwriteStore = (): PipelineStore => ({
         const { loadThread, } = await import('../../../worker/threadStoreServer');
         return loadThread(carouselId);
     },
+    async truncateThreadAfter(carouselId, messageId) {
+        const { truncateThreadAfter } = await import('../../../worker/threadStoreServer');
+        return truncateThreadAfter(carouselId, messageId);
+    },
+    async setMessageVersion(carouselId, messageId, versionId) {
+        const { setMessageVersion } = await import('../../../worker/threadStoreServer');
+        await setMessageVersion(carouselId, messageId, versionId);
+    },
     async saveBrief(carouselId, userId, brief) {
         const { saveCarouselBriefServer } = await import('../../../worker/briefStoreServer');
         await saveCarouselBriefServer(carouselId, userId, brief);
@@ -148,6 +163,10 @@ export const appwriteStore = (): PipelineStore => ({
     async saveVersion(carouselId, userId, snap) {
         const { saveVersionServer } = await import('../../../worker/versionStoreServer');
         return saveVersionServer(carouselId, userId, snap);
+    },
+    async getVersion(id) {
+        const { getVersionServer } = await import('../../../worker/versionStoreServer');
+        return getVersionServer(id);
     },
     async peekVersion(carouselId) {
         const { peekVersionServer } = await import('../../../worker/versionStoreServer');
@@ -209,16 +228,35 @@ export const memoryStore = (seed: { memory?: StructuredMemory } = {}): PipelineS
             threads.set(carouselId, t);
         },
         async loadThread(carouselId) { return clone(threads.get(carouselId) || []); },
+        async truncateThreadAfter(carouselId, messageId) {
+            const t = threads.get(carouselId) || [];
+            const at = t.findIndex((m) => m.id === messageId);
+            if (at < 0) return 0;
+            threads.set(carouselId, t.slice(0, at + 1));
+            return t.length - at - 1;
+        },
+        async setMessageVersion(carouselId, messageId, versionId) {
+            const m = (threads.get(carouselId) || []).find((x) => x.id === messageId);
+            if (m) m.versionId = versionId;
+        },
         async saveBrief(carouselId, _u, brief) { briefs.set(carouselId, clone(brief)); },
         async loadBrief(carouselId) { return briefs.has(carouselId) ? clone(briefs.get(carouselId)!) : null; },
         async saveVersion(carouselId, _u, snap) {
             const list = versions.get(carouselId) || [];
-            list.push(clone({ ...snap, id: `v-${++n}`, createdAt: new Date().toISOString() }));
-            versions.set(carouselId, list.slice(-10));
-            return true;
+            const id = `v-${++n}`;
+            list.push(clone({ ...snap, id, createdAt: new Date().toISOString() }));
+            versions.set(carouselId, list.slice(-30));
+            return id;
+        },
+        async getVersion(id) {
+            for (const list of versions.values()) {
+                const v = list.find((x) => x.id === id);
+                if (v) return clone(v);
+            }
+            return null;
         },
         async peekVersion(carouselId) {
-            const list = versions.get(carouselId) || [];
+            const list = (versions.get(carouselId) || []).filter((v) => v.kind !== 'point');
             return list.length ? clone(list[list.length - 1]) : null;
         },
         async dropVersion(carouselId, id) {

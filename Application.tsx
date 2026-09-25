@@ -8,10 +8,10 @@ import { exportSlideToJpg } from './utils/jpgExporter';
 import { UserMenu } from './components/UserMenu';
 import { updateCarouselContent, Carousel } from './services/carouselService';
 import { resolveAppTemplate } from './utils/templateConverter';
-import { ensureDeckDesigns } from './components/artifact/canvasControls';
 import { resolveTheme } from './utils/brandUtils';
 import { getPresetById } from './config/colorPresets';
 import { useAutoSave } from './hooks/useAutoSave';
+import { rehydrateRestore } from './services/restoreService';
 import { useJobWatcher } from './hooks/useJobWatcher';
 import { createJob, getActiveJobForCarousel } from './services/jobService';
 import BrandEditorPanel from './components/BrandEditorPanel';
@@ -200,9 +200,13 @@ const CarouselGenerator: React.FC = () => {
     if (user?.$id) {
       loadChat(carousel.$id, user.$id).then(({ messages, summary, summarizedUpTo }) => {
         const store = useCarouselStore.getState();
+        // The user may have opened another carousel while the chat loaded.
+        if (store.activeCarouselId !== carousel.$id) return;
         store.setChatMessages(messages);
         store.setChatSummary(summary);
         store.setChatSummarizedUpTo(summarizedUpTo);
+        // A restore made earlier on this device (replies after it show faded).
+        rehydrateRestore(carousel.$id, messages);
         console.log(`[App] Restored ${messages.length} chat messages for carousel ${carousel.$id}`);
       });
     }
@@ -270,14 +274,6 @@ const CarouselGenerator: React.FC = () => {
       }
     }
   }, [selectedTemplate, brandMode, presetId, brandKit, globalBrandKit, slides.length, isGenerating]);
-
-  // The Canvas: a deck switched to it (or loaded without layouts) gets
-  // deck-aware library layouts right away; "Redesign with AI" refines them.
-  useEffect(() => {
-    if (selectedTemplate !== 'template-5' || isGenerating || !slides.length) return;
-    const designed = ensureDeckDesigns(slides as any[], topic);
-    if (designed) setSlides(designed as any);
-  }, [selectedTemplate, isGenerating, slides, topic, setSlides]);
 
   // Reactive Visual Asset Repair: Fix missing icons/doodles on template switch
   useEffect(() => {

@@ -1,6 +1,6 @@
 # Background worker (worker/) — a persistent Node process, unlike the
-# stateless Vercel functions under api/. Deployed separately on Coolify.
-# See docs/coolify-deployment.md.
+# stateless Vercel functions under api/. Deployed on Fly.io (fly.toml).
+# See docs/fly-deployment.md.
 FROM node:20-slim
 
 WORKDIR /app

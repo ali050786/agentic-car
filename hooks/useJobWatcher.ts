@@ -76,11 +76,16 @@ export const useJobWatcher = () => {
                 let reply = 'Done! Tell me what to refine: a slide, the tone, or the whole angle.';
                 let tokenUsage = undefined;
                 let refused = false;
+                // The first reply's restore point (the deck as created) and its id in the saved thread.
+                let versionId: string | undefined;
+                let messageId: string | undefined;
                 try {
                     const result = JSON.parse(job.resultSummary || '{}');
                     if (result.reply) reply = result.reply;
                     if (result.tokenUsage) tokenUsage = result.tokenUsage;
                     refused = result.refused === true;
+                    if (typeof result.versionId === 'string') versionId = result.versionId;
+                    if (typeof result.messageId === 'string') messageId = result.messageId;
                 } catch {
                     if (job.resultSummary) reply = job.resultSummary;
                 }
@@ -103,6 +108,9 @@ export const useJobWatcher = () => {
                         events: markEventsDone(runningMsg.events),
                         text: reply,
                         tokenUsage,
+                        ...(versionId ? { versionId } : {}),
+                        // Same id as the saved thread, so restoring to it later is understood by the worker.
+                        ...(messageId ? { id: messageId } : {}),
                     });
                 }
             } else {
@@ -138,6 +146,8 @@ export const useJobWatcher = () => {
                             text: result.reply || 'Done.',
                             tokenUsage: result.tokenUsage,
                             undoable: result.undoable === true,
+                            ...(typeof result.versionId === 'string' ? { versionId: result.versionId } : {}),
+                            ...(typeof result.messageId === 'string' && result.messageId !== runningMsg.id ? { id: result.messageId } : {}),
                         });
                     }
                 } catch {

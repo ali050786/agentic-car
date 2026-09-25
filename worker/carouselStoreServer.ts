@@ -132,7 +132,7 @@ export const loadCarouselServer = async (carouselId: string): Promise<LoadedCaro
     };
 
     const theme = parse<CarouselTheme>(doc.theme, {} as CarouselTheme);
-    // The Canvas is stored as template1 + theme.designMode (see utils/templateConverter.ts).
+    // Retired Canvas decks (template1 + theme.designMode) open as The Truth (see utils/templateConverter.ts).
     const templateId = resolveAppTemplate(doc.templateType || 'template1', theme) as TemplateId;
 
     const branding = parse<any>(doc.branding, {});

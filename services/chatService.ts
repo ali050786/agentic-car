@@ -29,6 +29,7 @@ const rowToMessage = (doc: any): ChatMessage => {
         text: doc.text || '',
         events: doc.events ? safe(doc.events, undefined) : undefined,
         tokenUsage: doc.tokenUsage ? safe(doc.tokenUsage, undefined) : undefined,
+        ...(doc.versionId ? { versionId: doc.versionId } : {}),
     };
 };
 

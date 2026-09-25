@@ -31,9 +31,7 @@ export interface DraftSlide {
     id?: string;
     doodlePrompt?: string;
     doodleUrl?: string;
-    /** Canvas layout (template-5): a composed tree or a library recipe. */
-    design?: import('../../design/canvas/types').StoredDesign;
-    /** Short labels a Canvas design added (key → text, shown via "x.<key>" fields). */
+    /** Short extra labels kept from older decks (key → text, "x.<key>" fields). */
     extras?: Record<string, string>;
 }
 
@@ -42,8 +40,6 @@ export type SavedSlide = SlideContent & {
     blockType?: BlockType;
     slots?: SlideLayoutSlots;
     visual?: SlideLayoutVisual;
-    /** Canvas layout (template-5 decks). */
-    design?: import('../../design/canvas/types').StoredDesign;
 };
 
 export interface Fact {
@@ -134,4 +130,8 @@ export interface CreateResultV2 {
     critique?: CritiqueResult;
     hook?: HookChoice;
     issuesRemaining: Issue[];
+    /** Restore point: the deck as created (attached to the first reply). */
+    versionId?: string;
+    /** The first reply's message id in the thread. */
+    messageId?: string;
 }

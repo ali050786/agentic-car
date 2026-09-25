@@ -37,8 +37,6 @@ const DELAYS: Record<string, number> = {
     'critic': 250,
     'critic.revise': 250,
     'proofread': 80,
-    'design.director': 200,
-    'design.compose': 200,
 };
 
 const SOURCE = `Remote teams that write things down ship 23% faster, per the 2024 GitLab survey. "Default to asynchronous communication," said GitLab CEO Sid Sijbrandij.
@@ -95,14 +93,13 @@ const gantt = (t: Timed) => {
 /**
  * What the same calls cost on the critical path of the previous structure:
  * gate → facts → outline → hook write → hook judge → writer (one call) →
- * tighten → 2 × (critic → revise) → tighten → proofread → [design] → moderation.
+ * tighten → 2 × (critic → revise) → tighten → proofread → moderation.
  */
-const previousPath = (canvas: boolean) => {
+const previousPath = () => {
     const d = DELAYS;
     let ms = Math.max(d['gatekeeper.classify'], d['research.plan']) + d['research.facts'] + d.outline
         + d['hooks.generate'] + d['hooks.judge'] + d['writer.'] * 1.6 + d.tighten
         + 2 * (d.critic + d['critic.revise']) + d.tighten + d.proofread + d['gatekeeper.moderate'];
-    if (canvas) ms += d['design.director'] + 2 * d['design.compose'] - d.proofread; // 4 composers at a time, overlapping the proofread
     return Math.round(ms);
 };
 
@@ -113,7 +110,7 @@ const main = async () => {
     const t1 = await timedRun('template-1');
     check('classic run finishes', t1.kind === 'done');
     const sum1 = serialSum(t1);
-    console.log(`  classic: wall ${t1.wall} ms · all calls back to back ${sum1} ms · previous structure ≈ ${previousPath(false)} ms · first slides at ${t1.previews[0]?.at ?? '-'} ms`);
+    console.log(`  classic: wall ${t1.wall} ms · all calls back to back ${sum1} ms · previous structure ≈ ${previousPath()} ms · first slides at ${t1.previews[0]?.at ?? '-'} ms`);
     gantt(t1);
     check('writer groups run at the same time', overlaps(calls(t1, 'writer.2-'), calls(t1, 'writer.5-')));
     check('hook tournament runs alongside the writer', overlaps(calls(t1, 'hooks.generate'), calls(t1, 'writer.')));
@@ -123,27 +120,14 @@ const main = async () => {
     check('fact check runs alongside the editor review', overlaps(calls(t1, 'verify'), calls(t1, 'critic')));
     check('one critic pass', calls(t1, 'critic').filter((m) => m.name === 'critic').length === 1);
     check('wall time well under running calls back to back (≤ 70%)', t1.wall <= sum1 * 0.7, { wall: t1.wall, sum: sum1 });
-    check('faster than the previous structure by a third or more', t1.wall <= previousPath(false) * 0.67, { wall: t1.wall, previous: previousPath(false) });
+    check('faster than the previous structure by a third or more', t1.wall <= previousPath() * 0.67, { wall: t1.wall, previous: previousPath() });
     const draft1 = t1.previews.find((p) => p.stage === 'draft');
     check('first slides ready before the review and revision', !!draft1 && t1.wall - draft1.at >= DELAYS.critic + DELAYS['critic.revise'] * 0.8, { draft: draft1?.at, wall: t1.wall });
 
-    // ── Canvas ──────────────────────────────────────────────────────────────
-    const t5 = await timedRun('template-5');
-    check('Canvas run finishes', t5.kind === 'done');
-    const sum5 = serialSum(t5);
-    console.log(`\n  Canvas: wall ${t5.wall} ms · all calls back to back ${sum5} ms · previous structure ≈ ${previousPath(true)} ms · first slides at ${t5.previews[0]?.at ?? '-'} ms`);
-    gantt(t5);
-    check('Design Director runs while the copy is written', overlaps(calls(t5, 'design.director'), calls(t5, 'writer.')));
-    check('layouts are composed during the editor review', overlaps(calls(t5, 'design.compose'), calls(t5, 'critic')));
-    check('all 7 layouts composed at once (8 in flight)', (() => {
-        const c = calls(t5, 'design.compose');
-        const start = Math.min(...c.map((m) => m.at ?? 0));
-        return c.length === 7 && c.every((m) => (m.at ?? 0) - start < 30);
-    })());
-    check('Canvas wall time ≤ 60% of calls back to back', t5.wall <= sum5 * 0.6, { wall: t5.wall, sum: sum5 });
-    check('Canvas faster than the previous structure by 40% or more', t5.wall <= previousPath(true) * 0.6, { wall: t5.wall, previous: previousPath(true) });
-    const designed = t5.previews.find((p) => p.stage === 'designed');
-    check('composed layouts on screen before the deck is final', !!designed && designed.at < t5.wall - 50, { designed: designed?.at, wall: t5.wall });
+    // ── The Statement ─────────────────────────────────────────────────────
+    const t4 = await timedRun('template-4');
+    check('The Statement run finishes', t4.kind === 'done');
+    check('The Statement takes about as long as The Truth (±25%)', Math.abs(t4.wall - t1.wall) <= t1.wall * 0.25, { t4: t4.wall, t1: t1.wall });
 
     // ── Creative Director in the worker ─────────────────────────────────────
     const cd = await timedRun('template-1', { briefInWorker: true, creativeBrief: undefined });

@@ -5,3 +5,19 @@ dist-ssr
 .env
 .env.local
 *.log
+
+# Not needed in the worker image (keeps the build context small)
+.env.*
+!.env.example
+.DS_Store
+.claude
+.deltest_tmp
+_to_delete
+evals
+tests
+docs
+collected_code.md
+collect_code.py
+image.json
+image-1.json
+image_output copy.json

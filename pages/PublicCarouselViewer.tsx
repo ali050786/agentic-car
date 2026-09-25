@@ -13,7 +13,6 @@ import { getCarouselById } from '../services/carouselService';
 import { Carousel } from '../services/carouselService';
 import { getTemplateDisplayName, resolveAppTemplate } from '../utils/templateConverter';
 import { injectContentIntoSvg } from '../utils/svgInjector';
-import { useCanvasFit } from '../components/studio/useCanvasFit';
 import {
   Layout,
   AlertCircle,
@@ -83,7 +82,6 @@ export const PublicCarouselViewer: React.FC = () => {
     }
   }, [carousel, currentSlide, templateId]);
   const slideRef = useRef<HTMLDivElement | null>(null);
-  useCanvasFit(slideRef, [slideSvg], templateId === 'template-5');
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

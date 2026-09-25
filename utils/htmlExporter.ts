@@ -1,7 +1,6 @@
 import { SlideContent, SlideLayout, CarouselTheme, BrandingConfig, CarouselFormat } from '../types';
 import { injectContentIntoSvg } from './svgInjector';
 import { embedImagesInSvg } from './imageUtils';
-import { FIT_SCRIPT } from '../core/design/canvas/fit';
 
 /**
  * Standalone HTML export.
@@ -125,7 +124,7 @@ export const exportCarouselToHtml = async (opts: HtmlExportOptions): Promise<voi
 <body>
   <h1 class="deck-title">${deckTitle}</h1>
 ${slidesHtml}
-${opts.templateId === 'template-5' ? `  <script>${FIT_SCRIPT}</script>\n` : ''}</body>
+</body>
 </html>`;
 
   const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });

@@ -166,6 +166,8 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
           stats: outcome.stats,
           sources: outcome.result.sources,
           metrics: summary,
+          versionId: outcome.result.versionId,
+          messageId: outcome.result.messageId,
         }),
       });
     });
@@ -200,8 +202,7 @@ export const runCreateCarouselJob = async (job: GenerationJob): Promise<void> =>
       return;
     }
 
-    // v1 predates the Canvas: build those decks as The Truth.
-    const v1Payload = payload.selectedTemplate === 'template-5' ? { ...payload, selectedTemplate: 'template-1' as const } : payload;
+    const v1Payload = payload;
     const plannerResult = await CarouselPlanner.run({
       jobId: job.$id,
       userId,

@@ -13,213 +13,31 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCarouselStore } from '../../store/useCarouselStore';
 import { ThemeSelector } from '../ThemeSelector';
 import { getPatternName } from '../../utils/patternGenerator';
-import { User, Palette, Grid, LayoutTemplate, Shuffle, Wand2, Droplet } from 'lucide-react';
+import { User, Palette, Grid } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CloseButton, EASE, SPRING, Segmented } from '../studio/ui';
-import { DIRECTION_PRESETS, FONT_PAIRS, FONT_PAIR_IDS } from '../../core/design/canvas/tokens';
-import { DIRECTIONS, type Direction, type FontPairId, type MarkStyle } from '../../core/design/canvas/types';
-import { canInvert, currentDeckStyle, isInverted, patchDeckStyle, restyleDeck, shuffleSlide, toggleInvert } from './canvasControls';
 
 /** Sends a message through the chat composer (ChatPanel listens for this). */
 export const sendToChat = (text: string) => window.dispatchEvent(new CustomEvent('studio:chat-send', { detail: { text } }));
-
-const MARKS: { id: MarkStyle; label: string }[] = [
-    { id: 'color', label: 'Color' },
-    { id: 'highlight', label: 'Marker' },
-    { id: 'underline', label: 'Underline' },
-    { id: 'serif', label: 'Serif' },
-    { id: 'box', label: 'Block' },
-    { id: 'none', label: 'None' },
-];
-
-/**
- * The Canvas (template-5) controls: the deck's look, type, corners and accent,
- * plus per-slide layout shuffling, a color-moment toggle and AI redesign.
- */
-const LayoutControls: React.FC<{ stageIndex: number }> = ({ stageIndex }) => {
-    const slides = useCarouselStore((s) => s.slides) as any[];
-    const setSlides = useCarouselStore((s) => s.setSlides);
-    const updateSlide = useCarouselStore((s) => s.updateSlide);
-    const topic = useCarouselStore((s) => s.topic);
-    const isGenerating = useCarouselStore((s) => s.isGenerating);
-    const [ask, setAsk] = useState('');
-    const style = currentDeckStyle(slides, topic);
-    const i = Math.min(Math.max(stageIndex, 0), Math.max(slides.length - 1, 0));
-    const slide = slides[i];
-
-    const sectionTitle = (t: string, hint?: string) => (
-        <div className="flex items-baseline justify-between mb-1.5">
-            <span className="text-[11.5px] font-medium text-white/70">{t}</span>
-            {hint && <span className="text-[10.5px] text-white/35">{hint}</span>}
-        </div>
-    );
-
-    return (
-        <div className="space-y-4">
-            <div>
-                {sectionTitle('Look', 'instant layouts')}
-                <div className="grid grid-cols-4 gap-1.5">
-                    {DIRECTIONS.map((d: Direction) => {
-                        const on = style.direction === d;
-                        return (
-                            <motion.button
-                                key={d}
-                                type="button"
-                                whileHover={{ y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setSlides(restyleDeck(slides, d, topic) as any)}
-                                data-tip={DIRECTION_PRESETS[d].blurb}
-                                data-tip-pos="top"
-                                aria-pressed={on}
-                                className={`st-tip relative rounded-xl border px-1 py-2 text-[11px] font-medium transition-colors ${on ? 'border-violet-300/60 text-white' : 'border-white/[0.07] bg-black/25 text-white/55 hover:text-white hover:border-white/20'}`}
-                            >
-                                {on && <motion.span layoutId="look-active" className="absolute inset-0 rounded-xl bg-violet-400/15" transition={SPRING} />}
-                                <span className="relative">{DIRECTION_PRESETS[d].label}</span>
-                            </motion.button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            <div>
-                {sectionTitle('Type')}
-                <select
-                    value={style.fonts}
-                    onChange={(e) => setSlides(patchDeckStyle(slides, { fonts: e.target.value as FontPairId }, topic) as any)}
-                    className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[12px] text-white outline-none focus:border-violet-300/50"
-                    aria-label="Font pairing"
-                >
-                    {FONT_PAIR_IDS.map((f) => (
-                        <option key={f} value={f} className="bg-[#14141c]">{FONT_PAIRS[f].label} · {FONT_PAIRS[f].display.family} + {FONT_PAIRS[f].body.family}</option>
-                    ))}
-                </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-                <div>
-                    {sectionTitle('Corners')}
-                    <Segmented
-                        id="canvas-corners"
-                        size="xs"
-                        value={style.radius}
-                        onChange={(v) => setSlides(patchDeckStyle(slides, { radius: v as any }, topic) as any)}
-                        options={[{ value: 'none', label: '0' }, { value: 'sm', label: 'S' }, { value: 'md', label: 'M' }, { value: 'lg', label: 'L' }]}
-                    />
-                </div>
-                <div>
-                    {sectionTitle('Headings')}
-                    <Segmented
-                        id="canvas-case"
-                        size="xs"
-                        value={style.headingCase}
-                        onChange={(v) => setSlides(patchDeckStyle(slides, { headingCase: v as any }, topic) as any)}
-                        options={[{ value: 'none', label: 'Aa' }, { value: 'upper', label: 'AA' }]}
-                    />
-                </div>
-            </div>
-
-            <div>
-                {sectionTitle('Key phrase')}
-                <div className="grid grid-cols-6 gap-1">
-                    {MARKS.map((m) => {
-                        const on = style.mark === m.id;
-                        return (
-                            <button
-                                key={m.id}
-                                type="button"
-                                onClick={() => setSlides(patchDeckStyle(slides, { mark: m.id }, topic) as any)}
-                                aria-pressed={on}
-                                className={`rounded-lg border py-1.5 text-[10.5px] transition-colors ${on ? 'border-violet-300/60 bg-violet-400/15 text-white' : 'border-white/[0.07] bg-black/25 text-white/50 hover:text-white'}`}
-                            >
-                                {m.label}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/[0.06] bg-black/20 p-3 space-y-2.5">
-                {sectionTitle(`Slide ${i + 1}`)}
-                <div className="grid grid-cols-2 gap-2">
-                    <motion.button
-                        type="button"
-                        whileTap={{ scale: 0.96 }}
-                        disabled={!slide}
-                        onClick={() => slide && updateSlide(i, shuffleSlide(slide, i, style) as any)}
-                        className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2 text-[11.5px] text-white/80 hover:text-white hover:bg-white/[0.08] transition-colors"
-                    >
-                        <Shuffle size={12} /> Shuffle layout
-                    </motion.button>
-                    <motion.button
-                        type="button"
-                        whileTap={{ scale: 0.96 }}
-                        disabled={!slide || !canInvert(slide)}
-                        onClick={() => slide && updateSlide(i, toggleInvert(slide, i, style) as any)}
-                        aria-pressed={isInverted(slide)}
-                        className={`flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-[11.5px] transition-colors disabled:opacity-40 ${isInverted(slide) ? 'border-violet-300/60 bg-violet-400/15 text-white' : 'border-white/10 bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08]'}`}
-                    >
-                        <Droplet size={12} /> Color fill
-                    </motion.button>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <input
-                        value={ask}
-                        onChange={(e) => setAsk(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !isGenerating) {
-                                sendToChat(`Redesign slide ${i + 1} (keep the words)${ask.trim() ? `: ${ask.trim()}` : ''}`);
-                                setAsk('');
-                            }
-                        }}
-                        placeholder="e.g. make the number huge"
-                        className="flex-1 min-w-0 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[11.5px] text-white placeholder-white/30 outline-none focus:border-violet-300/50"
-                    />
-                    <motion.button
-                        type="button"
-                        whileTap={{ scale: 0.95 }}
-                        disabled={isGenerating}
-                        onClick={() => { sendToChat(`Redesign slide ${i + 1} (keep the words)${ask.trim() ? `: ${ask.trim()}` : ''}`); setAsk(''); }}
-                        className="shrink-0 flex items-center gap-1 rounded-xl bg-white text-black px-2.5 py-2 text-[11.5px] font-medium disabled:opacity-40"
-                    >
-                        <Wand2 size={12} /> Redesign
-                    </motion.button>
-                </div>
-                <button
-                    type="button"
-                    disabled={isGenerating}
-                    onClick={() => sendToChat('Redesign every slide with fresh layouts (keep the words)')}
-                    className="w-full text-[11px] text-white/45 hover:text-white/80 transition-colors disabled:opacity-40"
-                >
-                    Redesign every slide with AI
-                </button>
-            </div>
-        </div>
-    );
-};
 
 interface ArtifactSettingsPanelProps {
     isOpen: boolean;
     onClose: () => void;
     onOpenBrandEditor: () => void;
-    /** The slide on stage (for per-slide Canvas controls). */
+    /** The slide on stage. */
     stageIndex?: number;
 }
 
-export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ isOpen, onClose, onOpenBrandEditor, stageIndex = 0 }) => {
+export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ isOpen, onClose, onOpenBrandEditor }) => {
     const {
         selectedPattern, setPattern,
         patternOpacity, setPatternOpacity,
         patternScale, setPatternScale,
         patternSpacing, setPatternSpacing,
         signaturePosition, setSignaturePosition,
-        selectedTemplate,
     } = useCarouselStore();
-    const isCanvas = selectedTemplate === 'template-5';
 
-    const [activeTab, setActiveTab] = useState<'layout' | 'style' | 'pattern' | 'signature'>(isCanvas ? 'layout' : 'style');
-    useEffect(() => {
-        if (!isCanvas && activeTab === 'layout') setActiveTab('style');
-    }, [isCanvas, activeTab]);
+    const [activeTab, setActiveTab] = useState<'style' | 'pattern' | 'signature'>('style');
     const panelRef = useRef<HTMLDivElement | null>(null);
 
     // Close settings panel when clicking outside
@@ -345,7 +163,6 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
     };
 
     const TABS = [
-        ...(isCanvas ? [{ id: 'layout' as const, label: 'Layout', icon: LayoutTemplate }] : []),
         { id: 'style' as const, label: 'Palette', icon: Palette },
         { id: 'pattern' as const, label: 'Pattern', icon: Grid },
         { id: 'signature' as const, label: 'Signature', icon: User },
@@ -403,7 +220,6 @@ export const ArtifactSettingsPanel: React.FC<ArtifactSettingsPanelProps> = ({ is
                         exit={{ opacity: 0, y: -6, transition: { duration: 0.1 } }}
                         transition={{ duration: 0.25, ease: EASE }}
                     >
-                        {activeTab === 'layout' && isCanvas && <LayoutControls stageIndex={stageIndex} />}
                         {activeTab === 'style' && <ThemeSelector onOpenBrandEditor={onOpenBrandEditor} />}
 
                         {activeTab === 'pattern' && (

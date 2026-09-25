@@ -23,7 +23,6 @@ export const signatureRect = (
   const defaultX = templateId === 'template-3' ? 80
     : templateId === 'template-4' ? 100
     : templateId === 'template-1' ? (format === 'square' ? 80 : 90)
-    : templateId === 'template-5' ? (format === 'square' ? 84 : 96)
     : 150;
 
   // T4 has a tighter 100px margin, so the card sits lower to balance the layout.

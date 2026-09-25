@@ -18,7 +18,7 @@ A code-level review of v1 found these problems:
 | 8 | Self-critique by the same prompt, on vague criteria, with no check that rewrites helped. | A separate critic role, a rubric that depends on the content type, per-slide fixes, and revisions are kept only if they don't add rule violations. |
 | 9 | Research text was pasted raw into prompts and sources were thrown away. | Research becomes a numbered fact sheet (F1...Fn) with sources. Numbers in the copy must trace back to it, the source, or the user's request. Unsupported stat slides are downgraded. Sources are saved with the carousel brief. |
 | 10 | The Creative Director always asked questions on turn 1. | It asks only when the request is genuinely ambiguous, with a code-level check that skips questions for specific requests. |
-| 11 | Edits: one intent per message, safety check before loading (serial), empty conversation summary, headlines uppercased on sentence-case templates, save then moderate then revert, no undo. | A multi-action edit plan, safety in parallel with loading and planning, the client's rolling summary is used, sentence case kept, moderation before saving, and a snapshot before every change for undo. |
+| 11 | Edits: one intent per message, safety check before loading (serial), empty conversation summary, headlines uppercased on sentence-case templates, save then moderate then revert, no undo. | A multi-action edit plan, safety in parallel with loading and planning, the client's rolling summary is used, sentence case kept, moderation before saving, and a restore point after every change. |
 | 12 | All memory went into one bucket and banned words were never enforced. | Memory is categorised (banned words, tone, brand rules, other). Banned words are removed in code. Explicit "never use X" messages are caught by a deterministic backstop. |
 | 13 | Parallel steps shared one trace span; cached tokens read from the wrong field; no evals. | Each step gets its own span via AsyncLocalStorage. Cost and cached tokens come from OpenRouter usage. An offline test suite and a v1-vs-v2 eval harness. |
 
@@ -29,8 +29,8 @@ Defined in `core/llm/models.ts`. Every role defaults to `deepseek/deepseek-v4-fl
 | Role | Used for | Temperature | Max tokens | Timeout |
 |---|---|---|---|---|
 | fast | gate, moderation, research planning, fact extraction, tighten, proofread, memory | 0.1 | 2000 | 45s |
-| planner | outline, edit plan, Creative Director, Design Director | 0.3 | 4000 | 60s |
-| writer | slide copy, revisions, edit rewrites, Canvas composer | 0.75 | 8000 | 120s |
+| planner | outline, edit plan, Creative Director | 0.3 | 4000 | 60s |
+| writer | slide copy, revisions, edit rewrites | 0.75 | 8000 | 120s |
 | creative | hook candidates (written and scored in one call), art direction | 0.95 | 2500 | 60s |
 | critic | deck critique, eval judge | 0.15 | 4000 | 75s |
 
@@ -61,13 +61,13 @@ Every call streams (`LLM_STREAM=off` to disable), which makes slow calls cheap t
 
 1. **Gate, memory, research plan and (when the studio sent no brief) the Creative Director in parallel.** For a specific request the studio skips its own intent round trip and the worker writes the brief here; an explicit "N slides" in the request still wins, with a note in the reply if it was out of range.
 2. **Research → fact sheet.** Tavily search when needed (skipped for entertainment; for explainers of stable knowledge such as "how X works" or "explain X for kids", unless the request asks for current data; and when a substantial source is provided unless the user asked for a fact-check). Explainer outlines walk through the mechanism step by step instead. A `fast` call distills up to 12 atomic facts with ids and source links. A pasted source also gets a fact sheet.
-3. **Outline.** One beat per slide: purpose, key message, layout block, fact ids. The planner sees the user's own words and must deliver what they literally ask for (a time frame, a format, a verdict). The request decides the story: facts only support it, and off-topic facts are left out (the fact sheet itself keeps only facts that help answer the request, and the cover must be on topic). Code enforces the count, hero first, closing last, blocks the template supports, each fact id on one beat only, and that stat/quote beats cite a fact that actually contains a number or a quote. Canvas decks start the Design Director here, from the outline.
+3. **Outline.** One beat per slide: purpose, key message, layout block, fact ids. The planner sees the user's own words and must deliver what they literally ask for (a time frame, a format, a verdict). The request decides the story: facts only support it, and off-topic facts are left out (the fact sheet itself keeps only facts that help answer the request, and the cover must be on topic). Code enforces the count, hero first, closing last, blocks the template supports, each fact id on one beat only, and that stat/quote beats cite a fact that actually contains a number or a quote.
 4. **Hook tournament ‖ writer.** 4 covers (specific promise, curiosity gap, contrarian or surprising fact, story opening or direct benefit), written and scored on the rubric in one call; code sums the scores (ties go to "deliverable"). `HOOK_JUDGE=separate` scores them in a second critic call instead. Hooks must say exactly what the facts say (no hype labels, one person's result is not a promise), and "deliverable" scores 1-3 for anything overstated. Meanwhile the writer drafts slides 2 onward, in two halves at the same time once there are 6 or more (`WRITER_CHUNK=n` forces groups of n; smaller groups measured slower, because each call spends most of its time reasoning over the whole outline); the cover comes from the tournament, and if the tournament fails the writer writes it afterwards. Missing slides are re-requested once. The writer is told to use each fact faithfully (subject, scope, time frame, qualifiers), to lead with each fact on one slide only, to end every body on a complete sentence, and never to write fact ids in copy. Code scrubs any fact id that leaks anyway ("According to F12", "(F3)") and turns a stat slide whose number is not a number (e.g. "F2") into a plain slide.
 5. **Rules in code.** Structure, allowed blocks, list lengths, accent phrases, emoji, banned words, bodies that stop mid-sentence, and headlines, labels or list items that stop on a connector or an open quote ("…serverless vs.", "…haven't done your"). Over-limit fields, banned terms and fragments go to a `tighten` call that returns 3 options of decreasing length; code keeps the longest one that fits and reads complete, and retries once for anything still unfixed. The last-resort cut keeps whole sentences in body copy and whole clauses in labels (cut at a colon, comma or dash), never ends on a connector and never leaves a quote open. The final clamp applies the same guarantees.
 6. **Grounding.** Every numeric claim is checked against the fact sheet, the user's source and the user's request (not raw search snippets: the writer never saw those, so a match there is a coincidence). Percentages must match as percentages ("1%" is not supported by "1 in 100"). A number that leads two slides (headline or big number) is flagged for the review. A stat slide with an unsupported number becomes a plain slide.
-7. **The draft goes out.** It is moderated, and once it passes the studio shows it (read-only, with the current step). Canvas composers and sketch images start on it too.
+7. **The draft goes out.** It is moderated, and once it passes the studio shows it (read-only, with the current step). Sketch images start on it too.
 8. **Critic ‖ fact check ‖ proofread.** One critic pass by default (`maxReflectPasses`): a content-type rubric (now including "expectations": does it deliver what was asked), per-slide problems, revisions of flagged slides, kept only if they don't add violations; skipped when the score is 8+ with no blocking issues. At the same time a fact check (`verify.ts`, critic role, temperature 0) reads the slides next to the facts and reports only serious problems: invented numbers, quotes, studies or examples, and claims that change a fact's meaning (wrong number, one result presented as a rule, a flipped condition, merged facts). Paraphrase, omitted details and headline compression are explicitly not problems, fixes must be slide copy in the deck's voice, and at most 4 findings are kept. Its findings are blocking notes for the revision, so they are fixed even when the critic is happy, and a flagged cover may be rewritten. It runs when the deck has facts, a source, or an accuracy brief; not for pure entertainment. `FACT_CHECK=off` turns it off. The proofreader checks the draft at the same time.
-9. **Proofread what changed.** Slides the critic left alone keep the proofreader's corrections; revised slides are proofread now (corrections only, temperature 0; changes over 30% in length, to numbers, or past a limit are rejected). Words that changed since the draft was moderated are moderated alongside, and Canvas layouts are checked against the final words (a slide is composed again only if its layout no longer fits).
+9. **Proofread what changed.** Slides the critic left alone keep the proofreader's corrections; revised slides are proofread now (corrections only, temperature 0; changes over 30% in length, to numbers, or past a limit are rejected). Words that changed since the draft was moderated are moderated alongside.
 10. **Save.** Hybrid slides, the thread's first turn and the brief (premise, takeaway, facts, sources, creative settings; kept under the 8000-character column). A flagged deck is never saved; once the pipeline has refused or finished, calls still in flight stop.
 
 Steps 3 to 9 live in `composeDeck()`, which whole-deck edits reuse.
@@ -76,13 +76,13 @@ Steps 3 to 9 live in `composeDeck()`, which whole-deck edits reuse.
 
 ```
 gate ‖ memory ‖ research plan ‖ brief ─► search ─► facts ─► outline ─┬─► hooks ─┐
-                                                                     ├─► writer (groups of 3) ─► rules ─► draft ─┬─► critic ‖ fact check ─► revise ─► proofread changed ─► save
-                                                                     └─► design director                         ├─► proofread
+                                                                     └─► writer (groups of 3) ─► rules ─► draft ─┬─► critic ‖ fact check ─► revise ─► proofread changed ─► save
+                                                                                                            ├─► proofread
                                                                                                             ├─► moderation ─► preview
-                                                                                                            └─► composers (Canvas) / sketches (template-3)
+                                                                                                            └─► sketches (template-3)
 ```
 
-`npx tsx tests/v2/test-speed.ts` simulates the calls with delays (writer calls take time per slide) and checks these overlaps; in that simulation a classic deck finishes in about 55% of the previous structure's time and a Canvas deck in about 45%, with the first slides on screen at about 60% of the run.
+`npx tsx tests/v2/test-speed.ts` simulates the calls with delays (writer calls take time per slide) and checks these overlaps; in that simulation a deck finishes in about 55% of the previous structure's time, with the first slides on screen at about 60% of the run.
 
 ## Edit pipeline
 
@@ -92,18 +92,40 @@ gate ‖ memory ‖ research plan ‖ brief ─► search ─► facts ─► ou
 - The planner returns an ordered list of actions: `copy`, `design`, `structure`, `regenerate`, `image`, `undo`, `answer`, plus an optional memory note. "Switch to the sketch template and punch up slide 2" does both.
 - Executors: copy rewrites run with the same limits, banned words, accent and proofread guarantees as create. Structure changes track slides by identity, so slide numbers stay correct after removals and inserts; new slides are written by the writer, not by the planner. Template switches re-fit copy to the new template's blocks and limits. Regenerate runs the full compose pipeline. Image requests use the art director's style envelope.
 - Numbers an edit introduces that aren't in the facts are called out in the reply.
-- Moderation runs before saving. A snapshot of the previous deck is saved before every change.
+- Moderation runs before saving. Every reply that changes the deck saves a restore point: the deck right after that reply.
 - The honesty guard still refuses to claim a change that didn't happen, and anything that was planned but not applied is stated in the reply.
 
-## Undo
+## Restore points (undo)
 
-Run once per Appwrite project:
+Every reply that changed the carousel, and the reply that created it, saves a
+snapshot of the deck right after that reply (`carousel_versions`) and carries
+its id on the chat message (`versionId`). In the studio each such reply has a
+small round restore button:
+
+- Clicking it puts the carousel back to that reply instantly, with no chat
+  message and no agent run (`services/restoreService.ts`). The deck is saved
+  right away.
+- Replies after that point fade, with a "Restored to this point" line and a
+  "Back to latest" button. The first restore keeps the latest state (hand
+  edits included), so going forward returns exactly to it. The restore
+  position is remembered per carousel on this device.
+- Sending a new message drops the faded replies: the client removes them and
+  the worker trims the saved thread (`restoredTo` on the edit job) before
+  planning, so the agent never sees changes that no longer exist.
+- Typing "undo" works like the buttons: back one step, no chat message. The
+  step is the restore point just before the current state first appeared
+  (`core/agents/undo.ts`), so repeated undos walk back and never "redo".
+- Decks from before restore points get one on their last reply the first time
+  they're edited; their older before-change snapshots still serve "undo" until
+  then. The newest 30 snapshots per carousel are kept.
+
+Run once per Appwrite project (also adds `versionId` to `chat_messages`):
 
 ```
 npm run setup:versions
 ```
 
-This creates the `carousel_versions` collection (the last 10 snapshots per carousel are kept). Without it, edits still work; undo just says there's nothing to restore. In the studio, an "Undo last change" chip appears after any edit that saved a snapshot, and typing "undo" works too.
+Without it, edits still work; replies just have no restore button.
 
 ## Tests and evals
 
@@ -137,6 +159,6 @@ Job progress writes never block the pipeline: they go through one ordered queue,
 | `core/llm/generateContent.ts` | Retries, timeouts, fallback, repair, usage |
 | `core/llm/agentGateway.ts` | Job context, per-step spans, metrics, mock model hook |
 | `core/agents/v2/*` | The v2 stages and both pipelines |
-| `worker/versionStoreServer.ts`, `scripts/setupCarouselVersions.ts` | Undo storage |
+| `worker/versionStoreServer.ts`, `services/restoreService.ts`, `core/agents/undo.ts`, `scripts/setupCarouselVersions.ts` | Restore points (undo) |
 | `tests/v2/*` | Offline tests and the scripted mock model |
 | `evals/*` | Golden set, scorer, runner |

@@ -76,18 +76,6 @@ export const TEMPLATE_LIMITS: Partial<Record<TemplateId, TemplateSpec>> & Record
     },
 };
 
-// The Canvas (template-5) lays out each slide around its content, so limits are
-// a little looser; the renderer still auto-fits text in the browser.
-TEMPLATE_LIMITS['template-5'] = {
-    hero: { required: ['preHeader', 'headline', 'body'], max: { preHeader: 40, headline: 64, body: 140 }, guide: 'The cover. A specific, scroll-stopping headline and a one-line promise.' },
-    body: { required: ['preHeader', 'headline', 'body'], max: { preHeader: 40, headline: 64, body: 220 }, guide: 'One idea. Headline states it, body proves or explains it in 1-2 sentences.' },
-    list: { required: ['headline', 'listItem'], max: { preHeader: 40, headline: 48, listItem: 90 }, items: { min: 3, max: 5 }, guide: '3-5 parallel items, each "Key: value" with a short key (1-4 words).' },
-    stat: { required: ['headline', 'statNumber', 'statLabel'], max: { preHeader: 40, headline: 60, statNumber: 10, statLabel: 70, body: 140 }, guide: 'One striking, VERIFIED number (statNumber, e.g. "73%", "3x", "$4.2B") with what it measures (statLabel). headline is the takeaway in one line. Only use a number that appears in the facts.' },
-    quote: { required: ['headline', 'quoteAuthor'], max: { headline: 140, quoteAuthor: 40 }, guide: 'headline is the quote itself, without quote marks. quoteAuthor is who said it. Only quote words that appear in the facts/source with their real speaker.' },
-    split: { required: ['headline', 'splitLeft', 'splitRight'], max: { preHeader: 40, headline: 48, splitLeft: 110, splitRight: 110 }, guide: 'A genuine contrast (before vs after, do vs don\'t, myth vs fact). splitLeft and splitRight each start with a 1-3 word label then a colon, e.g. "Before: …" / "After: …".' },
-    closing: { required: ['headline', 'body', 'footer'], max: { preHeader: 40, headline: 56, body: 120, footer: 28 }, guide: 'The takeaway, plus a short call-to-action button label in footer (e.g. "Save this for later").' },
-};
-
 export const specFor = (templateId: TemplateId, block: BlockKind): BlockSpec => {
     const t = TEMPLATE_LIMITS[templateId] || TEMPLATE_LIMITS['template-1'];
     return t[block] || t.body!;

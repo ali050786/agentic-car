@@ -19,18 +19,19 @@ import { extractTextFromFile } from '../../utils/fileProcessor';
 import { capSourceContent, assertUploadSizeOk, truncationNote } from '../../utils/contentLimits';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-    ArrowUp, ArrowRight, Sparkles, X, Paperclip, Layers, Check, ChevronRight, Square, RotateCcw, Zap, FileText, Link2, Youtube, Undo2,
+    ArrowUp, ArrowRight, Sparkles, X, Paperclip, Layers, Check, ChevronRight, Square, RotateCcw, Zap, FileText, Link2, Youtube,
     Lightbulb, Scissors, BarChart3, Palette, Megaphone,
 } from 'lucide-react';
 import { DrawCheck, EASE, IconButton, Kbd, PHASE_COLOR, SPRING, Segmented, Spinner, phaseLabel, phaseOf } from '../studio/ui';
 import type { CreativeBrief } from '../../types';
+import { UNDO_RE, previousPoint, restorePoints } from '../../core/agents/undo';
+import { commitRestore, restoreToReply } from '../../services/restoreService';
 
 
 const HISTORY_WINDOW = 10;
 
 
 const TEMPLATE_OPTIONS = [
-    { id: 'template-5', label: 'The Canvas' },
     { id: 'template-1', label: 'The Truth' },
     { id: 'template-3', label: 'The Sketch' },
     { id: 'template-4', label: 'The Statement' },
@@ -65,6 +66,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         selectedModel, setModel,
         topic, activeCarouselId, activeJobId,
         setActiveJobId, setGenerating, generationProgress,
+        restoredTo,
     } = useCarouselStore();
 
     // A prompt typed on the landing page is handed over via sessionStorage so
@@ -79,6 +81,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
     const [attachedFile, setAttachedFile] = useState<{ name: string; content: string; truncated: boolean; originalLength: number } | null>(null);
     const [isAttaching, setIsAttaching] = useState(false);
     const [attachError, setAttachError] = useState<string | null>(null);
+    // Restore points: the reply being restored right now, and a short note (e.g. a point that's too old).
+    const [restoringId, setRestoringId] = useState<string | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
+    useEffect(() => {
+        if (!notice) return;
+        const t = setTimeout(() => setNotice(null), 4000);
+        return () => clearTimeout(t);
+    }, [notice]);
     const runMessageId = useRef<string | null>(null);
     const scrollRef = useRef<HTMLDivElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -164,15 +174,28 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
 
     const send = async (override?: unknown) => {
         const text = (typeof override === 'string' ? override : draft).trim();
-        if ((!text && !attachedFile) || busy) return;
+        if ((!text && !attachedFile) || busy || restoringId) return;
+
+        // A typed "undo" works like the restore buttons: back one step, no chat message.
+        if (hasSlides && !attachedFile && UNDO_RE.test(text)) {
+            setDraft('');
+            const target = previousPoint(useCarouselStore.getState().chatMessages, useCarouselStore.getState().restoredTo);
+            if (!target) { setNotice("There's nothing earlier to go back to."); return; }
+            await restoreTo(target.id);
+            return;
+        }
+
         setDraft('');
         const pendingAttachment = attachedFile;
         setAttachedFile(null);
+        // Sending after a restore: the faded replies go, and the worker trims the saved thread to match.
+        const trimTo = hasSlides ? commitRestore() : undefined;
         // The verbatim message (full URL included) — shown in the bubble AND
         // persisted as the user turn, so the saved thread is a faithful record.
         const userMessageText = text || `📎 Attached: ${pendingAttachment?.name}`;
+        const userMsgId = nextId();
         addChatMessage({
-            id: nextId(), role: 'user',
+            id: userMsgId, role: 'user',
             text: userMessageText,
         });
 
@@ -346,6 +369,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                     selectedSlideIndices: scopeIndices,
                     // Older turns folded by MemoryAgent; the worker only loads the recent thread.
                     conversationSummary: (state.chatSummary || '').slice(0, 2000),
+                    // Restored to an earlier reply: the worker drops the later messages first.
+                    ...(trimTo ? { restoredTo: trimTo } : {}),
+                    // The ids shown here, so the saved thread (and later restores) match.
+                    messageIds: { user: userMsgId, assistant: runId },
                 },
             });
             setActiveJobId(jobId);
@@ -375,6 +402,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         } catch (e: any) {
             runMessageId.current = null;
             updateChatMessage(runId, { running: false, error: true, events: [], text: e?.message || 'That didn\'t work — try rephrasing.' });
+        }
+    };
+
+    /** Puts the carousel back to how it was right after a reply (no chat message, no agent run). */
+    const restoreTo = async (messageId: string) => {
+        if (busy || restoringId) return;
+        setRestoringId(messageId);
+        try {
+            const outcome = await restoreToReply(messageId);
+            if (outcome === 'missing') {
+                setNotice('That restore point is too old to bring back (the last 30 are kept).');
+                updateChatMessage(messageId, { versionId: undefined });
+            } else if (outcome === 'unavailable') {
+                setNotice("This reply can't be restored.");
+            }
+        } catch (err) {
+            console.warn('[ChatPanel] restore failed:', err);
+            setNotice("Couldn't restore that version. Try again.");
+        } finally {
+            setRestoringId(null);
         }
     };
 
@@ -417,6 +464,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                         message: promptText,
                         selectedSlideIndex: selectedSlideIndex,
                         selectedSlideIndices: selectedSlideIndices,
+                        messageIds: { user: userMsg?.id, assistant: runId },
                     },
                 });
                 setActiveJobId(jobId);
@@ -486,7 +534,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
         return () => window.removeEventListener('keydown', onKey);
     }, []);
 
-    // Other panels (e.g. the Canvas layout controls) send requests through the chat.
+    // Other panels can send requests through the chat (studio:chat-send).
     const sendRef = useRef(send);
     sendRef.current = send;
     useEffect(() => {
@@ -510,6 +558,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
 
     const detected = !hasSlides && !attachedFile && draft.trim() ? detectInputMode(draft).mode : null;
     const lastMsg = chatMessages[chatMessages.length - 1];
+    // Restore points: the newest one, and where the carousel is restored to (replies after it are faded).
+    const latestPoint = restorePoints(chatMessages).slice(-1)[0];
+    const restoredIndex = restoredTo ? chatMessages.findIndex(m => m.id === restoredTo) : -1;
     const canSend = !busy && (!!draft.trim() || !!attachedFile);
 
     return (
@@ -548,14 +599,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                 )}
 
                 <AnimatePresence initial={false}>
-                    {chatMessages.map(msg => (
+                    {chatMessages.flatMap((msg, msgIndex) => [(
                         <motion.div
                             key={msg.id}
                             layout="position"
                             initial={{ opacity: 0, y: 14, scale: 0.98 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            // Replies after a restore point fade until the next message (or going forward again).
+                            animate={{ opacity: restoredIndex >= 0 && msgIndex > restoredIndex ? 0.38 : 1, y: 0, scale: 1 }}
                             transition={{ duration: 0.4, ease: EASE }}
-                            className={msg.role === 'user' ? 'flex justify-end' : 'flex justify-start gap-2.5'}
+                            className={msg.role === 'user' ? 'flex justify-end' : 'group/msg flex justify-start gap-2.5'}
                         >
                             {msg.role === 'user' ? (
                                 <div className="max-w-[86%] rounded-2xl rounded-br-md bg-white text-[#0b0b12] px-3.5 py-2.5 text-[13.5px] leading-relaxed whitespace-pre-wrap break-words shadow-[0_8px_24px_-12px_rgba(255,255,255,0.35)]">
@@ -759,10 +811,55 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                                         )}
                                         {msg.running && !msg.text && (!msg.events || msg.events.length === 0) && <TypingDots />}
                                     </div>
+                                    {/* Restore point: the carousel as it was right after this reply. */}
+                                    {msg.versionId && !msg.running && (() => {
+                                        const isCurrent = msg.id === (restoredTo ?? latestPoint?.id);
+                                        return (
+                                            <div className="self-end shrink-0 pb-1">
+                                                <motion.button
+                                                    type="button"
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                    onClick={() => restoreTo(msg.id)}
+                                                    disabled={busy || !!restoringId}
+                                                    title={isCurrent ? 'The carousel is at this point. Click to reset it to this reply.' : 'Restore the carousel to this point'}
+                                                    aria-label="Restore the carousel to this point"
+                                                    className={`grid place-items-center w-6 h-6 rounded-full border transition-[color,border-color,background-color,opacity] disabled:cursor-default ${isCurrent
+                                                        ? 'border-amber-200/45 bg-amber-200/[0.12] text-amber-100'
+                                                        : 'border-white/12 text-white/40 opacity-50 group-hover/msg:opacity-100 hover:text-white hover:border-white/35 hover:bg-white/[0.06]'}`}
+                                                >
+                                                    {restoringId === msg.id ? <Spinner size={11} /> : <RotateCcw size={11} />}
+                                                </motion.button>
+                                            </div>
+                                        );
+                                    })()}
                                 </>
                             )}
                         </motion.div>
-                    ))}
+                    ), msg.id === restoredTo ? (
+                        <motion.div
+                            key={`restored-${msg.id}`}
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.25, ease: EASE }}
+                            className="flex items-center gap-2 text-[11px] text-amber-100/75"
+                        >
+                            <div className="h-px flex-1 bg-amber-200/20" />
+                            <span className="shrink-0">Restored to this point</span>
+                            {latestPoint && latestPoint.id !== msg.id && (
+                                <button
+                                    type="button"
+                                    onClick={() => restoreTo(latestPoint.id)}
+                                    disabled={busy || !!restoringId}
+                                    className="shrink-0 rounded-full border border-amber-200/25 px-2 py-0.5 text-amber-100/85 hover:text-white hover:border-amber-200/50 transition-colors disabled:opacity-50"
+                                >
+                                    Back to latest
+                                </button>
+                            )}
+                            <div className="h-px flex-1 bg-amber-200/20" />
+                        </motion.div>
+                    ) : null])}
                 </AnimatePresence>
             </div>
 
@@ -777,21 +874,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                             exit={{ opacity: 0, y: 6, transition: { duration: 0.12 } }}
                             className="flex gap-1.5 overflow-x-auto lp-scrollbar-none -mx-1 px-1 pb-0.5"
                         >
-                            {lastMsg?.role === 'assistant' && lastMsg.undoable && (
-                                <motion.button
-                                    key="undo"
-                                    initial={{ opacity: 0, y: 6 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={SPRING}
-                                    whileHover={{ y: -2 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => send('undo')}
-                                    title="Restore the deck as it was before this change"
-                                    className="shrink-0 flex items-center gap-1.5 rounded-full border border-amber-200/25 bg-amber-200/[0.06] px-3 py-1.5 text-[11.5px] text-amber-100/85 hover:text-white hover:border-amber-200/45 transition-colors"
-                                >
-                                    <Undo2 size={11} /> Undo last change
-                                </motion.button>
-                            )}
                             {REFINE_SUGGESTIONS.map((sug, i) => (
                                 <motion.button
                                     key={sug.label}
@@ -833,8 +915,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ onFirstPrompt }) => {
                     )}
                 </AnimatePresence>
                 <AnimatePresence>
+                    {notice && (
+                        <motion.div key="notice" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="text-[11.5px] text-amber-100/80 px-1">{notice}</motion.div>
+                    )}
                     {!hasSlides && attachError && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto', x: [0, -4, 4, 0] }} exit={{ opacity: 0, height: 0 }} className="text-[11.5px] text-rose-300 px-1">{attachError}</motion.div>
+                        <motion.div key="attach-error" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto', x: [0, -4, 4, 0] }} exit={{ opacity: 0, height: 0 }} className="text-[11.5px] text-rose-300 px-1">{attachError}</motion.div>
                     )}
                 </AnimatePresence>
 

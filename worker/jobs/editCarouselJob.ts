@@ -27,6 +27,10 @@ export interface EditJobPayload {
     selectedSlideIndices?: number[];
     /** Client-kept rolling summary of older turns (MemoryAgent.compactHistory). */
     conversationSummary?: string;
+    /** The studio restored the carousel to this reply before sending: later messages are dropped. */
+    restoredTo?: string;
+    /** Ids the studio shows for this turn's messages (kept when saved). */
+    messageIds?: { user?: string; assistant?: string };
 }
 
 export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
@@ -113,19 +117,18 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
                 conversationSummary: (payload.conversationSummary || '').slice(0, 2000),
                 store: appwriteStore(),
                 progress,
+                // The studio restored the carousel to this reply: later messages go first.
+                restoredTo: typeof payload.restoredTo === 'string' ? payload.restoredTo : undefined,
+                messageIds: payload.messageIds && typeof payload.messageIds === 'object' ? payload.messageIds : undefined,
+                // The pipeline saves the turn (with its restore point) to the thread.
+                turnEvents: () => events.map(e => ({ ...e, done: true })),
+                usage: () => ({ ...tokenTracker, costUsd: Number(tokenTracker.costUsd.toFixed(5)) }),
             });
             if (result.refused) {
                 await refuse(result.refused);
                 return;
             }
             const usage = { ...tokenTracker, costUsd: Number(tokenTracker.costUsd.toFixed(5)) };
-            const cleanEvents = events.map(e => ({ ...e, done: true }));
-            try {
-                await appendMessage(carouselId, userId, { id: `msg-${Date.now()}-u`, role: 'user', text: payload.message });
-                await appendMessage(carouselId, userId, { id: `msg-${Date.now()}-a`, role: 'assistant', text: result.reply, events: cleanEvents, tokenUsage: usage });
-            } catch (err) {
-                console.warn('[editCarouselJob] Failed to persist thread turn (non-fatal):', err);
-            }
             const summary = summarizeMetrics(metrics);
             trace?.update({ output: { intent: result.intent, actions: result.actions, changed: result.changedIndices, metrics: summary } });
             // Canvas designs can make a deck large: past the job attribute's budget the
@@ -145,6 +148,8 @@ export const runEditCarouselJob = async (job: GenerationJob): Promise<void> => {
                     changedIndices: result.changedIndices,
                     designActions: result.designActions,
                     undoable: result.undoable,
+                    versionId: result.versionId,
+                    messageId: result.messageId,
                     memoryNote: result.memoryNote,
                     tokenUsage: usage,
                     metrics: summary,

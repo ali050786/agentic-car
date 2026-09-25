@@ -19,11 +19,16 @@ import { exportCarouselToHtml } from '../../utils/htmlExporter';
 import { ArtifactSettingsPanel } from './ArtifactSettingsPanel';
 import { Copy, FileText, Image as ImageIcon, Edit3, Code2, Check, ChevronLeft, ChevronRight, SlidersHorizontal, PenTool, MousePointerClick, Sparkles } from 'lucide-react';
 import { DrawCheck, EASE, IconButton, Kbd, PHASE_COLOR, SPRING, Segmented, Spinner, phaseLabel, phaseOf } from '../studio/ui';
-import { useCanvasFit } from '../studio/useCanvasFit';
-import { splitKey } from '../../core/design/canvas/render';
+
+/** "Before: rambling answers" → { key: 'Before', value: 'rambling answers' }. */
+const splitKey = (text: string): { key: string; value: string } => {
+    const t = (text || '').trim();
+    const i = t.indexOf(':');
+    if (i > 0 && i <= 48 && i < t.length - 1) return { key: t.slice(0, i).trim(), value: t.slice(i + 1).trim() };
+    return { key: '', value: t };
+};
 
 const TEMPLATE_NAMES: Record<string, string> = {
-    'template-5': 'The Canvas',
     'template-1': 'The Truth',
     'template-3': 'The Sketch',
     'template-4': 'The Statement',
@@ -193,8 +198,8 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
             let listItems = (slide.slots?.listItems || slide.listItems) ? [...(slide.slots?.listItems || slide.listItems)] : undefined;
             let listChanged = false;
 
-            // Canvas slides show "Key: detail" texts (list items, split sides) as two
-            // editable parts; collect both halves, then write the joined text back.
+            // "Key: detail" texts (list items, split sides) shown as two editable
+            // parts: collect both halves, then write the joined text back.
             const parts = new Map<string, { field: string; index: number | null; key?: string; value?: string }>();
             let extrasPatch: Record<string, string> | null = null;
 
@@ -422,10 +427,6 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ onOpenBrandEditor,
     // Keep the current thumbnail in view as you browse.
     const stripRef = useRef<HTMLDivElement | null>(null);
 
-    // The Canvas sizes text to its slide in the browser: fit after every render.
-    const isCanvas = selectedTemplate === 'template-5';
-    useCanvasFit(stageRef, [stageSvg], isCanvas);
-    useCanvasFit(stripRef, [thumbSvgs], isCanvas);
     useEffect(() => {
         const el = stripRef.current?.querySelector<HTMLElement>(`[data-thumb="${currentIndex}"]`);
         el?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });

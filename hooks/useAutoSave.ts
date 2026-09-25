@@ -14,8 +14,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createCarousel, updateCarouselContent } from '../services/carouselService';
-import { appToDbTemplate, stampTheme, type AppTemplateType } from '../utils/templateConverter';
-import { compactDesigns } from '../core/design/canvas';
+import { appToDbTemplate, stampTheme, withoutLayouts, type AppTemplateType } from '../utils/templateConverter';
 import { BrandKit, BrandMode, SignaturePosition } from '../types';
 import { useCarouselStore } from '../store/useCarouselStore';
 
@@ -65,7 +64,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
     const activeCarouselId = useCarouselStore(s => s.activeCarouselId);
     // A create job's draft on screen isn't a carousel yet: the job saves the final deck itself.
     const draftPreview = useCarouselStore(s => s.draftPreview);
-    // The Canvas is stored as template1 + a marker on the theme (utils/templateConverter.ts).
+    // Drops the retired Canvas marker from the theme on save (utils/templateConverter.ts).
     const rawThemeKey = rawTheme ? JSON.stringify(rawTheme) : '';
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const theme = useMemo(() => stampTheme(rawTheme, templateType), [rawThemeKey, templateType]);
@@ -161,7 +160,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                         topic || 'Untitled Carousel',
                         dbTemplateType,
                         theme,
-                        compactDesigns(slides),
+                        withoutLayouts(slides),
                         false, // isPublic
                         brandMode,
                         presetId,
@@ -193,7 +192,7 @@ export const useAutoSave = (params: UseAutoSaveParams): UseAutoSaveReturn => {
                     const { data, error } = await updateCarouselContent(
                         idToSave,
                         theme,
-                        compactDesigns(slides),
+                        withoutLayouts(slides),
                         brandMode,
                         presetId,
                         brandKit,

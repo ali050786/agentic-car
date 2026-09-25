@@ -24,8 +24,7 @@ import { TEMPLATE_CONFIGS } from './agentConfigs';
 import { getPresetIds } from '../../config/colorPresets';
 
 export interface DesignAction {
-    /** set_direction / set_fonts / set_corners only apply to The Canvas (template-5). */
-    action: 'set_template' | 'set_format' | 'set_preset' | 'set_pattern' | 'set_signature_position' | 'set_direction' | 'set_fonts' | 'set_corners';
+    action: 'set_template' | 'set_format' | 'set_preset' | 'set_pattern' | 'set_signature_position';
     value: string;
 }
 
@@ -56,7 +55,6 @@ export const parseDesignActionsFallback = (message: string): DesignAction[] => {
     const actions: DesignAction[] = [];
 
     const templateMap: [RegExp, string][] = [
-        [/\bcanvas\b|dynamic (layout|template|design)s?|custom layouts?/, 'template-5'],
         [/sketch|hand.?drawn|doodle/, 'template-3'],
         [/statement|typographic/, 'template-4'],
         [/truth|industrial|bold template|clean|modern/, 'template-1'],
@@ -73,13 +71,6 @@ export const parseDesignActionsFallback = (message: string): DesignAction[] => {
     for (const id of getPresetIds()) {
         const name = id.replace(/-/g, ' ');
         if (m.includes(name) || m.includes(id)) { actions.push({ action: 'set_preset', value: id }); break; }
-    }
-
-    // Canvas looks ("make it more minimal", "a playful style"): applied only on Canvas decks.
-    const look = m.match(/\b(minimal|editorial|playful|brutalist|magazine|corporate|techy?|bold)\b[^.]{0,30}\b(look|style|vibe|design|feel|direction)\b|\b(look|style|vibe|design|feel|direction)\b[^.]{0,30}\b(minimal|editorial|playful|brutalist|magazine|corporate|techy?|bold)\b|\bmore (minimal|editorial|playful|brutalist|corporate|bold)\b/);
-    if (look) {
-        const d = (look[1] || look[4] || look[5] || '').replace(/^techy$/, 'tech');
-        if (d && !actions.some((a) => a.action === 'set_template' && a.value !== 'template-5')) actions.push({ action: 'set_direction', value: d });
     }
 
     const sig = m.match(/signature.*(bottom.?left|top.?left|top.?right)|(bottom.?left|top.?left|top.?right).*signature/);

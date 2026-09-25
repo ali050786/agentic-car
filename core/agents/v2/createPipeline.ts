@@ -4,15 +4,13 @@
  *   gate ‖ memory ‖ research plan ‖ creative brief (when the client didn't send one)
  *     → web search → fact sheet (numbered, sourced)
  *     → outline (beat per slide, block per beat, facts per beat)
- *         ├─ Canvas: the Design Director plans the look from the outline
  *     → hook tournament ‖ writer (halves in parallel for 7+ slides)
  *     → validators + tighten (limits, banned terms, structure, accent) in code
  *     → grounding (numbers must exist in facts/source/request)
  *         ├─ moderation of the draft → preview in the studio
- *         ├─ Canvas: composers shape every slide's layout
  *         ├─ template-3: sketch prompts + images
  *     → critic ⇄ targeted revision (one pass by default) ‖ proofread of the draft
- *     → proofread of revised slides ‖ moderation of revised words ‖ Canvas refit
+ *     → proofread of revised slides ‖ moderation of revised words
  *     → save (hybrid slides keep stat/quote/split), thread, brief with sources
  *
  * Every model call carries a role (fast/planner/writer/creative/critic) that
@@ -40,11 +38,6 @@ import { reflectLoop, type ReflectOutcome } from './critic';
 import { proofreadDeck } from './proofread';
 import { draftToSaved } from './slides';
 import type { PipelineStore, StoredBrief } from './persistence';
-import {
-    designDeckWithAI, designEnvFlag, designsFromPlan, directFromOutline, heuristicStyle, planFromDirector, refitDesigns, repairPlan,
-    type DeckDesignResult, type DirectorOutput,
-} from './design';
-import { compactDesigns } from '../../design/canvas';
 import { CreativeDirectorAgent, parseExplicitSlideCount } from '../CreativeDirectorAgent';
 
 export interface CreateV2Options {
@@ -56,14 +49,12 @@ export interface CreateV2Options {
     skipModeration?: boolean;
     /** Critic passes (default 1). */
     maxReflectPasses?: number;
-    /** Canvas decks: skip the design models and use the layout library. */
-    skipDesignModels?: boolean;
 }
 
 /** Slides to show while the deck is still being finished. */
 export interface CreatePreview {
-    /** 'draft': the first full draft (Canvas: library layouts); 'designed': Canvas layouts composed. */
-    stage: 'draft' | 'designed';
+    /** 'draft': the first full draft. */
+    stage: 'draft';
     slides: SavedSlide[];
     theme: CarouselTheme;
     templateId: TemplateId;
@@ -100,8 +91,6 @@ export interface CreateV2Stats {
     proofreadFixes: number;
     downgradedStats: number;
     issuesRemaining: number;
-    /** Canvas decks: the look the Design Director chose and how many slides the composer shaped. */
-    design?: { direction: string; fonts: string; composed: number; fallbacks: number; source: 'model' | 'library' };
 }
 
 export type CreateV2Outcome =
@@ -172,7 +161,6 @@ const replyFor = (n: number, stats: CreateV2Stats): string => {
     else if (stats.facts) bits.push(`grounded it in ${stats.facts} facts from your material`);
     if (stats.hookCandidates > 1) bits.push(`tested ${stats.hookCandidates} cover hooks`);
     if (stats.revisedSlides.length) bits.push(`tightened ${stats.revisedSlides.length} slide${stats.revisedSlides.length === 1 ? '' : 's'} after an editor review`);
-    if (stats.design) bits.push(`designed each slide in a ${stats.design.direction} look`);
     const how = bits.length ? ` I ${bits.length > 1 ? `${bits.slice(0, -1).join(', ')} and ${bits[bits.length - 1]}` : bits[0]}.` : '';
     return `Your ${n}-slide carousel is ready.${how} Tell me what to change: a slide, the tone, the angle or the design.`;
 };
@@ -426,26 +414,9 @@ export const runCreatePipelineV2 = async (params: CreateV2Params): Promise<Creat
     const preset = getPresetById(payload.presetId || 'ocean-tech') || getPresetById('ocean-tech');
     const theme: CarouselTheme = preset ? resolveTheme(preset.seeds, templateId) : (payload.existingTheme as CarouselTheme);
 
-    // ── Work that overlaps the copy: design, sketches, moderation, preview ──
-    const isCanvas = templateId === 'template-5';
+    // ── Work that overlaps the copy: sketches, moderation, preview ──
     const wantsImages = templateId === 'template-3' && !opts.skipImages;
     const seed = Math.abs(Array.from(jobId).reduce((acc, ch) => (Math.imul(31, acc) + ch.charCodeAt(0)) | 0, 0));
-    const { terms: bannedForDesign, noEmoji: noEmojiForDesign } = bannedTerms(memory);
-    const allowEmojiForDesign = !noEmojiForDesign && wantsEmoji(userText);
-    const useDirector = opts.skipDesignModels ? false : designEnvFlag('DESIGN_DIRECTOR', true);
-    const useComposer = opts.skipDesignModels ? false : designEnvFlag('DESIGN_COMPOSER', true);
-    const designOpts = {
-        topic: payload.topic,
-        brief,
-        userText,
-        theme,
-        format: payload.format,
-        seed,
-        outputLanguage,
-        banned: bannedForDesign,
-        allowEmoji: allowEmojiForDesign,
-        signature: !!payload.brandKit?.enabled,
-    };
     const moderate = (label: string, texts: string[]) => (opts.skipModeration || !texts.length
         ? Promise.resolve<GateResult>(ALLOWED)
         : withSpan(label, { texts: texts.length }, () => GatekeeperAgent.moderateOutput(texts)));
@@ -455,62 +426,23 @@ export const runCreatePipelineV2 = async (params: CreateV2Params): Promise<Creat
     const emitPreview = async (stage: CreatePreview['stage'], list: DraftSlide[]) => {
         if (!params.preview || finished) return;
         try {
-            await params.preview({ stage, slides: compactDesigns(toSaved(list), 80_000), theme, templateId });
+            await params.preview({ stage, slides: toSaved(list), theme, templateId });
         } catch (err) {
             console.warn('[v2.create] preview failed (ignored):', err);
         }
     };
 
-    let directorP: Promise<DirectorOutput> | null = null;
-    let director: DirectorOutput | null = null;
-    let designP: Promise<DeckDesignResult | null> = Promise.resolve(null);
-    let designSeen: DraftSlide[] = [];
-    let refitP: Promise<(DeckDesignResult & { recomposed: number }) | null> | null = null;
     let draftSnapshot: DraftSlide[] = [];
     let earlyModP: Promise<GateResult> = Promise.resolve(ALLOWED);
     let deltaModP: Promise<GateResult> = Promise.resolve(ALLOWED);
-    const moderatedLabels = new Set<string>();
     let imagesP: Promise<{ url?: string; prompt: string }[]> | null = null;
     let refuse: ((g: GateResult) => void) | null = null;
     const refusedP = new Promise<GateResult>((resolve) => { refuse = resolve; });
-    const labelsOf = (extras: (Record<string, string> | undefined)[]) => extras.flatMap((e) => Object.values(e || {})).filter(Boolean);
-
-    const onOutline = (outline: Outline) => {
-        if (!isCanvas) return;
-        // The look is decided from the outline while the copy is written.
-        directorP = quiet(directFromOutline({ beats: outline.beats, topic: payload.topic, brief, userText, theme, useModel: useDirector })
-            .then((out) => { director = out; return out; }));
-    };
 
     const onDraft = (draft: DraftSlide[], _hook: HookChoice | null) => {
         draftSnapshot = draft;
         earlyModP = quiet(moderate('moderate.draft', slideTexts(toSaved(draft))));
         void earlyModP.then((g) => { if (!g.allowed) refuse?.(g); });
-
-        if (isCanvas && directorP) {
-            designSeen = draft;
-            designP = quiet(withSpan('design', { slides: draft.length }, () => designDeckWithAI({
-                ...designOpts,
-                drafts: draft,
-                director: directorP!,
-                concurrency: 8,
-                useDirector,
-                useComposer,
-            })).catch((err) => {
-                if (/cancel/i.test(String(err?.message || err))) throw err;
-                console.warn('[v2.create] design failed, slides will use library layouts:', err);
-                return null;
-            }));
-            // Composed layouts on screen as soon as they exist (labels moderated first).
-            void designP.then(async (res) => {
-                if (!res || finished) return;
-                const labels = labelsOf(res.extras);
-                const [g, early] = await Promise.all([moderate('moderate.labels', labels), earlyModP]);
-                if (!g.allowed || !early.allowed) return;
-                labels.forEach((l) => moderatedLabels.add(l));
-                await emitPreview('designed', draft.map((d, i) => ({ ...d, design: res.designs[i], extras: res.extras[i] })));
-            }).catch(() => undefined);
-        }
 
         if (wantsImages) {
             // Sketch prompts and images start on the draft (after it passes moderation), alongside the review.
@@ -538,21 +470,10 @@ export const runCreatePipelineV2 = async (params: CreateV2Params): Promise<Creat
             }));
         }
 
-        // The draft on screen once it has passed moderation. Canvas decks show library layouts
-        // in the director's look (or the topic's, if the director isn't done yet).
+        // The draft on screen once it has passed moderation.
         void earlyModP.then(async (g) => {
             if (!g.allowed || finished) return;
-            let shown = draft;
-            if (isCanvas) {
-                // Give the director a few seconds so the draft shows the deck's real look
-                // (not a look that flips when the director answers).
-                if (!director && directorP) await Promise.race([directorP.catch(() => null), new Promise((r) => setTimeout(r, 8000))]);
-                if (finished) return;
-                const plan = director ? planFromDirector(draft, director, seed) : { style: heuristicStyle(payload.topic, brief, userText), slides: repairPlan(draft, heuristicStyle(payload.topic, brief, userText), [], seed), source: 'library' as const };
-                const designs = designsFromPlan(draft, plan, seed);
-                shown = draft.map((d, i) => ({ ...d, design: designs[i] }));
-            }
-            await emitPreview('draft', shown);
+            await emitPreview('draft', draft);
         }).catch(() => undefined);
     };
 
@@ -560,11 +481,6 @@ export const runCreatePipelineV2 = async (params: CreateV2Params): Promise<Creat
         // Words that changed since the draft was moderated are checked now, alongside the last proofread.
         const changed = reviewed.map((_, i) => i).filter((i) => !draftSnapshot[i] || slideWords(reviewed[i]) !== slideWords(draftSnapshot[i]));
         deltaModP = quiet(moderate('moderate.revised', slideTexts(changed.map((i) => draftToSaved(reviewed[i], templateId, i)))));
-        if (isCanvas) {
-            refitP = quiet(designP.then((base) => (base && base.designs.length === reviewed.length
-                ? withSpan('design.refit', { slides: reviewed.length }, () => refitDesigns({ ...designOpts, drafts: reviewed, seen: designSeen, result: base, useComposer, concurrency: 8 }))
-                : null)));
-        }
     };
 
     let draftOutline: Outline | null = null;
@@ -575,7 +491,7 @@ export const runCreatePipelineV2 = async (params: CreateV2Params): Promise<Creat
         strictGrounding,
         maxReflectPasses: opts.maxReflectPasses ?? 1,
         progress,
-        onOutline: (o) => { draftOutline = o; onOutline(o); },
+        onOutline: (o) => { draftOutline = o; },
         onDraft,
         beforeProofread,
     })));
@@ -588,17 +504,6 @@ export const runCreatePipelineV2 = async (params: CreateV2Params): Promise<Creat
     const { outline, hook, reflect, proof, tightened, forcedFits, downgradedStats, remaining } = composed;
     let { drafts } = composed;
 
-    // ── Design: composed on the draft, brought up to date with the final words ──
-    let designStats: CreateV2Stats['design'];
-    if (isCanvas) {
-        await progress('EXECUTE: Art-directing every slide\'s layout...', 85);
-        const design = refitP ? await refitP : null;
-        if (design && design.designs.length === drafts.length) {
-            drafts = drafts.map((d, i) => ({ ...d, design: design.designs[i], extras: design.extras[i] }));
-            designStats = { direction: design.style.direction, fonts: design.style.fonts, composed: design.composed, fallbacks: design.fallbacks, source: design.source };
-        }
-    }
-
     // ── Sketches (template-3): started on the draft ─────────────────────────
     if (wantsImages && imagesP) {
         await progress('Art Director: finishing the sketches...', 88);
@@ -610,10 +515,9 @@ export const runCreatePipelineV2 = async (params: CreateV2Params): Promise<Creat
         });
     }
 
-    // ── Moderation: the draft was checked early; revised words and new labels now ──
-    const newLabels = labelsOf(drafts.map((d) => d.extras)).filter((l) => !moderatedLabels.has(l));
-    const [early, delta, labels] = await Promise.all([earlyModP, deltaModP, moderate('moderate.labels', newLabels)]);
-    const blocked = [early, delta, labels].find((g) => !g.allowed);
+    // ── Moderation: the draft was checked early; revised words now ─────────
+    const [early, delta] = await Promise.all([earlyModP, deltaModP]);
+    const blocked = [early, delta].find((g) => !g.allowed);
     if (blocked) {
         finished = true;
         return { kind: 'refused', gate: blocked, stage: 'output' };
@@ -638,12 +542,13 @@ export const runCreatePipelineV2 = async (params: CreateV2Params): Promise<Creat
         proofreadFixes: proof.corrected,
         downgradedStats,
         issuesRemaining: remaining.length,
-        ...(designStats ? { design: designStats } : {}),
     };
     const reply = `${slideCountNote ? `${slideCountNote} ` : ''}${replyFor(saved.length, stats)}`;
 
     // ── Save ────────────────────────────────────────────────────────────────
     let carouselId = 'dry-run';
+    let versionId: string | undefined;
+    const assistantMessageId = `msg-${Date.now()}-a`;
     if (!opts.dryRun) {
         await progress('Saving carousel & finalizing...', 95);
         carouselId = await store.createCarousel({
@@ -661,10 +566,17 @@ export const runCreatePipelineV2 = async (params: CreateV2Params): Promise<Creat
             patternOpacity: payload.patternOpacity,
         });
 
+        // Restore point: the deck as created, so the studio can always go back to it.
+        versionId = (await store.saveVersion(carouselId, userId, {
+            slides: saved as SlideContent[], theme, templateId, format: payload.format, presetId: payload.presetId,
+            selectedPattern: payload.selectedPattern, signaturePosition: payload.signaturePosition, brandMode: payload.brandMode,
+            label: 'Created the carousel', kind: 'point',
+        }).catch(() => null)) || undefined;
+
         // Best-effort: a thread/brief write must never fail a finished create.
         const turn: ChatMessage[] = [
             { id: `msg-${Date.now()}-u`, role: 'user', text: payload.userMessage || payload.topic },
-            { id: `msg-${Date.now()}-a`, role: 'assistant', text: reply, tokenUsage: params.usage?.() as any },
+            { id: assistantMessageId, role: 'assistant', text: reply, tokenUsage: params.usage?.() as any, ...(versionId ? { versionId } : {}) },
         ];
         await Promise.all([
             (async () => {
@@ -690,6 +602,7 @@ export const runCreatePipelineV2 = async (params: CreateV2Params): Promise<Creat
             critique: reflect.critique,
             hook: hook || undefined,
             issuesRemaining: remaining,
+            ...(versionId ? { versionId, messageId: assistantMessageId } : {}),
         },
     };
 };

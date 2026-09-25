@@ -18,10 +18,6 @@ export interface MockOptions {
     flagOutput?: boolean;
     /** Critic score for every dimension. */
     criticScore?: number;
-    /** Canvas: custom Design Director answer (default: a plausible plan). */
-    designDirector?: (prompt: string) => any;
-    /** Canvas: custom composer answer per slide (default: the draft plus a sticker and a spark). */
-    composer?: (prompt: string, draft: any) => any;
     /** Simulated latency per call, by label prefix (longest matching prefix wins), in ms. */
     delays?: Record<string, number>;
     /** Creative Director brief (worker-side briefing). */
@@ -175,27 +171,6 @@ export const createMockLLM = (opts: MockOptions = {}) => {
             return { corrections: fix };
         }
         if (label === 'artDirector') return { prompts: [] };
-        if (label === 'design.director') {
-            if (opts.designDirector) return opts.designDirector(p);
-            // First allowed layout per slide; invert the first quote slide.
-            const options = Array.from(p.matchAll(/^(\d+): ([a-z-]+) \(/gm)).map((m) => ({ i: Number(m[1]), id: m[2] }));
-            const blocks = Array.from(p.matchAll(/^(\d+) \[(\w+)\]/gm)).map((m) => ({ i: Number(m[1]), b: m[2] }));
-            const quote = blocks.find((b) => b.b === 'quote')?.i;
-            return {
-                direction: 'editorial', fonts: 'classic', radius: 'none', mark: 'serif', headingCase: 'none',
-                rationale: 'Serious research topic: editorial serif.',
-                slides: options.map((o) => ({ index: o.i, layout: o.id, invert: o.i === quote, idea: `Idea for slide ${o.i}` })),
-            };
-        }
-        if (label === 'design.compose') {
-            const raw = p.split('improve it for this content rather than starting over, unless the idea or request calls for something else):\n')[1]?.split('\n')[0] || '{}';
-            let draft: any = {};
-            try { draft = JSON.parse(raw); } catch { draft = {}; }
-            if (opts.composer) return opts.composer(p, draft);
-            const root = draft.root || { type: 'stack', children: [] };
-            root.children = [{ type: 'text', field: 'x.tag', role: 'label', color: 'accent' }, ...(root.children || [])];
-            return { root, bg: draft.bg, decor: [...(draft.decor || []), { shape: 'spark', x: 92, y: 95, w: 5, color: 'accent' }], extras: { tag: 'Worth knowing', bogus: 'Up 900% 🚀' } };
-        }
         if (label.startsWith('edit.plan')) return opts.editPlan || { actions: [{ type: 'answer' }], reply: 'Sure.' };
         if (label.startsWith('edit.copy')) {
             const section = p.split('SLIDES TO EDIT:')[1]?.split('LIMITS')[0] || '';

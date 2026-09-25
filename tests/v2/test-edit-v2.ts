@@ -13,6 +13,7 @@ import { memoryStore } from '../../core/agents/v2/persistence';
 import { asList, asText } from '../../core/agents/v2/slides';
 import { validateAndCoerce } from '../../core/llm/schema';
 import { createMockLLM, MockOptions } from './mockLLM';
+import { UNDO_RE, previousPoint } from '../../core/agents/undo';
 
 let pass = 0;
 let fail = 0;
@@ -59,8 +60,11 @@ const main = async () => {
     check('slide 3 keeps its quote block', (v1.slides[2] as any).blockType === 'quote', v1.slides[2]);
     check('headline stays sentence case (no v1 uppercasing)', v1.slides[2].headline === 'Punchier slide 3', v1.slides[2].headline);
     check('untraceable number flagged in reply', /99%/.test(e1.res.reply) && /double-check/.test(e1.res.reply), e1.res.reply);
-    check('snapshot saved before change', (store.versions.get(carouselId) || []).length === 1);
-    check('reply offers undo', /undo/i.test(e1.res.reply));
+    check('the change saves a restore point for its reply', !!e1.res.versionId && (store.versions.get(carouselId) || []).some((v) => v.id === e1.res.versionId && v.kind === 'point'));
+    check('the reply no longer asks you to type undo', !/say "undo"/i.test(e1.res.reply), e1.res.reply);
+    const thread1 = store.threads.get(carouselId) || [];
+    check('the creation reply carries a restore point', !!thread1[1]?.versionId && thread1[1].role === 'assistant', thread1.slice(0, 2));
+    check('the edit reply is saved with its restore point', thread1[thread1.length - 1]?.versionId === e1.res.versionId && thread1[thread1.length - 1]?.id === e1.res.messageId);
     check('copy edit uses writer role', e1.mock.calls.some((c) => c.label === 'edit.copy' && c.role === 'writer'));
     check('planner uses planner role', e1.mock.calls.some((c) => c.label === 'edit.plan' && c.role === 'planner'));
     check('selection + summary reach the planner', true);
@@ -170,6 +174,56 @@ const main = async () => {
     const t3v1 = await store.loadDeck(t3.result.carouselId);
     const drawn = t3v1.slides.findIndex((s: any) => s.doodleUrl || s.visual?.doodleUrl);
     check('image goes to the slide the user meant (original 4, now 3rd)', drawn === 2 && t3v1.slides[2].headline === t3v0.slides[3].headline, { drawn, actions: r6.res.actions });
+
+    // Restore to a reply in the studio, then keep going
+    const rc = await withMock(createMockLLM(), () => runCreatePipelineV2({
+        jobId: 'jr', userId: 'u1', store, progress: async () => undefined, options: { skipImages: true },
+        payload: { topic: 'Async-first remote teams', inputMode: 'text', sourceContent: SOURCE, slideCount: 7, selectedTemplate: 'template-1', presetId: 'ocean-tech', format: 'portrait' } as any,
+    }));
+    if (rc.kind !== 'done') throw new Error('restore fixture failed');
+    const rid = rc.result.carouselId;
+    check('create returns the first reply and its restore point', !!rc.result.versionId && !!rc.result.messageId);
+    const ra = await edit('Make slide 3 punchier', { editPlan: { actions: [{ type: 'copy', slides: [3] }], reply: 'Done.' } }, { id: rid });
+    const rb = await edit('Use pattern 5', { editPlan: { actions: [{ type: 'design', design: [{ action: 'set_pattern', value: '5' }] }], reply: 'Done.' } }, { id: rid });
+    check('every change has its own restore point', !!ra.res.versionId && !!rb.res.versionId && ra.res.versionId !== rb.res.versionId);
+    const beforeTrim = (store.threads.get(rid) || []).length;
+    const mockR = createMockLLM({ editPlan: { actions: [{ type: 'copy', slides: [2] }], reply: 'Done.' } });
+    const rr = await withMock(mockR, () => runEditPipelineV2({
+        carouselId: rid, userId: 'u1', message: 'Make slide 2 shorter', store, progress: async () => undefined, options: { skipImages: true },
+        restoredTo: ra.res.messageId, messageIds: { user: 'client-u', assistant: 'client-a' },
+    }));
+    const trimmed = store.threads.get(rid) || [];
+    check('restoring to a reply drops the later messages', beforeTrim === 6 && trimmed.length === 6 && trimmed[3].id === ra.res.messageId, trimmed.map((m) => m.id));
+    check('the new turn keeps the studio\'s message ids', trimmed[4].id === 'client-u' && trimmed[5].id === 'client-a' && rr.messageId === 'client-a', trimmed.slice(-2));
+    const ru2 = await edit('undo', {}, { id: rid });
+    const afterRu2 = await store.loadDeck(rid);
+    const atRa = await store.getVersion(ra.res.versionId!);
+    check('undo walks back to the reply before the current state', JSON.stringify(afterRu2.slides.map((x) => x.headline)) === JSON.stringify(atRa!.slides.map((x) => x.headline)) && ru2.res.versionId === ra.res.versionId, ru2.res.reply);
+    const ru3 = await edit('undo', {}, { id: rid });
+    const afterRu3 = await store.loadDeck(rid);
+    check('undo again goes further back, never forward', JSON.stringify(afterRu3.slides.map((x) => x.headline)) === JSON.stringify(rc.result.slides.map((x) => x.headline)), ru3.res.reply);
+    const ru4 = await edit('undo', {}, { id: rid });
+    check('nothing earlier than the created deck', /nothing to undo/i.test(ru4.res.reply), ru4.res.reply);
+
+    // A deck from before restore points: its last reply gets one for how the deck looked
+    const legacyId = await store.createCarousel({ ...(await store.loadDeck(rid)), userId: 'u1', title: 'old', brandKit: {} as any, brandMode: 'preset', signaturePosition: 'bottom-left', selectedPattern: 1, patternOpacity: 0.1 } as any);
+    store.threads.set(legacyId, [{ id: 'old-u', role: 'user', text: 'make a deck' }, { id: 'old-a', role: 'assistant', text: 'Here it is.' }]);
+    const legacyBefore = await store.loadDeck(legacyId);
+    await edit('Make slide 3 punchier', { editPlan: { actions: [{ type: 'copy', slides: [3] }], reply: 'Done.' } }, { id: legacyId });
+    const oldReply = (store.threads.get(legacyId) || []).find((m) => m.id === 'old-a');
+    const oldPoint = oldReply?.versionId ? await store.getVersion(oldReply.versionId) : null;
+    check('an older deck gets a restore point on its last reply', !!oldPoint && JSON.stringify(oldPoint.slides.map((x) => x.headline)) === JSON.stringify(legacyBefore.slides.map((x) => x.headline)));
+
+    // Undo steps (shared by the studio and the pipeline)
+    const M = (id: string, versionId?: string) => ({ id, role: 'assistant', versionId });
+    const U = (id: string) => ({ id, role: 'user' });
+    const timeline = [U('u0'), M('a0', 'v0'), U('u1'), M('a1', 'v1'), U('u2'), M('a2', 'v2'), U('u3'), M('a3')];
+    check('undo from the latest goes to the reply before it', previousPoint(timeline)?.id === 'a1');
+    check('undo from a restored reply goes one further back', previousPoint(timeline, 'a1')?.id === 'a0');
+    check('nothing before the first restore point', previousPoint(timeline, 'a0') === null);
+    const afterUndo = [...timeline, U('u4'), M('a4', 'v1')];
+    check('after an undo, the next undo walks back (never forward)', previousPoint(afterUndo)?.id === 'a0');
+    check('a bare undo is recognised', UNDO_RE.test('undo') && UNDO_RE.test('Undo that please') && !UNDO_RE.test('go back to the square format'));
 
     // Model output hardening
     check('asText flattens arrays', asText(['a', 'b']) === 'a b');

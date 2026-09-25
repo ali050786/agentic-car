@@ -14,7 +14,6 @@ import {
 } from '../../services/carouselService';
 import { injectContentIntoSvg } from '../../utils/svgInjector';
 import { resolveAppTemplate } from '../../utils/templateConverter';
-import { useCanvasFit } from '../studio/useCanvasFit';
 import { useCarouselStore } from '../../store/useCarouselStore';
 import type { SaveStatus } from '../../hooks/useAutoSave';
 import { subscribeToUserJobs, markJobSeen, GenerationJob } from '../../services/jobService';
@@ -75,7 +74,6 @@ const CarouselThumb: React.FC<{ carousel: Carousel; className?: string; running?
         } catch { return ''; }
     }, [carousel.slides, carousel.theme, templateId, scope]);
     const thumbRef = useRef<HTMLDivElement | null>(null);
-    useCanvasFit(thumbRef, [svg], templateId === 'template-5');
     return (
         <div className={`relative shrink-0 overflow-hidden rounded-[7px] bg-white/[0.04] ring-1 ring-white/10 ${className}`} style={{ aspectRatio: '1080 / 1384' }}>
             {svg ? (

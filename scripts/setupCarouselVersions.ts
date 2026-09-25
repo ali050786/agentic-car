@@ -1,6 +1,8 @@
 /**
- * One-time setup: creates the `carousel_versions` collection that powers
- * "Undo last change" in the studio chat. Safe to re-run; skips whatever exists.
+ * One-time setup for restore points in the studio chat: creates the
+ * `carousel_versions` collection (one snapshot per reply that changed the
+ * carousel) and adds `versionId` to `chat_messages` (which reply points at
+ * which snapshot). Safe to re-run; skips whatever exists.
  *
  * Talks to the Appwrite REST API with Node's own fetch instead of the
  * node-appwrite SDK: SDK 14 passes an undici 5 dispatcher to Node's built-in
@@ -17,6 +19,7 @@ const project = process.env.APPWRITE_PROJECT_ID || process.env.VITE_APPWRITE_PRO
 const apiKey = process.env.APPWRITE_API_KEY || '';
 const db = process.env.APPWRITE_DATABASE_ID || process.env.VITE_APPWRITE_DATABASE_ID || 'main';
 const id = process.env.APPWRITE_CAROUSEL_VERSIONS_COLLECTION_ID || 'carousel_versions';
+const chatId = process.env.APPWRITE_CHAT_MESSAGES_COLLECTION_ID || 'chat_messages';
 
 class ApiError extends Error {
     constructor(message: string, public code: number) { super(message); }
@@ -79,7 +82,15 @@ const main = async () => {
 
     console.log('Indexes...');
     await step(() => api('POST', `${col}/indexes`, { key: 'carousel_created_idx', type: 'key', attributes: ['carouselId', 'createdAt'] }), 'carouselId + createdAt');
-    console.log('Done. Undo is enabled.');
+
+    console.log(`Restore points on "${chatId}"...`);
+    try {
+        await step(() => api('POST', `/databases/${db}/collections/${chatId}/attributes/string`, { key: 'versionId', size: 64, required: false }), 'chat_messages.versionId');
+    } catch (e: any) {
+        if (e?.code === 404) console.log(`  ! "${chatId}" not found: run scripts/setupChatMessagesCollection.ts first, then this again.`);
+        else throw e;
+    }
+    console.log('Done. Restore points are enabled.');
 };
 
 main().catch((e) => {

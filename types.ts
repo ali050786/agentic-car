@@ -1,4 +1,4 @@
-export type TemplateId = 'template-1' | 'template-3' | 'template-4' | 'template-5';
+export type TemplateId = 'template-1' | 'template-3' | 'template-4';
 export type SlideVariant = 'hero' | 'body' | 'list' | 'cta' | 'closing';  // 'closing' is what LLM generates, 'cta' is template name
 export type AIModel = 'groq-llama' | 'claude-haiku';
 export type SignaturePosition = 'bottom-left' | 'top-left' | 'top-right';
@@ -90,7 +90,7 @@ export interface SlideLayoutSlots {
   quoteAuthor?: string;
   splitLeft?: string;
   splitRight?: string;
-  /** Short extra labels a Canvas design shows (field `x.<key>`), editable like any text. */
+  /** Short extra labels kept from older decks (field `x.<key>`). */
   extras?: Record<string, string>;
 }
 
@@ -106,8 +106,6 @@ export interface SlideLayout {
   slots: SlideLayoutSlots;
   styleOverrides?: Record<string, string>;
   visual?: SlideLayoutVisual;
-  /** Canvas (template-5) layout for this slide. Ignored by the classic templates. */
-  design?: import('./core/design/canvas/types').StoredDesign;
 }
 
 export interface StructuredMemory {
@@ -134,7 +132,7 @@ export interface CarouselTheme {
   // Customization flag (future use)
   customized?: boolean;
 
-  /** Set on Canvas (template-5) decks; stored with the theme so the deck reopens as Canvas. */
+  /** Legacy marker of the retired Canvas template (template-5). Read only to migrate; dropped on save. */
   designMode?: 'canvas';
 }
 
@@ -194,8 +192,10 @@ export interface ChatMessage {
   };
   /** Total token usage information for this generation turn */
   tokenUsage?: TokenUsage;
-  /** The worker saved a snapshot before this turn's change, so "undo" can restore it. */
+  /** Older replies: a snapshot was saved before this turn's change. Superseded by versionId. */
   undoable?: boolean;
+  /** Restore point: the carousel as it was right after this reply (a carousel_versions id). */
+  versionId?: string;
 }
 
 // ============================================================================
@@ -322,6 +322,13 @@ export interface CarouselState {
   chatSummarizedUpTo: number;
 
   /**
+   * The reply the carousel is restored to (its restore point), or null when
+   * it's at the latest reply. Replies after it show faded in the chat and are
+   * dropped when the next message is sent (services/restoreService.ts).
+   */
+  restoredTo: string | null;
+
+  /**
    * The single source of truth for "which carousel document am I pointed at" —
    * null for an unsaved/new carousel. Read directly by useAutoSave, the
    * history sidebar, and anything else that needs carousel identity, instead
@@ -413,6 +420,7 @@ export interface CarouselState {
   setChatMessages: (messages: ChatMessage[]) => void;
   setChatSummary: (summary: string) => void;
   setChatSummarizedUpTo: (index: number) => void;
+  setRestoredTo: (messageId: string | null) => void;
   setActiveCarouselId: (id: string | null) => void;
   /** Shows a create job's draft slides while it finishes (see draftPreview). */
   showDraftPreview: (slides: SlideContent[], theme?: CarouselTheme | null) => void;

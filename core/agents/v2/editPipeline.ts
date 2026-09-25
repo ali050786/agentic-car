@@ -14,12 +14,14 @@
  *  - each executor re-uses the create pipeline's guarantees: limits from the
  *    same table, banned terms, accent, block-aware slides, grounding notes
  *  - template switches re-fit the copy to the new template's limits and blocks
- *  - moderation runs BEFORE saving; a snapshot is saved before every change,
- *    so "undo" restores exactly what the user saw
+ *  - moderation runs BEFORE saving; every reply that changes the deck saves a
+ *    restore point (the deck right after it), so the studio can put the
+ *    carousel back to any reply, and "undo" walks back through them
  *  - the honesty guard still refuses to claim changes that didn't happen
  */
 
-import type { CarouselFormat, CarouselTheme, CreativeBrief, StructuredMemory, TemplateId } from '../../../types';
+import type { CarouselFormat, CarouselTheme, ChatMessage, ChatRunEvent, CreativeBrief, StructuredMemory, TemplateId, TokenUsage } from '../../../types';
+import { UNDO_RE, previousPoint, restorePoints } from '../undo';
 import type { BlockKind, DraftSlide, Fact, PipelineContext } from './types';
 import { withSpan } from '../../llm/agentGateway';
 import { GatekeeperAgent, type GateResult, slideTexts } from '../GatekeeperAgent';
@@ -37,12 +39,9 @@ import { proofreadDeck } from './proofread';
 import { SLIDES_SCHEMA } from './writer';
 import { composeDeck, defaultBrief, wantsEmoji } from './createPipeline';
 import type { PipelineStore, StoredBrief } from './persistence';
-import { contentOfDraft, designDeckWithAI, directionFromWords, heuristicStyle } from './design';
 import { stampTheme } from '../../../utils/templateConverter';
-import { DIRECTIONS, type DesignStyle, type Direction, type FontPairId, type SlideDesign } from '../../design/canvas/types';
-import { DIRECTION_PRESETS, FONT_PAIRS, FONT_PAIR_IDS, defaultStyle, deckStyleOf, designSlide } from '../../design/canvas';
 
-export type EditActionType = 'copy' | 'design' | 'redesign' | 'structure' | 'regenerate' | 'image' | 'undo' | 'answer';
+export type EditActionType = 'copy' | 'design' | 'structure' | 'regenerate' | 'image' | 'undo' | 'answer';
 
 export interface EditV2Params {
     carouselId: string;
@@ -54,6 +53,13 @@ export interface EditV2Params {
     store: PipelineStore;
     progress: (statusMessage: string, progressPct: number) => Promise<void>;
     options?: { dryRun?: boolean; skipImages?: boolean; skipSafety?: boolean };
+    /** The user restored the carousel to this reply in the studio: later messages are dropped first. */
+    restoredTo?: string;
+    /** Ids the studio already shows for this turn's messages, so they stay the same once saved. */
+    messageIds?: { user?: string; assistant?: string };
+    /** The turn's activity and token usage, saved with the reply. */
+    turnEvents?: () => ChatRunEvent[] | undefined;
+    usage?: () => TokenUsage | undefined;
 }
 
 export interface EditResultV2 {
@@ -70,7 +76,11 @@ export interface EditResultV2 {
     designActions: DesignAction[];
     memoryNote: { note: string; category: keyof StructuredMemory } | null;
     refused?: GateResult;
-    /** A snapshot was saved before this change, so "undo" will work. */
+    /** Restore point for this reply: the deck right after it (unset when nothing changed). */
+    versionId?: string;
+    /** The reply's message id in the thread. */
+    messageId?: string;
+    /** Older clients: true when this reply has a restore point. */
     undoable: boolean;
 }
 
@@ -84,7 +94,7 @@ const PLAN_SCHEMA = {
             items: {
                 type: 'object',
                 properties: {
-                    type: { type: 'string', enum: ['copy', 'design', 'redesign', 'structure', 'regenerate', 'image', 'undo', 'answer'] },
+                    type: { type: 'string', enum: ['copy', 'design', 'structure', 'regenerate', 'image', 'undo', 'answer'] },
                     slides: { type: 'array', items: { type: 'number' } },
                     instruction: { type: 'string' },
                     design: {
@@ -92,7 +102,7 @@ const PLAN_SCHEMA = {
                         items: {
                             type: 'object',
                             properties: {
-                                action: { type: 'string', enum: ['set_template', 'set_format', 'set_preset', 'set_pattern', 'set_signature_position', 'set_direction', 'set_fonts', 'set_corners'] },
+                                action: { type: 'string', enum: ['set_template', 'set_format', 'set_preset', 'set_pattern', 'set_signature_position'] },
                                 value: { type: 'string' },
                             },
                             required: ['action', 'value'],
@@ -139,7 +149,6 @@ export interface EditPlan {
     memory?: { note?: string; category?: keyof StructuredMemory };
 }
 
-const UNDO_RE = /^\s*(please\s+)?(undo|revert|roll ?back|go back|put it back)(\s+(that|it|this|the (last )?(change|edit)|my (last )?(change|edit)|last (change|edit)))?(\s+please)?\s*[.!]*\s*$/i;
 const POLITE_ASK_RE = /^\s*(can|could|would|will) you\b|^\s*please\b/i;
 const EDIT_VERB_RE = /\b(rewrite|re-write|rephrase|reword|change|make|shorten|lengthen|expand|add|insert|remove|delete|drop|switch|replace|fix|update|turn|move|swap|redo|regenerate|redraw|tighten|simplify|translate)\b/i;
 const COMMAND_START_RE = /^\s*(please\s+)?(rewrite|re-write|rephrase|reword|change|make|shorten|lengthen|expand|add|insert|remove|delete|drop|switch|replace|fix|update|turn|move|swap|redo|regenerate|redraw|tighten|simplify|translate|use)\b/i;
@@ -155,16 +164,12 @@ export const memoryFromMessage = (message: string): { note: string; category: ke
     return null;
 };
 
-const designOptions = (templateId?: TemplateId) => `Design values you can set:
-- set_template: template-5 (The Canvas: every slide gets its own designed layout), template-1 (bold, modern, clean), template-3 (hand-drawn sketch doodles), template-4 (typographic statement)
+const designOptions = () => `Design values you can set:
+- set_template: template-1 (The Truth: bold, modern, clean), template-3 (The Sketch: hand-drawn sketch doodles), template-4 (The Statement: typographic statement)
 - set_format: portrait | square
 - set_preset (color palette): ${getPresetIds().join(', ')}
 - set_pattern: 1-12 (background pattern)
-- set_signature_position: bottom-left | top-left | top-right
-- The Canvas only${templateId === 'template-5' ? ' (this deck is on it)' : ' (needs set_template template-5 first)'}:
-  - set_direction (the overall look; redesigns every slide): ${DIRECTIONS.map((d) => `${d} (${DIRECTION_PRESETS[d].blurb.replace(/\.$/, '')})`).join('; ')}
-  - set_fonts: ${FONT_PAIR_IDS.map((f) => `${f} (${FONT_PAIRS[f].label})`).join(', ')}
-  - set_corners: none | sm | md | lg`;
+- set_signature_position: bottom-left | top-left | top-right`;
 
 export const planEdit = async (params: {
     message: string;
@@ -189,14 +194,13 @@ ${params.history || '(none yet)'}
 CURRENT DECK (template ${templateId}, ${drafts.length} slides${sel.length ? `; the user has slide${sel.length > 1 ? 's' : ''} ${sel.join(', ')} selected` : ''}):
 ${drafts.map(dumpDraft).join('\n')}
 
-${designOptions(templateId)}
+${designOptions()}
 
 ${untrusted('user_message', message, 2000)}
 
 Action types:
 - copy: change the text of specific slides that stay in place. "slides" = 1-based numbers${sel.length ? ` (default to the selected slide${sel.length > 1 ? 's' : ''} unless the message clearly means others)` : ''}; empty = every slide. "instruction" = exactly what to change on them.
 - design: visual settings. Fill "design" with the settings above.
-- redesign: ${templateId === 'template-5' ? '' : '(The Canvas only) '}change how specific slides LOOK without changing their words: layout, what is biggest, panels, emphasis, decoration ("make slide 3 more visual", "different layout for the stat", "less cluttered"). "slides" = 1-based numbers (empty = every slide), "instruction" = what to change.
 - structure: remove specific slides ("removeSlides", 1-based) and/or add ONE new slide ("insertAfter" = 1-based slide it follows, "insertAbout" = what it should say). Use one structure action per new slide.
 - regenerate: rebuild the WHOLE deck: a new length ("make it 10 slides", "shorter"), much more depth, a new angle, or a tone change across every slide. "targetSlideCount" (2-20; keep the current count unless asked) and "instruction".
 - image: template-3 only. Redraw one slide's sketch. "imageSlide" (1-based) and "imageBrief" (the scene: one person, one oversized object, one action).
@@ -222,7 +226,9 @@ Return JSON: { "actions": [ { "type", ... } ], "reply": string, "memory"?: { "no
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const TEMPLATES: TemplateId[] = ['template-1', 'template-3', 'template-4', 'template-5'];
+const TEMPLATES: TemplateId[] = ['template-1', 'template-3', 'template-4'];
+/** Template names users say ("the sketch") → ids. */
+const TEMPLATE_NAMES: [RegExp, TemplateId][] = [[/truth/, 'template-1'], [/sketch/, 'template-3'], [/statement/, 'template-4']];
 
 export const sanitizeDesign = (actions: DesignAction[] = []): DesignAction[] => {
     const presets = new Set(getPresetIds());
@@ -231,17 +237,9 @@ export const sanitizeDesign = (actions: DesignAction[] = []): DesignAction[] => 
         if (!a || typeof a.value !== 'string') continue;
         const v = a.value.trim().toLowerCase();
         if (a.action === 'set_template') {
-            const t = (/canvas/.test(v) ? 'template-5' : v.replace(/^template\s*-?\s*/, 'template-')) as TemplateId;
+            const named = TEMPLATE_NAMES.find(([re]) => re.test(v))?.[1];
+            const t = (named || v.replace(/^template\s*-?\s*/, 'template-')) as TemplateId;
             if (TEMPLATES.includes(t)) out.push({ action: 'set_template', value: t });
-        } else if (a.action === 'set_direction') {
-            const d = v.replace(/^techy$/, 'tech');
-            if ((DIRECTIONS as string[]).includes(d)) out.push({ action: 'set_direction', value: d });
-        } else if (a.action === 'set_fonts') {
-            const f = v.replace(/\s+/g, '');
-            if ((FONT_PAIR_IDS as string[]).includes(f)) out.push({ action: 'set_fonts', value: f });
-        } else if (a.action === 'set_corners') {
-            const c = v === 'square' || v === 'sharp' ? 'none' : v === 'rounded' ? 'md' : v;
-            if (['none', 'sm', 'md', 'lg'].includes(c)) out.push({ action: 'set_corners', value: c });
         } else if (a.action === 'set_format' && (v === 'portrait' || v === 'square')) {
             out.push({ action: 'set_format', value: v });
         } else if (a.action === 'set_preset' && presets.has(v.replace(/\s+/g, '-'))) {
@@ -411,7 +409,33 @@ export const refitForTemplate = async (env: EditEnv, drafts: DraftSlide[], to: T
 
 // ── The turn ────────────────────────────────────────────────────────────────
 
+/**
+ * One edit turn: drops messages after a studio restore, runs the edit, and
+ * saves the turn (user message + reply with its restore point) to the thread.
+ */
 export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResultV2> => {
+    const { carouselId, userId, store } = params;
+    const dryRun = !!params.options?.dryRun;
+    if (params.restoredTo && !dryRun) {
+        await store.truncateThreadAfter(carouselId, params.restoredTo).catch((err) => console.warn('[v2.edit] thread trim failed:', err));
+    }
+    const result = await runEditTurn(params);
+    if (result.refused || dryRun) return result;
+    const now = Date.now();
+    const assistantId = params.messageIds?.assistant || `msg-${now}-a`;
+    const turn: ChatMessage[] = [
+        { id: params.messageIds?.user || `msg-${now}-u`, role: 'user', text: params.message },
+        {
+            id: assistantId, role: 'assistant', text: result.reply,
+            events: params.turnEvents?.(), tokenUsage: params.usage?.(),
+            ...(result.versionId ? { versionId: result.versionId } : {}),
+        },
+    ];
+    for (const m of turn) await store.appendMessage(carouselId, userId, m).catch((err) => console.warn('[v2.edit] thread write failed:', err));
+    return { ...result, messageId: assistantId };
+};
+
+const runEditTurn = async (params: EditV2Params): Promise<EditResultV2> => {
     const { carouselId, userId, message, store, progress } = params;
     const opts = params.options || {};
 
@@ -498,59 +522,32 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
     const has = (t: EditActionType) => actions.some((a) => a.type === t);
     const isCancel = (err: any) => /cancel/i.test(String(err?.message || err));
 
-    // ── Canvas design helpers ────────────────────────────────────────────────
-    const isCanvas = () => templateId === 'template-5';
-    const originalStyle: DesignStyle | null = deckStyleOf(deck.slides as any[]);
-    const currentStyle = (): DesignStyle =>
-        deckStyleOf(drafts.map((d) => ({ design: d.design }))) || originalStyle || heuristicStyle(topic, creative, '');
-    /**
-     * (Re)designs slides with the Design Director + composer. `style: null`
-     * lets the director choose a new look; otherwise the look is kept.
-     */
-    const designSlides = async (label: string, o: { only?: number[]; instruction?: string; style?: DesignStyle | null }) => {
-        await progress(`EXECUTE: ${label}...`, 74);
-        const only = o.only && o.only.length ? o.only : undefined;
-        const res = await withSpan('edit.design', { only, direction: o.style?.direction }, () => designDeckWithAI({
-            drafts,
-            topic,
-            brief: creative,
-            userText: message,
-            theme,
-            format,
-            style: o.style === null ? undefined : (o.style || currentStyle()),
-            only,
-            existing: drafts.map((d) => d.design),
-            instruction: o.instruction,
-            seed: seedFrom(`${carouselId}:${label}:${Date.now()}`),
-            outputLanguage: env.ctx.outputLanguage,
-            banned,
-            allowEmoji: env.allowEmoji,
-        }));
-        const targets = only || drafts.map((_, i) => i);
-        for (const i of targets) {
-            if (!drafts[i]) continue;
-            drafts[i].design = res.designs[i];
-            drafts[i].extras = res.extras[i];
-            changed.add(i);
-        }
-        // One look across the deck.
-        drafts.forEach((d, i) => { if (!targets.includes(i) && d.design) d.design = { ...(d.design as SlideDesign), style: res.style }; });
-        return res;
-    };
-
-    // ── undo (exclusive) ─────────────────────────────────────────────────────
+    // ── undo (exclusive): back to the restore point before the current state ──
     if (has('undo')) {
         await progress('EXECUTE: Restoring the previous version...', 55);
-        const snap = opts.dryRun ? null : await store.peekVersion(carouselId);
+        const others = actions.some((a) => a.type !== 'undo' && a.type !== 'answer');
+        const points = restorePoints(thread);
+        let snap: (Awaited<ReturnType<PipelineStore['getVersion']>>) = null;
+        let versionId: string | undefined;
+        if (points.length) {
+            const target = previousPoint(thread);
+            if (target?.versionId && !opts.dryRun) {
+                snap = await store.getVersion(target.versionId);
+                versionId = snap ? target.versionId : undefined;
+            }
+        } else if (!opts.dryRun) {
+            // A deck from before restore points: its older before-change snapshots.
+            snap = await store.peekVersion(carouselId);
+        }
         if (!snap) {
-            return { ...base, intent: 'undo', reply: "There's nothing to undo yet. I keep a snapshot before every change I make from here on." };
+            return { ...base, intent: 'undo', reply: "There's nothing to undo: this is the earliest version I have." };
         }
         await store.updateDeck(carouselId, {
             slides: snap.slides, theme: snap.theme, templateId: snap.templateId, format: snap.format,
             presetId: snap.presetId ?? '', selectedPattern: snap.selectedPattern ?? (typeof deck.selectedPattern === 'number' ? 1 : undefined),
         });
-        // Only drop the snapshot once the restore is saved.
-        await store.dropVersion(carouselId, snap.id);
+        // An older before-change snapshot is used once; restore points stay (other replies point at them).
+        if (!points.length) await store.dropVersion(carouselId, snap.id);
         const restore: DesignAction[] = [];
         if (snap.templateId !== deck.templateId) restore.push({ action: 'set_template', value: snap.templateId });
         if (snap.format !== deck.format) restore.push({ action: 'set_format', value: snap.format });
@@ -560,8 +557,8 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
         const snapPattern = typeof snap.selectedPattern === 'number' ? snap.selectedPattern : 1;
         if (snapPattern !== (deck.selectedPattern ?? 1)) restore.push({ action: 'set_pattern', value: String(snapPattern) });
         if (snap.signaturePosition && snap.signaturePosition !== deck.signaturePosition) restore.push({ action: 'set_signature_position', value: snap.signaturePosition });
-        const restored = snap.slides.map((s, i) => draftToSaved(savedToDraft(s), snap.templateId, i));
-        const others = actions.some((a) => a.type !== 'undo' && a.type !== 'answer');
+        const restored = snap.slides.map((s, i) => draftToSaved(savedToDraft(s), snap!.templateId, i));
+        const what = snap.label && points.length ? `the version after: ${snap.label.charAt(0).toLowerCase() + snap.label.slice(1)}` : snap.label ? `before: ${snap.label.charAt(0).toLowerCase() + snap.label.slice(1)}` : 'the previous version';
         return {
             ...base,
             slides: restored,
@@ -569,10 +566,12 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
             templateId: snap.templateId,
             intent: 'undo',
             actions: ['undo'],
-            reply: `Undone: ${snap.label ? snap.label.charAt(0).toLowerCase() + snap.label.slice(1) : 'your last change'}. Say "undo" again to go further back.${others ? ' Send your other changes as a new message and I\'ll apply them to this version.' : ''}`,
+            reply: `Restored ${what}.${others ? ' Send your other changes as a new message and I\'ll apply them to this version.' : ''}`,
             changedIndices: restored.map((_, i) => i),
             slidesChanged: true,
             designActions: restore,
+            ...(versionId ? { versionId } : {}),
+            undoable: !!versionId,
         };
     }
 
@@ -602,11 +601,6 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
                 drafts = composed.drafts;
                 changed = new Set(drafts.map((_, i) => i));
                 executed.push('regenerate');
-                if (isCanvas()) {
-                    // Keep the deck's look unless the message asks for a new one.
-                    const asked = directionFromWords(message);
-                    await designSlides('Designing the new slides', { style: asked ? defaultStyle(asked, originalStyle?.direction === asked ? originalStyle.fonts : undefined) : currentStyle() });
-                }
                 labels.push(`Rebuilt the deck as ${drafts.length} slides`);
                 replies.push(count === original.length ? 'I rebuilt the deck with your changes.' : `I rebuilt the deck as ${drafts.length} slides.`);
                 if (templateId === 'template-3' && !opts.skipImages) {
@@ -686,8 +680,6 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
             if (wrote.length) {
                 executed.push('structure');
                 labels.push(`Added ${wrote.length} slide${wrote.length > 1 ? 's' : ''}`);
-                const fresh = drafts.map((d, i) => (placeholders.has(d) ? i : -1)).filter((i) => i >= 0);
-                if (isCanvas() && fresh.length) await designSlides(fresh.length > 1 ? 'Designing the new slides' : 'Designing the new slide', { only: fresh });
             }
             if (wrote.length < idx.length) failed.push(idx.length - wrote.length > 1 ? 'add the new slides' : 'add the new slide');
         }
@@ -721,10 +713,8 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
         if (!list.length) return;
         designActions = list;
         executed.push('design');
-        // Template first, so look settings in the same message apply to the new template.
+        // Template first, so the other settings apply to the new template.
         const ordered = [...list.filter((d) => d.action === 'set_template'), ...list.filter((d) => d.action !== 'set_template')];
-        const lookActions = ordered.filter((d) => d.action === 'set_direction' || d.action === 'set_fonts' || d.action === 'set_corners');
-        let switchedToCanvas = false;
         for (const d of ordered) {
             if (d.action === 'set_template' && d.value !== templateId) {
                 await progress('EXECUTE: Re-fitting the copy to the new template...', 65);
@@ -734,8 +724,7 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
                 drafts = refit;
                 templateId = to;
                 theme = stampTheme(theme, templateId);
-                labels.push(to === 'template-5' ? 'Switched to The Canvas' : `Switched to ${to}`);
-                switchedToCanvas = to === 'template-5';
+                labels.push(`Switched to ${to}`);
             }
             if (d.action === 'set_format') { format = d.value as CarouselFormat; labels.push(`Changed format to ${d.value}`); }
             if (d.action === 'set_preset') { presetId = d.value; brandMode = 'preset'; labels.push(`Changed colors to ${d.value}`); }
@@ -747,38 +736,6 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
             if (preset) theme = resolveTheme(preset.seeds, templateId);
             theme = stampTheme(theme, templateId);
         }
-
-        // ── The Canvas: look (direction, fonts, corners) ──
-        if (lookActions.length && !isCanvas()) {
-            failed.push('change the look (directions, fonts and corners are part of The Canvas template; say "switch to The Canvas")');
-        }
-        if (isCanvas()) {
-            const direction = lookActions.find((d) => d.action === 'set_direction')?.value as Direction | undefined;
-            const fonts = lookActions.find((d) => d.action === 'set_fonts')?.value as FontPairId | undefined;
-            const corners = lookActions.find((d) => d.action === 'set_corners')?.value as DesignStyle['radius'] | undefined;
-            const base = currentStyle();
-            if (switchedToCanvas || direction) {
-                // A new look (or a deck new to the Canvas): every slide is designed again.
-                const asked = direction || directionFromWords(message);
-                const style: DesignStyle | null = asked
-                    ? { ...defaultStyle(asked as Direction, fonts), ...(corners ? { radius: corners } : {}) }
-                    : fonts || corners ? { ...base, ...(fonts ? { fonts } : {}), ...(corners ? { radius: corners } : {}) } : null;
-                const res = await designSlides(switchedToCanvas ? 'Designing every slide for The Canvas' : `Restyling the deck as ${asked}`, { style });
-                if (direction) labels.push(`Restyled the deck as ${direction}`);
-                else if (switchedToCanvas) labels.push(`Designed every slide (${res.style.direction} look)`);
-            } else if (fonts || corners) {
-                // Fonts and corners are deck settings: every design keeps its layout.
-                const style: DesignStyle = { ...base, ...(fonts ? { fonts } : {}), ...(corners ? { radius: corners } : {}) };
-                drafts.forEach((dr, i) => {
-                    dr.design = dr.design
-                        ? { ...(dr.design as SlideDesign), style }
-                        : designSlide(dr.blockType, contentOfDraft(dr), style, { seed: seedFrom(`${carouselId}:${i}`), index: i, total: drafts.length });
-                    changed.add(i);
-                });
-                if (fonts) labels.push(`Changed fonts to ${FONT_PAIRS[fonts].label}`);
-                if (corners) labels.push(`Changed corners to ${corners}`);
-            }
-        }
     };
     const designWanted = actions.filter((a) => a.type === 'design').flatMap((a) => a.design || []);
     if (has('design') || designWanted.length) {
@@ -787,32 +744,6 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
         if (!list.length) list = sanitizeDesign(parseDesignActionsFallback(message));
         if (list.length) await runDesign(list);
         else failed.push('change the design (I couldn\'t match it to an available template, format, palette or pattern)');
-    }
-
-    // ── redesign (The Canvas: layout of specific slides, words unchanged) ─────
-    for (const a of actions.filter((x) => x.type === 'redesign')) {
-        if (!isCanvas()) {
-            failed.push('redesign slides (custom layouts are part of The Canvas template; say "switch to The Canvas")');
-            continue;
-        }
-        const requested = (a.slides || []).map((n) => Math.round(n) - 1);
-        const wanted = requested.filter((i) => Number.isInteger(i) && i >= 0 && i < original.length);
-        if (requested.length && !wanted.length) { failed.push(`redesign slide ${nums(requested)} (no such slide)`); continue; }
-        const scope = wanted.length ? wanted : selected;
-        const targets = scope.map(posOf).filter((i) => i >= 0);
-        if (scope.length && !targets.length) { failed.push(`redesign slide ${nums(scope)} (it was removed)`); continue; }
-        try {
-            const instruction = a.instruction && a.instruction !== message ? `${message}\n(${a.instruction})` : message;
-            const res = await designSlides(targets.length === 1 ? `Redesigning slide ${targets[0] + 1}` : targets.length ? `Redesigning slides ${nums(targets)}` : 'Redesigning every slide', { only: targets, instruction });
-            executed.push('redesign');
-            const n = targets.length || drafts.length;
-            labels.push(targets.length ? `Redesigned slide${targets.length > 1 ? 's' : ''} ${nums(targets)}` : 'Redesigned every slide');
-            if (!res.composed && n) notes.push('The layout models were unavailable, so I used fresh layouts from the library.');
-        } catch (err) {
-            if (isCancel(err)) throw err;
-            console.warn('[v2.edit] redesign failed:', err);
-            failed.push(targets.length ? `redesign slide ${nums(targets)}` : 'redesign the slides');
-        }
     }
 
     // ── image ─────────────────────────────────────────────────────────────────
@@ -891,14 +822,19 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
     const designChanged = templateId !== deck.templateId || format !== deck.format || presetId !== deck.presetId
         || selectedPattern !== deck.selectedPattern || signaturePosition !== deck.signaturePosition || brandMode !== deck.brandMode;
     const deckChanged = slidesChanged || designChanged;
-    let undoable = false;
+    let versionId: string | undefined;
     if (deckChanged && !opts.dryRun) {
         await progress('Saving...', 90);
         const label = labels.join('; ') || 'Edited the deck';
-        undoable = await store.saveVersion(carouselId, userId, {
-            slides: deck.slides, theme: deck.theme, templateId: deck.templateId, format: deck.format, presetId: deck.presetId,
-            selectedPattern: deck.selectedPattern, signaturePosition: deck.signaturePosition, brandMode: deck.brandMode, label,
-        });
+        // A deck from before restore points gets one for how it looks now, on its last reply.
+        const lastReply = [...thread].reverse().find((m) => m.role === 'assistant');
+        if (lastReply && !restorePoints(thread).length) {
+            const before = await store.saveVersion(carouselId, userId, {
+                slides: deck.slides, theme: deck.theme, templateId: deck.templateId, format: deck.format, presetId: deck.presetId,
+                selectedPattern: deck.selectedPattern, signaturePosition: deck.signaturePosition, brandMode: deck.brandMode, label: 'Before restore points', kind: 'point',
+            });
+            if (before) await store.setMessageVersion(carouselId, lastReply.id, before).catch(() => undefined);
+        }
         await store.updateDeck(carouselId, {
             slides: slidesChanged || templateId !== deck.templateId ? saved : undefined,
             theme: theme !== deck.theme ? theme : undefined,
@@ -910,6 +846,11 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
         if (slidesChanged && brief) {
             await store.saveBrief(carouselId, userId, { ...brief, keyPoints: saved.map((s) => s.headline).filter(Boolean) }).catch(() => undefined);
         }
+        // Restore point: the deck right after this reply.
+        versionId = (await store.saveVersion(carouselId, userId, {
+            slides: slidesChanged || templateId !== deck.templateId ? saved : deck.slides,
+            theme, templateId, format, presetId, selectedPattern, signaturePosition, brandMode, label, kind: 'point',
+        })) || undefined;
     }
 
     // ── Memory ───────────────────────────────────────────────────────────────
@@ -925,7 +866,6 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
     if (failed.length) reply += ` I couldn't ${failed.join(', or ')}, so that part is unchanged.`;
     if (memoryNote) reply += memoryNote.category === 'bannedWords' ? ` I'll avoid "${memoryNote.note}" in future carousels too.` : ' I saved that preference for future carousels.';
     if (notes.length) reply += ` ${notes.join(' ')}`;
-    if (undoable) reply += ' Say "undo" to revert.';
     reply = reply.replace(/\s*—\s*/g, ', ');
 
     return {
@@ -940,6 +880,7 @@ export const runEditPipelineV2 = async (params: EditV2Params): Promise<EditResul
         slidesChanged,
         designActions,
         memoryNote,
-        undoable,
+        ...(versionId ? { versionId } : {}),
+        undoable: !!versionId,
     };
 };

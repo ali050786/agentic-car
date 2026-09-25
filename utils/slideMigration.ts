@@ -59,7 +59,6 @@ export const slideToLayout = (item: SlideContent | SlideLayout): SlideLayout => 
       slots,
       styleOverrides: item.styleOverrides,
       visual: item.visual,
-      design: raw.design,
     };
   }
 
@@ -82,7 +81,6 @@ export const slideToLayout = (item: SlideContent | SlideLayout): SlideLayout => 
       doodlePrompt: legacy.doodlePrompt,
       doodleUrl: legacy.doodleUrl,
     },
-    design: (legacy as any).design,
   };
 };
 

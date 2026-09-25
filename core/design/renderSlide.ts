@@ -13,7 +13,6 @@ import { renderStatBlock } from './blocks/statBlock';
 import { renderQuoteBlock } from './blocks/quoteBlock';
 import { renderSplitBlock } from './blocks/splitBlock';
 import { FONTS } from './tokens';
-import { renderCanvasSlide } from './canvas';
 
 /**
  * Unified Slide Renderer
@@ -39,15 +38,8 @@ export const renderSlide = (
 ): string => {
   // Normalize input into SlideLayout IR
   const layout = slideToLayout(content);
-
-  // The Canvas: layouts composed per slide (by the Design Director or the
-  // layout library) instead of one fixed layout per block type.
-  if (templateId === 'template-5') {
-    return renderCanvasSlide({
-      layout, theme, branding, format, patternId, patternOpacity, patternScale, patternSpacing,
-      uniqueId, slideNumber, totalSlides,
-    });
-  }
+  // The retired Canvas template (template-5) renders as The Truth.
+  if (templateId === 'template-5') templateId = 'template-1';
 
   // Sanitize slots
   const sanitizedSlots = {

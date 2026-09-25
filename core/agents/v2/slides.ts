@@ -11,7 +11,6 @@
 
 import type { TemplateId, BlockType } from '../../../types';
 import type { BlockKind, DraftSlide, SavedSlide } from './types';
-import { toStoredDesign } from '../../design/canvas';
 
 const legacyVariant = (b: BlockKind): SavedSlide['variant'] =>
     b === 'hero' ? 'hero' : b === 'list' ? 'list' : b === 'closing' ? 'closing' : 'body';
@@ -32,7 +31,6 @@ export const draftToSaved = (d: DraftSlide, templateId: TemplateId, index: numbe
     const icon = d.icon || undefined;
     const visual = { icon, doodlePrompt: d.doodlePrompt, doodleUrl: d.doodleUrl };
     const extras = d.extras && Object.keys(d.extras).length ? { ...d.extras } : undefined;
-    const design = toStoredDesign(d.design as any);
 
     return {
         id: d.id || newId(templateId, index),
@@ -62,7 +60,6 @@ export const draftToSaved = (d: DraftSlide, templateId: TemplateId, index: numbe
             ...(extras ? { extras } : {}),
         },
         visual,
-        ...(design ? { design } : {}),
     };
 };
 
@@ -99,7 +96,6 @@ export const savedToDraft = (s: any): DraftSlide => {
         icon: s?.icon || s?.visual?.icon,
         doodlePrompt: s?.doodlePrompt || s?.visual?.doodlePrompt,
         doodleUrl: s?.doodleUrl || s?.visual?.doodleUrl,
-        design: s?.design && typeof s.design === 'object' ? s.design : undefined,
         extras: slots.extras && typeof slots.extras === 'object' && !Array.isArray(slots.extras) ? { ...slots.extras } : undefined,
     };
 };
